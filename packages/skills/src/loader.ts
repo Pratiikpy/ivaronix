@@ -78,31 +78,49 @@ export function loadSkillFromPath(folderPath: string): LoadedSkill {
   };
 }
 
-/** Discover all skills under a directory. */
-export function loadSkillsFromDir(dirPath: string): LoadedSkill[] {
+/**
+ * Discover all skills under a directory. When a sub-directory does NOT contain
+ * a SKILL.md (e.g. `seed-skills/imports/`), recurse one level deeper so
+ * grouping folders work. Recursion is capped at depth 2 to avoid surprise
+ * walks of deep node_modules-style trees.
+ */
+export function loadSkillsFromDir(dirPath: string, depth = 0): LoadedSkill[] {
   if (!existsSync(dirPath)) return [];
   const entries = readdirSync(dirPath);
   const skills: LoadedSkill[] = [];
   for (const entry of entries) {
+    if (entry.startsWith('.') || entry === 'node_modules') continue;
     const subdir = join(dirPath, entry);
     if (!statSync(subdir).isDirectory()) continue;
     const skillMd = join(subdir, 'SKILL.md');
-    if (!existsSync(skillMd)) continue;
-    try {
-      skills.push(loadSkillFromPath(subdir));
-    } catch (err) {
-      console.error(`Skipping ${entry}: ${(err as Error).message}`);
+    if (existsSync(skillMd)) {
+      try {
+        skills.push(loadSkillFromPath(subdir));
+      } catch (err) {
+        console.error(`Skipping ${entry}: ${(err as Error).message}`);
+      }
+    } else if (depth < 2) {
+      // Container dir (e.g. seed-skills/imports/) — descend one level
+      skills.push(...loadSkillsFromDir(subdir, depth + 1));
     }
   }
   return skills;
 }
 
-/** Find a skill by id starting from the user's project + falling back to seed-skills. */
+/**
+ * Find a skill by id starting from the user's project + falling back to
+ * seed-skills. Searches one level of grouping folders (e.g. `imports/`) too,
+ * matching the recursive walk in `loadSkillsFromDir`.
+ */
 export function findSkill(id: string, searchDirs: string[]): LoadedSkill | null {
   for (const dir of searchDirs) {
-    const candidate = join(dir, id);
-    if (existsSync(join(candidate, 'SKILL.md'))) {
-      return loadSkillFromPath(candidate);
+    const direct = join(dir, id);
+    if (existsSync(join(direct, 'SKILL.md'))) return loadSkillFromPath(direct);
+    // Try one-level-down containers (e.g. dir/imports/<id>/SKILL.md)
+    if (!existsSync(dir)) continue;
+    for (const entry of readdirSync(dir)) {
+      const sub = join(dir, entry, id);
+      if (existsSync(join(sub, 'SKILL.md'))) return loadSkillFromPath(sub);
     }
   }
   return null;

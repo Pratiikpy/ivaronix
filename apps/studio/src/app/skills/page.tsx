@@ -25,32 +25,36 @@ function permissionsView(p: import('@ivaronix/skills').SkillManifest['og']['perm
 async function loadCards(): Promise<SkillCard[]> {
   const skills = loadAllSkills();
   const reg = getSkillRegistry();
-  const cards: SkillCard[] = [];
-  for (const s of skills) {
-    let registryStatus: SkillCard['registryStatus'] = 'unknown';
-    if (reg) {
-      try {
-        const skillId = skillIdFromName(s.id);
-        const versionId = versionIdFromSemver(s.manifest.version);
-        const v = await reg.getVersion(skillId, versionId);
-        if (!v) registryStatus = 'unregistered';
-        else if (v.revoked) registryStatus = 'mismatch';
-        else {
-          const localBytes32 = '0x' + s.manifestHash.replace(/^sha256:/, '').toLowerCase();
-          registryStatus = v.manifestHash.toLowerCase() === localBytes32 ? 'match' : 'mismatch';
-        }
-      } catch { /* keep 'unknown' */ }
-    }
-    cards.push({
-      id: s.id,
-      version: s.manifest.version,
-      description: s.manifest.description,
-      defaultTier: s.manifest.og.consensus.default_tier,
-      burnAuto: s.manifest.og.burn.auto_enable,
-      permissions: permissionsView(s.manifest.og.permissions),
-      registryStatus,
-    });
-  }
+
+  // Query all skills' on-chain status in parallel — 80 sequential RPCs would
+  // make /skills load in 15+ seconds, parallel collapses to ~1 RPC roundtrip.
+  const cards = await Promise.all(
+    skills.map(async (s): Promise<SkillCard> => {
+      let registryStatus: SkillCard['registryStatus'] = 'unknown';
+      if (reg) {
+        try {
+          const skillId = skillIdFromName(s.id);
+          const versionId = versionIdFromSemver(s.manifest.version);
+          const v = await reg.getVersion(skillId, versionId);
+          if (!v) registryStatus = 'unregistered';
+          else if (v.revoked) registryStatus = 'mismatch';
+          else {
+            const localBytes32 = '0x' + s.manifestHash.replace(/^sha256:/, '').toLowerCase();
+            registryStatus = v.manifestHash.toLowerCase() === localBytes32 ? 'match' : 'mismatch';
+          }
+        } catch { /* keep 'unknown' */ }
+      }
+      return {
+        id: s.id,
+        version: s.manifest.version,
+        description: s.manifest.description,
+        defaultTier: s.manifest.og.consensus.default_tier,
+        burnAuto: s.manifest.og.burn.auto_enable,
+        permissions: permissionsView(s.manifest.og.permissions),
+        registryStatus,
+      };
+    }),
+  );
   return cards;
 }
 
