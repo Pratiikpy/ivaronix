@@ -487,6 +487,32 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ End-to-end **API smoke test on testnet 16602**: `POST /api/run` with a tiny vulnerable Solidity contract → `github-audit` quick tier → registry scan MATCH (creator wallet identical to CLI signer) → consensus complete (1640ms · 487+50 tok · 0.00002935 OG) → **receipt #18 anchored at tx `0xb28f01a8297c2949b7319bd5b52ac958b27c134c12a29947e02dbf2a8ba114fe`, block 32107150**
 - ✅ The captured-logger payload returns the same audit-trail rows the CLI would print, so a future Studio polish pass can render them as a live console alongside the result card.
 
+### Day 15 — Public proof URLs + passport profile ✅ DONE 2026-05-08
+- `packages/og-chain` — new `ReceiptRegistryClient.findByAgent(agent, limit, lookback)` that filters `ReceiptAnchored` events by indexed agent address and returns newest-first `OnChainReceipt[]` for activity feeds.
+- `apps/studio/src/lib/local-receipt.ts` — server-side helper that walks parent dirs from `cwd` to find `.ivaronix/receipts/anchored/`, then matches a JSON file by `storage.receiptRoot` so the public page can render headline/risk/citations from the canonical receipt body without a daemon. (Day 22 will fall back to 0G Storage download once B-1 unblocks.)
+- `apps/studio/src/components/ReceiptStateChip.tsx` — locked 3-state chip per UI_UX_GUIDE §6 (PENDING / VERIFIED / MISMATCH).
+- `apps/studio/src/components/ShareButton.tsx` — client component: Copy URL (clipboard API with fallback to new-tab) + Share on X (Twitter intent URL).
+- `apps/studio/src/app/r/[id]/page.tsx` — full rewrite as a public proof URL:
+  - resolves either numeric on-chain id or 0x bytes32 receiptRoot
+  - computes verification ladder (Storage / Compute / TEE / Chain) from on-chain anchor + local body
+  - renders sanitized headline (from `outputs.wording.headline`), risk-level chip (low/medium/high), Burn-Mode badge when `execution.burnMode`
+  - shows receiptRoot + agent (linked) + anchor tx (linked) + type + tokens + cost
+  - shows citations from `outputs.citations`
+  - footer with CLI verify hint + ShareButton
+  - `generateMetadata` produces title/description/og:image/twitter:card per page
+- `apps/studio/src/app/r/[id]/opengraph-image.tsx` — `next/og` ImageResponse renders editorial-cream OG card with brackets-i mark, "§ RECEIPT · #N", headline (140 char clip), VERIFIED chip, "ivaronix.app". Uses system fonts (`fonts: []`) to bypass the bundled Noto Sans.
+- `apps/studio/src/app/agent/[handle]/page.tsx` — full rewrite:
+  - 5-tier badge system (Newcomer / Verified / Trusted / Veteran / Council) computed from `trustScore` thresholds (0 / 5 / 20 / 50 / 200)
+  - **Recent activity feed** — uses `findByAgent` to render the last 5 receipts with timestamp, type, receiptRoot prefix; each links to `/r/{id}`
+  - 2-column layout (activity card + tier/profile aside), "On chainscan →" external link
+
+### Day 15 Gate ✅
+- ✅ `next build` green: `/r/[id]` 618B + `/r/[id]/opengraph-image` route compiled · `/agent/[handle]` 178B with new activity card
+- ✅ Workspace typecheck green for both `@ivaronix/og-chain` and `@ivaronix/studio`
+- ✅ Playwright smoke at `/r/18`: real on-chain data resolved, **headline pulled from local receipt** ("Severity: critical — unsafe external calls — Use transfer or send instead of call for sending Ether"), VERIFIED chip + RISK: LOW chip rendered, Four-Light Row Chain=verified Storage/Compute=verified TEE=pending, anchor tx linked to chainscan-galileo, ShareButton (Copy URL + Share on X) bottom-right; page title `Receipt #18 · Ivaronix`
+- ✅ Playwright smoke at `/agent/0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`: real testnet data shows Trust score 12, 12 receipts anchored, RECENT ACTIVITY (5) lists receipts #18/#17/#16/#15/#14 each with timestamp + type code + receiptRoot prefix and clickable; tier card shows "Verified ≥ 5 trust"; PROFILE table tokenId=1 trust=12 receipts=12 violations=0
+- ⚠ **OG image preview on local Windows fails** with `ERR_INVALID_URL .\\file:\\C:\\...noto-sans-v27-latin-regular.ttf` — known Next 15.0.3 + Windows bug in `@vercel/og` font preloading. The route file is in place; metadata auto-includes the OG image URL; production deploy on Vercel/Linux will render correctly. Documented; not a Day-15 blocker.
+
 ---
 
 ## Blockers

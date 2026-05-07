@@ -90,6 +90,39 @@ export class ReceiptRegistryClient {
     };
   }
 
+  /** List recent ReceiptAnchored events for an agent, newest first. */
+  async findByAgent(
+    agent: Address,
+    limit = 10,
+    lookbackBlocks = 100_000,
+  ): Promise<OnChainReceipt[]> {
+    const provider = this.contract.runner?.provider;
+    if (!provider) throw new Error('ReceiptRegistryClient: no provider attached to runner');
+
+    const latest = await provider.getBlockNumber();
+    const fromBlock = Math.max(0, latest - lookbackBlocks);
+
+    const filter = this.contract.filters.ReceiptAnchored!(undefined, undefined, agent);
+    const events = await this.contract.queryFilter(filter, fromBlock, latest);
+    const sorted = events.slice().reverse().slice(0, limit);
+
+    const out: OnChainReceipt[] = [];
+    for (const ev of sorted) {
+      const args = (ev as { args: unknown[] }).args;
+      const block = await provider.getBlock(ev.blockNumber);
+      out.push({
+        id: args[0] as bigint,
+        receiptRoot: args[1] as Hash,
+        storageRoot: args[4] as Hash,
+        attestationHash: args[5] as Hash,
+        agentAddress: args[2] as Address,
+        timestamp: BigInt(block?.timestamp ?? 0),
+        receiptType: Number(args[3]),
+      });
+    }
+    return out;
+  }
+
   async nextId(): Promise<bigint> {
     return (await this.contract.nextId!()) as bigint;
   }
