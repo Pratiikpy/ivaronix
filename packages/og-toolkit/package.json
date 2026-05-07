@@ -1,0 +1,28 @@
+{
+  "name": "@ivaronix/og-toolkit",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@ivaronix/core": "workspace:*",
+    "@ivaronix/og-chain": "workspace:*",
+    "@ivaronix/og-storage": "workspace:*",
+    "@ivaronix/og-router": "workspace:*",
+    "@ivaronix/og-kv": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

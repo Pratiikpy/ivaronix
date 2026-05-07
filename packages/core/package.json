@@ -1,0 +1,28 @@
+{
+  "name": "@ivaronix/core",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./ulid": "./src/ulid.ts",
+    "./canonical": "./src/canonical.ts",
+    "./types": "./src/types.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "ethers": "^6.13.0",
+    "ulid": "^2.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [".env", "tsconfig.base.json"],
+  "globalEnv": [
+    "NODE_ENV",
+    "OG_NETWORK",
+    "OG_CHAIN_ID",
+    "OG_RPC_URL",
+    "OG_PRIVATE_KEY",
+    "OG_COMPUTE_PROVIDER",
+    "ZG_SERVICE_URL",
+    "ZG_API_SECRET",
+    "OG_DEFAULT_MODEL",
+    "OG_STORAGE_INDEXER",
+    "OG_CHAIN_EXPLORER",
+    "OG_STORAGE_EXPLORER",
+    "GITHUB_TOKEN",
+    "VERCEL_TOKEN"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "outputs": []
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    },
+    "clean": {
+      "cache": false
+    }
+  }
+}

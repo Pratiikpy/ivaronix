@@ -1,0 +1,64 @@
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+keystore/
+
+# Claude Code internal state
+.claude/
+CLAUDE.md.local
+
+# Reference / research material — kept locally only; not pushed
+# (each contains nested .git/ folders, so they'd become gitlinks if tracked)
+CLI Open Source Project/
+oglabs resources/
+og-projects-showcase/
+entries/
+_archive/
+
+# Bundled visual mockup — keep locally; if user wants it pushed remove this line
+# Ivaronix.html  -- (intentionally commented out; Ivaronix.html IS pushed as design source of truth)
+
+
+# Node / pnpm / Turbo
+node_modules/
+.turbo/
+dist/
+build/
+*.tsbuildinfo
+.next/
+.nuxt/
+.vercel/
+
+# Foundry
+out/
+cache/
+broadcast/
+
+# Local data
+.ivaronix/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite-journal
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test artifacts
+coverage/
+.nyc_output/
+playwright-report/
+
+# (do NOT gitignore _archive/ — those are intentional reference docs)
