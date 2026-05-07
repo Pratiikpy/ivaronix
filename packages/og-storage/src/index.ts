@@ -1,29 +1,22 @@
-/**
- * 0G Storage SDK wrapper.
- *
- * NOTE: the official `@0gfoundation/0g-storage-ts-sdk` will be added as a runtime dep
- * during install. Until then, this module exports a typed stub that throws on use,
- * with a clear error pointing the user to install the SDK.
- *
- * Usage in code:
- *   import { createStorageClient } from '@ivaronix/og-storage';
- *   const storage = createStorageClient({ network: 'testnet', privateKey: ... });
- *   const { rootHash, txHash } = await storage.uploadEncrypted(buffer, 'aes-256-gcm', sessionKey);
- */
-
 import { JsonRpcProvider, Wallet } from 'ethers';
+import { Indexer, MemData } from '@0glabs/0g-ts-sdk';
 import { NETWORKS, type Network } from '@ivaronix/core';
+import { burnEncrypt, type BurnEncryptResult } from './burn.js';
+
+export type Hex = `0x${string}`;
 
 export interface StorageUploadResult {
-  rootHash: `0x${string}`;
-  txHash: `0x${string}`;
+  rootHash: Hex;
+  txHash: Hex;
   size: number;
 }
 
-export interface EncryptionMetadata {
-  type: 'aes-256-gcm' | 'wallet' | 'none';
-  keyFingerprint?: `sha256:${string}`;
-  destroyedAt?: number;
+export interface BurnUploadResult extends StorageUploadResult {
+  burn: {
+    keyFingerprint: `sha256:${string}`;
+    encryptionType: 'aes-256-gcm';
+    destroyedAt: number;
+  };
 }
 
 export interface StorageClientOptions {
@@ -31,29 +24,27 @@ export interface StorageClientOptions {
   privateKey: string;
 }
 
-/**
- * Storage client. Wraps 0G Storage SDK with reachability checks + receipt-aware metadata.
- * Real implementation arrives in Day 2 + Day 4 (Burn Mode).
- */
 export class StorageClient {
   readonly network: Network;
-  private provider: JsonRpcProvider;
-  private signer: Wallet;
+  readonly rpcUrl: string;
   readonly indexerUrl: string;
+  private indexer: Indexer;
+  private signer: Wallet;
+  private provider: JsonRpcProvider;
 
   constructor(opts: StorageClientOptions) {
     const cfg = NETWORKS[opts.network];
     this.network = opts.network;
+    this.rpcUrl = cfg.rpcUrl;
+    this.indexerUrl = cfg.storageIndexer;
     this.provider = new JsonRpcProvider(cfg.rpcUrl);
     this.signer = new Wallet(opts.privateKey, this.provider);
-    this.indexerUrl = cfg.storageIndexer;
+    this.indexer = new Indexer(cfg.storageIndexer);
   }
 
   /** Reachability check for `ivaronix doctor --storage`. */
   async ping(): Promise<{ ok: true; status: number } | { ok: false; reason: string }> {
     try {
-      // 0G Storage indexer responds 404 on root (no listing endpoint), 200 on probe paths.
-      // Any HTTP response means DNS+TCP work and the service is alive.
       const res = await fetch(this.indexerUrl, { method: 'GET' });
       return { ok: true, status: res.status };
     } catch (err) {
@@ -61,44 +52,75 @@ export class StorageClient {
     }
   }
 
-  /**
-   * Upload arbitrary bytes to 0G Storage.
-   * STUB: real implementation lands in Day 2 once `@0gfoundation/0g-storage-ts-sdk` is installed.
-   */
-  async upload(_data: Uint8Array): Promise<StorageUploadResult> {
-    throw new Error(
-      '@ivaronix/og-storage upload not yet implemented. Install @0gfoundation/0g-storage-ts-sdk and complete in Day 2.',
-    );
+  /** Upload arbitrary bytes to 0G Storage. Returns root hash + tx hash. */
+  async upload(data: Uint8Array, opts?: { fee?: bigint; expectedReplica?: number; finalityRequired?: boolean }): Promise<StorageUploadResult> {
+    const file = new MemData(data);
+    const uploadOpts = {
+      tags: '0x',
+      finalityRequired: opts?.finalityRequired ?? true,
+      taskSize: 1,
+      expectedReplica: opts?.expectedReplica ?? 1,
+      skipTx: false,
+      // Pass a healthy fee floor (~0.001 OG); SDK's auto-calculated fee can underestimate
+      fee: opts?.fee ?? BigInt('1000000000000000'),
+    };
+    // Skip auto gas estimation by passing a fixed gasLimit — the FixedPriceFlow's
+    // estimateGas reverts on Galileo testnet (likely a node-side simulation issue
+    // or known testnet limitation; real submission may still succeed).
+    const txOpts = { gasLimit: BigInt(2_000_000) };
+    // The 0G SDK's bundled ethers uses CJS types; our package uses ESM types.
+    // Same package & version, but TypeScript sees nominal type differences from `#private`.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [result, err] = await this.indexer.upload(file, this.rpcUrl, this.signer as any, uploadOpts, undefined, txOpts);
+    if (err) {
+      // Distinguish "already uploaded" (data exists) from real errors
+      const msg = err.message ?? String(err);
+      if (msg.includes('already') || msg.toLowerCase().includes('exists')) {
+        // Upload succeeded earlier; try to retrieve the root hash by re-running merkle
+        // For now, re-throw with hint — Day 5 polish will handle dedupe gracefully
+        throw new Error(`0G Storage upload error (likely dedupe): ${msg}`);
+      }
+      throw new Error(`0G Storage upload failed: ${msg}`);
+    }
+    return {
+      rootHash: result.rootHash as Hex,
+      txHash: result.txHash as Hex,
+      size: data.length,
+    };
   }
 
   /**
-   * Upload encrypted bytes with Burn Mode metadata captured.
-   * STUB.
+   * Burn Mode upload: encrypt with AES-256-GCM session key, destroy the key,
+   * upload the ciphertext to 0G Storage. Returns root hash + burn metadata.
    */
-  async uploadEncrypted(
-    _data: Uint8Array,
-    _encryptionType: 'aes-256-gcm',
-    _sessionKey: Uint8Array,
-  ): Promise<StorageUploadResult & { encryption: EncryptionMetadata }> {
-    throw new Error(
-      '@ivaronix/og-storage uploadEncrypted not yet implemented. Burn Mode lands in Day 4.',
-    );
+  async uploadEncryptedBurn(plaintext: Uint8Array): Promise<BurnUploadResult> {
+    const encrypted: BurnEncryptResult = burnEncrypt(plaintext);
+    const result = await this.upload(encrypted.ciphertext);
+    return {
+      ...result,
+      burn: {
+        keyFingerprint: encrypted.keyFingerprint,
+        encryptionType: encrypted.encryptionType,
+        destroyedAt: encrypted.destroyedAt,
+      },
+    };
   }
 
-  /**
-   * Download bytes by root hash, optionally with Merkle proof verification.
-   * STUB.
-   */
-  async download(_rootHash: `0x${string}`, _withProof = true): Promise<Uint8Array> {
-    throw new Error('@ivaronix/og-storage download not yet implemented.');
+  /** Download bytes by root hash to a local file path. Optionally verify Merkle proof. */
+  async download(rootHash: Hex, outputPath: string, withProof = true): Promise<void> {
+    const err = await this.indexer.download(rootHash, outputPath, withProof);
+    if (err) throw new Error(`0G Storage download failed: ${err.message ?? String(err)}`);
   }
 
-  /** Detect encryption mode from header without downloading the full blob. STUB. */
-  async peekHeader(_rootHash: `0x${string}`): Promise<{ encrypted: boolean; type?: string }> {
-    throw new Error('@ivaronix/og-storage peekHeader not yet implemented.');
+  /** Inspect storage node locations for a root (used by doctor + verify). */
+  async getFileLocations(rootHash: Hex): Promise<unknown[]> {
+    return this.indexer.getFileLocations(rootHash) as unknown as Promise<unknown[]>;
   }
 }
 
 export function createStorageClient(opts: StorageClientOptions): StorageClient {
   return new StorageClient(opts);
 }
+
+export { burnEncrypt, decryptWithKey } from './burn.js';
+export type { BurnEncryptResult } from './burn.js';
