@@ -1,6 +1,6 @@
 ---
 name: private-doc-review
-version: 0.1.0
+version: 0.2.0
 description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Burn-mode-aware; produces an Action Receipt.
 license: Apache-2.0
 entrypoint: prompt.md
@@ -26,6 +26,10 @@ og:
     default_tier: standard
   burn:
     auto_enable: true
+  hooks:
+    session_start: ["print_passport"]
+    pre_consensus: ["redact_pii", "balance_check"]
+    post_consensus: ["log_tokens"]
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
 ---

@@ -51,11 +51,25 @@ const Burn = z.object({
   auto_enable: z.boolean().default(false),
 });
 
+/**
+ * Lifecycle-hook subscriptions (Day 11). Each value is an ordered list of
+ * built-in hook names. Unknown names are dropped at load time with a warning.
+ */
+const Hooks = z.object({
+  session_start: z.array(z.string()).default([]),
+  pre_consensus: z.array(z.string()).default([]),
+  post_consensus: z.array(z.string()).default([]),
+  pre_anchor: z.array(z.string()).default([]),
+  post_anchor: z.array(z.string()).default([]),
+  session_end: z.array(z.string()).default([]),
+});
+
 const OgBlock = z.object({
   permissions: Permissions.default({} as z.infer<typeof Permissions>),
   reputation: Reputation.default({} as z.infer<typeof Reputation>),
   consensus: Consensus.default({} as z.infer<typeof Consensus>),
   burn: Burn.default({} as z.infer<typeof Burn>),
+  hooks: Hooks.default({} as z.infer<typeof Hooks>),
   creator: z
     .object({
       passport: z.string().optional(),

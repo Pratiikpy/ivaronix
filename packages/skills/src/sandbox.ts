@@ -84,13 +84,29 @@ export function evaluateSandbox(skill: LoadedSkill, ctx: SandboxContext): Sandbo
     });
   }
 
-  // 5. scanner mismatch — when a scan was performed and it failed, escalate to block
-  if (ctx.scan && (!ctx.scan.matches || ctx.scan.revoked)) {
-    v.push({
-      severity: 'block',
-      code: ctx.scan.revoked ? 'registry.revoked' : 'registry.manifest-mismatch',
-      message: ctx.scan.reason ?? 'on-chain skill registry verification failed',
-    });
+  // 5. scanner verdict
+  //    - revoked or registered-but-mismatched → block (tampering or kill-switch)
+  //    - not registered → warn (local-only manifest, safe to run)
+  if (ctx.scan) {
+    if (ctx.scan.revoked) {
+      v.push({
+        severity: 'block',
+        code: 'registry.revoked',
+        message: ctx.scan.reason ?? 'on-chain version was revoked',
+      });
+    } else if (ctx.scan.registered && !ctx.scan.matches) {
+      v.push({
+        severity: 'block',
+        code: 'registry.manifest-mismatch',
+        message: ctx.scan.reason ?? 'local manifest differs from on-chain canonical record',
+      });
+    } else if (!ctx.scan.registered) {
+      v.push({
+        severity: strict ? 'block' : 'warn',
+        code: 'registry.not-registered',
+        message: ctx.scan.reason ?? 'skill version is not registered on SkillRegistry',
+      });
+    }
   }
 
   // 6. shell_access / writes_files / wallet_access — informational for now, since

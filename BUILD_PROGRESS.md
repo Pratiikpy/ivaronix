@@ -398,7 +398,26 @@ embedding hashing-trick-tfidf-v1 dim=384
   - `private-doc-review@0.1.0` → tx `0xdd4736c17768ede59001485a33e03a1e62ef66cd2b4ac321f082531e4053bd4c`
 - ✅ `skill verify` returns MATCH for all three (creator wallet locked, on-chain manifestHash byte-identical to the local sha256)
 - ✅ `doc ask --skill private-doc-review` runs scanner pre-flight, prints "registry scan MATCH", then proceeds → receipt #11 anchored, tx `0xfc31b4a8adc342eb01f0543c93c2b483362ba6c2d783314481863f91acd80622`, passport receiptCount=5/trustScore=5
-- ✅ Sandbox enforcement: passport_min_trust (block), receipt_required (block), scanner mismatch (block), burn-disabled-on-burn-skill (warn unless strict)
+- ✅ Sandbox enforcement: passport_min_trust (block), receipt_required (block), scanner mismatch (block), scanner not-registered (warn), burn-disabled-on-burn-skill (warn unless strict)
+
+### Day 11 — Lifecycle hooks ✅ DONE 2026-05-08
+- `packages/skills/src/hooks/types.ts` — typed event union for the 6 lifecycle phases (`session.start`, `consensus.pre`, `consensus.post`, `receipt.pre-anchor`, `receipt.post-anchor`, `session.end`)
+- `packages/skills/src/hooks/registry.ts` — `BUILTIN_HOOKS` registry, `resolveHooks(declared, kind)`, `runHooks(...)` with patch-aggregation (each hook sees prior hooks' patched payload)
+- 4 first-party built-in hooks under `packages/skills/src/hooks/builtin/`:
+  - `redact_pii` — scrubs SSN / email / phone / Luhn-valid credit-card patterns from `consensus.pre.context` before it reaches the router; emits redaction count
+  - `balance_check` — warns when tier-estimated cost ≥ 0.05 OG (≈5¢)
+  - `log_tokens` — auditable post-consensus token + cost + convergence log
+  - `print_passport` — surfaces caller wallet + trustScore at session start
+- Manifest schema: new `og.hooks` block accepts ordered name lists per event; unknown names are dropped at load time (anti-typo) without breaking the manifest
+- CLI `doc ask` runs `session.start` → sandbox → `consensus.pre` (with patch) → router → `consensus.post`
+- Sandbox tightening: not-registered → warn (was incorrectly blocking); registered+mismatch → block; revoked → block
+- `private-doc-review` bumped to **v0.2.0** with `og.hooks: { session_start: [print_passport], pre_consensus: [redact_pii, balance_check], post_consensus: [log_tokens] }`; published on chain at tx `0x2f5023ed3c82f4c4c4f78bd80f75fc52a1603e12db0f6242a6d9e61a70cdc9d5`
+- `tests/sample-lease.txt` augmented with PII (SSN, email, phone, card) so smoke runs exercise redaction
+
+### Day 11 Gate ✅
+- ✅ End-to-end run with v0.2.0 + hooks: registry scan = MATCH, `redact_pii` scrubbed 4/4 PII types (ssn=1 email=1 phone=1 card=1), receipt #14 anchored at tx `0xb301ebf02778951dd4a5d8b7a4be8a7208491fcfe41a59b3c10903584a967754`, passport receiptCount=8 trustScore=8
+- ✅ The LLM never received the redacted PII — output references only lease clauses, never the SSN/email/phone/card values
+- ✅ Hooks correctly logged with `hook` prefix in CLI output for auditability
 
 ---
 

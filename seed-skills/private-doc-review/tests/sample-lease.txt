@@ -1,5 +1,8 @@
 RESIDENTIAL LEASE AGREEMENT (sample for skill testing)
 
+Tenant: Jane Doe (SSN 123-45-6789, email jane.doe@example.com, phone 555-867-5309)
+Card on file for autopay: 4111 1111 1111 1111
+
 1. The Tenant agrees to pay $2,400 per month rent, due on the 1st with a $250 late fee after the 3rd.
 
 2. The Landlord may enter the premises at any time, with or without notice, for inspection or maintenance.

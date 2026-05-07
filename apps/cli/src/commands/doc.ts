@@ -9,7 +9,8 @@ import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
-import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, type LoadedSkill, type ScanResult } from '@ivaronix/skills';
+import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, resolveHooks, runHooks, type LoadedSkill, type ScanResult, type HookEvent_PreConsensus, type HookEvent_PostConsensus, type HookEvent_SessionStart, type HookEvent_SessionEnd } from '@ivaronix/skills';
+import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -140,6 +141,30 @@ docCommand
     }
     if (decision.violations.length > 0) ui.divider();
 
+    // ─── 1.7. session.start hooks ─────────────────────────────────────────
+    const startedAt = Date.now();
+    const sessionStartHooks = resolveHooks(skill.manifest.og.hooks.session_start, 'session.start');
+    if (sessionStartHooks.length > 0) {
+      const evt: HookEvent_SessionStart = {
+        kind: 'session.start',
+        skill,
+        network: env.network,
+        caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+        trustScore: callerTrust,
+        command: 'doc.ask',
+        argv: [file, question],
+        startedAt,
+      };
+      const r = await runHooks(sessionStartHooks, evt);
+      for (const log of r.logs) ui.info(`hook                 ${log}`);
+      if (!r.allow) {
+        ui.fail(`session.start hook "${r.blockingHook}" refused: ${r.reason}`);
+        process.exitCode = 1;
+        return;
+      }
+      if (r.logs.length > 0) ui.divider();
+    }
+
     // ─── 2. Encryption (Burn Mode) ────────────────────────────────────────
     let burnMeta: { keyFingerprint: `sha256:${string}`; encryptionType: 'aes-256-gcm'; destroyedAt: number } | null = null;
     let evidenceBytes: Uint8Array;
@@ -170,22 +195,71 @@ docCommand
 
     const contextText = docBytes.toString('utf8', 0, Math.min(docBytes.length, 8192));
 
+    // ─── 3a. consensus.pre hooks ──────────────────────────────────────────
+    let activeContext = contextText;
+    let activeQuestion = question;
+    const preConsensusHooks = resolveHooks(skill.manifest.og.hooks.pre_consensus, 'consensus.pre');
+    if (preConsensusHooks.length > 0) {
+      const evt: HookEvent_PreConsensus = {
+        kind: 'consensus.pre',
+        skill,
+        network: env.network,
+        caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+        trustScore: callerTrust,
+        context: contextText,
+        userPrompt: question,
+        tier,
+        estimatedCostOg: TIER_COST_OG_LOOKUP[tier],
+      };
+      const r = await runHooks(preConsensusHooks, evt);
+      for (const log of r.logs) ui.info(`hook                 ${log}`);
+      if (!r.allow) {
+        ui.fail(`consensus.pre hook "${r.blockingHook}" refused: ${r.reason}`);
+        process.exitCode = 1;
+        return;
+      }
+      if (r.patched.kind === 'consensus.pre') {
+        activeContext = (r.patched as HookEvent_PreConsensus).context;
+        activeQuestion = (r.patched as HookEvent_PreConsensus).userPrompt;
+      }
+      if (r.logs.length > 0) ui.divider();
+    }
+
     ui.pending(`querying 0G Router (${tier} tier, ${ROLES_BY_TIER[tier].length} role${ROLES_BY_TIER[tier].length > 1 ? 's' : ''})...`);
     const startTime = Date.now();
 
     // Inject the skill's prompt body as the role-shared instruction prefix
-    const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${contextText}\n--- INPUT END ---`;
+    const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
 
     const consensusResult = await runConsensus({
       tier,
       keyring,
       model: opts.model,
       context: enrichedContext,
-      userPrompt: question,
+      userPrompt: activeQuestion,
       rawBytes: docBytes,
     });
 
     const elapsedMs = Date.now() - startTime;
+
+    // ─── 3b. consensus.post hooks ─────────────────────────────────────────
+    const postConsensusHooks = resolveHooks(skill.manifest.og.hooks.post_consensus, 'consensus.post');
+    if (postConsensusHooks.length > 0) {
+      const evt: HookEvent_PostConsensus = {
+        kind: 'consensus.post',
+        skill,
+        network: env.network,
+        caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+        trustScore: callerTrust,
+        ms: elapsedMs,
+        inputTokens: consensusResult.billing.totalInputTokens,
+        outputTokens: consensusResult.billing.totalOutputTokens,
+        costOg: consensusResult.billing.estimatedCostOg,
+        convergenceScore: consensusResult.convergence.score ?? null,
+      };
+      const r = await runHooks(postConsensusHooks, evt);
+      for (const log of r.logs) ui.info(`hook                 ${log}`);
+    }
 
     if (consensusResult.gateResult.warnings.length > 0) {
       ui.divider();
