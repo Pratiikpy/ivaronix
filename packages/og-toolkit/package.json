@@ -1,18 +1,45 @@
 {
   "name": "@ivaronix/og-toolkit",
   "version": "0.0.1",
-  "private": true,
+  "description": "Receipt-aware-by-default DX wrappers for 0G — one import, every action gets a verifiable Action Receipt anchored on chain.",
+  "license": "Apache-2.0",
+  "homepage": "https://ivaronix.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pratiikpy/ivaronix"
+  },
+  "keywords": [
+    "0g",
+    "ai-agent",
+    "verifiable-ai",
+    "receipts",
+    "tee",
+    "consensus",
+    "agent-framework"
+  ],
   "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
     "typecheck": "tsc --noEmit",
+    "prepublishOnly": "tsc -b",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
@@ -20,9 +47,13 @@
     "@ivaronix/og-chain": "workspace:*",
     "@ivaronix/og-storage": "workspace:*",
     "@ivaronix/og-router": "workspace:*",
-    "@ivaronix/og-kv": "workspace:*"
+    "@ivaronix/og-kv": "workspace:*",
+    "@ivaronix/runtime": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

@@ -570,6 +570,28 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ The other 74 imported skills share the same loader, sandbox, hook stack, and runtime path as the proven one — they're functionally interchangeable from a system perspective. Mass on-chain `SkillRegistry.publishVersion` of all 75 is intentionally deferred to Day 21 (the Day-21 batch is where BUILD.md plans the bulk on-chain anchoring with the receipt-automation script).
 - ✅ `next build` green; `@ivaronix/skills` typecheck green; tested `findSkill('domain-name-brainstormer', …)` resolves through the imports/ recursion correctly.
 
+### Day 20 — MCP server + OpenClaw skill + og-toolkit polish ✅ DONE 2026-05-08
+- `apps/mcp-server` — full `@modelcontextprotocol/sdk@^1.0.4` stdio server exposing **5 tools**:
+  - `ivaronix_ask` — runs any installed skill against text input via the canonical `runPipeline`, returning the result + receipt id/tx/onchain id; receipt anchoring on by default
+  - `ivaronix_verify_receipt` — resolves a receipt by numeric on-chain id OR 0x bytes32 receiptRoot via `ReceiptRegistryClient`
+  - `ivaronix_passport_show` — returns passport state (tokenId, trustScore, receiptCount, violations) for any wallet via `AgentPassportClient.getPassportByWallet`
+  - `ivaronix_install_skill` — lists all skills (5 first-party + 75 imports = 80) with optional substring filter
+  - `ivaronix_search_memory` — Day-20 stub that points the caller at the CLI; full memory-engine integration arrives Day 22
+  - server boot loads `.env` from any parent dir (same walk-up as the CLI) so the same testnet wallet signs MCP receipts
+- `apps/openclaw-skill/SKILL.md` — installable OpenClaw skill manifest with `og:` extension (memory_access=project_only, network_access=router+rpc only, wallet_access=true, receipt_required=true), CLI examples, "why receipt-aware?" pitch, configuration block, and a v0.0.1 inventory.
+- `packages/og-toolkit` polished for npm publish:
+  - `OgToolkit.runSkill(input)` delegates to `@ivaronix/runtime.runPipeline` so consumers get the **same** scanner + sandbox + hooks + consensus + receipt anchor flow that CLI + Studio + MCP use — DX and behaviour stay aligned.
+  - `package.json` flipped to `private: false` shape with `description`, `keywords`, `repository`, `homepage`, `files` manifest, `prepublishOnly: tsc -b`, ESM-only `exports`, dual-runtime `import` + `types` entries, and engines `node >=20`.
+  - `README.md` ships with quickstart, "why receipt-aware?", API table, network table, license.
+
+### Day 20 Gate ✅
+- ✅ `pnpm --filter @ivaronix/mcp-server typecheck` green; stdio smoke test:
+  - `tools/list` returned all 5 tool definitions with correct JSON Schema
+  - `tools/call ivaronix_passport_show wallet=0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` returned **live testnet data**: `tokenId 1 · trustScore 13 · receiptCount 13 · violations 0 · network testnet`
+- ✅ `pnpm --filter @ivaronix/og-toolkit build` green; `dist/index.{js,d.ts}` produced; `prepublishOnly` hook wired
+- ✅ Workspace-wide typecheck (cli + studio + mcp-server + og-toolkit + runtime + skills + memory + consensus + og-chain + og-router + og-storage + og-kv + receipts + core) all green
+- ⚠ `apps/api` deferred — Studio's `/api/run` Route Handler is functionally equivalent to the planned apps/api OpenAI-compatible HTTP surface; standing up a separate Vercel deployable adds operational surface without unlocking new functionality on testnet. Day 22 polish revisits.
+
 ---
 
 ## Blockers
