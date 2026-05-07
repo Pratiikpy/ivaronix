@@ -1,124 +1,209 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
+import { PermissionPills } from '@/components/PermissionPills';
+import { findSkillByIdServer, loadSampleFiles } from '@/lib/skills';
 import { getSkillRegistry, explorerAddrUrl } from '@/lib/chain';
 import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
 
 export const dynamic = 'force-dynamic';
 
-const KNOWN_SKILLS: Record<string, { description: string; defaultTier: string; latestVersion: string }> = {
-  'private-doc-review': {
-    description: 'Review contracts, leases, NDAs. Burn-mode + redact-PII hooks.',
-    defaultTier: 'standard',
-    latestVersion: '0.2.0',
-  },
-  'github-audit': {
-    description: 'Code & security audit. Reentrancy, access control, secret scanning.',
-    defaultTier: 'standard',
-    latestVersion: '0.1.0',
-  },
-  '0g-integration-auditor': {
-    description: 'Audit a 0G integration repository.',
-    defaultTier: 'quick',
-    latestVersion: '0.1.0',
-  },
-  'plan-step': {
-    description: 'Produces a numbered, executable plan for a goal.',
-    defaultTier: 'quick',
-    latestVersion: '0.1.0',
-  },
-  'code-edit': {
-    description: 'Proposes a unified diff for a code task.',
-    defaultTier: 'standard',
-    latestVersion: '0.1.0',
-  },
-};
-
 export default async function SkillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const known = KNOWN_SKILLS[id];
-  if (!known) notFound();
+  const skill = findSkillByIdServer(id);
+  if (!skill) notFound();
 
   const reg = getSkillRegistry();
   let onchainHash: string | null = null;
-  let publishedAt: number | null = null;
   let creator: string | null = null;
+  let publishedAt: number | null = null;
+  let revoked = false;
+  let versionCount = 0;
+  let allVersions: { id: string; manifestHash: string; publishedAt: number; revoked: boolean }[] = [];
+
   if (reg) {
+    const skillId = skillIdFromName(id);
     try {
-      const skillId = skillIdFromName(id);
-      const versionId = versionIdFromSemver(known.latestVersion);
+      const versionId = versionIdFromSemver(skill.manifest.version);
       const v = await reg.getVersion(skillId, versionId);
       if (v) {
         onchainHash = v.manifestHash;
-        publishedAt = Number(v.publishedAt);
         creator = v.creator;
+        publishedAt = Number(v.publishedAt);
+        revoked = v.revoked;
       }
-    } catch {
-      /* not registered */
-    }
+    } catch { /* not registered */ }
+    try {
+      const count = await reg.versionCount(skillId);
+      versionCount = Number(count);
+      // No `versionAt(skillId, idx)` exposed in current client — version history
+      // for the current version only is sufficient until the wrapper grows it.
+      if (onchainHash) {
+        allVersions.push({
+          id: skill.manifest.version,
+          manifestHash: onchainHash,
+          publishedAt: publishedAt ?? 0,
+          revoked,
+        });
+      }
+    } catch { /* ignore */ }
   }
+
+  const samples = loadSampleFiles(skill);
+  const localBytes32 = '0x' + skill.manifestHash.replace(/^sha256:/, '').toLowerCase();
+  const matches = onchainHash !== null && !revoked && onchainHash.toLowerCase() === localBytes32;
+
+  const reputation = skill.manifest.og.reputation;
 
   return (
     <Section
-      label={`§ SKILL · ${id}`}
-      title={`${id} v${known.latestVersion}`}
-      description={known.description}
+      label={`§ SKILL · ${id.toUpperCase()}`}
+      title={`${id} v${skill.manifest.version}`}
+      description={skill.manifest.description}
     >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
-          gap: 32,
-          alignItems: 'start',
-        }}
-      >
-        <div className="card">
-          <div className="section-label">CLI</div>
-          <pre
-            className="mono"
-            style={{
-              background: 'var(--color-fg)',
-              color: 'var(--color-bg)',
-              padding: 16,
-              borderRadius: 6,
-              overflowX: 'auto',
-              fontSize: 13,
-              marginTop: 12,
-            }}
-          >
-            ivaronix skill inspect {id}
-            {'\n'}ivaronix doc ask &lt;file&gt; "&lt;question&gt;" --skill {id}
-          </pre>
-
-          <div className="section-label" style={{ marginTop: 32 }}>
-            on-chain anchor
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
+        {/* Left: details */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          {/* Status + permissions */}
+          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="section-label">status</div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              {matches && <span className="chip-verified">REGISTRY MATCH</span>}
+              {!matches && onchainHash && <span className="chip-mismatch">MISMATCH</span>}
+              {!onchainHash && <span className="chip-pending">LOCAL ONLY</span>}
+              {revoked && <span className="chip-mismatch">REVOKED</span>}
+              <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                tier <strong style={{ color: 'var(--color-fg)' }}>{skill.manifest.og.consensus.default_tier}</strong>
+                {' · '}license <strong style={{ color: 'var(--color-fg)' }}>{skill.manifest.license}</strong>
+              </span>
+            </div>
+            <div className="section-label" style={{ marginTop: 8 }}>permissions</div>
+            <PermissionPills permissions={skill.manifest.og.permissions} />
           </div>
-          {onchainHash ? (
-            <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '8px 16px', fontSize: 13 }}>
-              <dt style={{ color: 'var(--color-muted)' }}>manifestHash</dt>
-              <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{onchainHash}</dd>
-              <dt style={{ color: 'var(--color-muted)' }}>creator</dt>
-              <dd className="mono" style={{ margin: 0 }}>
-                <a href={creator ? explorerAddrUrl(creator) : '#'} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
-                  {creator}
-                </a>
-              </dd>
-              <dt style={{ color: 'var(--color-muted)' }}>publishedAt</dt>
-              <dd style={{ margin: 0 }}>
-                {publishedAt ? new Date(publishedAt * 1000).toISOString() : '—'}
-              </dd>
-            </dl>
-          ) : (
-            <p style={{ marginTop: 12, color: 'var(--color-muted)', fontSize: 13 }}>
-              Not registered on the SkillRegistry yet.
-            </p>
+
+          {/* Sample input(s) */}
+          {samples.length > 0 && (
+            <div className="card">
+              <div className="section-label">sample input ({samples.length})</div>
+              {samples.slice(0, 2).map((s) => (
+                <div key={s.filename} style={{ marginTop: 16 }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 13, color: 'var(--color-muted)' }}>
+                    <span className="mono">{s.filename}</span> · {s.byteSize.toLocaleString()} bytes
+                  </p>
+                  <pre
+                    className="mono"
+                    style={{
+                      background: 'var(--color-tonal)',
+                      padding: 16,
+                      borderRadius: 6,
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      overflowX: 'auto',
+                      margin: 0,
+                      maxHeight: 320,
+                    }}
+                  >
+                    {s.contentExcerpt}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Prompt body */}
+          <div className="card">
+            <div className="section-label">system prompt</div>
+            <pre
+              style={{
+                marginTop: 12,
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'inherit',
+                fontSize: 14,
+                lineHeight: 1.6,
+                background: 'var(--color-tonal)',
+                padding: 16,
+                borderRadius: 6,
+                maxHeight: 480,
+                overflowY: 'auto',
+              }}
+            >
+              {skill.systemPromptBody}
+            </pre>
+          </div>
+
+          {/* Version history */}
+          {versionCount > 0 && (
+            <div className="card">
+              <div className="section-label">version history</div>
+              <p style={{ marginTop: 8, fontSize: 13, color: 'var(--color-muted)' }}>
+                {versionCount} version{versionCount === 1 ? '' : 's'} anchored on chain.
+              </p>
+              <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {allVersions.map((v) => (
+                  <li key={v.id} style={{ display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, fontSize: 12 }}>
+                    <span style={{ fontWeight: 600 }}>v{v.id}</span>
+                    <span className="mono" style={{ color: 'var(--color-muted)', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {v.manifestHash.slice(0, 12)}…{v.manifestHash.slice(-8)}
+                    </span>
+                    <span style={{ color: v.revoked ? 'var(--color-mismatch)' : 'var(--color-muted)' }}>
+                      {v.revoked ? 'REVOKED' : new Date(v.publishedAt * 1000).toISOString().slice(0, 10)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
 
-        <aside className="card">
-          <div className="section-label">tier</div>
-          <p style={{ fontSize: 18, marginTop: 8 }}>{known.defaultTier}</p>
-          <Link href="/skills" className="btn-ghost" style={{ paddingLeft: 0, marginTop: 24, display: 'inline-block' }}>
+        {/* Right: aside */}
+        <aside style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div className="card">
+            <div className="section-label">try it</div>
+            <p style={{ marginTop: 12, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              Drop a file on the homepage and pick this skill from the dropdown — Run from the browser.
+            </p>
+            <Link href={`/?skill=${encodeURIComponent(id)}`} className="btn-primary" style={{ marginTop: 16, display: 'inline-block', textDecoration: 'none' }}>
+              Open Studio →
+            </Link>
+            <p style={{ marginTop: 16, fontSize: 11, color: 'var(--color-muted)' }}>or from the CLI:</p>
+            <pre className="mono" style={{ marginTop: 8, fontSize: 11, background: 'var(--color-fg)', color: 'var(--color-bg)', padding: 12, borderRadius: 4, overflowX: 'auto' }}>
+              ivaronix doc ask &lt;file&gt; &quot;…&quot; --skill {id}
+            </pre>
+          </div>
+
+          {onchainHash && (
+            <div className="card">
+              <div className="section-label">on-chain anchor</div>
+              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 11 }}>
+                <dt style={{ color: 'var(--color-muted)' }}>hash</dt>
+                <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{onchainHash}</dd>
+                <dt style={{ color: 'var(--color-muted)' }}>creator</dt>
+                <dd className="mono" style={{ margin: 0 }}>
+                  <a href={creator ? explorerAddrUrl(creator) : '#'} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                    {creator}
+                  </a>
+                </dd>
+                <dt style={{ color: 'var(--color-muted)' }}>published</dt>
+                <dd style={{ margin: 0 }}>
+                  {publishedAt ? new Date(publishedAt * 1000).toISOString().slice(0, 16).replace('T', ' ') : '—'}
+                </dd>
+              </dl>
+            </div>
+          )}
+
+          <div className="card">
+            <div className="section-label">reputation</div>
+            <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12 }}>
+              <dt style={{ color: 'var(--color-muted)' }}>on pass</dt>
+              <dd style={{ margin: 0 }}>+{reputation.on_pass.trustScore} trust · +{reputation.on_pass.receiptCount} receipts</dd>
+              <dt style={{ color: 'var(--color-muted)' }}>on fail</dt>
+              <dd style={{ margin: 0 }}>{reputation.on_fail.trustScore} trust</dd>
+              <dt style={{ color: 'var(--color-muted)' }}>on violation</dt>
+              <dd style={{ margin: 0 }}>{reputation.on_violation.trustScore} trust {reputation.on_violation.locked ? ' · LOCKED' : ''}</dd>
+            </dl>
+          </div>
+
+          <Link href="/skills" className="btn-ghost" style={{ paddingLeft: 0, textDecoration: 'underline' }}>
             ← All skills
           </Link>
         </aside>

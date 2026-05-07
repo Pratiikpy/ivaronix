@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FourLightRow } from './FourLightRow';
 
@@ -35,6 +35,16 @@ const EXPLORER_TX = (h: string) => `https://chainscan-galileo.0g.ai/tx/${h}`;
 
 export function RunPanel() {
   const [skillId, setSkillId] = useState<string>('private-doc-review');
+
+  // If the page arrived with ?skill=<id>, pre-select it.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('skill');
+    if (requested && SKILLS.some((s) => s.id === requested)) {
+      setSkillId(requested);
+    }
+  }, []);
   const [tier, setTier] = useState<Tier>('quick');
   const [receipt, setReceipt] = useState<boolean>(true);
   const [contentText, setContentText] = useState<string>('');

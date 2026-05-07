@@ -1,83 +1,122 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
+import { PermissionPills } from '@/components/PermissionPills';
+import { loadAllSkills } from '@/lib/skills';
+import { getSkillRegistry } from '@/lib/chain';
+import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
 
-const STATIC_SKILLS = [
-  {
-    id: 'private-doc-review',
-    version: '0.2.0',
-    description: 'Review contracts, leases, NDAs. Burn-mode + redact-PII hooks.',
-    permissions: { network: 'amber', files: 'green', compute: 'green' },
-    tier: 'standard',
-  },
-  {
-    id: 'github-audit',
-    version: '0.1.0',
-    description: 'Code & security audit. Reentrancy, access control, secret scanning.',
-    permissions: { network: 'amber', files: 'green', compute: 'green' },
-    tier: 'standard',
-  },
-  {
-    id: '0g-integration-auditor',
-    version: '0.1.0',
-    description: 'Audit a 0G integration: chain ID, encryption, TEE verify, receipts.',
-    permissions: { network: 'amber', files: 'green', compute: 'green' },
-    tier: 'quick',
-  },
-  {
-    id: 'plan-step',
-    version: '0.1.0',
-    description: 'Read-only planning skill — produces a numbered, executable plan.',
-    permissions: { network: 'amber', files: 'green', compute: 'green' },
-    tier: 'quick',
-  },
-  {
-    id: 'code-edit',
-    version: '0.1.0',
-    description: 'Propose minimal code changes — emits a unified diff.',
-    permissions: { network: 'amber', files: 'green', compute: 'green' },
-    tier: 'standard',
-  },
-];
+export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
-export default function SkillsPage() {
+interface SkillCard {
+  id: string;
+  version: string;
+  description: string;
+  defaultTier: 'quick' | 'standard' | 'high-stakes';
+  burnAuto: boolean;
+  permissions: ReturnType<typeof permissionsView>;
+  registryStatus: 'match' | 'mismatch' | 'unregistered' | 'unknown';
+}
+
+function permissionsView(p: import('@ivaronix/skills').SkillManifest['og']['permissions']) {
+  return p;
+}
+
+async function loadCards(): Promise<SkillCard[]> {
+  const skills = loadAllSkills();
+  const reg = getSkillRegistry();
+  const cards: SkillCard[] = [];
+  for (const s of skills) {
+    let registryStatus: SkillCard['registryStatus'] = 'unknown';
+    if (reg) {
+      try {
+        const skillId = skillIdFromName(s.id);
+        const versionId = versionIdFromSemver(s.manifest.version);
+        const v = await reg.getVersion(skillId, versionId);
+        if (!v) registryStatus = 'unregistered';
+        else if (v.revoked) registryStatus = 'mismatch';
+        else {
+          const localBytes32 = '0x' + s.manifestHash.replace(/^sha256:/, '').toLowerCase();
+          registryStatus = v.manifestHash.toLowerCase() === localBytes32 ? 'match' : 'mismatch';
+        }
+      } catch { /* keep 'unknown' */ }
+    }
+    cards.push({
+      id: s.id,
+      version: s.manifest.version,
+      description: s.manifest.description,
+      defaultTier: s.manifest.og.consensus.default_tier,
+      burnAuto: s.manifest.og.burn.auto_enable,
+      permissions: permissionsView(s.manifest.og.permissions),
+      registryStatus,
+    });
+  }
+  return cards;
+}
+
+export default async function SkillsPage() {
+  const cards = await loadCards();
+  // Sort: registry-MATCH first, then by id alphabetically
+  cards.sort((a, b) => {
+    const order = { match: 0, unregistered: 1, unknown: 2, mismatch: 3 } as const;
+    const da = order[a.registryStatus];
+    const db = order[b.registryStatus];
+    if (da !== db) return da - db;
+    return a.id.localeCompare(b.id);
+  });
+
   return (
     <Section
       label="§ 01 · SKILL CATALOG"
       title="First-party skills"
-      description="Each skill ships with a manifest hash anchored on the SkillRegistry contract. Run them from the CLI today; Day 14+ wires the in-Studio drop-zone."
+      description="Each skill ships with a manifest hash anchored on the SkillRegistry contract. Sorted by registry verification — MATCH first."
     >
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
           gap: 24,
         }}
       >
-        {STATIC_SKILLS.map((s) => (
-          <Link key={s.id} href={`/skill/${s.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+        {cards.map((c) => (
+          <Link key={c.id} href={`/skill/${c.id}`} className="card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-              <h3 style={{ fontSize: 20, margin: 0, fontWeight: 600 }}>{s.id}</h3>
-              <span className="mono" style={{ color: 'var(--color-muted)' }}>v{s.version}</span>
+              <h3 style={{ fontSize: 20, margin: 0, fontWeight: 600 }}>{c.id}</h3>
+              <span className="mono" style={{ color: 'var(--color-muted)' }}>v{c.version}</span>
             </div>
-            <p style={{ marginTop: 12, fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.5 }}>{s.description}</p>
-            <div style={{ marginTop: 16, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <Pill tone="amber">net: router-only</Pill>
-              <Pill tone="green">files: read-only</Pill>
-              <Pill tone="green">compute: tee</Pill>
-              <Pill tone="green">tier: {s.tier}</Pill>
+            <p style={{ marginTop: 12, fontSize: 14, color: 'var(--color-muted)', lineHeight: 1.5 }}>
+              {c.description}
+            </p>
+            <div style={{ marginTop: 16, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+              <RegistryBadge status={c.registryStatus} />
+              <Pill tone="green">tier: {c.defaultTier}</Pill>
+              {c.burnAuto && <Pill tone="amber">🔒 burn auto</Pill>}
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <PermissionPills permissions={c.permissions} />
             </div>
           </Link>
         ))}
       </div>
+      <p style={{ marginTop: 32, fontSize: 12, color: 'var(--color-muted)' }}>
+        {cards.length} skill{cards.length === 1 ? '' : 's'} loaded · network {process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet'}
+      </p>
     </Section>
   );
+}
+
+function RegistryBadge({ status }: { status: SkillCard['registryStatus'] }) {
+  if (status === 'match') return <span className="chip-verified">REGISTRY MATCH</span>;
+  if (status === 'mismatch') return <span className="chip-mismatch">MISMATCH</span>;
+  if (status === 'unregistered') return <span className="chip-pending">LOCAL ONLY</span>;
+  return null;
 }
 
 function Pill({ tone, children }: { tone: 'green' | 'amber' | 'red'; children: React.ReactNode }) {
   const palette = {
     green: { bg: 'var(--color-verified-bg)', fg: '#166534', border: 'var(--color-verified)' },
     amber: { bg: 'var(--color-pending-bg)', fg: '#92400e', border: 'var(--color-pending)' },
-    red: { bg: 'var(--color-mismatch-bg)', fg: '#991b1b', border: 'var(--color-mismatch)' },
+    red:   { bg: 'var(--color-mismatch-bg)', fg: '#991b1b', border: 'var(--color-mismatch)' },
   }[tone];
   return (
     <span

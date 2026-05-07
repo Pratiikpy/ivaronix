@@ -513,6 +513,20 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Playwright smoke at `/agent/0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`: real testnet data shows Trust score 12, 12 receipts anchored, RECENT ACTIVITY (5) lists receipts #18/#17/#16/#15/#14 each with timestamp + type code + receiptRoot prefix and clickable; tier card shows "Verified ≥ 5 trust"; PROFILE table tokenId=1 trust=12 receipts=12 violations=0
 - ⚠ **OG image preview on local Windows fails** with `ERR_INVALID_URL .\\file:\\C:\\...noto-sans-v27-latin-regular.ttf` — known Next 15.0.3 + Windows bug in `@vercel/og` font preloading. The route file is in place; metadata auto-includes the OG image URL; production deploy on Vercel/Linux will render correctly. Documented; not a Day-15 blocker.
 
+### Day 16 — Skill browser + skill detail polish ✅ DONE 2026-05-08
+- `apps/studio/src/lib/skills.ts` — server-side skill discovery: walks parent dirs from cwd to find `seed-skills/` + `.ivaronix/skills/`, dedupes by skill id, exposes `loadAllSkills()` and `findSkillByIdServer()`. `loadSampleFiles()` reads `tests/*` and returns the first 2400 bytes of each.
+- `apps/studio/src/components/PermissionPills.tsx` — 5-slot pill row per UI_UX_GUIDE §7: net / files / compute / wallet / shell with green/amber/red tones derived from the manifest's `og.permissions` block.
+- `/skills` rewrite — fully dynamic: loads all skills from disk, queries SkillRegistry per-skill for `MATCH` / `MISMATCH` / `LOCAL ONLY` registry status, sorts MATCH-first then alphabetical, renders 5-pill permission row + tier + burn-auto chip + on-chain registry badge per card. Footer counts loaded skills + current network.
+- `/skill/[id]` rewrite — 2-column detail page:
+  - **Left:** status card (registry chip + tier + license + permissions), sample-input card (renders `tests/` files with byte size + 2.4kB excerpt in mono-font), system-prompt card (full SKILL.md body), version-history card (uses on-chain `versionCount`)
+  - **Right:** "Try it" CTA jumps to `/?skill=<id>`, on-chain anchor (manifestHash + creator-linked-to-chainscan + publishedAt), reputation card (on-pass / on-fail / on-violation trust deltas + locked flag)
+- `RunPanel` — reads `?skill=<id>` from `window.location.search` on mount and pre-selects the matching skill, so `/skill/<id>` → "Open Studio →" → drop-zone arrives with the right skill already chosen.
+
+### Day 16 Gate ✅
+- ✅ `next build` green; all workspace typechecks green
+- ✅ Playwright smoke at `/skills`: 5 cards rendered with REGISTRY MATCH on every one (live on-chain MATCH against the SkillRegistry contract for github-audit / 0g-integration-auditor / private-doc-review v0.2.0 / plan-step / code-edit), each card shows 5 permission pills (net=amber 2-4 hosts / files=green / compute=green / wallet=green / shell=green), private-doc-review shows additional 🔒 burn-auto chip; footer "5 skills loaded · network testnet"
+- ✅ Playwright smoke at `/skill/private-doc-review`: title v0.2.0, REGISTRY MATCH + tier standard + license Apache-2.0 status row, sample-input card renders `sample-lease.txt` with PII visible, system-prompt card shows full SKILL.md body, on-chain anchor card shows manifestHash `sha256:874d…f689`, creator wallet linked, publishedAt `2026-05-07 20:56`, reputation card shows on-pass +1 trust / on-fail -2 / on-violation -10 LOCKED, "Open Studio →" jumps with `?skill=private-doc-review`
+
 ---
 
 ## Blockers
