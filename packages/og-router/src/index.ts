@@ -50,33 +50,53 @@ export class RouterClient {
     if (opts.systemPrompt) messages.push({ role: 'system', content: opts.systemPrompt });
     messages.push({ role: 'user', content: opts.userPrompt });
 
-    const completion = await this.client.chat.completions.create({
-      model: opts.model ?? 'qwen/qwen-2.5-7b-instruct',
-      messages,
-      stream: false,
-      // verify_tee may not be a standard OpenAI field; included if Router accepts it
-      ...(opts.verifyTee !== undefined ? { verify_tee: opts.verifyTee } : {}),
-    } as Parameters<typeof this.client.chat.completions.create>[0]);
+    // .withResponse() returns both the parsed body AND the raw fetch Response,
+    // so we can read 0G-specific HTTP headers (ZG-Res-Key) that aren't part of
+    // the OpenAI body.
+    const result = await this.client.chat.completions
+      .create({
+        model: opts.model ?? 'qwen/qwen-2.5-7b-instruct',
+        messages,
+        stream: false,
+        ...(opts.verifyTee !== undefined ? { verify_tee: opts.verifyTee } : {}),
+      } as Parameters<typeof this.client.chat.completions.create>[0])
+      .withResponse();
 
-    // Narrow: stream:false guarantees a ChatCompletion (not a Stream<>)
-    const result = completion as unknown as {
+    const completion = result.data as unknown as {
       choices: { message: { content: string | null } }[];
       usage?: { prompt_tokens?: number; completion_tokens?: number };
-      ZG_Res_Key?: string;
       x_0g_trace?: { provider?: `0x${string}`; tee_verified?: boolean } & Record<string, unknown>;
     };
-    const content = result.choices[0]?.message?.content ?? '';
+    const headers = result.response.headers;
+    const content = completion.choices[0]?.message?.content ?? '';
+
+    // Capture ZG-Res-Key (case-insensitive)
+    const zgResKey =
+      headers.get('zg-res-key') ??
+      headers.get('ZG-Res-Key') ??
+      headers.get('Zg-Res-Key') ??
+      undefined;
+
+    // x_0g_trace lives in the body (Router-specific extension)
+    const x0gTrace = completion.x_0g_trace;
+
+    // Provider is sometimes in body's x_0g_trace, but the testnet proxy currently
+    // omits it; fall back to the credential's providerAddress (always known since
+    // we generated the API key for that provider).
+    const providerAddress = x0gTrace?.provider ?? this.credential.providerAddress;
 
     return {
       content,
       rawResponse: completion,
-      // ZG-specific fields land in x_0g_trace; capture defensively
-      zgResKey: result.ZG_Res_Key,
-      x0gTrace: result.x_0g_trace,
-      providerAddress: result.x_0g_trace?.provider,
-      routerVerified: Boolean(result.x_0g_trace?.tee_verified),
-      inputTokens: result.usage?.prompt_tokens,
-      outputTokens: result.usage?.completion_tokens,
+      zgResKey: zgResKey ?? undefined,
+      x0gTrace,
+      providerAddress,
+      // routerVerified reflects whether the body explicitly confirms TEE.
+      // When the trace is absent we set it false; the user can still trigger the
+      // independent broker.processResponse path which is the stronger check.
+      routerVerified: Boolean(x0gTrace?.tee_verified),
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
     };
   }
 

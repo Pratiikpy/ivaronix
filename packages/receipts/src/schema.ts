@@ -39,6 +39,10 @@ const ConsensusRoleAttestation = z.object({
   role: z.string(),
   attestationHash: HexHash,
   providerAddress: HexAddress,
+  /** chat ID returned by Router (ZG-Res-Key header) — required for independent verify via broker.processResponse */
+  chatId: z.string().optional(),
+  /** Independent verify result, populated by `ivaronix receipt verify --tee-independent` */
+  independentVerified: z.boolean().nullable().optional(),
 });
 
 export const ReceiptV1Schema = z.object({

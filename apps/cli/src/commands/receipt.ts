@@ -21,7 +21,7 @@ receiptCommand
 
     const filePath = resolve(process.cwd(), pathOrId);
     if (!existsSync(filePath)) {
-      ui.fail(`No receipt at ${filePath}`, 'Day 4+ will resolve receipt ids by querying ReceiptRegistry');
+      ui.fail(`No receipt at ${filePath}`);
       process.exitCode = 1;
       return;
     }
@@ -38,7 +38,7 @@ receiptCommand
     ui.title(`Verifying ${pathOrId}`);
     ui.divider();
 
-    // 1. CLAIMED checks (offline)
+    // ─── 1. CLAIMED checks (offline) ──────────────────────────────────────
     const claimedResult = verifyClaimed(json);
     for (const check of claimedResult.checks) {
       const label = check.name.padEnd(22);
@@ -54,8 +54,9 @@ receiptCommand
     }
     ui.pass(`                    → CLAIMED`);
 
-    // 2. ANCHORED check (on-chain via ReceiptRegistry)
     const receipt = json as ReceiptV1;
+
+    // ─── 2. ANCHORED check (on-chain via ReceiptRegistry) ─────────────────
     const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
     if (!registryAddr) {
       ui.divider();
@@ -63,36 +64,126 @@ receiptCommand
       return;
     }
 
+    let onChain: Awaited<ReturnType<ReceiptRegistryClient['findByReceiptRoot']>> = null;
     try {
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const registry = new ReceiptRegistryClient(registryAddr, provider);
-      const onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
-
-      if (!onChain) {
-        ui.fail('chain anchor          NOT FOUND  (receipt was never anchored, or different network)');
-        ui.divider();
-        ui.banner(true, '→ CLAIMED (not yet anchored)');
-        return;
-      }
-
-      // Verify on-chain receipt matches the local one
-      if (onChain.storageRoot.toLowerCase() !== receipt.storage.receiptRoot.toLowerCase() && onChain.receiptRoot.toLowerCase() === receipt.storage.receiptRoot.toLowerCase()) {
-        ui.pass(`chain anchor          PASS  (id=${onChain.id} block≈${onChain.timestamp})`);
-        ui.pass(`                    → ANCHORED`);
-      } else {
-        ui.pass(`chain anchor          PASS  (id=${onChain.id})`);
-        ui.pass(`                    → ANCHORED`);
-      }
-
-      if (opts.teeIndependent) {
-        ui.pending(`tee independent       PENDING  (Day 5: broker.processResponse integration)`);
-      }
-
-      ui.divider();
-      ui.banner(true, '→ ANCHORED ✓');
+      onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
     } catch (err) {
       ui.fail('chain anchor lookup error', (err as Error).message);
-      ui.banner(true, '→ CLAIMED (anchor check failed; see error above)');
+      ui.banner(true, '→ CLAIMED (anchor check failed)');
+      return;
+    }
+
+    if (!onChain) {
+      ui.fail('chain anchor          NOT FOUND  (receipt was never anchored, or different network)');
+      ui.divider();
+      ui.banner(true, '→ CLAIMED (not yet anchored)');
+      return;
+    }
+
+    ui.pass(`chain anchor          PASS  (id=${onChain.id} block≈${onChain.timestamp})`);
+    ui.pass(`                    → ANCHORED`);
+
+    // ─── 3. FULLY VERIFIED — independent TEE verify ───────────────────────
+    if (!opts.teeIndependent) {
+      ui.divider();
+      ui.banner(true, '→ ANCHORED ✓');
+      ui.hint('Run again with --tee-independent to advance to FULLY VERIFIED');
+      return;
+    }
+
+    if (!env.privateKey) {
+      ui.fail('--tee-independent requires EVM_PRIVATE_KEY in .env to construct broker');
+      process.exitCode = 1;
+      return;
+    }
+
+    // Use createRequire for the broker SDK because its ESM bundle has internal
+    // module-resolution issues; the CJS path is stable.
+    const { createRequire } = await import('node:module');
+    const require = createRequire(import.meta.url);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sdk = require('@0gfoundation/0g-compute-ts-sdk') as {
+      createZGComputeNetworkBroker: (
+        signer: unknown,
+      ) => Promise<{
+        inference: {
+          processResponse: (
+            providerAddress: string,
+            chatID?: string,
+            content?: string,
+          ) => Promise<boolean | null>;
+        };
+      }>;
+    };
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const wallet = new Wallet(env.privateKey, provider);
+
+    let broker: Awaited<ReturnType<typeof sdk.createZGComputeNetworkBroker>>;
+    try {
+      ui.pending('initializing 0G Compute broker...');
+      broker = await sdk.createZGComputeNetworkBroker(wallet);
+    } catch (err) {
+      ui.fail('Failed to create broker', (err as Error).message);
+      ui.banner(true, '→ ANCHORED (TEE-independent skipped)');
+      return;
+    }
+
+    // Collect (role, providerAddress, chatId, content) tuples to verify.
+    type Att = { role: string; providerAddress: string; chatId?: string };
+    const attestations: Att[] = [];
+    if (receipt.execution.consensus?.individualAttestations) {
+      for (const a of receipt.execution.consensus.individualAttestations) {
+        attestations.push({ role: a.role, providerAddress: a.providerAddress, chatId: a.chatId });
+      }
+    } else if (receipt.routerTrace.zgResKey && receipt.teeVerification.providerAddress) {
+      // Single-role (Quick tier)
+      attestations.push({
+        role: 'primary',
+        providerAddress: receipt.teeVerification.providerAddress,
+        chatId: receipt.routerTrace.zgResKey,
+      });
+    }
+
+    if (attestations.length === 0) {
+      ui.pending('no attestations available in receipt for independent verify');
+      ui.banner(true, '→ ANCHORED (TEE-independent N/A)');
+      return;
+    }
+
+    ui.pending(`verifying ${attestations.length} attestation${attestations.length > 1 ? 's' : ''} via broker.processResponse...`);
+
+    let allPass = true;
+    for (const att of attestations) {
+      if (!att.chatId) {
+        ui.fail(`tee:${att.role.padEnd(15)}  no chatId in receipt`);
+        allPass = false;
+        continue;
+      }
+      try {
+        const ok = await broker.inference.processResponse(att.providerAddress, att.chatId);
+        if (ok === true) {
+          ui.pass(`tee:${att.role.padEnd(15)}  PASS  (provider ${att.providerAddress.slice(0, 10)}…)`);
+        } else if (ok === false) {
+          ui.fail(`tee:${att.role.padEnd(15)}  FAIL  (signature mismatch)`);
+          allPass = false;
+        } else {
+          ui.pending(`tee:${att.role.padEnd(15)}  inconclusive (${String(ok)})`);
+          allPass = false;
+        }
+      } catch (err) {
+        ui.fail(`tee:${att.role.padEnd(15)}  error`, (err as Error).message);
+        allPass = false;
+      }
+    }
+
+    ui.divider();
+    if (allPass) {
+      ui.pass(`                    → FULLY VERIFIED`);
+      ui.banner(true, '→ FULLY VERIFIED ✓');
+    } else {
+      ui.banner(true, '→ ANCHORED (some TEE checks failed; see above)');
     }
   });
 
@@ -104,7 +195,7 @@ receiptCommand
   .action(async (pathToSignedReceipt: string, opts: { writeBack?: boolean }) => {
     const env = loadEnv();
     if (!env.privateKey) {
-      ui.fail('No private key in .env', 'Set EVM_PRIVATE_KEY to anchor receipts');
+      ui.fail('No private key in .env');
       process.exitCode = 1;
       return;
     }
@@ -126,14 +217,14 @@ receiptCommand
     const receipt = parsed.data;
 
     if (!receipt.signature) {
-      ui.fail('Receipt is unsigned', 'Sign the receipt first (build phase)');
+      ui.fail('Receipt is unsigned');
       process.exitCode = 1;
       return;
     }
 
     const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
     if (!registryAddr) {
-      ui.fail(`ReceiptRegistry not deployed on ${env.network}`, `Run 'forge create' or wait for next deploy phase`);
+      ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
@@ -151,8 +242,6 @@ receiptCommand
 
     try {
       const typeCode = RECEIPT_TYPES[receipt.type as ReceiptType];
-      // For Day 3 we use the receipt root as both receiptRoot and storageRoot (Day 4 will upload to 0G Storage first).
-      // For attestationHash, use the TEE attestation if present, otherwise zero.
       const attestationHash: Hash = (receipt.teeVerification.attestationHash ?? ('0x' + '0'.repeat(64))) as Hash;
       const storageRoot: Hash = (receipt.storage.evidenceRoot ?? receipt.storage.receiptRoot) as Hash;
 
@@ -169,15 +258,12 @@ receiptCommand
       const receipt2 = await tx.wait();
       if (!receipt2) {
         ui.fail('Transaction did not return a receipt');
-        process.exitCode = 1;
         return;
       }
 
       ui.pass(`block                ${receipt2.blockNumber}`);
       ui.pass(`gas used             ${receipt2.gasUsed}`);
-      ui.pass(`status               ${receipt2.status === 1 ? 'success' : 'failed'}`);
 
-      // Read back the on-chain receipt id from the event
       const onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash, 50);
       if (onChain) {
         ui.pass(`receipt id           ${onChain.id}`);
@@ -206,15 +292,7 @@ receiptCommand
     }
   });
 
-// ─── list / show (placeholders) ─────────────────────────────────────────────
-receiptCommand
-  .command('list')
-  .description('List recent receipts from ReceiptRegistry events')
-  .option('--since <date>', 'filter by date (YYYY-MM-DD)')
-  .action(() => {
-    ui.hint('Receipt listing arrives Day 4 (event log scan).');
-  });
-
+// ─── show ───────────────────────────────────────────────────────────────────
 receiptCommand
   .command('show <id>')
   .description('Show full receipt by on-chain id')
@@ -239,4 +317,13 @@ receiptCommand
     ui.info(`agent                ${r.agentAddress}`);
     ui.info(`timestamp            ${r.timestamp}  (${new Date(Number(r.timestamp) * 1000).toISOString()})`);
     ui.info(`type                 ${r.receiptType}`);
+  });
+
+// ─── list ───────────────────────────────────────────────────────────────────
+receiptCommand
+  .command('list')
+  .description('List recent receipts from ReceiptRegistry events')
+  .option('--since <date>', 'filter by date (YYYY-MM-DD)')
+  .action(() => {
+    ui.hint('Receipt listing arrives Day 11+ (event log scan).');
   });

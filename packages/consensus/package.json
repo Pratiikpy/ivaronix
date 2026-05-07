@@ -1,5 +1,5 @@
 {
-  "name": "@ivaronix/og-router",
+  "name": "@ivaronix/consensus",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -7,21 +7,23 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./keyring": "./src/keyring.ts"
+    "./prompts": "./src/prompts.ts",
+    "./gates": "./src/gates.ts",
+    "./convergence": "./src/convergence.ts"
   },
   "scripts": {
     "build": "tsc -b",
     "lint": "echo skip",
-    "test": "echo skip",
+    "test": "tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@0gfoundation/0g-compute-ts-sdk": "^0.8.1",
     "@ivaronix/core": "workspace:*",
-    "openai": "^4.77.0"
+    "@ivaronix/og-router": "workspace:*"
   },
   "devDependencies": {
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
 }

@@ -18,7 +18,7 @@
 | A | 2 (receipt skeleton) | 🟢 **DONE 2026-05-08** |
 | A | 3 (ReceiptRegistry deploy) | 🟢 **DONE 2026-05-08** |
 | A | 4 (Burn Mode + doc-ask) | 🟢 **DONE 2026-05-08** (B-1 blocker open on Storage upload, workaround in place) |
-| A | 5 (tiered consensus + TEE verify) | ⬜ pending |
+| A | 5 (tiered consensus + TEE verify) | 🟢 **DONE 2026-05-08** |
 | A | 6 (ERC-7857 passport) | ⬜ pending |
 | A | 7 (CapabilityRegistry + MemoryAccessLog) | ⬜ pending |
 | A | 8 (hybrid memory engine) | ⬜ pending |
@@ -207,19 +207,54 @@ chain anchor PASS (id=2) → ANCHORED
 ### B-1 caveat (see Blockers section above)
 Day 4 ships **without** uploading the encrypted ciphertext to 0G Storage — the on-chain `FixedPriceFlow.submit()` reverts. Workaround: `evidenceRoot` is the local sha256 digest of ciphertext (still chain-anchored on the receipt). When B-1 is unblocked (likely Day 8 hybrid memory work), the same code path will additionally call `storage.upload()` to get a real Storage root + tx hash.
 
-### Day 5 — Tiered consensus + Independent TEE Verify (next)
-- `packages/consensus` with 3 tiers: Quick (1) / Standard (3 — analyst+critic+judge default) / High-Stakes (5)
-- Pre-flight 7-gate fail-fast (MUSASHI pattern)
-- 3 parallel Router calls with different system prompts
-- Convergence scoring via embeddings cosine similarity
-- `broker.inference.processResponse()` for independent TEE verify per role
-- `ivaronix receipt verify <id> --tee-independent` shows all attestations independently
-- Cost shown upfront (~$0.02 / $0.10 / $0.25)
+### Day 5 — Tiered Consensus + Independent TEE Verify (DONE 2026-05-08)
 
-### Day 5 Gate
-- `ivaronix doc ask --consensus` defaults to Standard 3-role
-- All 3 attestations captured in receipt + independently verified
-- Verify shows full ladder: CLAIMED → ANCHORED → FULLY VERIFIED
+### Done
+- [x] `packages/consensus` shipped with 3 tiers (Quick / Standard / High-Stakes), 5 role prompts (analyst / critic / risk-reviewer / evidence-checker / judge), 7-gate pre-flight fail-fast, Jaccard convergence scoring, and the `verifyAttestationsIndependent` helper
+- [x] 6 unit tests for convergence (identical → 1.0, disjoint → 0, partial overlap, judge excluded, single-reviewer, pairwise scores)
+- [x] `apps/cli` `doc ask` accepts `--consensus` (Standard 3-role) / `--high-stakes` (5-role) / `--quick`. Tier resolves from flags; cost shown upfront
+- [x] Receipt now records `consensus.individualAttestations` per role with `chatId` for independent verify
+- [x] OG Router client switched to `.withResponse()` to capture `ZG-Res-Key` header (chatID for processResponse) and falls back to credential.providerAddress when `x_0g_trace.provider` is absent
+- [x] `apps/cli` `receipt verify --tee-independent` initializes `createZGComputeNetworkBroker(wallet)` via `createRequire` (CJS path; the SDK's ESM bundle has internal module-resolution issues), then calls `broker.inference.processResponse(provider, chatID)` per role
+- [x] Schema (`ReceiptV1Schema`) extended with optional `chatId` + `independentVerified` per consensus attestation
+
+### Day 5 Gate (HIT 2026-05-08)
+```
+$ ivaronix doc ask sample-contract.txt "Find risky clauses for the Client" --consensus --burn --receipt
+✓ encrypting with AES-256-GCM session key
+✓ analyst + critic + judge in parallel via Router (~21s, 1100+ tokens)
+✓ convergence score: 0.43 (partial overlap; disagreement summary captured)
+✓ judge synthesized: 4 risky clauses + Final Risk Level: Medium + Action Line
+✓ receiptId rcpt_01KR20AYQG2Z9FDRDSA85JB7EM, on-chain id 6
+✓ tx 0x78ad263816a4b6daee745a5833b35a54fd46446bb814a1a415f5b0eada6cbee6
+
+$ ivaronix receipt verify <path> --tee-independent
+schema PASS / hash PASS / signature PASS         → CLAIMED
+chain anchor PASS (id=6)                          → ANCHORED
+tee:analyst PASS (provider 0xa48f0128…)
+tee:critic  PASS (provider 0xa48f0128…)
+tee:judge   PASS (provider 0xa48f0128…)            → FULLY VERIFIED ✓
+
+Status: → FULLY VERIFIED ✓
+```
+
+### Notes
+- 3 anchored consensus receipts on testnet (id=4, 5, 6) all FULLY VERIFY through `broker.inference.processResponse`. This is the differentiator vs. every other 0G project — Router-flag verify is convenient but trusts the Router; we close the loop with the Compute broker doing post-hoc signature verification.
+- 7-gate pre-flight catches sensitive content (private keys, GitHub tokens, mnemonics, CC numbers) and recommends Burn Mode automatically.
+- Convergence baseline is Jaccard tokens; embeddings (all-MiniLM-L6-v2) upgrade Day 8 with hybrid memory engine.
+
+### Day 6 — ERC-7857 Agent Passport (next)
+- Deploy `Erc7857Verifier.sol` and `AgentPassportINFT.sol` to testnet
+- `ivaronix passport mint` mints ERC-7857 INFT for the user's wallet
+- Encrypted metadata blob on 0G Storage; pointer in 0G KV (B-1 caveat: KV uses local cache until Storage upload unblocks)
+- Passport `recordReceipt(tokenId, receiptId)` updates trustScore + receiptCount on chain
+- `ivaronix passport restore --wallet 0x...` restores from chain + KV
+- `ivaronix passport show` displays current state
+
+### Day 6 Gate
+- `ivaronix passport mint` mints + returns tokenId; passport.json on disk
+- `ivaronix passport show` reads on-chain state (trustScore, receiptCount, ownerWallet)
+- `recordReceipt` integration so each `doc ask --receipt` updates passport reputation
 
 ---
 
