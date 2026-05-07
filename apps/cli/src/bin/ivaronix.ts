@@ -28,6 +28,11 @@ import { computeCommand } from '../commands/compute.js';
 import { docCommand } from '../commands/doc.js';
 import { memoryCommand } from '../commands/memory.js';
 import { skillCommand } from '../commands/skill.js';
+import { planCommand } from '../commands/plan.js';
+import { codeCommand } from '../commands/code.js';
+import { auditCommand } from '../commands/audit.js';
+import { swarmCommand } from '../commands/swarm.js';
+import { watchCommand } from '../commands/watch.js';
 
 const program = new Command();
 
@@ -59,6 +64,13 @@ program.addCommand(memoryCommand);
 
 // Skills (browse/inspect installed skills)
 program.addCommand(skillCommand);
+
+// Modes: plan / code (build) / audit / swarm / watch
+program.addCommand(planCommand);
+program.addCommand(codeCommand);
+program.addCommand(auditCommand);
+program.addCommand(swarmCommand);
+program.addCommand(watchCommand);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error('Error:', err.message);

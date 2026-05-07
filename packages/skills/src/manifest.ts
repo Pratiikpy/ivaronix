@@ -69,7 +69,10 @@ const OgBlock = z.object({
   reputation: Reputation.default({} as z.infer<typeof Reputation>),
   consensus: Consensus.default({} as z.infer<typeof Consensus>),
   burn: Burn.default({} as z.infer<typeof Burn>),
-  hooks: Hooks.default({} as z.infer<typeof Hooks>),
+  // Hooks is optional so older manifests (published without an `og.hooks` block)
+  // produce the SAME canonical-JSON hash they did before this field was added.
+  // Adding `.default({})` would silently mutate every old manifest's hash.
+  hooks: Hooks.optional(),
   creator: z
     .object({
       passport: z.string().optional(),

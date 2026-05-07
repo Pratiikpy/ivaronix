@@ -419,6 +419,32 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ The LLM never received the redacted PII — output references only lease clauses, never the SSN/email/phone/card values
 - ✅ Hooks correctly logged with `hook` prefix in CLI output for auditability
 
+### Day 12 — All 7 CLI modes wired ✅ DONE 2026-05-08
+- Shared `apps/cli/src/lib/pipeline.ts` orchestrates the common path: skill load → SkillRegistry scan → sandbox → session.start hooks → consensus.pre hooks (with patch) → router → consensus.post hooks → optional sign + anchor receipt + passport update. `doc ask` keeps its own bespoke flow (Burn Mode evidence digest UX); the other 5 modes route through `runPipeline`.
+- Two new first-party skills:
+  - `seed-skills/plan-step/SKILL.md` v0.1.0 — read-only planner (no writes, no shell, quick tier, redact_pii + balance_check + log_tokens hooks)
+  - `seed-skills/code-edit/SKILL.md` v0.1.0 — proposes a unified diff (standard tier, receipt_required, redact_pii + log_tokens hooks)
+- Both new skills published on chain:
+  - `plan-step@0.1.0` → tx `0xf3cd0fbeaca619fcbb8d56e6cdb7e9b5cc96e488456f4996b6168bdc38147e2f`
+  - `code-edit@0.1.0` → tx `0xf5343367b9eb934d2b2eff975c4bc97826e1233091577e04e3249169ae7b1be9`
+- Five new mode commands wired into `bin/ivaronix.ts`:
+  - `ivaronix plan <goal> --files ...` — read-only; receipt opt-in
+  - `ivaronix code <task> --files ...` — emits unified diff; receipt always (sandbox enforced)
+  - `ivaronix audit <path>` — walks dir, audits each file with `--max-files` cap; receipt per file
+  - `ivaronix swarm run <todo>` — parses markdown bullets/numbered list, dispatches each task; receipt per task
+  - `ivaronix watch <path>` — foreground daemon with `--interval` / `--max-runs` / `--duration`; receipt per run
+- **Schema fix (during testing):** `og.hooks` made `.optional()` so older manifests (no hooks) keep their canonical-JSON hash. Verified github-audit + 0g-integration-auditor still match their on-chain anchors after the fix.
+
+### Day 12 Gate ✅
+- ✅ All 5 new modes smoke-tested end-to-end on testnet 16602 with real consensus + real receipts:
+  - `plan` → Status: → COMPLETE (read-only, 7-step plan rendered for "Ship Ivaronix v0.1 to OG testnet")
+  - `audit contracts/src/SkillRegistry.sol` → receipt #15, found 3 medium/info findings
+  - `code "Add natspec comment"` → receipt #16, sandbox correctly blocked when `--no-receipt` passed (then allowed when receipt enabled)
+  - `swarm run sample-todo.md` (2 tasks) → both ran through plan-step with registry MATCH
+  - `watch SkillRegistry.sol --max-runs 1` → receipt #17 anchored
+- ✅ 61/61 contract tests pass after schema change; every workspace typecheck (consensus / memory / og-toolkit / skills / cli) passes.
+- ✅ Skill catalog now lists 5 first-party skills, all with on-chain anchored manifests.
+
 ---
 
 ## Blockers

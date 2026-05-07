@@ -143,7 +143,7 @@ docCommand
 
     // ─── 1.7. session.start hooks ─────────────────────────────────────────
     const startedAt = Date.now();
-    const sessionStartHooks = resolveHooks(skill.manifest.og.hooks.session_start, 'session.start');
+    const sessionStartHooks = resolveHooks(skill.manifest.og.hooks?.session_start, 'session.start');
     if (sessionStartHooks.length > 0) {
       const evt: HookEvent_SessionStart = {
         kind: 'session.start',
@@ -198,7 +198,7 @@ docCommand
     // ─── 3a. consensus.pre hooks ──────────────────────────────────────────
     let activeContext = contextText;
     let activeQuestion = question;
-    const preConsensusHooks = resolveHooks(skill.manifest.og.hooks.pre_consensus, 'consensus.pre');
+    const preConsensusHooks = resolveHooks(skill.manifest.og.hooks?.pre_consensus, 'consensus.pre');
     if (preConsensusHooks.length > 0) {
       const evt: HookEvent_PreConsensus = {
         kind: 'consensus.pre',
@@ -243,7 +243,7 @@ docCommand
     const elapsedMs = Date.now() - startTime;
 
     // ─── 3b. consensus.post hooks ─────────────────────────────────────────
-    const postConsensusHooks = resolveHooks(skill.manifest.og.hooks.post_consensus, 'consensus.post');
+    const postConsensusHooks = resolveHooks(skill.manifest.og.hooks?.post_consensus, 'consensus.post');
     if (postConsensusHooks.length > 0) {
       const evt: HookEvent_PostConsensus = {
         kind: 'consensus.post',
