@@ -20,7 +20,7 @@
 | A | 4 (Burn Mode + doc-ask) | 🟢 **DONE 2026-05-08** (B-1 blocker open on Storage upload, workaround in place) |
 | A | 5 (tiered consensus + TEE verify) | 🟢 **DONE 2026-05-08** |
 | A | 6 (ERC-7857 passport) | 🟢 **DONE 2026-05-08** |
-| A | 7 (CapabilityRegistry + MemoryAccessLog) | ⬜ pending |
+| A | 7 (CapabilityRegistry + MemoryAccessLog) | 🟢 **DONE 2026-05-08** |
 | A | 8 (hybrid memory engine) | ⬜ pending |
 | A | 9 (3 first-party skills) | ⬜ pending |
 | A | 10 (SkillRegistry + scanner + sandbox) | ⬜ pending |
@@ -292,17 +292,36 @@ lastEvolutionAt 1778184489 (2026-05-07T20:08:09.000Z)
 - The metadata blob is currently a JSON object hashed locally (sha256) since 0G Storage upload is parked (B-1). When B-1 is fixed, the encrypted JSON will be uploaded to Storage and the rootHash will be the metadataRoot — no schema change needed.
 - ERC-7857 secure transfer (`iTransferFrom`) is on-chain functional; tests prove the attestor-signed proof flow rejects bad signatures and consumes nonces against replay.
 
-### Day 7 — CapabilityRegistry + MemoryAccessLog (next)
-- Deploy `CapabilityRegistry.sol` (memory-permission grants, scoped TTL, revocation)
-- Deploy `MemoryAccessLog.sol` (append-only event emitter for audit trail)
-- `ivaronix memory grant <grantee> --scope <namespace> --ttl 7d`
-- `ivaronix memory revoke <grantId>`
-- Every memory access call (Day 8 hybrid memory) emits `MemoryAccessLog`
+### Day 7 — CapabilityRegistry + MemoryAccessLog (DONE 2026-05-08)
 
-### Day 7 Gate
-- Both contracts deployed; doctor shows them
-- Grant + revoke + list working from CLI
-- Test access-log emission
+### Done
+- [x] `CapabilityRegistry.sol` (SealedMind pattern, REFERENCE_PATTERNS §2.3)
+  - issueGrant / revokeGrant / consumeRead / isValid + reverse indexes
+  - 16 unit tests pass (issue, revoke, expiry, reads cap, scope mismatch, events)
+- [x] `MemoryAccessLog.sol` event-only emitter (3 unit tests pass)
+- [x] **Both contracts deployed to testnet 16602:**
+  - `CapabilityRegistry`: `0x3783f3c4834fCCBD553860e15c64C7E052646a8D`
+  - `MemoryAccessLog`: `0xEe1aDFe76785377C4430B1325d86E58A6eC92119`
+- [x] og-chain wrappers: `CapabilityRegistryClient` (with grantIdFromTx helper) + `MemoryAccessLogClient` (with listForAgent event scan)
+- [x] CLI `memory grant/revoke/list/log/log-emit` end-to-end working
+- [x] doctor now shows all 5 deployed contracts in green
+
+### Day 7 Gate (HIT 2026-05-08)
+- Grant `0xf437b7350b69…` issued: grantee 0xB0B0…, scope "work", 7d TTL, 100 reads cap
+- Manual log-emit produced indexed event; `memory log` retrieved it correctly
+- All contract reads on chain verify the on-chain state matches local
+
+### Day 8 — Hybrid memory engine (next)
+- `packages/memory` 4-way hybrid: vector + temporal graph + SQLite FTS5 + 0G KV pointer
+- `all-MiniLM-L6-v2` embeddings via `transformers.js`
+- TEE fact extraction on remember; TEE synthesis on recall
+- `ivaronix memory remember/recall/snapshot`
+- Hooks into CapabilityRegistry.consumeRead + MemoryAccessLog.logAccess
+
+### Day 8 Gate
+- `memory remember` writes encrypted observation, indexes via vector + FTS, returns memoryRoot
+- `memory recall` returns top-K with provenance; emits MemoryAccessed
+- Capability check enforced when grantee tries to recall scoped memory
 
 ---
 
