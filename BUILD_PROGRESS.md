@@ -632,13 +632,13 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ **Memory grant/revoke + access log audit** — UI live at `/memory` with wagmi-wired issue/revoke (Day 17); `/global` shows live `MemoryAccessed` event feed.
 - ✅ **Hooks firing automatically** — `private-doc-review@0.2.0` end-to-end run (Day 11): redact_pii scrubbed 4/4 PII types before context reached the router; LLM output never references the redacted values.
 - ✅ **README with testnet addresses + screenshots + run snippets** — landed this Day 22; "Phase A · Live testnet" section at the top.
-- 🟡 **≥100 testnet receipts** — currently at **76** with the runner continuing. The numerical bullet is in flight; the BUILD.md Phase A gate proper is "Phase A complete. Full product runs on testnet. Ready for mainnet promotion." → **MET**. The 100-mark is a continuous-operation milestone that crosses naturally as the runner stays up.
+- ✅ **≥100 testnet receipts** — gate-watcher fired with `nextId = 102`, passport `trustScore = 92` and `receiptCount = 92`. Numerical milestone hit alongside the functional gate.
 
 ### Phase A Status: ✅ COMPLETE
 After 22 days of testnet-first build, every primitive Ivaronix promised is live and provable on 0G Galileo Testnet 16602:
 - 6 contracts deployed + 16/16 SkillRegistry tests + 61/61 total Foundry tests pass
 - 80 skills loaded; 5 first-party + private-doc-review v0.2.0 anchored on `SkillRegistry`
-- 76 cumulative anchored receipts; passport tokenId=1 with trustScore=66
+- **102 cumulative anchored receipts** on testnet 16602; passport tokenId=1 with trustScore=92
 - CLI (7 modes), Studio (8 routes + drop-zone + memory PC + global stats), MCP server (5 tools), og-toolkit (npm-publishable, receipt-aware)
 - ENGINEERING_DEBUG_LOG with 5 documented incidents; CI workflow committed
 - ✅ CI matrix locally green — all `@ivaronix/*` workspace typechecks (14 packages/apps) and **61/61 contract tests pass** in `forge test` across 5 suites (ReceiptRegistry, AgentPassportINFT, CapabilityRegistry, MemoryAccessLog, SkillRegistry); workflow file committed and ready for first GitHub push.
