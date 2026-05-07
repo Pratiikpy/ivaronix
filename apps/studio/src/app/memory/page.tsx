@@ -1,11 +1,24 @@
 import { Section } from '@/components/Section';
+import { MemoryPanel } from '@/components/MemoryPanel';
+import { getDeployedAddress } from '@ivaronix/og-chain';
+import { getNetwork } from '@/lib/chain';
+
+export const dynamic = 'force-dynamic';
 
 export default function MemoryPage() {
+  const capabilityAddr = getDeployedAddress(getNetwork(), 'CapabilityRegistry');
+  const memoryAddr = getDeployedAddress(getNetwork(), 'MemoryAccessLog');
+
   return (
     <Section
       label="§ 01 · MEMORY PERMISSION CENTER"
-      title="Grants, scopes, audit."
-      description="The on-chain CapabilityRegistry already issues TTL-bounded grants. The web UI for issuing + revoking grants ships Day 17. CLI: 'ivaronix memory grant <grantee> --scope project --ttl 7d'."
-    />
+      title="Grants. Scopes. Audit."
+      description={`Issue, list, and revoke memory grants directly on the on-chain CapabilityRegistry. Reads + writes on ${getNetwork()}.`}
+    >
+      <MemoryPanel
+        capabilityAddr={capabilityAddr ?? ''}
+        memoryLogAddr={memoryAddr ?? ''}
+      />
+    </Section>
   );
 }

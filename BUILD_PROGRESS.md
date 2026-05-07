@@ -527,6 +527,23 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Playwright smoke at `/skills`: 5 cards rendered with REGISTRY MATCH on every one (live on-chain MATCH against the SkillRegistry contract for github-audit / 0g-integration-auditor / private-doc-review v0.2.0 / plan-step / code-edit), each card shows 5 permission pills (net=amber 2-4 hosts / files=green / compute=green / wallet=green / shell=green), private-doc-review shows additional 🔒 burn-auto chip; footer "5 skills loaded · network testnet"
 - ✅ Playwright smoke at `/skill/private-doc-review`: title v0.2.0, REGISTRY MATCH + tier standard + license Apache-2.0 status row, sample-input card renders `sample-lease.txt` with PII visible, system-prompt card shows full SKILL.md body, on-chain anchor card shows manifestHash `sha256:874d…f689`, creator wallet linked, publishedAt `2026-05-07 20:56`, reputation card shows on-pass +1 trust / on-fail -2 / on-violation -10 LOCKED, "Open Studio →" jumps with `?skill=private-doc-review`
 
+### Day 17 — Memory Permission Center + Global Stats ✅ DONE 2026-05-08
+- `apps/studio/src/lib/local-receipts.ts` — server-side helper that walks parent dirs to find `.ivaronix/receipts/anchored/`, reads up to N most-recent JSON files (newest mtime first), exposes `loadAllLocalReceipts(maxEntries)`, `topSkillsByUsage(receipts, limit)`, `totalOgSpent(receipts)`. Used by `/global` to compute aggregate stats from the canonical receipt bodies.
+- `apps/studio/src/lib/client-abis.ts` — client-safe ABI fragments duplicated from `@ivaronix/og-chain`. Necessary because the og-chain barrel re-exports `deployments.ts` which uses `node:fs`/`node:path`; that's fine on the server but breaks Next's client bundle. Documented in the file header so the duplication stays in sync.
+- `apps/studio/src/app/global/page.tsx` rewrite — adds **OG spent** stat (sum of `billing.totalCostOg` from local receipts), **Top skills (last 50 receipts)** card grouping local receipts by `skillId` with run count + total cost, **Recent memory access (chain log)** feed reading the last 5 `MemoryAccessed` events from the on-chain `MemoryAccessLog` contract. 60s revalidate.
+- `apps/studio/src/app/memory/page.tsx` rewrite — server route resolves `CapabilityRegistry` + `MemoryAccessLog` deployed addresses from the og-chain workspace, then mounts the client-side `<MemoryPanel/>`.
+- `apps/studio/src/components/MemoryPanel.tsx` — wallet-aware on-chain admin per UI_UX_GUIDE:
+  - shows empty-state card prompting Connect Wallet when not connected
+  - **issue-grant form**: grantee address input, scope picker (3 presets: project / work / personal — `keccak256("namespace:<x>")` sent on-chain), TTL slider (1h–30d), `wagmi.useWriteContract` calling `CapabilityRegistry.issueGrant(...)`
+  - **your grants list**: `useReadContract listGrantsByOwner(address)` then per-grant `grants(grantId)` to render grantee + expiry + reads-remaining; **Revoke** button calls `revokeGrant`
+  - aside card showing connected wallet + capability/memory-log contract addresses
+
+### Day 17 Gate ✅
+- ✅ `next build` green: `/memory` 41.4kB First Load JS (wagmi + viem on the wallet form), `/global` 182B server-rendered with new memory feed
+- ✅ Workspace typecheck green
+- ✅ Playwright smoke at `/global`: live stats — Receipts anchored **19**, Passports minted **1**, OG spent **0.000029** (sum of local billing), First-party skills **5**; Top skills card shows `github-audit · 1 run · 0.000029 OG`; Recent memory access feed shows 5 real on-chain `MemoryAccessed` events from wallet `0xaa954c33…77Ce` (READ + WRITE access types from the Day-8 memory engine writes), each row stamped with block number + ISO timestamp
+- ✅ Playwright smoke at `/memory`: page renders the §-pattern, "Grants. Scopes. Audit." headline, and the wallet-required empty-state card ("Connect a wallet to issue and revoke memory grants. The connected wallet becomes the grant owner; only it can revoke."). The wagmi-wired issue + revoke + grants-list flows mount once a wallet connects; full end-to-end click-to-tx test requires a browser wallet extension and is deferred to Day 22 e2e.
+
 ---
 
 ## Blockers
