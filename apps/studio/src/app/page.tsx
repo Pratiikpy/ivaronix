@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { FourLightRow } from '@/components/FourLightRow';
 import { Section } from '@/components/Section';
+import { RunPanel } from '@/components/RunPanel';
 import { getReceiptRegistry } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic'; // always read live chain state
@@ -41,38 +41,7 @@ export default async function HomePage() {
           AI agents that double-check themselves on 0G. Every action a verifiable receipt.
         </p>
 
-        <div
-          style={{
-            background: 'var(--color-tonal)',
-            border: '1px solid var(--color-hairline)',
-            borderRadius: 'var(--radius-lg)',
-            padding: 32,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 24,
-            maxWidth: 720,
-          }}
-        >
-          <p className="section-label">§ 01 · DROP A FILE OR ASK</p>
-          <p style={{ fontSize: 14, color: 'var(--color-muted)', margin: 0 }}>
-            <span className="italic-display">The Studio drop-zone arrives Day 14.</span> For now, run from the CLI:
-          </p>
-          <pre
-            className="mono"
-            style={{
-              background: 'var(--color-fg)',
-              color: 'var(--color-bg)',
-              padding: '16px 20px',
-              borderRadius: 'var(--radius-md)',
-              overflowX: 'auto',
-              margin: 0,
-              fontSize: 13,
-            }}
-          >
-            ivaronix doc ask contract.pdf "find risky clauses" --skill private-doc-review --consensus
-          </pre>
-          <FourLightRow layers={{ Storage: 'verified', Compute: 'verified', TEE: 'verified', Chain: 'verified' }} />
-        </div>
+        <RunPanel />
 
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
           <Link href="/skills" className="btn-primary" style={{ textDecoration: 'none' }}>

@@ -28,6 +28,7 @@
     "@ivaronix/skills": "workspace:*",
     "@ivaronix/og-toolkit": "workspace:*",
     "@ivaronix/receipts": "workspace:*",
+    "@ivaronix/runtime": "workspace:*",
     "@0gfoundation/0g-compute-ts-sdk": "^0.8.1",
     "commander": "^12.1.0",
     "dotenv": "^16.4.0",

@@ -471,6 +471,22 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Console clean except an initial `/favicon.ico 404` — fixed by adding `app/icon.svg`
 - ⚠ Vercel deploy skipped (requires user-side `vercel login`); Day-22 Phase A close will deploy. The build artifacts are deploy-ready.
 
+### Day 14 — Studio: drop-zone hero + run flow ✅ DONE 2026-05-08
+- Refactored the run pipeline into a new `packages/runtime` workspace package so Studio + CLI share one code path. The CLI keeps a thin colorized wrapper at `apps/cli/src/lib/pipeline.ts`; Studio uses `@ivaronix/runtime` directly.
+- New `PipelineLogger` interface (`info` / `pass` / `fail`) with two implementations: CLI binds it to the colorized stdout `ui`, Studio binds it to a `createCaptureLogger()` that returns structured log entries with the JSON response.
+- `apps/studio/src/components/RunPanel.tsx` — react-dropzone hero card with skill picker (5 first-party skills), tier picker (Quick/Standard/High-Stakes), receipt toggle, free-form question field, Run button, Four-Light Row that animates through pending → active → verified, ResultCard that shows the audit findings + token/cost metadata + receiptId + "Verify on chain →" anchor link to the testnet explorer.
+- `apps/studio/src/app/api/run/route.ts` — Next.js Route Handler (`runtime: nodejs`, `maxDuration: 60`) that accepts `{ skillId, question, contentText, tier, receipt }`, calls `runPipeline` with a capture logger, returns `{ ok, finalText, scan, receiptId, receiptTxHash, receiptOnchainId, logs }`.
+- `apps/studio/src/lib/boot-env.ts` — lazy `.env` loader for server-side route handlers; walks parent dirs from cwd to find the workspace-root `.env` (so the same testnet wallet + router config the CLI uses also signs Studio receipts). Bypasses Next 15.0.3's instrumentation.ts edge-bundling issue with `dotenv`/`crypto`.
+- `next.config.ts` — `transpilePackages` extended to all six workspace packages the runtime touches (core, og-chain, og-router, consensus, skills, receipts, runtime).
+- Replaced the static "Drop a file" placeholder code-snippet on `/` with the live `<RunPanel/>`.
+
+### Day 14 Gate ✅
+- ✅ `next build` green: 8 routes + new `/api/run` Route Handler · homepage bundle 19.3kB → 128kB First Load JS
+- ✅ Workspace typecheck green for both `@ivaronix/runtime` and `@ivaronix/studio`
+- ✅ Playwright smoke at `http://localhost:3300/`: drop-zone hero rendered with brand-correct dashed border, skill/tier pickers, receipt checkbox, disabled Run button (correctly waiting for content), Four-Light Row in all-pending amber state below the action area
+- ✅ End-to-end **API smoke test on testnet 16602**: `POST /api/run` with a tiny vulnerable Solidity contract → `github-audit` quick tier → registry scan MATCH (creator wallet identical to CLI signer) → consensus complete (1640ms · 487+50 tok · 0.00002935 OG) → **receipt #18 anchored at tx `0xb28f01a8297c2949b7319bd5b52ac958b27c134c12a29947e02dbf2a8ba114fe`, block 32107150**
+- ✅ The captured-logger payload returns the same audit-trail rows the CLI would print, so a future Studio polish pass can render them as a live console alongside the result card.
+
 ---
 
 ## Blockers
