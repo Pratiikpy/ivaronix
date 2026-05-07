@@ -592,6 +592,29 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Workspace-wide typecheck (cli + studio + mcp-server + og-toolkit + runtime + skills + memory + consensus + og-chain + og-router + og-storage + og-kv + receipts + core) all green
 - ⚠ `apps/api` deferred — Studio's `/api/run` Route Handler is functionally equivalent to the planned apps/api OpenAI-compatible HTTP surface; standing up a separate Vercel deployable adds operational surface without unlocking new functionality on testnet. Day 22 polish revisits.
 
+### Day 21 — Testnet receipt automation + ENGINEERING_DEBUG_LOG + CI ✅ DONE 2026-05-08
+- `scripts/automate-receipts-testnet.ts` — runs `0g-integration-auditor` against a curated batch of 6 public 0G integration repos (snapshots embedded so the script is offline-replayable). Each iteration: skill load → registry MATCH → consensus quick → receipt sign + anchor + passport update. Defaults to a 6-receipt batch; `--max <n>` controls run size. Cron-equivalent hourly cadence ships when the receipt-automation runner is hosted (Day 22+).
+- `ENGINEERING_DEBUG_LOG.md` — five Provus-pattern incidents, each with **Symptom · Triage · Root cause · Fix · Lesson**:
+  - I-1 Solidity 0.8.19 vs OZ v5 pragma collision (Day 2-3, ~2h)
+  - I-2 HASH_EXCLUDE drift broke receipt re-verification (Day 4, ~3h)
+  - I-3 0G Storage `submit()` reverts on testnet — STILL OPEN as B-1 (Day 4, ~6h)
+  - I-4 manifest schema change silently broke published skills (Day 12, ~30m)
+  - I-5 Next 15.0.3 + `@vercel/og` font path mangling on Windows (Day 15, ~45m)
+- `.github/workflows/ci.yml` — three-job CI matrix:
+  - `contracts` — Foundry-toolchain action installs OZ, runs `forge build --skip test` then `forge test -vvv`
+  - `workspace` — pnpm + Node 20 cache, `pnpm install`, `pnpm -r run typecheck` across `@ivaronix/*`, `pnpm -r run build`
+  - `receipt-roundtrip` (depends on workspace) — picks the first committed anchored receipt JSON and runs `ivaronix receipt verify` (schema + hash + signature; chain anchor and TEE deferred to live testnet)
+
+### Day 21 Gate ✅
+- ✅ Automation kicked off — **4 fresh receipts anchored on testnet 16602** in this batch:
+  - `0glabs/0g-storage-client` → receipt #20 tx `0xad21de7dd894e7310519a2b9b5455629f7cb388e9e3ca91cfce94505bba6505c`
+  - `0glabs/0g-storage-ts-sdk` → receipt #21 tx `0x7909eff8f221309413ba4febf7c0b3951dcd4f7beb994e6ee695f4dcce54d3c9`
+  - `0gfoundation/0g-compute-ts-sdk` → receipt #22 tx `0x74e0e917c83db6329b035f909d54e98a13ad19459fcf09badffb204504469779`
+  - `sample-builder/0g-vector-rag` → receipt #23 tx `0xb0a1e38021a6507a31769ca8e5e56b5e78c305fc7c3c132e55096beb48a04c5e`
+  - cumulative receipt count on testnet: **24** (4–12 receipt target ✓)
+- ✅ ENGINEERING_DEBUG_LOG seeded with 5 real documented incidents (gate said ≥3) — every entry dated, with reproducible triage
+- ✅ CI matrix locally green — all `@ivaronix/*` workspace typechecks (14 packages/apps) and **61/61 contract tests pass** in `forge test` across 5 suites (ReceiptRegistry, AgentPassportINFT, CapabilityRegistry, MemoryAccessLog, SkillRegistry); workflow file committed and ready for first GitHub push.
+
 ---
 
 ## Blockers
