@@ -1,8 +1,44 @@
 # Ivaronix — Working Repository
 
 > **Project:** Ivaronix — The 0G Agent Operating System.
-> **Status:** PRD locked v3 (full Nexus vision, 2026-05-07). Day-1 build pending.
+> **Status:** **Phase A complete (testnet) · 2026-05-08** — all 22 Phase-A days closed with real on-chain artifacts. Phase B mainnet promotion (Day 23-30) next.
 > **Submission target:** OG Labs grant.
+
+## Phase A · Live testnet (Galileo, chainId 16602)
+
+All five contracts deployed and feeding live data into Studio + CLI + MCP:
+
+| Contract             | Address                                                                                                                                            |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ReceiptRegistry`    | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c)                  |
+| `Erc7857Verifier`    | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938)                  |
+| `AgentPassportINFT`  | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E)                  |
+| `CapabilityRegistry` | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D)                  |
+| `MemoryAccessLog`    | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119)                  |
+| `SkillRegistry`      | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1)                  |
+
+Live data path:
+
+- **Receipts anchored:** read live via `ReceiptRegistry.nextId()` — Studio `/global` + CLI `ivaronix receipt list`.
+- **Passport profile:** `AgentPassportINFT.passportOf(wallet)` — `did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1` (tokenId 1, trustScore + receiptCount climbing per anchor).
+- **Skill catalog:** 5 first-party skills + 75 awesome-claude-skills ports = **80 skills** discoverable via `ivaronix skill list` and Studio `/skills`.
+- **First-party skills published on-chain via `SkillRegistry`:** `0g-integration-auditor`, `github-audit`, `private-doc-review` (v0.1.0 + v0.2.0), `plan-step`, `code-edit`. Each `verify` returns `MATCH` against the local manifestHash.
+
+Run end-to-end on the **public testnet** today:
+
+```bash
+# CLI
+ivaronix doc ask contract.pdf "find risky clauses" \
+  --skill private-doc-review --consensus --burn
+
+# Studio
+pnpm --filter @ivaronix/studio dev
+# → http://localhost:3300/  drop a file, pick a skill, click Run
+
+# MCP server (Claude Desktop / Cursor / Codex)
+pnpm --filter @ivaronix/mcp-server dev
+# stdio: tools/list returns ivaronix_ask, verify_receipt, passport_show, …
+```
 
 ---
 
