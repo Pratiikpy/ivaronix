@@ -311,17 +311,64 @@ lastEvolutionAt 1778184489 (2026-05-07T20:08:09.000Z)
 - Manual log-emit produced indexed event; `memory log` retrieved it correctly
 - All contract reads on chain verify the on-chain state matches local
 
-### Day 8 — Hybrid memory engine (next)
-- `packages/memory` 4-way hybrid: vector + temporal graph + SQLite FTS5 + 0G KV pointer
-- `all-MiniLM-L6-v2` embeddings via `transformers.js`
-- TEE fact extraction on remember; TEE synthesis on recall
-- `ivaronix memory remember/recall/snapshot`
-- Hooks into CapabilityRegistry.consumeRead + MemoryAccessLog.logAccess
+### Day 8 — Hybrid memory engine (DONE 2026-05-08)
 
-### Day 8 Gate
-- `memory remember` writes encrypted observation, indexes via vector + FTS, returns memoryRoot
-- `memory recall` returns top-K with provenance; emits MemoryAccessed
-- Capability check enforced when grantee tries to recall scoped memory
+### Done
+- [x] `packages/memory` shipped with full 4-way hybrid:
+  - **FTS5** (`better-sqlite3` + virtual fts5 table) for plaintext search
+  - **Vector index** (in-memory FlatVectorIndex, cosine sim, 384-dim hashing-trick TF-IDF — Day 18 swaps for transformers.js + all-MiniLM-L6-v2)
+  - **Temporal graph** (facts table with subject/predicate/object/validFrom/validUntil/supersededBy)
+  - **KV pointer** (manifest computed on demand; uploaded to 0G KV when B-1 unblocks)
+- [x] AES-256-GCM at rest with key derived from owner's private key via scrypt (deterministic; recoverable)
+- [x] CapabilityRegistry integration: when caller != owner, `recall` calls `isValid` then `consumeRead` on the grant
+- [x] MemoryAccessLog event emission on every WRITE / READ / DELETE (best-effort; doesn't fail the local op)
+- [x] `MemoryEngine` API: remember / recall / forget / computeManifest / count / close
+- [x] **7 unit tests pass**: roundtrip, tag filtering, encryption-at-rest (plaintext recovers), forget, manifest determinism, manifest changes with state, caller-without-grant rejection
+- [x] CLI commands wired:
+  - `ivaronix memory remember <text> --tags --source --receipt --no-log`
+  - `ivaronix memory recall <query> --tags --top-k --from --to`
+  - `ivaronix memory snapshot` (shows manifest)
+  - `ivaronix memory forget <id>`
+- [x] Recall returns hybrid score (`0.6 * vector + 0.4 * fts`) with per-component scores visible
+
+### Day 8 Gate (HIT 2026-05-08)
+```
+$ ivaronix memory remember "Bob owes me $400 ..." --tags work,finance
+✓ obs id obs_01KR21YW2Q89TRV7S9EHPYXGEC
+✓ memory rootHash 0x32af093ef97993586d395338a22ae29a72b4f6a0f67b2dc29fa948997f1e2e14
+✓ access log tx 0xd9d55e150ad5f4084ff3cf99abac09d3726979086e67020f6e0f735c0213c830  (real on-chain WRITE event)
+
+(after 3 remembers across work/personal/security tags...)
+
+$ ivaronix memory recall "what does Bob owe" --tags work --top-k 3
+#1  score 0.560  vec 0.267  fts 1.000  tags [work, security]
+     Reentrancy clause review by Bob: line 142 vulnerable
+#2  score 0.550  vec 0.250  fts 1.000  tags [work, finance]
+     Bob owes me 00 for the contract review last Tuesday
+✓ access log tx 0x156d3e3ae6b69d2a369c99f454f73cdb2ea5a31f10903fbf184b0aeba8800fcf
+
+$ ivaronix memory snapshot
+observations 3
+rootHash 0xdfa29bc98b18cf2ef2efc89c6b19b788fb40f9ff46b53b86bc083f5d3e0c2f98
+embedding hashing-trick-tfidf-v1 dim=384
+```
+
+### Notes
+- 4 real on-chain MemoryAccessed events emitted in this session (3 WRITE + 1 READ); each cost ~0.0001 OG and is queryable via `ivaronix memory log`.
+- The `$400 → 00` in the captured output is bash variable expansion on unquoted strings, NOT a memory bug — single-quoted input would preserve the literal.
+- Embedding method (`hashing-trick-tfidf-v1`) is intentionally simple. Day 18 polish swaps in `transformers.js + all-MiniLM-L6-v2` cosine via the same `embed()` interface — no engine code change needed.
+- Temporal graph schema is in place; observation→fact extraction (TEE-backed) lands Day 9 with the first-party skills.
+
+### Day 9 — Three first-party skills (next)
+- `private-doc-review` — confidential PDF/DOCX/MD review with consensus + burn + receipt
+- `0g-integration-auditor` — audits any GitHub repo's 0G integration quality (used by automation Day 21)
+- `github-audit` — general code-quality + security audit
+- Each skill has SKILL.md + manifest.json + prompt.md + tests/
+- Manifest hash anchored on chain (Day 10 SkillRegistry)
+
+### Day 9 Gate
+- All 3 skills run end-to-end producing verified receipts on testnet
+- Skills directory layout matches awesome-claude-skills format
 
 ---
 

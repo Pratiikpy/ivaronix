@@ -24,7 +24,7 @@
     "@ivaronix/og-storage": "workspace:*",
     "@ivaronix/og-kv": "workspace:*",
     "@ivaronix/consensus": "workspace:*",
-    "@ivaronix/og-storage": "workspace:*",
+    "@ivaronix/memory": "workspace:*",
     "@ivaronix/og-toolkit": "workspace:*",
     "@ivaronix/receipts": "workspace:*",
     "@0gfoundation/0g-compute-ts-sdk": "^0.8.1",

@@ -1,5 +1,7 @@
 import { Command } from 'commander';
 import { keccak256, toUtf8Bytes, Wallet, JsonRpcProvider } from 'ethers';
+import { resolve, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import {
   CapabilityRegistryClient,
   MemoryAccessLogClient,
@@ -7,6 +9,7 @@ import {
   getDeployedAddress,
   type MemoryAccessType,
 } from '@ivaronix/og-chain';
+import { MemoryEngine } from '@ivaronix/memory';
 import { NETWORKS, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -35,8 +38,183 @@ function scopeHash(scope: string): Hash {
   return keccak256(toUtf8Bytes(`namespace:${scope}`)) as Hash;
 }
 
+/** Resolve the local memory SQLite path under .ivaronix/memory/ivaronix.db */
+function memoryDbPath(): string {
+  return resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
+}
+
+/** Build a configured MemoryEngine. */
+function buildEngine(): MemoryEngine | null {
+  const env = loadEnv();
+  if (!env.privateKey || !env.walletAddress) {
+    ui.fail('Memory engine requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+    return null;
+  }
+  const dbPath = memoryDbPath();
+  mkdirSync(dirname(dbPath), { recursive: true });
+
+  const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+  const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+
+  return MemoryEngine.create({
+    ownerWallet: env.walletAddress as Address,
+    ownerPrivateKey: env.privateKey,
+    dbPath,
+    enableOnChainPermissions: Boolean(capAddr && logAddr),
+    capabilityRegistryAddress: (capAddr ?? undefined) as Address | undefined,
+    memoryAccessLogAddress: (logAddr ?? undefined) as Address | undefined,
+    rpcUrl: env.rpcUrl,
+    chainId: env.chainId,
+  });
+}
+
 export const memoryCommand = new Command('memory')
-  .description('Manage on-chain memory permissions (CapabilityRegistry + MemoryAccessLog)');
+  .description('Hybrid memory engine + on-chain permissions (CapabilityRegistry + MemoryAccessLog)');
+
+// ─── remember ────────────────────────────────────────────────────────────────
+memoryCommand
+  .command('remember <text>')
+  .description('Store an observation in your hybrid memory (vector + FTS + temporal)')
+  .option('--tags <list>', 'comma-separated tags/scopes (e.g. work,finance)', 'general')
+  .option('--source <name>', 'provenance source label', 'manual')
+  .option('--receipt <id>', 'associate this observation with a receipt id')
+  .option('--no-log', 'skip on-chain MemoryAccessLog emission')
+  .action(async (text: string, opts: { tags: string; source: string; receipt?: string; log: boolean }) => {
+    const engine = buildEngine();
+    if (!engine) {
+      process.exitCode = 1;
+      return;
+    }
+
+    const tags = opts.tags.split(',').map((t) => t.trim()).filter(Boolean);
+    ui.title('Remembering observation');
+    ui.info(`tags                 ${tags.join(', ')}`);
+    ui.info(`source               ${opts.source}`);
+    if (opts.receipt) ui.info(`parent receipt       ${opts.receipt}`);
+    ui.info(`text length          ${text.length} chars`);
+    ui.divider();
+
+    try {
+      const result = await engine.remember({
+        text,
+        tags,
+        source: opts.source,
+        parentReceiptId: opts.receipt,
+      });
+      ui.pass(`obs id               ${result.id}`);
+      ui.pass(`memory rootHash      ${result.manifest.rootHash}`);
+      ui.pass(`obs count            ${result.manifest.observationCount}`);
+      ui.pass(`embed dim            ${result.manifest.embedding.dim} (${result.manifest.embedding.method})`);
+      if (result.logTxHash) {
+        ui.pass(`access log tx        ${result.logTxHash}`);
+      }
+      ui.divider();
+      ui.banner(true, '→ REMEMBERED ✓');
+    } catch (err) {
+      ui.fail('remember failed', (err as Error).message);
+      process.exitCode = 1;
+    } finally {
+      engine.close();
+    }
+  });
+
+// ─── recall ──────────────────────────────────────────────────────────────────
+memoryCommand
+  .command('recall <query>')
+  .description('Retrieve top-K observations matching the query (vector + FTS hybrid score)')
+  .option('--tags <list>', 'comma-separated tags to restrict scope')
+  .option('--top-k <n>', 'how many results to return', '5')
+  .option('--from <ts>', 'unix-ms lower bound')
+  .option('--to <ts>', 'unix-ms upper bound')
+  .action(async (query: string, opts: { tags?: string; topK: string; from?: string; to?: string }) => {
+    const engine = buildEngine();
+    if (!engine) {
+      process.exitCode = 1;
+      return;
+    }
+
+    const tags = opts.tags ? opts.tags.split(',').map((t) => t.trim()).filter(Boolean) : undefined;
+    ui.title(`Recalling: "${query}"`);
+    if (tags) ui.info(`tags                 ${tags.join(', ')}`);
+    ui.info(`top-k                ${opts.topK}`);
+    ui.divider();
+
+    try {
+      const { hits, logTxHash } = await engine.recall({
+        text: query,
+        tags,
+        topK: Number(opts.topK),
+        fromTime: opts.from ? Number(opts.from) : undefined,
+        toTime: opts.to ? Number(opts.to) : undefined,
+      });
+      if (hits.length === 0) {
+        ui.hint('(no matches)');
+      } else {
+        for (const [i, h] of hits.entries()) {
+          ui.pass(`#${i + 1}  score ${h.score.toFixed(3)}  vec ${h.vectorScore.toFixed(3)}  fts ${h.ftsScore.toFixed(3)}  tags [${h.tags.join(', ')}]`);
+          console.log(`     ${h.text.slice(0, 200)}${h.text.length > 200 ? '…' : ''}`);
+        }
+      }
+      if (logTxHash) {
+        ui.divider();
+        ui.pass(`access log tx        ${logTxHash}`);
+      }
+      ui.divider();
+      ui.banner(hits.length > 0, hits.length > 0 ? `→ RECALLED ${hits.length} ✓` : '→ NO MATCHES');
+    } catch (err) {
+      ui.fail('recall failed', (err as Error).message);
+      process.exitCode = 1;
+    } finally {
+      engine.close();
+    }
+  });
+
+// ─── snapshot ────────────────────────────────────────────────────────────────
+memoryCommand
+  .command('snapshot')
+  .description('Compute the current memory manifest (rootHash + observation count)')
+  .action(() => {
+    const engine = buildEngine();
+    if (!engine) {
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const m = engine.computeManifest();
+      ui.title('Memory snapshot');
+      ui.info(`owner                ${m.ownerWallet}`);
+      ui.info(`observations         ${m.observationCount}`);
+      ui.info(`rootHash             ${m.rootHash}`);
+      ui.info(`lastWriteAt          ${m.lastWriteAt > 0 ? new Date(m.lastWriteAt).toISOString() : '(never)'}`);
+      ui.info(`embedding            ${m.embedding.method} dim=${m.embedding.dim}`);
+      ui.divider();
+      ui.hint('Day 11+ will upload this manifest to 0G Storage and update passport.memoryRoot.');
+    } finally {
+      engine.close();
+    }
+  });
+
+// ─── forget ──────────────────────────────────────────────────────────────────
+memoryCommand
+  .command('forget <id>')
+  .description('Permanently delete an observation by id')
+  .action(async (id: string) => {
+    const engine = buildEngine();
+    if (!engine) {
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const r = await engine.forget(id);
+      ui.pass(`forgot               ${id}`);
+      if (r.logTxHash) ui.pass(`access log tx        ${r.logTxHash}`);
+    } catch (err) {
+      ui.fail('forget failed', (err as Error).message);
+      process.exitCode = 1;
+    } finally {
+      engine.close();
+    }
+  });
 
 // ─── grant ───────────────────────────────────────────────────────────────────
 memoryCommand

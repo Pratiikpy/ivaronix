@@ -43,6 +43,11 @@ export class CapabilityRegistryClient {
     return this.contract.revokeGrant!(grantId);
   }
 
+  /** Decrement reads on a grant; returns tx (caller awaits .wait()). */
+  async consumeRead(grantId: Hash): Promise<ContractTransactionResponse> {
+    return this.contract.consumeRead!(grantId);
+  }
+
   async getGrant(grantId: Hash): Promise<GrantData | null> {
     const r = await this.contract.grants!(grantId);
     if (r[0] === '0x0000000000000000000000000000000000000000') return null;
