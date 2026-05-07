@@ -4,7 +4,7 @@ import { resolve, basename } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
@@ -292,6 +292,29 @@ docCommand
         anchorTimestamp: Math.floor(Date.now() / 1000),
       },
     }, null, 2));
+
+    // ─── 6. Record receipt against passport (if owner has one) ────────────
+    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (passportAddr) {
+      const passport = new AgentPassportClient(passportAddr, wallet);
+      try {
+        const tokenId = await passport.passportOf(wallet.address as `0x${string}`);
+        if (tokenId !== 0n) {
+          ui.pending(`recording receipt against passport tokenId=${tokenId}...`);
+          // Trust delta: +1 per anchored receipt; can be tuned per skill in Day 9+
+          const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
+          await ptx.wait();
+          // Re-read updated state
+          const updated = await passport.getPassport(tokenId);
+          if (updated) {
+            ui.pass(`passport updated     receiptCount=${updated.receiptCount} trustScore=${updated.trustScore}`);
+          }
+        }
+      } catch (err) {
+        // Don't fail the whole flow if passport update fails — receipt is still anchored
+        ui.pending(`passport update skipped: ${(err as Error).message}`);
+      }
+    }
 
     ui.divider();
     ui.banner(true, '→ ANCHORED ✓');

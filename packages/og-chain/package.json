@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./contracts/ReceiptRegistry": "./src/contracts/ReceiptRegistry.ts",
+    "./contracts/AgentPassportINFT": "./src/contracts/AgentPassportINFT.ts",
     "./deployments": "./src/deployments.ts"
   },
   "scripts": {

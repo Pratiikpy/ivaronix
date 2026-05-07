@@ -8,6 +8,16 @@
       "address": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "txHash": "0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c"
+    },
+    "Erc7857Verifier": {
+      "address": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
+      "txHash": "0x92eec89896daaea5f4ebe28f262bc8acb91dd0975798f603918c501debcb4b6a",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938"
+    },
+    "AgentPassportINFT": {
+      "address": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
+      "txHash": "0x40c2e67b08b60d5d4902397d6e81f84583e8e109c07e53eadace7ef20d6825da",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E"
     }
   }
 }

@@ -19,7 +19,7 @@
 | A | 3 (ReceiptRegistry deploy) | 🟢 **DONE 2026-05-08** |
 | A | 4 (Burn Mode + doc-ask) | 🟢 **DONE 2026-05-08** (B-1 blocker open on Storage upload, workaround in place) |
 | A | 5 (tiered consensus + TEE verify) | 🟢 **DONE 2026-05-08** |
-| A | 6 (ERC-7857 passport) | ⬜ pending |
+| A | 6 (ERC-7857 passport) | 🟢 **DONE 2026-05-08** |
 | A | 7 (CapabilityRegistry + MemoryAccessLog) | ⬜ pending |
 | A | 8 (hybrid memory engine) | ⬜ pending |
 | A | 9 (3 first-party skills) | ⬜ pending |
@@ -243,18 +243,66 @@ Status: → FULLY VERIFIED ✓
 - 7-gate pre-flight catches sensitive content (private keys, GitHub tokens, mnemonics, CC numbers) and recommends Burn Mode automatically.
 - Convergence baseline is Jaccard tokens; embeddings (all-MiniLM-L6-v2) upgrade Day 8 with hybrid memory engine.
 
-### Day 6 — ERC-7857 Agent Passport (next)
-- Deploy `Erc7857Verifier.sol` and `AgentPassportINFT.sol` to testnet
-- `ivaronix passport mint` mints ERC-7857 INFT for the user's wallet
-- Encrypted metadata blob on 0G Storage; pointer in 0G KV (B-1 caveat: KV uses local cache until Storage upload unblocks)
-- Passport `recordReceipt(tokenId, receiptId)` updates trustScore + receiptCount on chain
-- `ivaronix passport restore --wallet 0x...` restores from chain + KV
-- `ivaronix passport show` displays current state
+### Day 6 — ERC-7857 Agent Passport (DONE 2026-05-08)
 
-### Day 6 Gate
-- `ivaronix passport mint` mints + returns tokenId; passport.json on disk
-- `ivaronix passport show` reads on-chain state (trustScore, receiptCount, ownerWallet)
-- `recordReceipt` integration so each `doc ask --receipt` updates passport reputation
+### Done
+- [x] `Erc7857Verifier.sol` shipped — attestor-signed sealed-data integrity verifier with replay-proof nonces (Day 6 MVP; Phase B+ swaps for TEE remote attestation per ERC-7857 §integration)
+- [x] `AgentPassportINFT.sol` shipped — ERC-7857 hybrid:
+  - ERC-721 base + Ownable2Step + Pausable
+  - One passport per wallet (one-agent-per-wallet enforcement)
+  - AgentData struct (8 fields, packed): metadataRoot, memoryRoot, skillManifestRoot, receiptCount, violationCount, trustScore (int128), mintedAt, lastEvolutionAt
+  - `mint(metadataRoot)` for fresh passports
+  - `recordReceipt(tokenId, receiptRoot, type, trustScoreDelta)` — owner OR authorizedRecorder
+  - `recordViolation(tokenId, delta, reason)` — negative deltas only
+  - `updateMemoryRoot` / `updateSkillManifestRoot` / `rotateMetadata` — owner only
+  - `authorizeExecutor(tokenId, executor, ttl)` — run-without-ownership pattern
+  - `iTransferFrom` — ERC-7857 secure transfer with attestor-signed re-encryption proof
+  - `addAuthorizedRecorder(addr)` — Day 7+ for ReceiptRegistry hook
+- [x] **16 unit tests pass** (mint flow, one-per-wallet, recordReceipt + recordViolation, authorized recorders, memory/skill/metadata updates, executors with TTL, iTransferFrom good + bad attestations, pause)
+- [x] **Both contracts deployed to testnet 16602:**
+  - `Erc7857Verifier`: `0xEAd66Cb90B681720f3aab52d86c289E21106d938`
+  - `AgentPassportINFT`: `0x08d25653638c3ed40C3b82840fA20CAe9c94563E`
+- [x] `packages/og-chain` adds `AgentPassportClient` (typed wrapper) — mint, getPassport, getPassportByWallet, recordReceipt, updateMemoryRoot, updateSkillManifestRoot
+- [x] `apps/cli` `passport mint` — submits mint tx, captures tokenId, writes `.ivaronix/passport.json`
+- [x] `apps/cli` `passport show` — reads on-chain state and renders reputation + lifecycle blocks
+- [x] `apps/cli` `passport restore --wallet <addr>` — fetches chain state, writes local passport.json (preserves prior metadata if present)
+- [x] `apps/cli` `doc ask` now hooks into passport: after anchoring a receipt, calls `passport.recordReceipt(tokenId, receiptRoot, type, +1)` so reputation compounds
+- [x] `ivaronix doctor --chain` now displays Verifier + Passport addresses
+
+### Day 6 Gate (HIT 2026-05-08)
+```
+$ ivaronix passport mint --name "Pratiikpy Agent" --handle "pratiikpy"
+✓ tokenId 1
+✓ tx 0xf121a37d4b47b2e7ae8226bb4e5dd9f7129c063312b18d4832969dda3a62f037
+✓ block 32096127, gas 151953
+
+$ ivaronix doc ask sample-contract.txt "..." --consensus --burn --receipt
+✓ receipt on-chain id 7
+✓ recording receipt against passport tokenId=1...
+✓ passport updated     receiptCount=1 trustScore=1
+
+$ ivaronix passport show
+tokenId 1 / receiptCount 1 / violationCount 0 / trustScore 1
+mintedAt 1778184420 (2026-05-07T20:07:00.000Z)
+lastEvolutionAt 1778184489 (2026-05-07T20:08:09.000Z)
+```
+
+### Notes
+- Reputation compounds **automatically** on every successful `doc ask --receipt`. Each anchored Action Receipt → +1 trustScore on the user's passport. This closes the receipt-reputation loop spec'd in PRD §4.7.
+- The metadata blob is currently a JSON object hashed locally (sha256) since 0G Storage upload is parked (B-1). When B-1 is fixed, the encrypted JSON will be uploaded to Storage and the rootHash will be the metadataRoot — no schema change needed.
+- ERC-7857 secure transfer (`iTransferFrom`) is on-chain functional; tests prove the attestor-signed proof flow rejects bad signatures and consumes nonces against replay.
+
+### Day 7 — CapabilityRegistry + MemoryAccessLog (next)
+- Deploy `CapabilityRegistry.sol` (memory-permission grants, scoped TTL, revocation)
+- Deploy `MemoryAccessLog.sol` (append-only event emitter for audit trail)
+- `ivaronix memory grant <grantee> --scope <namespace> --ttl 7d`
+- `ivaronix memory revoke <grantId>`
+- Every memory access call (Day 8 hybrid memory) emits `MemoryAccessLog`
+
+### Day 7 Gate
+- Both contracts deployed; doctor shows them
+- Grant + revoke + list working from CLI
+- Test access-log emission
 
 ---
 
