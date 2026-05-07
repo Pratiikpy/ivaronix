@@ -44,6 +44,9 @@ importers:
       '@ivaronix/og-toolkit':
         specifier: workspace:*
         version: link:../../packages/og-toolkit
+      '@ivaronix/receipts':
+        specifier: workspace:*
+        version: link:../../packages/receipts
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -107,7 +110,7 @@ importers:
         version: link:../core
       openai:
         specifier: ^4.77.0
-        version: 4.104.0
+        version: 4.104.0(zod@3.25.76)
     devDependencies:
       typescript:
         specifier: ^5.6.0
@@ -144,6 +147,25 @@ importers:
         specifier: workspace:*
         version: link:../og-storage
     devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+
+  packages/receipts:
+    dependencies:
+      '@ivaronix/core':
+        specifier: workspace:*
+        version: link:../core
+      ethers:
+        specifier: ^6.13.0
+        version: 6.16.0
+      zod:
+        specifier: ^3.23.0
+        version: 3.25.76
+    devDependencies:
+      tsx:
+        specifier: ^4.19.0
+        version: 4.21.0
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -581,6 +603,9 @@ packages:
       utf-8-validate:
         optional: true
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
 snapshots:
 
   '@adraffy/ens-normalize@1.10.1': {}
@@ -870,7 +895,7 @@ snapshots:
     dependencies:
       whatwg-url: 5.0.0
 
-  openai@4.104.0:
+  openai@4.104.0(zod@3.25.76):
     dependencies:
       '@types/node': 18.19.130
       '@types/node-fetch': 2.6.13
@@ -879,6 +904,8 @@ snapshots:
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
       node-fetch: 2.7.0
+    optionalDependencies:
+      zod: 3.25.76
     transitivePeerDependencies:
       - encoding
 
@@ -928,3 +955,5 @@ snapshots:
       webidl-conversions: 3.0.1
 
   ws@8.17.1: {}
+
+  zod@3.25.76: {}

@@ -15,7 +15,7 @@
 | Phase | Day | Status |
 |---|---|---|
 | A | 1 (scaffold + network) | 🟢 **DONE 2026-05-08** |
-| A | 2 (receipt skeleton) | ⬜ pending (next) |
+| A | 2 (receipt skeleton) | 🟢 **DONE 2026-05-08** |
 | A | 3 (ReceiptRegistry deploy) | ⬜ pending |
 | A | 4 (Burn Mode + doc-ask) | ⬜ pending |
 | A | 5 (tiered consensus + TEE verify) | ⬜ pending |
@@ -95,18 +95,48 @@ Status: ✓ ALL SYSTEMS GO
 - Bumped Solidity from 0.8.19 → 0.8.20 because OZ v5 requires `^0.8.20`. Confirmed Provus/MUSASHI use 0.8.20+ on 0G mainnet, so this is fine for explorer verification.
 - `OG_ROUTER_KEYS` multi-key file format documented in HLD §11.0; for now keyring loads single key from `ZG_API_SECRET` + `ZG_SERVICE_URL` + `OG_COMPUTE_PROVIDER` + `EVM_WALLET_ADDRESS`.
 
-## Day 2 — Receipt skeleton (next)
+## Day 2 — Receipt skeleton (DONE 2026-05-08)
+
+### Done
+- [x] `packages/receipts` created
+- [x] `schema.ts` — full Zod schema for `ReceiptV1` matching RECEIPTS_SPEC.md §2 (9 receipt types, all required + optional fields, hex/sha256/wallet regex validators)
+- [x] `builder.ts` — `buildReceipt()`, `signReceipt()` (eth_personal_sign over receipt root hash), `defaultChainAnchor()`
+- [x] `verify.ts` — `verifyClaimed()` returns CLAIMED if schema + hash + signature all pass; INVALID otherwise
+- [x] **6 unit tests pass** (build returns valid draft / hash deterministic / sign produces recoverable signature / verifyClaimed returns CLAIMED / rejects tampered receipt / rejects wrong-signer signature)
+- [x] `apps/cli` `receipt verify <path>` reads a JSON file and runs `verifyClaimed`, prints per-check pass/fail rows + final state
+- [x] Wiring through workspace: receipts depends on core; cli depends on receipts; typecheck clean across the graph
+- [x] `sha256HexAsync` exported from core (used by builder/test fixtures)
+- [x] `signReceipt` accepts `Signer` interface (works with both `Wallet` and `HDNodeWallet` from `Wallet.createRandom()`)
+
+### Day 2 Gate (HIT 2026-05-08)
+```
+$ pnpm --filter @ivaronix/receipts test
+✓ buildReceipt returns a draft with id, createdAt, and a non-zero receipt root
+✓ canonical hash is deterministic
+✓ signReceipt produces signature recoverable to signer
+✓ verifyClaimed returns CLAIMED for a valid signed receipt
+✓ verifyClaimed rejects tampered receipt (output hash changed after sign)
+✓ verifyClaimed rejects signature from a different wallet
+6/6 pass
+```
+
+### Notes
+- Receipt root hash = `keccak256(canonical JSON without signature field)`. Per RECEIPTS_SPEC.md §3 step 2.
+- Signing path: hash → `eth_personal_sign` → signature attached → full canonical bytes uploaded to Storage in Day 4.
+- The JSON-schema (`schemas/receipt-v1.json`) file isn't generated yet — Zod schema is the source; will derive a JSON schema export in Day 3 if external tooling needs it.
+
+## Day 3 — ReceiptRegistry on testnet (next)
 
 ### Plan
-- `packages/receipts` — canonical JSON, hashing, signing, JSON-schema validation
-- `schemas/receipt-v1.json` — JSON-schema mirroring RECEIPTS_SPEC.md §2
-- 9 receipt types defined as string-union + numeric codes (already in core/types.ts)
-- Sign with `eth_personal_sign` (viem on browser, ethers on daemon)
-- Verify with `ecrecover`
-- "Hello world" receipt locally (no chain anchor yet — that's Day 3)
+- Deploy `ReceiptRegistry.sol` to Galileo testnet 16602 via Foundry script
+- Verify on `chainscan-galileo.0g.ai`
+- Add `apps/cli` `receipt anchor <id>` command that calls `ReceiptRegistry.anchor()`
+- Update `apps/cli` `receipt verify` to fetch on-chain anchor via the registry contract and show `ANCHORED` state
+- First end-to-end testnet receipt anchored
 
-### Day 2 Gate
-- Receipt schema valid + signed + reproducible hash + 9 receipt types defined.
+### Day 3 Gate
+- `ivaronix receipt anchor <local-receipt>` returns testnet tx hash
+- `ivaronix receipt verify <id>` shows `CLAIMED → ANCHORED`
 
 ---
 

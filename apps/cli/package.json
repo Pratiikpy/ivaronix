@@ -24,6 +24,7 @@
     "@ivaronix/og-storage": "workspace:*",
     "@ivaronix/og-kv": "workspace:*",
     "@ivaronix/og-toolkit": "workspace:*",
+    "@ivaronix/receipts": "workspace:*",
     "commander": "^12.1.0",
     "dotenv": "^16.4.0",
     "picocolors": "^1.1.1"
