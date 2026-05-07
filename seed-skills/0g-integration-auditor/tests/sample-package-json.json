@@ -1,0 +1,22 @@
+{
+  "name": "demo-0g-app",
+  "version": "0.0.1",
+  "dependencies": {
+    "@0glabs/0g-ts-sdk": "^0.3.3",
+    "ethers": "^6.13.0"
+  },
+  "scripts": {
+    "deploy": "forge create --rpc-url https://evmrpc-testnet.0g.ai --legacy ..."
+  },
+  "_note": "this is a sample package.json snippet for skill smoke-testing",
+  "_chain_id_in_code": 16601,
+  "_uses_storage": true,
+  "_uses_compute": false,
+  "_uses_inft": false,
+  "_uses_chain_anchor": false,
+  "_solidity_version": "0.8.19",
+  "_evm_version": "shanghai",
+  "_encryption": "none",
+  "_receipts": "console.log only",
+  "_tee_verify": "verify_tee: true (router-flag only, no broker.processResponse)"
+}

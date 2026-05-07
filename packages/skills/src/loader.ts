@@ -1,0 +1,109 @@
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { resolve, basename, join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { parse as parseYaml } from 'yaml';
+import { SkillManifestSchema, type SkillManifest } from './manifest.js';
+
+/**
+ * A loaded skill = parsed SKILL.md frontmatter + body, plus the on-disk path
+ * and a content-addressable manifest hash (used for on-chain anchoring Day 10).
+ */
+export interface LoadedSkill {
+  id: string;             // skill folder name == manifest.name
+  manifest: SkillManifest;
+  systemPromptBody: string; // markdown body of SKILL.md (the prompt)
+  rootPath: string;       // absolute path to the skill folder
+  manifestHash: `sha256:${string}`; // content-addressable digest of canonical manifest JSON
+}
+
+/** Parse a SKILL.md file: split YAML frontmatter from markdown body. */
+export function parseSkillMd(content: string): { frontmatter: unknown; body: string } {
+  const trimmed = content.trimStart();
+  if (!trimmed.startsWith('---')) {
+    return { frontmatter: {}, body: content };
+  }
+  const endIdx = trimmed.indexOf('\n---', 3);
+  if (endIdx === -1) {
+    return { frontmatter: {}, body: content };
+  }
+  const fmText = trimmed.slice(3, endIdx).trim();
+  const body = trimmed.slice(endIdx + 4).trim();
+  const frontmatter = parseYaml(fmText);
+  return { frontmatter, body };
+}
+
+/** Compute a content-addressable hash of the canonical manifest JSON. */
+export function manifestHash(manifest: SkillManifest): `sha256:${string}` {
+  const sortKeys = (obj: unknown): unknown => {
+    if (obj === null || obj === undefined) return obj;
+    if (Array.isArray(obj)) return obj.map(sortKeys);
+    if (typeof obj !== 'object') return obj;
+    const sorted: Record<string, unknown> = {};
+    for (const k of Object.keys(obj as Record<string, unknown>).sort()) {
+      sorted[k] = sortKeys((obj as Record<string, unknown>)[k]);
+    }
+    return sorted;
+  };
+  // Strip the anchor.manifest_hash field itself before hashing (otherwise self-reference)
+  const stripped: SkillManifest = JSON.parse(JSON.stringify(manifest));
+  if (stripped.og.anchor) delete stripped.og.anchor.manifest_hash;
+  const json = JSON.stringify(sortKeys(stripped));
+  return `sha256:${createHash('sha256').update(json, 'utf8').digest('hex')}` as `sha256:${string}`;
+}
+
+/** Load a skill from a folder containing SKILL.md. */
+export function loadSkillFromPath(folderPath: string): LoadedSkill {
+  const skillMdPath = resolve(folderPath, 'SKILL.md');
+  if (!existsSync(skillMdPath)) {
+    throw new Error(`No SKILL.md at ${folderPath}`);
+  }
+  const content = readFileSync(skillMdPath, 'utf8');
+  const { frontmatter, body } = parseSkillMd(content);
+
+  const parsed = SkillManifestSchema.safeParse(frontmatter);
+  if (!parsed.success) {
+    throw new Error(`Invalid SKILL.md frontmatter at ${folderPath}: ${parsed.error.message}`);
+  }
+  const manifest = parsed.data;
+
+  // The skill folder name should match manifest.name (or at least be sluggable)
+  const id = basename(folderPath);
+
+  return {
+    id,
+    manifest,
+    systemPromptBody: body,
+    rootPath: resolve(folderPath),
+    manifestHash: manifestHash(manifest),
+  };
+}
+
+/** Discover all skills under a directory. */
+export function loadSkillsFromDir(dirPath: string): LoadedSkill[] {
+  if (!existsSync(dirPath)) return [];
+  const entries = readdirSync(dirPath);
+  const skills: LoadedSkill[] = [];
+  for (const entry of entries) {
+    const subdir = join(dirPath, entry);
+    if (!statSync(subdir).isDirectory()) continue;
+    const skillMd = join(subdir, 'SKILL.md');
+    if (!existsSync(skillMd)) continue;
+    try {
+      skills.push(loadSkillFromPath(subdir));
+    } catch (err) {
+      console.error(`Skipping ${entry}: ${(err as Error).message}`);
+    }
+  }
+  return skills;
+}
+
+/** Find a skill by id starting from the user's project + falling back to seed-skills. */
+export function findSkill(id: string, searchDirs: string[]): LoadedSkill | null {
+  for (const dir of searchDirs) {
+    const candidate = join(dir, id);
+    if (existsSync(join(candidate, 'SKILL.md'))) {
+      return loadSkillFromPath(candidate);
+    }
+  }
+  return null;
+}

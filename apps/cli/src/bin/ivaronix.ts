@@ -27,6 +27,7 @@ import { passportCommand } from '../commands/passport.js';
 import { computeCommand } from '../commands/compute.js';
 import { docCommand } from '../commands/doc.js';
 import { memoryCommand } from '../commands/memory.js';
+import { skillCommand } from '../commands/skill.js';
 
 const program = new Command();
 
@@ -55,6 +56,9 @@ program.addCommand(docCommand);
 
 // Memory permissions
 program.addCommand(memoryCommand);
+
+// Skills (browse/inspect installed skills)
+program.addCommand(skillCommand);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error('Error:', err.message);

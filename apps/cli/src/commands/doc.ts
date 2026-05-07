@@ -2,14 +2,31 @@ import { Command } from 'commander';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
+import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
 import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
+import { findSkill, type LoadedSkill } from '@ivaronix/skills';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+
+/** Walk up directories to find seed-skills + .ivaronix/skills */
+function skillSearchDirs(): string[] {
+  const cwd = process.cwd();
+  const local = resolve(cwd, '.ivaronix', 'skills');
+  let dir = cwd;
+  for (let i = 0; i < 8; i++) {
+    const candidate = resolve(dir, 'seed-skills');
+    if (existsSync(candidate)) return [local, candidate];
+    const parent = resolve(dir, '..');
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return [local];
+}
 
 export const docCommand = new Command('doc')
   .description('Private document Q&A — the killer demo');
@@ -22,16 +39,29 @@ docCommand
   .option('--high-stakes', 'use 5-role High-Stakes consensus (legal/contract/financial/medical)')
   .option('--quick', 'force 1-model Quick tier (overrides --consensus / --high-stakes)')
   .option('--receipt', 'create an Action Receipt for this run', true)
+  .option('--skill <id>', 'use this skill (defaults to private-doc-review)', 'private-doc-review')
   .option('--model <id>', 'override default model', 'qwen/qwen-2.5-7b-instruct')
   .option('--out-dir <dir>', 'where to write the signed receipt JSON', '.ivaronix/receipts/anchored')
-  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; quick?: boolean; receipt?: boolean; model: string; outDir: string }) => {
+  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string }) => {
     const env = loadEnv();
 
-    // Resolve tier — Quick is default; --consensus → Standard; --high-stakes → High-Stakes
-    let tier: ConsensusTier = 'quick';
+    // ─── 0. Load skill ────────────────────────────────────────────────────
+    const skill: LoadedSkill | null = findSkill(opts.skill, skillSearchDirs());
+    if (!skill) {
+      ui.fail(`Skill "${opts.skill}" not found in seed-skills/ or .ivaronix/skills/`);
+      ui.hint(`Run 'ivaronix skill list' to see available skills`);
+      process.exitCode = 1;
+      return;
+    }
+
+    // Resolve tier — explicit flag wins; otherwise skill's default_tier; finally Quick fallback
+    let tier: ConsensusTier = skill.manifest.og.consensus.default_tier;
     if (opts.highStakes) tier = 'high-stakes';
     else if (opts.consensus) tier = 'standard';
     if (opts.quick) tier = 'quick';
+
+    // Auto-enable Burn Mode if the skill prescribes it (e.g., private-doc-review)
+    const burnMode = Boolean((opts as { burn?: boolean }).burn ?? skill.manifest.og.burn.auto_enable);
 
     // ─── 1. Read the file ─────────────────────────────────────────────────
     const filePath = resolve(process.cwd(), file);
@@ -45,9 +75,11 @@ docCommand
     }
 
     ui.title(`doc ask ${basename(file)}`);
+    ui.info(`skill:               ${skill.id} v${skill.manifest.version}`);
+    ui.info(`manifestHash:        ${skill.manifestHash}`);
     ui.info(`question:            "${question}"`);
     ui.info(`model:               ${opts.model}`);
-    ui.info(`burn mode:           ${opts.burn ? 'ON (AES-256-GCM)' : 'off'}`);
+    ui.info(`burn mode:           ${burnMode ? 'ON (AES-256-GCM)' : 'off'}${!burnMode && skill.manifest.og.burn.auto_enable ? ' [auto-enabled by skill]' : ''}`);
     ui.info(`consensus tier:      ${tier} (~${TIER_COST_OG[tier]} OG estimate)`);
     ui.info(`roles:               ${ROLES_BY_TIER[tier].join(', ')}`);
     ui.divider();
@@ -55,7 +87,7 @@ docCommand
     // ─── 2. Encryption (Burn Mode) ────────────────────────────────────────
     let burnMeta: { keyFingerprint: `sha256:${string}`; encryptionType: 'aes-256-gcm'; destroyedAt: number } | null = null;
     let evidenceBytes: Uint8Array;
-    if (opts.burn) {
+    if (burnMode) {
       ui.pending('encrypting with AES-256-GCM session key...');
       const enc = burnEncrypt(docBytes);
       evidenceBytes = enc.ciphertext;
@@ -85,14 +117,16 @@ docCommand
     ui.pending(`querying 0G Router (${tier} tier, ${ROLES_BY_TIER[tier].length} role${ROLES_BY_TIER[tier].length > 1 ? 's' : ''})...`);
     const startTime = Date.now();
 
+    // Inject the skill's prompt body as the role-shared instruction prefix
+    const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${contextText}\n--- INPUT END ---`;
+
     const consensusResult = await runConsensus({
       tier,
       keyring,
       model: opts.model,
-      context: contextText,
+      context: enrichedContext,
       userPrompt: question,
       rawBytes: docBytes,
-      // Optional: future polish — pass live router balance + registry pause state
     });
 
     const elapsedMs = Date.now() - startTime;
@@ -161,17 +195,17 @@ docCommand
         trustScoreAtTime: 0,
       },
       request: {
-        skillId: 'private-doc-review',
-        skillVersion: '0.0.1',
-        skillManifestHash: sha256HexAsync('private-doc-review:0.0.1'),
+        skillId: skill.id,
+        skillVersion: skill.manifest.version,
+        skillManifestHash: skill.manifestHash,
         userPromptHash: sha256HexAsync(question),
-        inputArtifacts: [{ kind: 'doc', encrypted: !!opts.burn }],
+        inputArtifacts: [{ kind: 'doc', encrypted: !!burnMode }],
         policyDecision: 'approved',
         approvalChain: [{ gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:default-strict' }],
       },
       execution: {
         mode: tier === 'quick' ? 'doc_ask' : 'consensus',
-        burnMode: !!opts.burn,
+        burnMode: !!burnMode,
         consensusMode: tier !== 'quick',
         modelSelection: { requested: opts.model, final: opts.model },
         providerRouting: {
@@ -220,7 +254,7 @@ docCommand
       },
       storage: {
         proofDownloadVerified: false,
-        encryption: opts.burn
+        encryption: burnMode
           ? {
               enabled: true,
               type: 'aes-256-gcm',
@@ -229,7 +263,7 @@ docCommand
             }
           : { enabled: false, type: 'none', headerDetected: false },
       },
-      burn: opts.burn
+      burn: burnMode
         ? {
             sessionKeyDestroyedAt: burnMeta!.destroyedAt,
             localCleanupStatus: 'completed',

@@ -21,7 +21,7 @@
 | A | 5 (tiered consensus + TEE verify) | 🟢 **DONE 2026-05-08** |
 | A | 6 (ERC-7857 passport) | 🟢 **DONE 2026-05-08** |
 | A | 7 (CapabilityRegistry + MemoryAccessLog) | 🟢 **DONE 2026-05-08** |
-| A | 8 (hybrid memory engine) | ⬜ pending |
+| A | 8 (hybrid memory engine) | 🟢 **DONE 2026-05-08** |
 | A | 9 (3 first-party skills) | ⬜ pending |
 | A | 10 (SkillRegistry + scanner + sandbox) | ⬜ pending |
 | A | 11 (lifecycle hooks) | ⬜ pending |
@@ -359,16 +359,27 @@ embedding hashing-trick-tfidf-v1 dim=384
 - Embedding method (`hashing-trick-tfidf-v1`) is intentionally simple. Day 18 polish swaps in `transformers.js + all-MiniLM-L6-v2` cosine via the same `embed()` interface — no engine code change needed.
 - Temporal graph schema is in place; observation→fact extraction (TEE-backed) lands Day 9 with the first-party skills.
 
-### Day 9 — Three first-party skills (next)
-- `private-doc-review` — confidential PDF/DOCX/MD review with consensus + burn + receipt
-- `0g-integration-auditor` — audits any GitHub repo's 0G integration quality (used by automation Day 21)
-- `github-audit` — general code-quality + security audit
-- Each skill has SKILL.md + manifest.json + prompt.md + tests/
-- Manifest hash anchored on chain (Day 10 SkillRegistry)
+### Day 9 — Three first-party skills ✅ DONE 2026-05-08
+- `packages/skills` workspace package
+  - `manifest.ts` — Zod schema for Anthropic SKILL.md + Ivaronix `og:` extension block (permissions, reputation, consensus tier, burn auto-enable, creator passport)
+  - `loader.ts` — parses SKILL.md frontmatter + body, computes deterministic `manifestHash` from canonical-JSON of validated frontmatter (the value receipts will reference)
+  - `run.ts` — `runSkill()` composes skill body + user input → consensus invocation, returning `{ skillId, skillVersion, skillManifestHash, defaultTier, ... }`
+  - `index.ts` exports `loadSkillsFromDir` / `findSkill` for CLI consumption
+- Three first-party skill folders under `seed-skills/` matching awesome-claude-skills layout:
+  - `private-doc-review/` — confidential PDF/DOCX review, **burn auto-enabled**, standard tier; tests/sample-lease.txt (10-clause hostile lease)
+  - `0g-integration-auditor/` — quick-tier scoring of 0G repo integration; tests/sample-package-json.json with deliberate flaws (chain 16601, no encryption, console.log receipts, router-flag-only TEE)
+  - `github-audit/` — code & security audit; tests/sample-vulnerable.sol (Vault with reentrancy + missing access control)
+- CLI: `apps/cli/src/commands/skill.ts` exposes `ivaronix skill list` and `ivaronix skill inspect <id>` (manifest hash, permissions, reputation, prompt preview)
+- CLI: `ivaronix doc ask --skill <id>` defaults to `private-doc-review` and now honors the loaded skill's `default_tier` and `burn.auto_enable` policy unless the user explicitly overrides; receipts reference the real `skillId / skillVersion / skillManifestHash`
 
-### Day 9 Gate
-- All 3 skills run end-to-end producing verified receipts on testnet
-- Skills directory layout matches awesome-claude-skills format
+### Day 9 Gate ✅
+- ✅ All 3 skills smoke-tested end-to-end on testnet 16602:
+  - `0g-integration-auditor` → receipt #8, tx `0x8746ffc18acb1d30f193e665647eef4bbf4fed7bcdaef3deb2cf3db62eb6fbf2`, manifestHash `sha256:3cdd647f99c4a2…7462`, found all 4 deliberate flaws
+  - `github-audit` → receipt #9, tx `0xe358ece9603f1a93a766b5e468ed554346a11be5b1bf7af34629baa48fd0fdd5`, manifestHash `sha256:2c23673945e0df…c5eb`, caught critical (missing access control), high (reentrancy), medium (zero-address)
+  - `private-doc-review` → receipt #10, tx `0x3df3e5e48c834f4188d9cc88490d2aa1943b70c90099e0a754f20edb3797d65c`, manifestHash `sha256:7d45df06183d72…f689`, **Burn Mode auto-enabled** (AES-256-GCM, session key fingerprint captured + destroyed), risk-level=high
+- ✅ Passport `tokenId=1` updated correctly across all three runs: receiptCount 1→4, trustScore 1→4
+- ✅ Skills directory layout matches awesome-claude-skills format (SKILL.md + tests/, frontmatter + markdown body)
+- ✅ Manifest hash deterministic across loads (same input → same hash) — ready for Day 10 SkillRegistry on-chain anchoring
 
 ---
 
