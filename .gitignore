@@ -36,6 +36,13 @@ build/
 out/
 cache/
 broadcast/
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Local test artifacts
+tmp/
+*.tmp.json
 
 # Local data
 .ivaronix/

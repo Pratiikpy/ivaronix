@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { createChainClient } from '@ivaronix/og-chain';
+import { createChainClient, ReceiptRegistryClient, loadDeployments } from '@ivaronix/og-chain';
 import { createStorageClient } from '@ivaronix/og-storage';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { STALE_CHAIN_IDS } from '@ivaronix/core';
@@ -84,15 +84,37 @@ export const doctorCommand = new Command('doctor')
       }
     }
 
-    // Chain (contracts not yet deployed in Day 1)
+    // Chain
     if (all || opts.chain) {
       ui.section('04 · Chain (contracts)');
-      ui.pending('ReceiptRegistry      not yet deployed (Phase A Day 3)');
-      ui.pending('AgentPassportINFT    not yet deployed (Phase A Day 6)');
-      ui.pending('CapabilityRegistry   not yet deployed (Phase A Day 7)');
-      ui.pending('MemoryAccessLog      not yet deployed (Phase A Day 7)');
-      ui.pending('SkillRegistry        not yet deployed (Phase A Day 10)');
-      ui.pending('Erc7857Verifier      not yet deployed (Phase A Day 6)');
+      const deployments = loadDeployments(env.network);
+      const allContracts: { name: string; phase: string }[] = [
+        { name: 'ReceiptRegistry', phase: 'Day 3' },
+        { name: 'Erc7857Verifier', phase: 'Day 6' },
+        { name: 'AgentPassportINFT', phase: 'Day 6' },
+        { name: 'CapabilityRegistry', phase: 'Day 7' },
+        { name: 'MemoryAccessLog', phase: 'Day 7' },
+        { name: 'SkillRegistry', phase: 'Day 10' },
+      ];
+      for (const c of allContracts) {
+        const dep = deployments?.contracts[c.name];
+        if (dep) {
+          ui.pass(`${c.name.padEnd(18)} ${dep.address}`);
+          // Live read: next id (proves contract is callable)
+          if (c.name === 'ReceiptRegistry' && env.privateKey) {
+            try {
+              const chain = createChainClient({ network: env.network, privateKey: env.privateKey });
+              const registry = new ReceiptRegistryClient(dep.address, chain.provider);
+              const next = await registry.nextId();
+              ui.info(`${' '.repeat(18)}   ${next} receipts anchored`);
+            } catch {
+              /* skip live read on error */
+            }
+          }
+        } else {
+          ui.pending(`${c.name.padEnd(18)} not yet deployed (Phase A ${c.phase})`);
+        }
+      }
     }
 
     // Wallet balance (live read)

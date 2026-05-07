@@ -2,8 +2,34 @@ import { canonicalize, canonicalHash, newReceiptId, sha256HexAsync, NETWORKS, ty
 import type { Signer } from 'ethers';
 import { ReceiptV1Schema, type ReceiptV1, type UnsignedReceiptV1 } from './schema.js';
 
-/** Fields excluded from the canonical hash (per RECEIPTS_SPEC.md §3 step 1). */
-const HASH_EXCLUDE = new Set(['signature']);
+/**
+ * Fields excluded from the canonical hash (per RECEIPTS_SPEC.md §3 step 1).
+ *
+ * The receipt hash is the digest of the IMMUTABLE content as of the `claimed` state.
+ * Side-channel fields populated POST-CLAIM (chain anchor, storage tx) are excluded
+ * so the hash remains stable across the `claimed → anchored` transition:
+ *
+ * - `signature`         — added after hash, RECEIPTS_SPEC.md §3 step 3
+ * - `anchorTxHash`      — populated after on-chain anchor (`anchored` state)
+ * - `anchorBlockNumber` — same
+ * - `anchorTimestamp`   — same
+ * - `receiptTxHash`     — 0G Storage upload tx (only known post-upload)
+ *
+ * NOT excluded (stay in canonical at build time and in verify):
+ * - `proofDownloadVerified` — set to `false` at build, queried fresh at verify time (NOT mutated in receipt)
+ * - `independentVerified`   — set to `null` at build, queried fresh at verify time
+ * - `verifiedAt`            — same
+ *
+ * Verification re-runs the storage/chain/TEE checks from scratch each time;
+ * it does NOT mutate these fields in the receipt JSON.
+ */
+const HASH_EXCLUDE = new Set([
+  'signature',
+  'anchorTxHash',
+  'anchorBlockNumber',
+  'anchorTimestamp',
+  'receiptTxHash',
+]);
 
 export interface BuildReceiptInput {
   type: ReceiptV1['type'];

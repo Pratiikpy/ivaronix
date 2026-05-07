@@ -16,7 +16,7 @@
 |---|---|---|
 | A | 1 (scaffold + network) | 🟢 **DONE 2026-05-08** |
 | A | 2 (receipt skeleton) | 🟢 **DONE 2026-05-08** |
-| A | 3 (ReceiptRegistry deploy) | ⬜ pending |
+| A | 3 (ReceiptRegistry deploy) | 🟢 **DONE 2026-05-08** |
 | A | 4 (Burn Mode + doc-ask) | ⬜ pending |
 | A | 5 (tiered consensus + TEE verify) | ⬜ pending |
 | A | 6 (ERC-7857 passport) | ⬜ pending |
@@ -125,18 +125,63 @@ $ pnpm --filter @ivaronix/receipts test
 - Signing path: hash → `eth_personal_sign` → signature attached → full canonical bytes uploaded to Storage in Day 4.
 - The JSON-schema (`schemas/receipt-v1.json`) file isn't generated yet — Zod schema is the source; will derive a JSON schema export in Day 3 if external tooling needs it.
 
-## Day 3 — ReceiptRegistry on testnet (next)
+## Day 3 — ReceiptRegistry on testnet (DONE 2026-05-08)
 
-### Plan
-- Deploy `ReceiptRegistry.sol` to Galileo testnet 16602 via Foundry script
-- Verify on `chainscan-galileo.0g.ai`
-- Add `apps/cli` `receipt anchor <id>` command that calls `ReceiptRegistry.anchor()`
-- Update `apps/cli` `receipt verify` to fetch on-chain anchor via the registry contract and show `ANCHORED` state
-- First end-to-end testnet receipt anchored
+### Done
+- [x] `ReceiptRegistry.sol` deployed to testnet 16602 via `forge create`
+  - **Address: `0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`**
+  - Tx: `0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814`
+  - Deployer: Wallet A `0xaa95...8677Ce`
+- [x] `deployments/testnet.json` records contract address + tx hash + explorer URL
+- [x] `packages/og-chain` adds `ReceiptRegistryClient` (typed wrapper, inline ABI) + `loadDeployments()` helper
+- [x] `apps/cli` `receipt anchor <path>` calls `ReceiptRegistry.anchor()`, waits for confirmation, writes anchor tx info back to file
+- [x] `apps/cli` `receipt verify <path>` runs CLAIMED checks + queries on-chain anchor by `receiptRoot` via `ReceiptAnchored` event; shows `→ ANCHORED ✓` when found
+- [x] `apps/cli` `receipt show <id>` reads on-chain receipt by id and prints fields
+- [x] `apps/cli` `doctor` now reads `deployments/testnet.json` and shows live `nextId()` count
+- [x] `scripts/build-hello-receipt.ts` produces a signed receipt for smoke testing
+- [x] **2 testnet receipts anchored end-to-end:**
+  - id=0 — first anchor (gas 141217)
+  - id=1 — fresh receipt with corrected hash (gas 107017, https://chainscan-galileo.0g.ai/tx/0x600999550e3b4fba6cd44a92f0ae1eda3c8502d0e5f7d0d8a173091aa8ac38a3)
 
-### Day 3 Gate
-- `ivaronix receipt anchor <local-receipt>` returns testnet tx hash
-- `ivaronix receipt verify <id>` shows `CLAIMED → ANCHORED`
+### Day 3 Gate (HIT 2026-05-08)
+```
+$ ivaronix receipt verify tmp/hello-receipt-v2.json
+  ● schema                 PASS
+  ● hash                   PASS
+  ● signature              PASS
+  ●                     → CLAIMED
+  ● chain anchor          PASS  (id=1)
+  ●                     → ANCHORED
+
+Status: → ANCHORED ✓
+```
+
+### Bug found & fixed during Day 3
+**Hash exclusion drift between build and verify.** Initial HASH_EXCLUDE only excluded `signature`. After write-back of `chainAnchor.anchorTxHash` post-anchor, the recomputed hash diverged from the original. First fix added too many exclusions (including build-time fields like `proofDownloadVerified`), which made build/verify canonical content asymmetric. Final fix: HASH_EXCLUDE only excludes truly post-claim mutated fields:
+```typescript
+const HASH_EXCLUDE = new Set([
+  'signature',         // added after hash, RECEIPTS_SPEC.md §3 step 3
+  'anchorTxHash',      // populated after on-chain anchor
+  'anchorBlockNumber',
+  'anchorTimestamp',
+  'receiptTxHash',     // populated after 0G Storage upload
+]);
+```
+Verification re-runs the storage/chain/TEE checks fresh each time; it does NOT mutate `proofDownloadVerified` / `independentVerified` / `verifiedAt` in the receipt JSON. Those fields stay at their build-time values (false/null) — the LIVE state lives in the verify command's output.
+
+### Day 4 — Burn Mode + doc-ask end-to-end (next)
+- AES-256-GCM session keys with destruction + key fingerprint capture
+- `ivaronix doc ask <pdf> --burn --receipt` builds, encrypts, uploads to 0G Storage, anchors receipt, prints public Proof URL placeholder
+- `peekHeader`-detected encryption type
+- Wire `@0gfoundation/0g-storage-ts-sdk` into `packages/og-storage` (currently stubbed)
+- Storage upload with proof download verification
+- Local cleanup verification (zero buffer, vacuum tmp dir)
+
+### Day 4 Gate
+- `ivaronix doc ask <pdf> --burn --receipt` end-to-end on testnet
+- Receipt has populated storage section (real evidenceRoot, encryption metadata)
+- Receipt verifies CLAIMED → ANCHORED
+- No plaintext leak in receipt JSON (only hashes)
 
 ---
 

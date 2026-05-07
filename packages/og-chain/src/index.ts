@@ -1,6 +1,9 @@
 import { JsonRpcProvider, Wallet, type Signer } from 'ethers';
 import { NETWORKS, STALE_CHAIN_IDS, type Network, type NetworkConfig } from '@ivaronix/core';
 
+export * from './contracts/ReceiptRegistry.js';
+export * from './deployments.js';
+
 export interface ChainClientOptions {
   network: Network;
   privateKey?: string;

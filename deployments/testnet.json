@@ -1,0 +1,13 @@
+{
+  "network": "testnet",
+  "chainId": 16602,
+  "deployer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "deployedAt": "2026-05-08",
+  "contracts": {
+    "ReceiptRegistry": {
+      "address": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+      "txHash": "0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c"
+    }
+  }
+}
