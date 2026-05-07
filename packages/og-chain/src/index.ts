@@ -3,6 +3,8 @@ import { NETWORKS, STALE_CHAIN_IDS, type Network, type NetworkConfig } from '@iv
 
 export * from './contracts/ReceiptRegistry.js';
 export * from './contracts/AgentPassportINFT.js';
+export * from './contracts/CapabilityRegistry.js';
+export * from './contracts/MemoryAccessLog.js';
 export * from './deployments.js';
 
 export interface ChainClientOptions {

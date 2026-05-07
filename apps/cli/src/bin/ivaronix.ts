@@ -26,6 +26,7 @@ import { receiptCommand } from '../commands/receipt.js';
 import { passportCommand } from '../commands/passport.js';
 import { computeCommand } from '../commands/compute.js';
 import { docCommand } from '../commands/doc.js';
+import { memoryCommand } from '../commands/memory.js';
 
 const program = new Command();
 
@@ -51,6 +52,9 @@ program.addCommand(computeCommand);
 
 // Doc-ask (the killer demo)
 program.addCommand(docCommand);
+
+// Memory permissions
+program.addCommand(memoryCommand);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error('Error:', err.message);

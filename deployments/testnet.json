@@ -18,6 +18,16 @@
       "address": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
       "txHash": "0x40c2e67b08b60d5d4902397d6e81f84583e8e109c07e53eadace7ef20d6825da",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E"
+    },
+    "CapabilityRegistry": {
+      "address": "0x3783f3c4834fCCBD553860e15c64C7E052646a8D",
+      "txHash": "0xdc8387e0f6c5c7a5a510270ba1c9d7c568e68b17e7cde9d6e75c213911a2d151",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D"
+    },
+    "MemoryAccessLog": {
+      "address": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
+      "txHash": "0x3a94eee55dbf5b6a0aaba3be84453eef665f3ce960f984449f1d26d970f8eb28",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119"
     }
   }
 }

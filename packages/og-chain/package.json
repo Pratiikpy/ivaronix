@@ -9,6 +9,8 @@
     ".": "./src/index.ts",
     "./contracts/ReceiptRegistry": "./src/contracts/ReceiptRegistry.ts",
     "./contracts/AgentPassportINFT": "./src/contracts/AgentPassportINFT.ts",
+    "./contracts/CapabilityRegistry": "./src/contracts/CapabilityRegistry.ts",
+    "./contracts/MemoryAccessLog": "./src/contracts/MemoryAccessLog.ts",
     "./deployments": "./src/deployments.ts"
   },
   "scripts": {
