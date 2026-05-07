@@ -9,7 +9,7 @@ import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
-import { findSkill, type LoadedSkill } from '@ivaronix/skills';
+import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, type LoadedSkill, type ScanResult } from '@ivaronix/skills';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -83,6 +83,62 @@ docCommand
     ui.info(`consensus tier:      ${tier} (~${TIER_COST_OG[tier]} OG estimate)`);
     ui.info(`roles:               ${ROLES_BY_TIER[tier].join(', ')}`);
     ui.divider();
+
+    // ─── 1.5. Scanner + sandbox pre-flight ────────────────────────────────
+    const provider0 = new JsonRpcProvider(env.rpcUrl);
+    const skillRegistryAddr = getDeployedAddress(env.network, 'SkillRegistry');
+    let scan: ScanResult | undefined;
+    if (skillRegistryAddr) {
+      const reg = new SkillRegistryClient(skillRegistryAddr, provider0);
+      scan = await scanSkill(skill, reg);
+      if (scan.matches) {
+        ui.pass(`registry scan        MATCH (creator ${scan.creator}, block-time ${new Date(scan.publishedAt! * 1000).toISOString()})`);
+      } else if (!scan.registered) {
+        ui.info(`registry scan        not registered — manifest is local-only`);
+      } else if (scan.revoked) {
+        ui.fail(`registry scan        REVOKED on chain — refusing to run`);
+        process.exitCode = 1;
+        return;
+      } else {
+        ui.fail(`registry scan        MISMATCH — local manifest differs from on-chain canonical record`);
+        ui.fail(`                     ${scan.reason}`);
+        process.exitCode = 1;
+        return;
+      }
+    } else {
+      ui.info(`registry scan        skipped (SkillRegistry not deployed on ${env.network})`);
+    }
+
+    // Sandbox: pull caller's passport trust score (best-effort)
+    let callerTrust = 0;
+    try {
+      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+      if (passportAddr && env.walletAddress) {
+        const passport = new AgentPassportClient(passportAddr, provider0);
+        const profile = await passport.getPassportByWallet(env.walletAddress as `0x${string}`);
+        if (profile) callerTrust = Number(profile.trustScore ?? 0);
+      }
+    } catch { /* best-effort; sandbox treats trust=0 if unknown */ }
+
+    const decision = evaluateSandbox(skill, {
+      callerTrustScore: callerTrust,
+      receiptRequested: !!opts.receipt,
+      burnEnabled: burnMode,
+      scan,
+    });
+
+    if (decision.violations.length > 0) {
+      for (const v of decision.violations) {
+        const fn = v.severity === 'block' ? ui.fail : ui.info;
+        fn(`sandbox.${v.code}`, v.message);
+      }
+    }
+    if (!decision.allow) {
+      ui.fail(`sandbox refused this run`);
+      process.exitCode = 1;
+      return;
+    }
+    if (decision.violations.length > 0) ui.divider();
 
     // ─── 2. Encryption (Burn Mode) ────────────────────────────────────────
     let burnMeta: { keyFingerprint: `sha256:${string}`; encryptionType: 'aes-256-gcm'; destroyedAt: number } | null = null;

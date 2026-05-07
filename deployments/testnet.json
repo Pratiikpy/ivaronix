@@ -28,6 +28,11 @@
       "address": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
       "txHash": "0x3a94eee55dbf5b6a0aaba3be84453eef665f3ce960f984449f1d26d970f8eb28",
       "explorer": "https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119"
+    },
+    "SkillRegistry": {
+      "address": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
+      "txHash": "0x7b17d10f7fd00465660e563b4cd0e1c136a49add4ffce8e63276e5878cd12f8b",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1"
     }
   }
 }

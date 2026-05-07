@@ -5,6 +5,7 @@ export * from './contracts/ReceiptRegistry.js';
 export * from './contracts/AgentPassportINFT.js';
 export * from './contracts/CapabilityRegistry.js';
 export * from './contracts/MemoryAccessLog.js';
+export * from './contracts/SkillRegistry.js';
 export * from './deployments.js';
 
 export interface ChainClientOptions {

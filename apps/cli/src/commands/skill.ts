@@ -1,11 +1,20 @@
 import { Command } from 'commander';
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
+import { Wallet, JsonRpcProvider } from 'ethers';
 import {
   loadSkillsFromDir,
   findSkill,
+  scanSkill,
+  skillIdFromName,
+  versionIdFromSemver,
+  manifestHashToBytes32,
+  SkillRegistryClient,
   type LoadedSkill,
 } from '@ivaronix/skills';
+import { NETWORKS } from '@ivaronix/core';
+import { getDeployedAddress } from '@ivaronix/og-chain';
+import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
 /** Search dirs in priority order: project local skills → seed-skills (root) */
@@ -24,6 +33,13 @@ function skillSearchDirs(): string[] {
     dir = parent;
   }
   return [localSkills];
+}
+
+function requireKey(k: string | undefined): string {
+  if (!k) {
+    throw new Error('Missing EVM private key. Set EVM_PRIVATE_KEY or OG_PRIVATE_KEY in .env');
+  }
+  return k;
 }
 
 function loadAllSkills(): LoadedSkill[] {
@@ -104,4 +120,127 @@ skillCommand
     ui.divider();
     ui.section('prompt body (first 600 chars)');
     console.log(skill.systemPromptBody.slice(0, 600) + (skill.systemPromptBody.length > 600 ? '…' : ''));
+  });
+
+// ─── publish ─────────────────────────────────────────────────────────────────
+skillCommand
+  .command('publish <id>')
+  .description('Anchor this skill\'s manifestHash on the SkillRegistry contract')
+  .option('--network <net>', 'testnet | mainnet', 'testnet')
+  .action(async (id: string, opts: { network: 'testnet' | 'mainnet' }) => {
+    const env = loadEnv();
+    const skill = findSkill(id, skillSearchDirs());
+    if (!skill) {
+      ui.fail(`No skill named "${id}"`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const net = NETWORKS[opts.network];
+    if (!net) {
+      ui.fail(`Unknown network "${opts.network}"`);
+      process.exitCode = 1;
+      return;
+    }
+    const provider = new JsonRpcProvider(net.rpcUrl);
+    const wallet = new Wallet(requireKey(env.privateKey), provider);
+    const registryAddr = getDeployedAddress(opts.network, 'SkillRegistry');
+    if (!registryAddr) {
+      ui.fail(`SkillRegistry not deployed on ${opts.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const reg = new SkillRegistryClient(registryAddr, wallet);
+
+    const skillId = skillIdFromName(skill.id);
+    const versionId = versionIdFromSemver(skill.manifest.version);
+    const manifestHash = manifestHashToBytes32(skill.manifestHash);
+
+    ui.title(`skill publish ${skill.id}@${skill.manifest.version}`);
+    ui.info(`registry             ${registryAddr}`);
+    ui.info(`skillId              ${skillId}`);
+    ui.info(`versionId            ${versionId}`);
+    ui.info(`manifestHash         ${manifestHash}`);
+    ui.divider();
+
+    // Pre-flight: is this version already published?
+    const existing = await reg.getVersion(skillId, versionId);
+    if (existing) {
+      if (existing.manifestHash.toLowerCase() === manifestHash.toLowerCase()) {
+        ui.pass(`already published with the same manifestHash — nothing to do`);
+        if (existing.revoked) ui.fail(`note: this version is REVOKED on chain`);
+        return;
+      }
+      ui.fail(`version ${skill.manifest.version} is already published with a DIFFERENT manifestHash:`);
+      ui.info(`  on chain:  ${existing.manifestHash}`);
+      ui.info(`  local:     ${manifestHash}`);
+      ui.hint(`bump the skill's version (e.g. ${skill.manifest.version} → next patch) and retry`);
+      process.exitCode = 1;
+      return;
+    }
+
+    ui.info(`publishing on ${opts.network}...`);
+    const tx = await reg.publishVersion(skillId, versionId, manifestHash);
+    ui.info(`tx hash              ${tx.hash}`);
+    const receipt = await tx.wait();
+    ui.pass(`block                ${receipt?.blockNumber}`);
+    ui.pass(`gas used             ${receipt?.gasUsed}`);
+    ui.divider();
+    ui.pass(`Status: → ANCHORED ✓`);
+    ui.hint(`Explorer: https://chainscan-galileo.0g.ai/tx/${tx.hash}`);
+  });
+
+// ─── verify ──────────────────────────────────────────────────────────────────
+skillCommand
+  .command('verify <id>')
+  .description('Compare local manifest against the on-chain SkillRegistry record')
+  .option('--network <net>', 'testnet | mainnet', 'testnet')
+  .action(async (id: string, opts: { network: 'testnet' | 'mainnet' }) => {
+    const env = loadEnv();
+    const skill = findSkill(id, skillSearchDirs());
+    if (!skill) {
+      ui.fail(`No skill named "${id}"`);
+      process.exitCode = 1;
+      return;
+    }
+    const net = NETWORKS[opts.network];
+    const provider = new JsonRpcProvider(net.rpcUrl);
+    const registryAddr = getDeployedAddress(opts.network, 'SkillRegistry');
+    if (!registryAddr) {
+      ui.fail(`SkillRegistry not deployed on ${opts.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const reg = new SkillRegistryClient(registryAddr, provider);
+
+    ui.title(`skill verify ${skill.id}@${skill.manifest.version}`);
+    ui.info(`local manifestHash   ${skill.manifestHash}`);
+
+    const scan = await scanSkill(skill, reg);
+    ui.divider();
+    if (!scan.registered) {
+      ui.fail(`status               NOT REGISTERED`);
+      ui.hint(`run 'ivaronix skill publish ${skill.id}' to anchor it`);
+      process.exitCode = 1;
+      return;
+    }
+    if (scan.revoked) {
+      ui.fail(`status               REVOKED`);
+      ui.info(`onchain hash         ${scan.onchainManifestHash}`);
+      ui.info(`creator              ${scan.creator}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (!scan.matches) {
+      ui.fail(`status               MISMATCH`);
+      ui.info(`onchain hash         ${scan.onchainManifestHash}`);
+      ui.info(`reason               ${scan.reason}`);
+      process.exitCode = 1;
+      return;
+    }
+    ui.pass(`status               MATCH`);
+    ui.pass(`onchain hash         ${scan.onchainManifestHash}`);
+    ui.pass(`creator              ${scan.creator}`);
+    ui.pass(`publishedAt          ${new Date(scan.publishedAt! * 1000).toISOString()}`);
+    if (env) { /* env is loaded; no-op to silence ts unused */ }
   });

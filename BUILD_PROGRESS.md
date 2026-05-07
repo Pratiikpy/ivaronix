@@ -381,6 +381,25 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Skills directory layout matches awesome-claude-skills format (SKILL.md + tests/, frontmatter + markdown body)
 - ✅ Manifest hash deterministic across loads (same input → same hash) — ready for Day 10 SkillRegistry on-chain anchoring
 
+### Day 10 — SkillRegistry contract + scanner + sandbox ✅ DONE 2026-05-08
+- `contracts/src/SkillRegistry.sol` — anchors manifestHash per (skillId, versionId); creator lock-on-first-publish, revocation, immutable versions, transferable ownership; deployed to **`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`** on testnet 16602 (tx `0x7b17d10f7fd00465660e563b4cd0e1c136a49add4ffce8e63276e5878cd12f8b`)
+- `contracts/test/SkillRegistry.t.sol` — 16/16 tests pass (publish/revoke/verify/transfer paths + zero-arg + non-owner rejection)
+- `packages/og-chain/src/contracts/SkillRegistry.ts` — typed wrapper with `publishVersion` / `revokeVersion` / `verify` / `latestVersion` / helpers `skillIdFromName` `versionIdFromSemver` `manifestHashToBytes32`
+- `packages/skills/src/scanner.ts` — `scanSkill(skill, registry)` returns `{matches, registered, revoked, onchainManifestHash, creator, publishedAt, reason}`
+- `packages/skills/src/sandbox.ts` — `evaluateSandbox(skill, ctx)` enforces `og.permissions` block: passport_min_trust gate, receipt_required, compute_tee_required, burn auto-enable contract, scanner-mismatch escalation; declares (warn-tier) shell_access / writes_files / wallet_access for Day 11 lifecycle hooks
+- CLI: `ivaronix skill publish <id>` anchors a skill's manifestHash on chain (idempotent — refuses if same version is already published with different hash)
+- CLI: `ivaronix skill verify <id>` does the round-trip check off-chain → on-chain
+- CLI: `doc ask` now runs scanner+sandbox pre-flight; MISMATCH or REVOKED aborts the run with exit code 1; absent registry registration is logged as informational ("local-only")
+
+### Day 10 Gate ✅
+- ✅ All 3 first-party skills anchored on SkillRegistry:
+  - `0g-integration-auditor@0.1.0` → tx `0xb156196085d360fe0d3e7af03eb24f6d3130e591edc369c05d18768d4db13212`
+  - `github-audit@0.1.0` → tx `0xc1c5fd203f034a4d07dac53cba4ec745acfbc6caf0538f4cb680c14e1131398a`
+  - `private-doc-review@0.1.0` → tx `0xdd4736c17768ede59001485a33e03a1e62ef66cd2b4ac321f082531e4053bd4c`
+- ✅ `skill verify` returns MATCH for all three (creator wallet locked, on-chain manifestHash byte-identical to the local sha256)
+- ✅ `doc ask --skill private-doc-review` runs scanner pre-flight, prints "registry scan MATCH", then proceeds → receipt #11 anchored, tx `0xfc31b4a8adc342eb01f0543c93c2b483362ba6c2d783314481863f91acd80622`, passport receiptCount=5/trustScore=5
+- ✅ Sandbox enforcement: passport_min_trust (block), receipt_required (block), scanner mismatch (block), burn-disabled-on-burn-skill (warn unless strict)
+
 ---
 
 ## Blockers

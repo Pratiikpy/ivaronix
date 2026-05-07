@@ -243,6 +243,9 @@ importers:
       '@ivaronix/core':
         specifier: workspace:*
         version: link:../core
+      '@ivaronix/og-chain':
+        specifier: workspace:*
+        version: link:../og-chain
       '@ivaronix/og-router':
         specifier: workspace:*
         version: link:../og-router

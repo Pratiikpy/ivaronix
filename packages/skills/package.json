@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@ivaronix/core": "workspace:*",
+    "@ivaronix/og-chain": "workspace:*",
     "@ivaronix/og-router": "workspace:*",
     "@ivaronix/consensus": "workspace:*",
     "yaml": "^2.6.0",
