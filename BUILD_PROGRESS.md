@@ -544,6 +544,20 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ Playwright smoke at `/global`: live stats — Receipts anchored **19**, Passports minted **1**, OG spent **0.000029** (sum of local billing), First-party skills **5**; Top skills card shows `github-audit · 1 run · 0.000029 OG`; Recent memory access feed shows 5 real on-chain `MemoryAccessed` events from wallet `0xaa954c33…77Ce` (READ + WRITE access types from the Day-8 memory engine writes), each row stamped with block number + ISO timestamp
 - ✅ Playwright smoke at `/memory`: page renders the §-pattern, "Grants. Scopes. Audit." headline, and the wallet-required empty-state card ("Connect a wallet to issue and revoke memory grants. The connected wallet becomes the grant owner; only it can revoke."). The wagmi-wired issue + revoke + grants-list flows mount once a wallet connects; full end-to-end click-to-tx test requires a browser wallet extension and is deferred to Day 22 e2e.
 
+### Day 18 — Studio polish + mobile responsive ✅ DONE 2026-05-08
+- `apps/studio/src/app/globals.css` — added the responsive layer per UI_UX_GUIDE §8:
+  - **Tablet ≤1280px**: body font 16px → 15px
+  - **Mobile ≤768px**: hero h1 80px → 40px (line-height 1.05, letter-spacing -0.5px), section padding 96px → 48px, header nav links hidden (logo + Connect-wallet only), every 2-col grid (`grid-template-columns: 2fr 1fr` and `1fr 1fr`) collapses to single column via attribute selector, card padding 32px → 20px, `.italic-display` numbers 64px → 40px, footer wraps to column with reduced padding, .btn-primary/.btn-secondary inside cards become full-width
+  - Hover lift on `.card-hoverable` (only on `(hover: hover)` devices, avoids sticky :hover on touch)
+  - Smooth focus-ring transition + reduced-motion respect (already present)
+
+### Day 18 Gate ✅
+- ✅ `next build` green (no bundle changes; CSS-only)
+- ✅ Playwright visual diff at **390×844 (mobile)**: home renders single-column, hero "Catch the risks. *Keep the receipts.*" at 40px, nav reduced to logo + wallet, drop-zone hero card stacks (skill/tier rows wrap), stat cards single-column, footer wraps; `/skills` renders 5 stacked cards with REGISTRY MATCH on each, all permission pills wrap cleanly
+- ✅ Playwright visual diff at **1280×800 (tablet)**: full nav, hero at full size, 4-col stat grid, 2-col bottom panel on `/global` (Top skills + Recent memory access)
+- ✅ Desktop 1440×900 path unchanged — earlier Day-17 + Day-15 screenshots already proved correct rendering at desktop width
+- ⚠ Demo GIF deferred to Day 22 e2e once a real wallet is connected (Playwright MCP can't host an injected web3 provider for the Run-flow click-through)
+
 ---
 
 ## Blockers

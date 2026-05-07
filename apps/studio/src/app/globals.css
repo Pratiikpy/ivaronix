@@ -195,6 +195,88 @@ body {
   display: inline-block;
 }
 
+/* ─── Responsive ─────────────────────────────────────────────────────────────
+ * Per UI_UX_GUIDE §8. Tested at 1440x900, 1280x800, 390x844.
+ *
+ * Breakpoint thinking (mobile-first overrides):
+ *   ≤1280px → tablet: side gutters 48px, hero 64px
+ *   ≤768px  → mobile: side gutters 24px, hero 40px, two-col grids stack,
+ *             header nav truncated, four-light row scrolls horizontally
+ */
+
+/* Tablet */
+@media (max-width: 1280px) {
+  body {
+    font-size: 15px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  /* Hero scaling — 80px → 40px per the guide */
+  h1 {
+    font-size: 40px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.5px !important;
+  }
+  /* Section padding shrink — 96px → 48px */
+  section {
+    padding-top: 48px !important;
+    padding-bottom: 48px !important;
+  }
+  /* Header: hide secondary links, keep logo + wallet button */
+  header nav a {
+    display: none;
+  }
+  header > div {
+    padding: 0 16px !important;
+  }
+  /* Stack any 2-col grid */
+  [style*="grid-template-columns: 2fr 1fr"],
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Card padding shrink */
+  .card {
+    padding: 20px !important;
+  }
+  /* Side gutters */
+  main section > div {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+  /* Buttons full-width inside narrow cards */
+  .card .btn-primary,
+  .card .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+  /* Smaller stat numbers so they fit a single line on 390px */
+  .italic-display {
+    font-size: 40px !important;
+  }
+  /* Footer wraps */
+  footer {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    padding: 24px 16px !important;
+  }
+}
+
+/* Hover lift on cards (skip on touch devices to avoid sticky :hover) */
+@media (hover: hover) {
+  .card-hoverable:hover {
+    box-shadow: var(--shadow-soft);
+    transform: translateY(-1px);
+  }
+}
+
+/* Smooth focus ring transition */
+:focus-visible {
+  transition: outline-color 150ms ease;
+}
+
 /* Reduce motion — respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *,
