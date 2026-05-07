@@ -445,6 +445,32 @@ embedding hashing-trick-tfidf-v1 dim=384
 - ✅ 61/61 contract tests pass after schema change; every workspace typecheck (consensus / memory / og-toolkit / skills / cli) passes.
 - ✅ Skill catalog now lists 5 first-party skills, all with on-chain anchored manifests.
 
+### Day 13 — Studio scaffold ✅ DONE 2026-05-08
+- `apps/studio` — Next.js 15.0.3 + React 19 + Tailwind v4-beta with the canonical brand tokens from UI_UX_GUIDE.md §1 (cream `#faf9f6` background, near-black `#1a1a1a` foreground, accent green `#16a34a`, serif italic display via Times New Roman). Editorial design — NOT dark mode (BUILD.md was older; UI_UX_GUIDE locked 2026-05-08 wins).
+- 8 routes scaffolded:
+  - `/` — hero with "Catch the risks. *Keep the receipts.*" + live `Total receipts` from on-chain `ReceiptRegistry.nextId()` + Four-Light Row + section pattern
+  - `/skills` — catalog of 5 first-party skills with permission pills (network/files/compute)
+  - `/skill/[id]` — detail page; reads on-chain manifestHash + creator + publishedAt from SkillRegistry
+  - `/r/[id]` — receipt page; reads from `ReceiptRegistry.getReceipt(id)` (numeric) or `findByReceiptRoot` (bytes32)
+  - `/agent/[handle]` — passport profile (wallet-address handles for Day 13; vanity handles Day 17)
+  - `/memory` — Day-13 stub for the Memory Permission Center
+  - `/global` — live `nextId` + `nextTokenId` reads cached 60s
+  - `/dashboard` — wallet-aware stub showing connected address + links
+- Components: `Logo` (brackets-with-i), `Header` (sticky 64px, blur backdrop), `WalletConnect` (wagmi `injected` connector), `FourLightRow`, `Section` (the §-pattern), all per UI_UX_GUIDE.
+- Wallet connect: wagmi v2 + viem with `defineChain` for both `ogTestnet` (16602) and `ogMainnet` (16661); `injected` connector covers MetaMask + browser wallets without WalletConnect overhead.
+- `src/lib/chain.ts` — server-side reads from ReceiptRegistry + AgentPassportINFT + SkillRegistry using the workspace `@ivaronix/og-chain` package directly (no API proxy).
+- `next.config.ts` — `transpilePackages` + a webpack `extensionAlias` for `.js` → `.ts` so workspace ESM source imports resolve without a build step.
+- `middleware.ts` — rewrites `/@<handle>` → `/agent/<handle>` for the canonical vanity URL pattern from HLD §6 (Next.js doesn't accept literal `@` in route segments).
+- `app/icon.svg` — brand brackets-with-i mark; Next 15 picks it up automatically as the favicon.
+
+### Day 13 Gate ✅
+- ✅ `next build` succeeds (8 routes compiled · middleware 31.9 kB · shared chunks 100 kB · React 19)
+- ✅ Workspace typecheck passes (every package + Studio)
+- ✅ Playwright visual diff at 1280×800: homepage renders with `Total receipts: 18` (LIVE from on-chain `ReceiptRegistry.nextId()`), `First-party skills: 5`, brand cream-on-black, serif italic emphasis on "Keep the receipts.", §-numbered section labels, Four-Light Row chips, brand-correct logo + wordmark
+- ✅ All 5 routes load successfully via `next start` on :3300 (`/`, `/skills`, `/skill/private-doc-review`, `/global`, `/r/14`)
+- ✅ Console clean except an initial `/favicon.ico 404` — fixed by adding `app/icon.svg`
+- ⚠ Vercel deploy skipped (requires user-side `vercel login`); Day-22 Phase A close will deploy. The build artifacts are deploy-ready.
+
 ---
 
 ## Blockers

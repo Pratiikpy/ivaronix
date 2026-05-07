@@ -1,0 +1,213 @@
+@import "tailwindcss";
+
+/*
+ * Brand tokens — copied verbatim from UI_UX_GUIDE.md §1 (locked 2026-05-08).
+ * The HTML mockup at root /Ivaronix.html is the visual source of truth.
+ *
+ * IMPORTANT: foreground is #1a1a1a, NOT #000. Pure black is too aggressive
+ * against the cream background — the warm near-black is part of the
+ * editorial feel.
+ */
+@theme inline {
+  --color-bg: #faf9f6;
+  --color-fg: #1a1a1a;
+  --color-muted: #6b6b66;
+  --color-soft: #999999;
+  --color-card: #ffffff;
+  --color-tonal: #f4f3ef;
+  --color-hairline: rgba(26, 26, 26, 0.08);
+
+  --color-accent: #16a34a;
+  --color-accent-soft: #dcfce7;
+
+  --color-pending: #d97706;
+  --color-pending-bg: #fef3c7;
+  --color-verified: #16a34a;
+  --color-verified-bg: #dcfce7;
+  --color-mismatch: #dc2626;
+  --color-mismatch-bg: #fee2e2;
+
+  /* Per-layer Active colors during inference */
+  --color-storage: #0d9488;
+  --color-compute: #7c3aed;
+  --color-tee: #9333ea;
+  --color-chain: #2563eb;
+
+  --font-display: "Times New Roman", "Georgia", serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Editorial italics — display font for serif italic emphasis */
+.italic-display {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Section label: § 01 · QUICKSTART */
+.section-label {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Wordmark: I V A R O N I X */
+.wordmark {
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Card surface */
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  transition: box-shadow 200ms ease-out;
+}
+.card:hover {
+  box-shadow: var(--shadow-soft);
+}
+
+/* Tonal surface (slightly darker cream) */
+.surface-tonal {
+  background: var(--color-tonal);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--color-fg);
+  color: var(--color-bg);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background 150ms ease;
+}
+.btn-primary:hover {
+  background: #333;
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--color-fg);
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  border: 1px solid var(--color-fg);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.btn-secondary:hover {
+  background: var(--color-fg);
+  color: var(--color-bg);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-fg);
+  padding: 8px 16px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+.btn-ghost:hover {
+  text-decoration: underline;
+}
+
+/* Focus ring — green, only on keyboard focus */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Receipt state chips */
+.chip-pending {
+  background: var(--color-pending-bg);
+  color: #92400e;
+  border: 1px dashed var(--color-pending);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+.chip-verified {
+  background: var(--color-verified-bg);
+  color: #166534;
+  border: 1px solid var(--color-verified);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+.chip-mismatch {
+  background: var(--color-mismatch-bg);
+  color: #991b1b;
+  border: 1px solid var(--color-mismatch);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-block;
+}
+
+/* Reduce motion — respect user preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mono helpers for hashes / addresses */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
