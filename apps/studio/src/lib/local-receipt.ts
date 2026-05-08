@@ -41,40 +41,44 @@ export interface ReceiptBody {
   [key: string]: unknown;
 }
 
-function findReceiptsDir(): string | null {
+/**
+ * Returns ALL `.ivaronix/receipts/anchored` directories found while walking
+ * ancestors of cwd. The first-match approach broke when a sub-dir (like
+ * `apps/studio/.ivaronix/`) had its own receipts folder — receipts anchored
+ * from the repo root never got discovered. We now check every ancestor.
+ */
+function findReceiptsDirs(): string[] {
+  const out: string[] = [];
   let dir = process.cwd();
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 12; i++) {
     const candidate = resolve(dir, '.ivaronix', 'receipts', 'anchored');
-    if (existsSync(candidate)) return candidate;
+    if (existsSync(candidate)) out.push(candidate);
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
   }
-  return null;
+  return out;
 }
 
 export function findLocalReceiptByRoot(receiptRoot: string): LocalReceiptLookup | null {
-  const dir = findReceiptsDir();
-  if (!dir) return null;
+  const dirs = findReceiptsDirs();
   const target = receiptRoot.toLowerCase();
-  let entries: string[];
-  try {
-    entries = readdirSync(dir);
-  } catch {
-    return null;
-  }
-  for (const entry of entries) {
-    if (!entry.endsWith('.json')) continue;
-    const file = resolve(dir, entry);
-    try {
-      if (!statSync(file).isFile()) continue;
-      const body = JSON.parse(readFileSync(file, 'utf8')) as ReceiptBody;
-      const root = body.storage?.receiptRoot?.toLowerCase();
-      if (root && root === target) {
-        return { root, path: file, body };
+  for (const dir of dirs) {
+    let entries: string[];
+    try { entries = readdirSync(dir); } catch { continue; }
+    for (const entry of entries) {
+      if (!entry.endsWith('.json')) continue;
+      const file = resolve(dir, entry);
+      try {
+        if (!statSync(file).isFile()) continue;
+        const body = JSON.parse(readFileSync(file, 'utf8')) as ReceiptBody;
+        const root = body.storage?.receiptRoot?.toLowerCase();
+        if (root && root === target) {
+          return { root, path: file, body };
+        }
+      } catch {
+        /* skip unreadable / malformed */
       }
-    } catch {
-      /* skip unreadable / malformed */
     }
   }
   return null;

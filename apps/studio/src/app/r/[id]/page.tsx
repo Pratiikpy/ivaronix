@@ -89,6 +89,40 @@ function risk(label?: string) {
   );
 }
 
+/**
+ * Trust-tier badge — green TIER 1 (0G + TEE-attested) vs amber TIER 2
+ * (signed + chain-anchored, no TEE — e.g. NVIDIA NIM, OpenAI). The point
+ * is to NOT hide the trust delta: external receipts are still verifiable,
+ * but the inference itself is outside the TEE.
+ */
+function TierBadge({ tier, providerKind }: { tier: 'tier-1-tee' | 'tier-2-external-signed'; providerKind: string }) {
+  const isTier1 = tier === 'tier-1-tee';
+  const palette = isTier1
+    ? { bg: 'var(--color-verified-bg)', fg: '#166534', border: 'var(--color-verified)' }
+    : { bg: 'var(--color-pending-bg)', fg: '#92400e', border: 'var(--color-pending)' };
+  const label = isTier1 ? 'TIER 1 · TEE' : 'TIER 2 · EXTERNAL';
+  return (
+    <span
+      title={isTier1
+        ? 'Inference happened on the 0G Compute network with TEE attestation. Strongest trust tier.'
+        : `Inference happened on ${providerKind}, outside the 0G TEE. Receipt is still signed + chain-anchored, but the inference itself is not TEE-attested.`}
+      style={{
+        background: palette.bg,
+        color: palette.fg,
+        border: `1px solid ${palette.border}`,
+        padding: '4px 12px',
+        borderRadius: 4,
+        fontSize: 11,
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        fontWeight: 600,
+      }}
+    >
+      {label}{!isTier1 && providerKind ? ` · ${providerKind}` : ''}
+    </span>
+  );
+}
+
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const result = await loadReceipt(id);
@@ -102,6 +136,14 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   //         No anchor → wouldn't reach here (404)
   const hasLocalBody = local !== null;
   const teeVerified = local?.teeVerification?.routerVerified ?? false;
+  // Trust tier: tier-1-tee (0G + TEE) vs tier-2-external-signed (NVIDIA NIM, …)
+  // Newer receipts carry these fields; older ones default to tier-1.
+  const teeBlock = local?.teeVerification as
+    | { tier?: 'tier-1-tee' | 'tier-2-external-signed'; providerKind?: string; verificationMethod?: string }
+    | undefined;
+  const tier: 'tier-1-tee' | 'tier-2-external-signed' = teeBlock?.tier
+    ?? (teeBlock?.verificationMethod === 'external-signed' ? 'tier-2-external-signed' : 'tier-1-tee');
+  const providerKind: string = teeBlock?.providerKind ?? '0g-router';
   const overallState: 'verified' | 'pending' | 'mismatch' =
     hasLocalBody ? 'verified' : 'pending';
 
@@ -126,6 +168,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <ReceiptStateChip state={overallState} />
+          <TierBadge tier={tier} providerKind={providerKind} />
           {risk(local?.outputs?.riskLevel)}
           {local?.execution?.burnMode && (
             <span
