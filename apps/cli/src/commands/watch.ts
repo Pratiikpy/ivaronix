@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { readFileSync, statSync, readdirSync } from 'node:fs';
+import { readFileSync, statSync, readdirSync, watch as fsWatch } from 'node:fs';
 import { resolve, relative, extname } from 'node:path';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
@@ -51,8 +51,10 @@ export const watchCommand = new Command('watch')
   .option('--consensus', 'force standard 3-role consensus')
   .option('--high-stakes', 'use 5-role high-stakes consensus')
   .option('--no-receipt', 'skip receipt anchoring per run')
+  .option('--on-change', 'fire only when files change (Hermes pattern); ignores --interval/--max-runs')
+  .option('--debounce <ms>', 'when --on-change is set, wait this many ms after the last change before firing', '600')
   .option('--out-dir <dir>', 'where to write receipt JSON', '.ivaronix/receipts/anchored')
-  .action(async (target: string, opts: { interval: string; maxRuns: string; duration?: string; skill: string; ext?: string; maxFiles: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; outDir: string }) => {
+  .action(async (target: string, opts: { interval: string; maxRuns: string; duration?: string; skill: string; ext?: string; maxFiles: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; onChange?: boolean; debounce: string; outDir: string }) => {
     let tier: 'quick' | 'standard' | 'high-stakes' | undefined;
     if (opts.highStakes) tier = 'high-stakes';
     else if (opts.consensus) tier = 'standard';
@@ -74,6 +76,85 @@ export const watchCommand = new Command('watch')
     let runs = 0;
     let totalReceipts = 0;
     let totalFailures = 0;
+
+    /** Run a single audit cycle over the matching files. */
+    const runCycle = async () => {
+      runs++;
+      ui.section(`run ${runs} @ ${new Date().toISOString()}`);
+      const files: string[] = [];
+      for (const f of walk(root, exts)) {
+        files.push(f);
+        if (files.length >= fileCap) break;
+      }
+      if (files.length === 0) {
+        ui.fail('no matching files', `nothing to audit under ${target}`);
+        return;
+      }
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i]!;
+        const relPath = relative(process.cwd(), f);
+        const label = `r${runs} ${i + 1}/${files.length} ${relPath}`;
+        try {
+          const content = readFileSync(f, 'utf8').slice(0, 24_000);
+          const result = await runPipeline({
+            skillId: opts.skill,
+            context: content,
+            userPrompt: `Audit ${relPath}`,
+            tier,
+            receipt: opts.receipt,
+            outDir: opts.outDir,
+            receiptType: 'audit',
+            label,
+          });
+          if (result.receiptId) totalReceipts++;
+        } catch (err) {
+          ui.fail(`[${label}] failed`, (err as Error).message);
+          totalFailures++;
+        }
+      }
+    };
+
+    // ─── --on-change mode ────────────────────────────────────────────────
+    if (opts.onChange) {
+      const debounceMs = Math.max(50, parseInt(opts.debounce, 10) || 600);
+      ui.title(`watch (--on-change): ${target}  debounce ${debounceMs}ms  skill=${opts.skill}`);
+      ui.divider();
+      await runCycle(); // initial baseline run
+
+      let timer: NodeJS.Timeout | null = null;
+      let busy = false;
+      const trigger = () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(async () => {
+          if (busy) return;
+          busy = true;
+          try { await runCycle(); } finally { busy = false; }
+        }, debounceMs);
+      };
+
+      try {
+        const watcher = fsWatch(root, { recursive: true, persistent: true }, (event, fname) => {
+          if (!fname) return;
+          const ext = extname(String(fname));
+          if (exts.size && !exts.has(ext)) return;
+          // Skip our own output
+          if (String(fname).includes('.ivaronix')) return;
+          trigger();
+        });
+        process.on('SIGINT', () => {
+          watcher.close();
+          ui.divider();
+          ui.banner(true, `→ ${runs} run${runs === 1 ? '' : 's'} · ${totalReceipts} receipt${totalReceipts === 1 ? '' : 's'} anchored`);
+          process.exit(0);
+        });
+        await new Promise<void>(() => { /* keep alive until SIGINT */ });
+      } catch (err) {
+        ui.fail('fs.watch failed', (err as Error).message);
+        process.exitCode = 1;
+        return;
+      }
+      return;
+    }
 
     while (runs < maxRuns && Date.now() - startedAt < durationMs) {
       runs++;

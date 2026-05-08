@@ -71,10 +71,23 @@ daemonCommand
   .command('start <path>')
   .description('Fork `ivaronix watch <path>` into the background')
   .option('--interval <dur>', 'time between runs', '15m')
+  .option('--cron <expr>', 'standard 5-field cron expression in local time (overrides --interval)')
   .option('--skill <id>', 'audit skill', 'github-audit')
   .option('--max-files <n>', 'cap files per cycle', '10')
   .option('--quick', 'force quick tier')
-  .action((target: string, opts: { interval: string; skill: string; maxFiles: string; quick?: boolean }) => {
+  .action(async (target: string, opts: { interval: string; cron?: string; skill: string; maxFiles: string; quick?: boolean }) => {
+    if (opts.cron) {
+      const { parseCron, nextFireAfter } = await import('../lib/cron.js');
+      try {
+        const parsed = parseCron(opts.cron);
+        const next = nextFireAfter(parsed);
+        ui.info(`cron expression validated; next fire ${next.toISOString()}`);
+      } catch (err) {
+        ui.fail('bad --cron expression', (err as Error).message);
+        process.exitCode = 1;
+        return;
+      }
+    }
     if (existsSync(pidFile())) {
       const prev = parseInt(readFileSync(pidFile(), 'utf8'), 10);
       if (Number.isFinite(prev) && isAlive(prev)) {
@@ -133,7 +146,7 @@ daemonCommand
     ui.title('ivaronix daemon · started');
     ui.pass(`pid                  ${child.pid}`);
     ui.pass(`target               ${targetAbs}`);
-    ui.pass(`interval             ${opts.interval}`);
+    ui.pass(`schedule             ${opts.cron ? `cron "${opts.cron}"` : `interval ${opts.interval}`}`);
     ui.pass(`skill                ${opts.skill}`);
     ui.info(`log                  ${log}`);
     ui.divider();

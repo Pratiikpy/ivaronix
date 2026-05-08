@@ -36,6 +36,7 @@ import { watchCommand } from '../commands/watch.js';
 import { updateCommand } from '../commands/update.js';
 import { daemonCommand } from '../commands/daemon.js';
 import { chatCommand } from '../commands/chat.js';
+import { serveCommand } from '../commands/serve.js';
 
 const program = new Command();
 
@@ -77,6 +78,7 @@ program.addCommand(watchCommand);
 program.addCommand(updateCommand);
 program.addCommand(daemonCommand);
 program.addCommand(chatCommand);
+program.addCommand(serveCommand);
 
 // Bare `ivaronix` (no subcommand) → drop into interactive chat (claude-code style)
 if (process.argv.length === 2) {

@@ -1,0 +1,28 @@
+{
+  "name": "@ivaronix/trust-layer",
+  "version": "0.0.1",
+  "description": "Phase-3 schema scaffold per PRD §3.5 — team workspaces, policy engine, approval gates, spend limits, audit exports.",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./policy": "./src/policy.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@ivaronix/core": "workspace:*",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}

@@ -6,10 +6,10 @@ import { stdin as input, stdout as output } from 'node:process';
 import { execFileSync } from 'node:child_process';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import type { ChatRichMessage, Keyring } from '@ivaronix/og-router';
-import { findSkill } from '@ivaronix/skills';
+import { findSkill, type LoadedSkill } from '@ivaronix/skills';
 import { JsonRpcProvider } from 'ethers';
 import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
-import { TOOL_DEFS, dispatchTool } from '../lib/chat-tools.js';
+import { TOOL_DEFS, dispatchTool, buildSkillToolCatalog } from '../lib/chat-tools.js';
 import {
   newConversation,
   saveConversation,
@@ -205,7 +205,34 @@ async function handleSlash(line: string, state: ChatState): Promise<boolean> {
         console.log(pc.dim('usage: /swarm <task description>'));
         return true;
       }
-      console.log(pc.dim(`(swarm spawn deferred to next iteration — wire \`ivaronix swarm run\` from a temp todo here)`));
+      // Spawn a real worker via runPipeline (Octogent pattern, no separate process)
+      const { runPipeline } = await import('../lib/pipeline.js');
+      const skillId = state.skillId ?? 'plan-step';
+      console.log(pc.dim(`spawning sub-agent · skill=${skillId} · tier=quick`));
+      try {
+        const r = await runPipeline({
+          skillId,
+          context: state.systemBase || '(no workspace context)',
+          userPrompt: arg,
+          tier: 'quick',
+          receipt: false,
+          receiptType: 'doc_ask',
+          label: 'sub-agent',
+        });
+        console.log(pc.bold('\nsub-agent result'));
+        console.log(r.finalText);
+        // Inject as an assistant message into the parent conversation so it's available for subsequent turns
+        state.conv.messages.push({
+          role: 'assistant',
+          content: `[sub-agent · skill=${skillId}] ${r.finalText}`,
+        });
+        if (r.consensus.billing.totalInputTokens) state.conv.tokens.input += r.consensus.billing.totalInputTokens;
+        if (r.consensus.billing.totalOutputTokens) state.conv.tokens.output += r.consensus.billing.totalOutputTokens;
+        state.conv.costOg += r.consensus.billing.estimatedCostOg;
+        saveConversation(state.conv);
+      } catch (err) {
+        console.log(pc.red(`sub-agent failed: ${(err as Error).message}`));
+      }
       return true;
     }
     case 'history': {
@@ -246,10 +273,16 @@ async function chatTurn(state: ChatState, userText: string): Promise<void> {
   // Tool-loop: up to 4 iterations of tool-use → final answer
   for (let iter = 0; iter < 4; iter++) {
     process.stdout.write(pc.bold('\nassistant') + pc.dim('  · ' + state.model + (iter > 0 ? ` · iter ${iter + 1}` : '')) + '\n');
+    // Build tool catalog: built-ins narrowed by current skill + skill custom tools
+    const activeSkill: LoadedSkill | null = state.skillId
+      ? findSkill(state.skillId, [resolve(state.cwd, 'seed-skills'), resolve(state.cwd, '.ivaronix/skills')])
+      : null;
+    const { defs: toolDefs, customByName } = buildSkillToolCatalog(activeSkill);
+
     const result = await state.keyring.chatRich({
       model: state.model,
       messages,
-      tools: TOOL_DEFS,
+      tools: toolDefs,
       stream: state.stream,
       onToken: state.stream ? (delta) => process.stdout.write(delta) : undefined,
     });
@@ -274,7 +307,7 @@ async function chatTurn(state: ChatState, userText: string): Promise<void> {
     // Dispatch tools, append results, loop
     for (const tc of result.toolCalls) {
       console.log(pc.cyan(`  ⚙ ${tc.function.name}`) + pc.dim(`  ${tc.function.arguments.slice(0, 100)}${tc.function.arguments.length > 100 ? '…' : ''}`));
-      const r = await dispatchTool(state.cwd, tc.function.name, tc.function.arguments);
+      const r = await dispatchTool(state.cwd, tc.function.name, tc.function.arguments, customByName);
       const status = r.ok ? pc.green('✓') : pc.red('✗');
       const preview = r.output.split('\n').slice(0, 3).join('\n');
       console.log(`  ${status} ${pc.dim(preview.slice(0, 200))}`);

@@ -331,3 +331,91 @@ skillCommand
     ui.hint(`run: ivaronix doc ask <file> "..." --skill ${id}`);
     ui.hint(`if you trust the source, anchor it: ivaronix skill publish ${id}`);
   });
+
+// ─── eval ────────────────────────────────────────────────────────────────────
+skillCommand
+  .command('eval <id>')
+  .description('Run the skill against every fixture under tests/; score outputs (claude-mem evals pattern)')
+  .option('--receipt', 'anchor a receipt per fixture (off by default to avoid OG burn)', false)
+  .action(async (id: string, opts: { receipt?: boolean }) => {
+    const skill = findSkill(id, skillSearchDirs());
+    if (!skill) {
+      ui.fail(`No skill named "${id}"`);
+      process.exitCode = 1;
+      return;
+    }
+    const { join: jp } = await import('node:path');
+    const { readdirSync, readFileSync, existsSync, statSync } = await import('node:fs');
+    const testsDir = jp(skill.rootPath, 'tests');
+    if (!existsSync(testsDir)) {
+      ui.fail(`no tests/ folder for ${id}`);
+      ui.hint(`add tests/<sample>.txt fixtures to enable eval`);
+      process.exitCode = 1;
+      return;
+    }
+    const fixtures = readdirSync(testsDir).filter((e) => {
+      const f = jp(testsDir, e);
+      try { return statSync(f).isFile() && !e.endsWith('.expects.txt'); }
+      catch { return false; }
+    });
+    if (fixtures.length === 0) {
+      ui.fail(`no fixtures in ${testsDir}`);
+      process.exitCode = 1;
+      return;
+    }
+    const { runPipeline } = await import('../lib/pipeline.js');
+    ui.title(`eval ${id} v${skill.manifest.version}`);
+    ui.info(`fixtures             ${fixtures.length}`);
+    ui.divider();
+    let totalPass = 0;
+    let totalTokens = 0;
+    let totalCost = 0;
+    const rows: { fixture: string; pass: boolean; reason: string; tokens: number; ms: number }[] = [];
+    for (const f of fixtures) {
+      const path = jp(testsDir, f);
+      const content = readFileSync(path, 'utf8').slice(0, 16_000);
+      const expectsPath = jp(testsDir, `${f}.expects.txt`);
+      const expects = existsSync(expectsPath)
+        ? readFileSync(expectsPath, 'utf8').split('\n').map((l: string) => l.trim()).filter(Boolean)
+        : [];
+      try {
+        const result = await runPipeline({
+          skillId: id,
+          context: content,
+          userPrompt: `Run your prescribed analysis on this fixture.`,
+          tier: 'quick',
+          receipt: !!opts.receipt,
+          receiptType: 'audit',
+          label: f,
+        });
+        const out = result.finalText;
+        const tokens = result.consensus.billing.totalInputTokens + result.consensus.billing.totalOutputTokens;
+        totalTokens += tokens;
+        totalCost += result.consensus.billing.estimatedCostOg;
+        const reasons: string[] = [];
+        if (out.length < 80) reasons.push(`output<80 chars (${out.length})`);
+        if ((result.consensus.convergence.score ?? 1) < 0.5) reasons.push(`convergence<0.5`);
+        for (const exp of expects) {
+          const isRegex = exp.startsWith('/') && exp.endsWith('/');
+          const ok = isRegex ? new RegExp(exp.slice(1, -1)).test(out) : out.includes(exp);
+          if (!ok) reasons.push(`missing expected: ${exp}`);
+        }
+        const pass = reasons.length === 0;
+        if (pass) totalPass++;
+        rows.push({ fixture: f, pass, reason: pass ? 'ok' : reasons.join('; '), tokens, ms: result.consensusMs });
+      } catch (err) {
+        rows.push({ fixture: f, pass: false, reason: (err as Error).message, tokens: 0, ms: 0 });
+      }
+    }
+    for (const r of rows) {
+      const fn = r.pass ? ui.pass : ui.fail;
+      fn(`${r.fixture}`, `${r.pass ? 'pass' : r.reason} · ${r.tokens} tok · ${r.ms}ms`);
+    }
+    ui.divider();
+    if (totalPass === rows.length) {
+      ui.banner(true, `→ ${totalPass}/${rows.length} pass · ${totalTokens} tok · ${totalCost.toFixed(8)} OG`);
+    } else {
+      ui.banner(false, `→ ${totalPass}/${rows.length} pass · ${totalTokens} tok · ${totalCost.toFixed(8)} OG`);
+      process.exitCode = 1;
+    }
+  });

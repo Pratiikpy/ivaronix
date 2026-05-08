@@ -3,6 +3,7 @@ import { resolve, relative, dirname, join } from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { ToolDef } from '@ivaronix/og-router';
+import type { LoadedSkill, SkillManifest } from '@ivaronix/skills';
 
 /**
  * Tool catalog the model can invoke during `ivaronix chat`.
@@ -236,11 +237,82 @@ async function webFetchTool(url: string): Promise<ToolExecResult> {
   }
 }
 
+/** Render `{{argName}}` placeholders in a shell argv against parsed JSON args. */
+function renderShellArgs(template: string[], args: Record<string, unknown>): string[] {
+  return template.map((piece) =>
+    piece.replace(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g, (_, key: string) => {
+      const v = args[key];
+      return v === undefined || v === null ? '' : String(v);
+    }),
+  );
+}
+
+type CustomTool = NonNullable<NonNullable<SkillManifest['og']['tools']>['custom']>[number];
+
+/**
+ * Build the active tool catalog for the current skill. Without a skill, all 6
+ * built-in tools are exposed. With a skill, the manifest's `og.tools` block
+ * narrows builtins and adds custom tools.
+ */
+export function buildSkillToolCatalog(skill: LoadedSkill | null): {
+  defs: ToolDef[];
+  customByName: Map<string, CustomTool>;
+} {
+  const customByName = new Map<string, CustomTool>();
+  if (!skill || !skill.manifest.og.tools) return { defs: TOOL_DEFS, customByName };
+  const cfg = skill.manifest.og.tools;
+  const allowedBuiltins = cfg.builtins ?? ['read_file', 'write_file', 'list_files', 'grep', 'run_bash', 'web_fetch'];
+  const builtinDefs = TOOL_DEFS.filter((d) => allowedBuiltins.includes(d.function.name as typeof allowedBuiltins[number]));
+  const customDefs: ToolDef[] = (cfg.custom ?? []).map((c) => {
+    customByName.set(c.name, c);
+    return {
+      type: 'function' as const,
+      function: {
+        name: c.name,
+        description: c.description,
+        parameters: c.parameters as ToolDef['function']['parameters'],
+      },
+    };
+  });
+  return { defs: [...builtinDefs, ...customDefs], customByName };
+}
+
 export async function dispatchTool(
   cwd: string,
   name: string,
   argsRaw: string,
+  customByName: Map<string, CustomTool> = new Map(),
 ): Promise<ToolExecResult> {
+  // Custom tool path
+  const custom = customByName.get(name);
+  if (custom) {
+    let parsed: Record<string, unknown> = {};
+    try { parsed = argsRaw ? (JSON.parse(argsRaw) as Record<string, unknown>) : {}; }
+    catch { return { ok: false, output: `bad tool arguments JSON: ${argsRaw}` }; }
+    if (custom.runner.type === 'shell') {
+      const banned = new Set(['rm', 'rmdir', 'del', 'format', 'mkfs', 'dd', 'shutdown', 'reboot']);
+      if (banned.has(custom.runner.cmd.toLowerCase())) return { ok: false, output: `command "${custom.runner.cmd}" not allowed` };
+      const argv = renderShellArgs(custom.runner.args, parsed);
+      try {
+        const { stdout, stderr } = await execFileAsync(custom.runner.cmd, argv, {
+          cwd,
+          timeout: custom.runner.timeout_ms,
+          maxBuffer: 256 * 1024,
+          windowsHide: true,
+        });
+        const out = (stdout || '') + (stderr ? `\n[stderr]\n${stderr}` : '');
+        return { ok: true, output: out.slice(0, MAX_FILE_BYTES) };
+      } catch (err) {
+        const e = err as { stdout?: string; stderr?: string; message: string };
+        return { ok: false, output: (e.stdout ?? '') + (e.stderr ?? '') + '\n' + e.message };
+      }
+    }
+    if (custom.runner.type === 'builtin') {
+      return dispatchTool(cwd, custom.runner.tool, argsRaw, customByName);
+    }
+  }
+
+  // Built-in path
   let args: Record<string, unknown>;
   try { args = argsRaw ? (JSON.parse(argsRaw) as Record<string, unknown>) : {}; }
   catch { return { ok: false, output: `bad tool arguments JSON: ${argsRaw}` }; }

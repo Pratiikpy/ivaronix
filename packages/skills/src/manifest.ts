@@ -64,6 +64,71 @@ const Hooks = z.object({
   session_end: z.array(z.string()).default([]),
 });
 
+/**
+ * Skill-declared tools. Skills declare which built-in tools they allow plus
+ * any custom shell-runner tools (e.g. `extract_pdf_text` calling
+ * `pdftotext`). The chat REPL merges these with the global tool catalog
+ * when this skill is active. Custom tools render through a small template
+ * substitution: `{{argName}}` in args[] is replaced with the corresponding
+ * JSON property the model passed.
+ *
+ * Example (private-doc-review/SKILL.md):
+ *
+ *   og:
+ *     tools:
+ *       builtins: ["read_file", "list_files"]
+ *       custom:
+ *         - name: extract_pdf_text
+ *           description: Extract plain text from a PDF file at `path`.
+ *           parameters:
+ *             type: object
+ *             properties:
+ *               path: {type: string, description: "PDF path"}
+ *             required: ["path"]
+ *           runner:
+ *             type: shell
+ *             cmd: pdftotext
+ *             args: ["{{path}}", "-"]
+ *             timeout_ms: 15000
+ */
+const ToolRunner = z.discriminatedUnion('type', [
+  z.object({
+    type: z.literal('shell'),
+    cmd: z.string(),
+    args: z.array(z.string()).default([]),
+    timeout_ms: z.number().int().min(100).max(60_000).default(20_000),
+  }),
+  z.object({
+    type: z.literal('builtin'),
+    tool: z.enum(['read_file', 'write_file', 'list_files', 'grep', 'run_bash', 'web_fetch']),
+  }),
+]);
+
+const SkillTools = z.object({
+  builtins: z
+    .array(z.enum(['read_file', 'write_file', 'list_files', 'grep', 'run_bash', 'web_fetch']))
+    .optional()
+    .describe('Subset of built-in tools the skill is allowed to use; unset = all six'),
+  custom: z
+    .array(
+      z.object({
+        name: z.string().regex(/^[a-z][a-z0-9_]{0,40}$/),
+        description: z.string().min(1).max(500),
+        parameters: z
+          .object({
+            type: z.literal('object'),
+            properties: z.record(z.unknown()),
+            required: z.array(z.string()).optional(),
+          })
+          .strict(),
+        runner: ToolRunner,
+      }),
+    )
+    .default([]),
+});
+
+export type SkillToolDef = z.infer<typeof SkillTools>['custom'][number];
+
 const OgBlock = z.object({
   permissions: Permissions.default({} as z.infer<typeof Permissions>),
   reputation: Reputation.default({} as z.infer<typeof Reputation>),
@@ -73,6 +138,9 @@ const OgBlock = z.object({
   // produce the SAME canonical-JSON hash they did before this field was added.
   // Adding `.default({})` would silently mutate every old manifest's hash.
   hooks: Hooks.optional(),
+  // Skill-declared tools (Day 22+ polish). Optional so old manifests' canonical
+  // hash stays unchanged.
+  tools: SkillTools.optional(),
   creator: z
     .object({
       passport: z.string().optional(),
