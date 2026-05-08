@@ -252,6 +252,7 @@ body {
   @media (max-width: 480px) {
     header nav a[href="/global"],
     header nav a[href="/skills"],
+    header nav a[href="/brand"],
     header nav a[href="/dashboard"] {
       display: none !important;
     }

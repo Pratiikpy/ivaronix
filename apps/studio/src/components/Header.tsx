@@ -41,6 +41,9 @@ export function Header() {
           <Link href="/global" className="btn-ghost">
             Global
           </Link>
+          <Link href="/brand" className="btn-ghost">
+            Brand
+          </Link>
           <Link href="/dashboard" className="btn-ghost">
             Dashboard
           </Link>
