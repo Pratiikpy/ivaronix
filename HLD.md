@@ -183,7 +183,7 @@ ivaronix/
 
 The web app is the primary user surface. Treat polish as a first-class deliverable.
 
-> **For visual design decisions** (colors, typography, spacing, logo, motion, a11y, responsive breakpoints, Playwright workflow): read `UI_UX_GUIDE.md` FIRST. The bundled `Ivaronix.html` mockup is the visual source of truth — open it in a browser before writing any Studio code.
+> **For visual design decisions** (colors, typography, spacing, logo, motion, a11y, responsive breakpoints, Playwright workflow): read `UI_UX_GUIDE.md` FIRST. The bundled `brand/Ivaronix.html` mockup is the visual source of truth — open it in a browser before writing any Studio code.
 >
 > **For per-component UX decisions** (drop-zone four-light row, audit report layout, skill browser permission pills, public Proof URL tile strip, etc.): read `COMPONENTS.md`.
 >

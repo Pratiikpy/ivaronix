@@ -77,9 +77,9 @@ When you write **anything that ships** (READMEs, docs, marketing copy, PR descri
 
 If you catch yourself writing AI slop: stop, delete the paragraph, write one sentence that is true, ship that.
 
-## 10. Visual contract — match `Ivaronix.html`
+## 10. Visual contract — match `brand/Ivaronix.html`
 
-`Ivaronix.html` at the repo root is the **canonical visual reference** for every Studio surface. The Next.js app at `apps/studio/` must look indistinguishable from that file when rendered side-by-side.
+`brand/Ivaronix.html` is the **canonical visual reference** for every Studio surface. The Next.js app at `apps/studio/` must look indistinguishable from that file when rendered side-by-side.
 
 Non-negotiables:
 - **Cream background** `#faf9f6`, **near-black ink** `#0a0a0a` (not the warmer `#1a1a1a`).
@@ -92,7 +92,7 @@ Non-negotiables:
 - **Section eyebrows:** uppercase micro-labels with letterspacing; both `§ 01 · THING` and `— Thesis` styles are acceptable as long as the chosen one is consistent within a page.
 
 Verification before shipping any UI change:
-1. Open `Ivaronix.html` in a headless browser, screenshot at 1440×900 + 375×812.
+1. Open `brand/Ivaronix.html` in a headless browser, screenshot at 1440×900 + 375×812.
 2. Open the changed Studio route at the same viewports.
 3. Lay them side-by-side. If the Studio screenshot reads as "less designed" — colours weaker, type blander, radii sharper, hero emptier — fix the Studio render first; do not commit.
 

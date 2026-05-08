@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import './globals.css';
 
 // Brand typography per CLAUDE.md §10. The HTML reference at
-// /Ivaronix.html uses these three families verbatim.
+// brand/Ivaronix.html uses these three families verbatim.
 const outfit = Outfit({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],

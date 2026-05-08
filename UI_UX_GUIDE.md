@@ -1,8 +1,8 @@
 # Ivaronix — UI/UX Guide & Design System
 
 > **Status:** v1, locked 2026-05-08.
-> **Visual source of truth:** `Ivaronix.html` at `C:\Users\prate\Downloads\oglabs\Ivaronix.html` — the bundled mockup. Open in browser to see the rendered reference.
-> **Companion docs:** `COMPONENTS.md` (per-component decisions), `HLD.md §4` (Studio architecture), `BUILD.md §1` (Day 13-18 Studio build).
+> **Visual source of truth:** `brand/Ivaronix.html` — the bundled mockup. Open in browser to see the rendered reference.
+> **Companion docs:** `COMPONENTS.md` (per-component decisions), `HLD.md §4` (Studio architecture), `docs/build/BUILD.md §1` (Day 13-18 Studio build).
 >
 > **The most important rule, in capital letters:**
 >
@@ -14,7 +14,7 @@
 
 ## 1. Brand Tokens (canonical hex values)
 
-Extracted directly from the static SVG thumbnail + inline CSS in `Ivaronix.html`. These are the only colors the design uses.
+Extracted directly from the static SVG thumbnail + inline CSS in `brand/Ivaronix.html`. These are the only colors the design uses.
 
 ```css
 /* Tailwind v4 @theme inline definition */
@@ -395,9 +395,9 @@ Per the user's prompt:
 ### Step 1 — Open and inspect
 ```bash
 # Open the bundled HTML in a browser to see the rendered reference
-open C:\Users\prate\Downloads\oglabs\Ivaronix.html
+open C:\Users\prate\Downloads\oglabs\brand\Ivaronix.html
 # OR
-start C:\Users\prate\Downloads\oglabs\Ivaronix.html  # Windows
+start C:\Users\prate\Downloads\oglabs\brand\Ivaronix.html  # Windows
 ```
 
 The HTML is a self-extracting bundle (base64+gzip) — JS unpacks the rendered SPA at load. Static read won't reveal the content; **must render to see**.
@@ -415,7 +415,7 @@ const sizes = [
 for (const s of sizes) {
   const browser = await chromium.launch()
   const page = await browser.newPage({ viewport: { width: s.w, height: s.h } })
-  await page.goto(`file:///C:/Users/prate/Downloads/oglabs/Ivaronix.html`)
+  await page.goto(`file:///C:/Users/prate/Downloads/oglabs/brand/Ivaronix.html`)
   await page.waitForLoadState('networkidle')
   await page.screenshot({ path: `screenshots/reference-${s.name}.png`, fullPage: true })
   await browser.close()
@@ -462,7 +462,7 @@ When in doubt about a color, font, spacing, or component shape: **this doc wins*
 
 ## 18. The user's prompt rules (locked, do not violate)
 
-1. Treat `Ivaronix.html` as visual reference, NOT data source.
+1. Treat `brand/Ivaronix.html` as visual reference, NOT data source.
 2. No fake metrics / receipts / counts / agents / wallet data anywhere in production UI.
 3. Inspect real backend before implementing UI; map every mock value to real source or empty/loading/error state.
 4. Preserve: cream bg, black editorial type, green accent, serif italic display, compact nav, card surfaces, section spacing, button styles, hero layout, receipt visual patterns, responsive behavior, hover/motion polish.
@@ -475,4 +475,4 @@ When in doubt about a color, font, spacing, or component shape: **this doc wins*
 
 ---
 
-**End of UI_UX_GUIDE. Open Ivaronix.html in a browser before starting Studio code.**
+**End of UI_UX_GUIDE. Open brand/Ivaronix.html in a browser before starting Studio code.**

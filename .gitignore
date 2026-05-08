@@ -18,8 +18,7 @@ og-projects-showcase/
 entries/
 _archive/
 
-# Bundled visual mockup — keep locally; if user wants it pushed remove this line
-# Ivaronix.html  -- (intentionally commented out; Ivaronix.html IS pushed as design source of truth)
+# Bundled visual mockup at brand/Ivaronix.html — pushed as design source of truth.
 
 
 # Node / pnpm / Turbo
@@ -67,5 +66,9 @@ Thumbs.db
 coverage/
 .nyc_output/
 playwright-report/
+.playwright-mcp/
+
+# Visual evidence — kept locally, organized by round / surface; not pushed
+screenshots/
 
 # (do NOT gitignore _archive/ — those are intentional reference docs)

@@ -157,7 +157,7 @@ Full per-round detail with receipt ids, tx hashes, and code-line refs lives in:
 
 - `docs/build/BUILD_PROGRESS.md` — 30-round timeline with bug numbers + commits
 - `docs/build/TEST_REPORT.md` — surface coverage matrix
-- `test-*.png` — visual evidence at desktop + mobile widths
+- `screenshots/test-*.png` and `screenshots/studio-*.png` — visual evidence at desktop + mobile widths (gitignored; local artifacts)
 - `git log --oneline -50` — 50 commits across the 37 rounds
 
 This document is the executive summary. The above sources are the receipts.
