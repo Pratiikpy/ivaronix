@@ -1,4 +1,11 @@
-import { RouterClient, type RouterCallOptions, type RouterCallResult, type RouterCredential } from './index.js';
+import {
+  RouterClient,
+  type RouterCallOptions,
+  type RouterCallResult,
+  type RouterCredential,
+  type ChatRichInput,
+  type ChatRichResult,
+} from './index.js';
 
 /**
  * Multi-key rotation for Router calls per HLD §11.0.
@@ -64,7 +71,36 @@ export class Keyring {
           this.invalidate(cred.label, 'auth');
           continue;
         }
-        throw err; // 4xx other than 401/402/403/429 = real error, surface it
+        throw err;
+      }
+    }
+    throw lastErr ?? new Error('All keyring credentials failed.');
+  }
+
+  async chatRich(input: ChatRichInput): Promise<ChatRichResult> {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt < this.credentials.length; attempt++) {
+      const cred = this.pickActive();
+      const client = this.clients.get(cred.label);
+      if (!client) throw new Error(`Internal: no client for ${cred.label}`);
+      try {
+        return await client.chatRich(input);
+      } catch (err: unknown) {
+        lastErr = err;
+        const status = (err as { status?: number }).status;
+        if (status === 402) {
+          this.invalidate(cred.label, '402');
+          continue;
+        }
+        if (status === 429) {
+          this.invalidate(cred.label, '429');
+          continue;
+        }
+        if (status === 401 || status === 403) {
+          this.invalidate(cred.label, 'auth');
+          continue;
+        }
+        throw err;
       }
     }
     throw lastErr ?? new Error('All keyring credentials failed.');

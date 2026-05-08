@@ -104,6 +104,129 @@ export class RouterClient {
     const models = await this.client.models.list();
     return models.data.map((m) => ({ id: m.id, created: m.created }));
   }
+
+  /**
+   * Multi-message chat with optional tool-use and streaming. Used by the REPL
+   * (`ivaronix chat`) so the model can call read_file / run_bash / etc. and the
+   * caller can re-enter the loop with the tool result. Single-shot `chat()`
+   * stays unchanged for backwards compat with the consensus runner.
+   */
+  async chatRich(input: ChatRichInput): Promise<ChatRichResult> {
+    const params: Record<string, unknown> = {
+      model: input.model ?? 'qwen/qwen-2.5-7b-instruct',
+      messages: input.messages,
+      stream: false,
+    };
+    if (input.tools && input.tools.length > 0) params.tools = input.tools;
+    if (input.toolChoice) params.tool_choice = input.toolChoice;
+    if (input.verifyTee !== undefined) params.verify_tee = input.verifyTee;
+
+    if (input.stream && input.onToken) {
+      params.stream = true;
+      const stream = (await this.client.chat.completions.create(
+        params as unknown as Parameters<typeof this.client.chat.completions.create>[0],
+      )) as AsyncIterable<{
+        choices: { delta: { content?: string; tool_calls?: ToolCall[] }; finish_reason?: string }[];
+      }>;
+
+      let content = '';
+      const collected: ToolCall[] = [];
+      let finishReason: string | undefined;
+      for await (const chunk of stream) {
+        const choice = chunk.choices?.[0];
+        if (!choice) continue;
+        const piece = choice.delta?.content ?? '';
+        if (piece) {
+          content += piece;
+          input.onToken(piece);
+        }
+        if (choice.delta?.tool_calls) {
+          // Streaming tool-call deltas: append by index
+          for (const tc of choice.delta.tool_calls) {
+            const idx = (tc as ToolCall & { index?: number }).index ?? collected.length;
+            const cur = collected[idx] ?? { id: '', type: 'function', function: { name: '', arguments: '' } };
+            if (tc.id) cur.id = tc.id;
+            if (tc.function?.name) cur.function.name = (cur.function.name ?? '') + tc.function.name;
+            if (tc.function?.arguments) cur.function.arguments = (cur.function.arguments ?? '') + tc.function.arguments;
+            collected[idx] = cur;
+          }
+        }
+        if (choice.finish_reason) finishReason = choice.finish_reason;
+      }
+      return {
+        content,
+        toolCalls: collected.filter((c) => c.function.name),
+        finishReason,
+        inputTokens: undefined, // streaming responses omit usage on testnet
+        outputTokens: undefined,
+        routerVerified: false,
+        rawResponse: undefined,
+      };
+    }
+
+    const result = await this.client.chat.completions
+      .create(params as unknown as Parameters<typeof this.client.chat.completions.create>[0])
+      .withResponse();
+    const completion = result.data as unknown as {
+      choices: { message: { content: string | null; tool_calls?: ToolCall[] }; finish_reason?: string }[];
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+      x_0g_trace?: { tee_verified?: boolean } & Record<string, unknown>;
+    };
+    const choice = completion.choices[0];
+    return {
+      content: choice?.message?.content ?? '',
+      toolCalls: choice?.message?.tool_calls ?? [],
+      finishReason: choice?.finish_reason,
+      inputTokens: completion.usage?.prompt_tokens,
+      outputTokens: completion.usage?.completion_tokens,
+      routerVerified: Boolean(completion.x_0g_trace?.tee_verified),
+      rawResponse: completion,
+    };
+  }
+}
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
+export interface ChatRichMessage {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string | null;
+  name?: string;
+  tool_call_id?: string;
+  tool_calls?: ToolCall[];
+}
+
+export interface ToolDef {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: { type: 'object'; properties: Record<string, unknown>; required?: string[] };
+  };
+}
+
+export interface ToolCall {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+}
+
+export interface ChatRichInput {
+  model?: string;
+  messages: ChatRichMessage[];
+  tools?: ToolDef[];
+  toolChoice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+  verifyTee?: boolean;
+  stream?: boolean;
+  onToken?: (delta: string) => void;
+}
+
+export interface ChatRichResult {
+  content: string;
+  toolCalls: ToolCall[];
+  finishReason?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  routerVerified?: boolean;
+  rawResponse?: unknown;
 }
 
 export { Keyring } from './keyring.js';

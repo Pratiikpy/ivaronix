@@ -35,6 +35,7 @@ import { swarmCommand } from '../commands/swarm.js';
 import { watchCommand } from '../commands/watch.js';
 import { updateCommand } from '../commands/update.js';
 import { daemonCommand } from '../commands/daemon.js';
+import { chatCommand } from '../commands/chat.js';
 
 const program = new Command();
 
@@ -75,6 +76,12 @@ program.addCommand(swarmCommand);
 program.addCommand(watchCommand);
 program.addCommand(updateCommand);
 program.addCommand(daemonCommand);
+program.addCommand(chatCommand);
+
+// Bare `ivaronix` (no subcommand) → drop into interactive chat (claude-code style)
+if (process.argv.length === 2) {
+  process.argv.push('chat');
+}
 
 program.parseAsync(process.argv).catch((err) => {
   console.error('Error:', err.message);
