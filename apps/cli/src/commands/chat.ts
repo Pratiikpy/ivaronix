@@ -98,6 +98,23 @@ function costMeter(state: ChatState): string {
   return pc.dim(`  · ${state.conv.tokens.input}+${state.conv.tokens.output} tok · ${state.conv.costOg.toFixed(8)} OG · ${state.conv.messages.length} msgs · ${state.conv.id.slice(-8)}`);
 }
 
+/** Single-frame Braille rotating spinner with self-overwrite. Stops via stop(). */
+function startSpinner(label: string): { stop: () => void } {
+  const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+  let i = 0;
+  const t = setInterval(() => {
+    process.stdout.write(`\r${pc.cyan(frames[i % frames.length]!)} ${pc.dim(label)}`);
+    i++;
+  }, 80);
+  return {
+    stop: () => {
+      clearInterval(t);
+      // Wipe the spinner line so the next write starts clean.
+      process.stdout.write('\r' + ' '.repeat(label.length + 4) + '\r');
+    },
+  };
+}
+
 async function passportSnapshot(env: ReturnType<typeof loadEnv>): Promise<string> {
   try {
     const addr = getDeployedAddress(env.network, 'AgentPassportINFT');
@@ -279,13 +296,23 @@ async function chatTurn(state: ChatState, userText: string): Promise<void> {
       : null;
     const { defs: toolDefs, customByName } = buildSkillToolCatalog(activeSkill);
 
+    // Spinner runs until the first token (streaming) or until the response
+    // arrives (non-streaming). Removes the dead-air feeling of a blank line.
+    const spinner = startSpinner(state.stream ? 'thinking…' : 'querying router…');
+    let firstToken = true;
     const result = await state.keyring.chatRich({
       model: state.model,
       messages,
       tools: toolDefs,
       stream: state.stream,
-      onToken: state.stream ? (delta) => process.stdout.write(delta) : undefined,
+      onToken: state.stream
+        ? (delta) => {
+            if (firstToken) { spinner.stop(); firstToken = false; }
+            process.stdout.write(delta);
+          }
+        : undefined,
     });
+    if (firstToken) spinner.stop();
     if (!state.stream && result.content) process.stdout.write(result.content);
     process.stdout.write('\n');
 
@@ -377,7 +404,18 @@ export const chatCommand = new Command('chat')
     console.log(pc.dim('  type your message, or `/help` for commands. Ctrl-D / `/exit` to quit.'));
     console.log(pc.dim(`  conversation ${state.conv.id} · ${state.conv.messages.length} prior messages · model ${state.model}` + (state.skillId ? ` · skill ${state.skillId}` : '')));
 
-    const rl = createInterface({ input, output });
+    // Tab-completion for slash commands. readline calls completer with the
+    // current line; we return [matches, line]. Empty matches → no-op.
+    const SLASH_CMDS = [
+      '/help', '/skill ', '/model ', '/cost', '/clear', '/save',
+      '/passport', '/memory ', '/swarm ', '/history', '/resume ', '/exit',
+    ];
+    const completer = (line: string): [string[], string] => {
+      if (!line.startsWith('/')) return [[], line];
+      const hits = SLASH_CMDS.filter((c) => c.startsWith(line));
+      return [hits, line];
+    };
+    const rl = createInterface({ input, output, completer, historySize: 200 });
     try {
       while (!state.exit) {
         const line = (await rl.question(pc.green('\n› '))).trim();

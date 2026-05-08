@@ -107,6 +107,12 @@ daemonCommand
     const cliEntry = resolve(here, '../bin/ivaronix.ts');
     const tsxBin = resolve(here, '..', '..', '..', '..', 'node_modules', '.bin', process.platform === 'win32' ? 'tsx.cmd' : 'tsx');
 
+    // Receipts are anchored by default — the skill manifest decides via
+    // og.permissions.receipt_required. Hardcoding --no-receipt here used to
+    // make every receipt_required skill (github-audit, code-edit, etc.) get
+    // sandbox-refused on every cycle, which made the daemon unusable as
+    // shipped. The user can still opt out by running `ivaronix watch` directly
+    // with --no-receipt for skills where the manifest allows it.
     const args: string[] = [
       cliEntry,
       'watch', targetAbs,
@@ -114,15 +120,20 @@ daemonCommand
       '--skill', opts.skill,
       '--max-files', opts.maxFiles,
       '--max-runs', '999999',
-      '--no-receipt',
     ];
     if (opts.quick) args.push('--quick');
 
+    // On Windows, tsx is a .cmd shim and spawn() cannot CreateProcess a .cmd
+    // directly — it returns EINVAL. shell: true delegates to cmd.exe which can
+    // run the shim. POSIX systems use the binary path directly (no shell).
+    const isWin = process.platform === 'win32';
     const child = spawn(tsxBin, args, {
       detached: true,
       stdio: ['ignore', out, err],
       cwd: process.cwd(),
       env: process.env,
+      shell: isWin,
+      windowsHide: true,
     });
     if (!child.pid) {
       ui.fail('failed to spawn daemon child process');

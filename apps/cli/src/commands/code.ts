@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync, mkdtempSync, existsSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { runPipeline } from '../lib/pipeline.js';
@@ -21,14 +21,26 @@ function extractDiff(text: string): string | null {
   return match ? match[1]!.trim() : null;
 }
 
-function applyDiff(diff: string): { ok: boolean; output: string } {
+/** Walk up from `start` looking for the git root (a directory containing `.git`). */
+function findGitRoot(start: string): string | null {
+  let dir = start;
+  for (let i = 0; i < 12; i++) {
+    if (existsSync(resolve(dir, '.git'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+  return null;
+}
+
+function applyDiff(diff: string, gitRoot: string): { ok: boolean; output: string } {
   const tmp = mkdtempSync(join(tmpdir(), 'ivaronix-code-'));
   const patchFile = join(tmp, 'patch.diff');
   writeFileSync(patchFile, diff + '\n', 'utf8');
   try {
     // First check if the patch applies cleanly. If yes, apply.
-    execFileSync('git', ['apply', '--check', patchFile], { stdio: 'pipe', encoding: 'utf8' });
-    const output = execFileSync('git', ['apply', patchFile], { stdio: 'pipe', encoding: 'utf8' });
+    execFileSync('git', ['apply', '--check', patchFile], { stdio: 'pipe', encoding: 'utf8', cwd: gitRoot });
+    const output = execFileSync('git', ['apply', patchFile], { stdio: 'pipe', encoding: 'utf8', cwd: gitRoot });
     return { ok: true, output: output || `applied ${patchFile}` };
   } catch (err) {
     return { ok: false, output: (err as { stderr?: string; message: string }).stderr ?? (err as Error).message };
@@ -90,12 +102,13 @@ export const codeCommand = new Command('code')
           ui.hint('the skill may have refused the task; try a smaller scope or --consensus');
         } else {
           ui.pending(`--apply: running git apply --check ...`);
-          if (!existsSync(resolve(process.cwd(), '.git'))) {
-            ui.fail('--apply: not inside a git repo. Run from a git working tree.');
+          const gitRoot = findGitRoot(process.cwd());
+          if (!gitRoot) {
+            ui.fail('--apply: not inside a git repo. Run from anywhere under a git working tree.');
           } else {
-            const r = applyDiff(diff);
+            const r = applyDiff(diff, gitRoot);
             if (r.ok) {
-              ui.pass('--apply: patch applied');
+              ui.pass(`--apply: patch applied (gitRoot=${gitRoot})`);
               ui.hint('Review with `git diff` and stage with `git add`. Revert with `git checkout -- <file>`.');
             } else {
               ui.fail('--apply: patch failed', r.output.split('\n')[0]);

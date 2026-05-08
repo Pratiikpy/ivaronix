@@ -789,3 +789,62 @@ Per CLAUDE.md §1 — "the only blocker is money":
 3. **Public HTTPS deploy** — Vercel / Render / Fly auth, not testable from inside the agent.
 
 Everything else either ships or has an explicit punt-with-reason. There's no "yes, build it" item left that doesn't require one of those three human-only actions.
+
+---
+
+## Round 6 — every-untested-as-a-human sweep + 3 real bugs found and fixed (2026-05-08)
+
+After Round 5 closed the polish list, swept through every "looks done but never used like a real human would" path. Three real bugs found, all fixed.
+
+### Bugs
+
+**B6-1 — `code --apply` checked `.git` only in `process.cwd()`**
+`apps/cli/src/commands/code.ts` resolved `.git` against the current directory. From inside `apps/cli/`, `.git` is two levels up, so `--apply` always failed with `not inside a git repo`.
+
+Fix: `findGitRoot()` walks up to find the repo, and `applyDiff()` runs `git apply` with `cwd: gitRoot` so the relative paths in the diff resolve correctly. Verified end-to-end — receipt #165 anchored AND the wave() function actually written into `test-targets/greet.ts`.
+
+**B6-2 — `daemon start` failed with `spawn EINVAL` on Windows**
+The detached spawn tried to invoke `node_modules/.bin/tsx.cmd` directly. On Windows, `child_process.spawn` cannot CreateProcess a `.cmd` file without a shell intermediary; it returns `EINVAL` immediately.
+
+Fix: pass `shell: true` only on Windows + `windowsHide: true` so cmd.exe handles the .cmd shim. Verified: `daemon start` → PID 34712 backgrounded, `daemon status` reports running with full state, `daemon stop` kills cleanly.
+
+**B6-3 — Daemon hardcoded `--no-receipt` clashed with `receipt_required: true` skills**
+The forked watch process was invoked with `--no-receipt` baked in. github-audit (and code-edit, and any audit-grade skill) declare `og.permissions.receipt_required: true` in their manifest. The sandbox layer correctly refused every cycle with `sandbox.receipt.required`, making the daemon a glorified no-op.
+
+Fix: remove the hardcoded flag. Receipts now anchor by default per the skill manifest. Users who want no-receipt watch loops can run `ivaronix watch ... --no-receipt` directly for skills whose manifest allows it.
+
+### Tested as a real human (no shortcuts)
+
+- ✅ `code --apply` → diff applied to greet.ts on disk + receipt #165 anchored
+- ✅ Studio `/api/run` direct curl POST → returns ANCHORED inline JSON, receipt #167, registry MATCH on private-doc-review@0.3.0, hooks fired
+- ✅ `/global` page on testnet at receipt #168 — shows 168 receipts / 2 passports / 0.000120 OG spent / 5 first-party skills + top-skills + memory-access chain log
+- ✅ `/dashboard` — wallet-gating empty state ("Connect a wallet to begin.") renders premium
+- ✅ `/skill/code-edit` — detects v0.2.0 from local manifest, shows LOCAL ONLY chip honestly (since 0.2.0 not republished on chain), full system prompt + permission chips + reputation rules
+- ✅ `daemon start/status/stop` lifecycle on Windows after the EINVAL fix
+- ✅ `serve` HTTP API — `/healthz` returns `{ok:true, network:"testnet", receipts:168, passports:2}`
+- ✅ Chat REPL — banner + slash commands list render; tab-completion for `/...` commands now works; rotating Braille spinner during router calls (overwrites itself with `\r`, no scroll-flicker).
+
+### Chat REPL polish — closer to Claude Code / OpenCode "smoothness"
+
+User feedback: the readline REPL felt rougher than Claude Code / OpenCode. Two material wins without an Ink rewrite:
+- **Spinner during router calls** — `⠋ querying router…` rotating Braille frames, overwrites itself in place. Removes the dead-air pause.
+- **Tab completion for `/`-commands** — readline's `completer` returns `/help`, `/skill`, `/model`, etc. when the line starts with `/`. History buffer bumped to 200 lines.
+
+Honest gap: full Claude-Code parity (multi-line input via shift-enter, in-place re-render of partial responses, syntax-highlighted code blocks during streaming) needs an Ink TUI rewrite — readline can't do raw-mode multi-line capture without conflicting with Ink's own stdin takeover. Documented in PMF-list item #4 (Ink TUI deferred); revisit post-grant.
+
+### Round 6 evidence
+
+| Test | Receipt | Block | Tx |
+|---|---|---|---|
+| code (Round 5 manifest verify) | rcpt_01KR3G36X8VTKQ74CMS2JCY86Z | 32197188 | 0xd4c17afbf3d8… |
+| code --apply (greet.ts wave fn) | rcpt_01KR3GAMJDQ09DY5GRKCPZAM81 | 32197676 | 0x1dde8736eb95… |
+| code --apply (after B6-1 fix) | rcpt_01KR3GDSM75DKM6SP0EB3M4CFK | 32197883 | 0xb912575fb7eb… |
+| /api/run direct curl | rcpt_01KR3GG3E1ANGTM8CR4KXT8Z6D | 32198035 | 0x77d7cb3254dc… |
+
+Cumulative testnet receipts after Round 6: **168 anchored**.
+
+### Round 6 net code changes
+
+- `apps/cli/src/commands/code.ts` — `findGitRoot()` helper + `applyDiff(cwd: gitRoot)`
+- `apps/cli/src/commands/daemon.ts` — `shell: true` + `windowsHide: true` on Windows; remove hardcoded `--no-receipt`
+- `apps/cli/src/commands/chat.ts` — `startSpinner()` helper; readline `completer` + `historySize: 200`
