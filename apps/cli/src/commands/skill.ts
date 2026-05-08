@@ -244,3 +244,90 @@ skillCommand
     ui.pass(`publishedAt          ${new Date(scan.publishedAt! * 1000).toISOString()}`);
     if (env) { /* env is loaded; no-op to silence ts unused */ }
   });
+
+// ─── install ─────────────────────────────────────────────────────────────────
+/**
+ * `ivaronix skill install <url>` — install a skill from a remote source.
+ *
+ * Supported URL forms:
+ *   - https://raw.githubusercontent.com/<owner>/<repo>/<branch>/path/to/SKILL.md
+ *   - https://github.com/<owner>/<repo>/blob/<branch>/path/to/SKILL.md  (rewritten to raw)
+ *   - file:///abs/path/to/SKILL.md  (local file)
+ *
+ * The fetched SKILL.md is validated through the same Zod schema used at
+ * load time. The skill is then copied into `.ivaronix/skills/<id>/SKILL.md`
+ * (project-local) so it overrides any same-id seed skill.
+ */
+skillCommand
+  .command('install <url>')
+  .description('Install a skill from a URL (GitHub raw, github.com blob URL, or file://)')
+  .option('--id <id>', 'override the skill id (defaults to the manifest name)')
+  .option('--force', 'overwrite an existing same-id skill')
+  .action(async (url: string, opts: { id?: string; force?: boolean }) => {
+    // Rewrite github.com/<owner>/<repo>/blob/... → raw.githubusercontent.com/<owner>/<repo>/...
+    let fetchUrl = url;
+    const githubBlob = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+    if (githubBlob) {
+      fetchUrl = `https://raw.githubusercontent.com/${githubBlob[1]}/${githubBlob[2]}/${githubBlob[3]}`;
+    }
+
+    ui.title(`skill install ${url}`);
+    if (fetchUrl !== url) ui.info(`rewritten URL        ${fetchUrl}`);
+
+    let body: string;
+    try {
+      if (fetchUrl.startsWith('file://')) {
+        const { readFileSync } = await import('node:fs');
+        body = readFileSync(new URL(fetchUrl), 'utf8');
+      } else {
+        const res = await fetch(fetchUrl);
+        if (!res.ok) {
+          ui.fail(`HTTP ${res.status}`, await res.text().catch(() => 'no body'));
+          process.exitCode = 1;
+          return;
+        }
+        body = await res.text();
+      }
+    } catch (err) {
+      ui.fail(`fetch failed`, (err as Error).message);
+      process.exitCode = 1;
+      return;
+    }
+
+    // Validate the manifest by writing to a tmp dir + loadSkillFromPath
+    const { mkdtempSync, writeFileSync, mkdirSync, copyFileSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { loadSkillFromPath } = await import('@ivaronix/skills');
+
+    const tmp = mkdtempSync(join(tmpdir(), 'ivaronix-install-'));
+    writeFileSync(join(tmp, 'SKILL.md'), body, 'utf8');
+
+    let loaded;
+    try {
+      loaded = loadSkillFromPath(tmp);
+    } catch (err) {
+      ui.fail(`manifest invalid`, (err as Error).message);
+      process.exitCode = 1;
+      return;
+    }
+    const id = opts.id ?? loaded.manifest.name;
+    ui.pass(`manifest valid       ${id}@${loaded.manifest.version}`);
+    ui.pass(`manifestHash         ${loaded.manifestHash}`);
+
+    // Install into .ivaronix/skills/<id>/SKILL.md
+    const targetRoot = resolve(process.cwd(), '.ivaronix', 'skills', id);
+    const targetMd = join(targetRoot, 'SKILL.md');
+    if (existsSync(targetMd) && !opts.force) {
+      ui.fail(`already installed at ${targetRoot}`, 'pass --force to overwrite');
+      process.exitCode = 1;
+      return;
+    }
+    mkdirSync(targetRoot, { recursive: true });
+    copyFileSync(join(tmp, 'SKILL.md'), targetMd);
+
+    ui.divider();
+    ui.banner(true, '→ INSTALLED ✓');
+    ui.hint(`run: ivaronix doc ask <file> "..." --skill ${id}`);
+    ui.hint(`if you trust the source, anchor it: ivaronix skill publish ${id}`);
+  });

@@ -1,18 +1,21 @@
 import { Command } from 'commander';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { resolve, basename, join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
 
 /**
- * `ivaronix swarm run <todo.md>` — parent/worker mode.
+ * `ivaronix swarm run <todo.md>` — parent/worker mode with optional worktree
+ * isolation (Octogent pattern).
  *
- * Parses a todo file (markdown bullet list or numbered list — one task per
- * line). For each task, runs a consensus pass using the chosen skill and
- * anchors a receipt. Tasks run sequentially (Day-12 testnet quality);
- * Day-19+ will add worktree-isolated parallelism.
+ * Without --worktree: tasks run sequentially in the current cwd.
+ * With --worktree: each task runs in a fresh `git worktree add <path> -b
+ * swarm/<ts-slug> HEAD` so workers can edit independent branches without
+ * stepping on each other. Each worker gets `CONTEXT.md`, `notes.md`, and
+ * `result.md` scaffolded into its worktree.
  */
-export const swarmCommand = new Command('swarm').description('Multi-task parent/worker dispatch');
+export const swarmCommand = new Command('swarm').description('Multi-task parent/worker dispatch with optional worktree isolation');
 
 function parseTasks(text: string): string[] {
   const tasks: string[] = [];
@@ -20,11 +23,48 @@ function parseTasks(text: string): string[] {
     const line = raw.trim();
     if (!line) continue;
     if (/^#/.test(line)) continue;
-    // Markdown bullets, numbered lists, or "- [ ]" task lists
     const m = line.match(/^(?:-\s*\[\s*[ x]\s*\]|[-*+]|\d+[.)])\s+(.+)$/);
     if (m) tasks.push(m[1]!.trim());
   }
   return tasks;
+}
+
+function isInsideGitRepo(): boolean {
+  try {
+    execFileSync('git', ['rev-parse', '--is-inside-work-tree'], { stdio: 'pipe' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function gitRepoRoot(): string {
+  try {
+    return execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim();
+  } catch {
+    return process.cwd();
+  }
+}
+
+function shortBranchSlug(s: string): string {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'task';
+}
+
+function tryAddWorktree(branch: string, worktreePath: string): { ok: boolean; reason?: string } {
+  try {
+    execFileSync('git', ['worktree', 'add', worktreePath, '-b', branch, 'HEAD'], { stdio: 'pipe' });
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, reason: (err as { stderr?: string; message: string }).stderr?.toString() ?? (err as Error).message };
+  }
+}
+
+function removeWorktree(worktreePath: string) {
+  try {
+    execFileSync('git', ['worktree', 'remove', '--force', worktreePath], { stdio: 'pipe' });
+  } catch {
+    /* best-effort */
+  }
 }
 
 swarmCommand
@@ -36,17 +76,20 @@ swarmCommand
   .option('--consensus', 'force standard 3-role consensus')
   .option('--high-stakes', 'use 5-role high-stakes consensus')
   .option('--no-receipt', 'skip receipt anchoring per task')
+  .option('--worktree', 'run each task inside an isolated git worktree (Octogent pattern)')
+  .option('--worktree-root <dir>', 'where to create worktrees', '.ivaronix/swarm')
+  .option('--cleanup', 'remove every worktree at the end of the run')
   .option('--out-dir <dir>', 'where to write receipt JSON', '.ivaronix/receipts/anchored')
-  .action(async (todoPath: string, opts: { skill: string; max: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; outDir: string }) => {
+  .action(async (todoPath: string, opts: { skill: string; max: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; worktree?: boolean; worktreeRoot: string; cleanup?: boolean; outDir: string }) => {
     let tier: 'quick' | 'standard' | 'high-stakes' | undefined;
     if (opts.highStakes) tier = 'high-stakes';
     else if (opts.consensus) tier = 'standard';
     else if (opts.quick) tier = 'quick';
 
-    const path = resolve(process.cwd(), todoPath);
+    const todoAbs = resolve(process.cwd(), todoPath);
     let raw: string;
     try {
-      raw = readFileSync(path, 'utf8');
+      raw = readFileSync(todoAbs, 'utf8');
     } catch (err) {
       ui.fail(`cannot read ${todoPath}`, (err as Error).message);
       process.exitCode = 1;
@@ -59,20 +102,54 @@ swarmCommand
       return;
     }
 
-    ui.title(`swarm: ${todoPath}  (${tasks.length} task${tasks.length === 1 ? '' : 's'})`);
+    const ctxPath = todoAbs.replace(/\.md$/, '.context.md');
+    const sharedContext = existsSync(ctxPath) ? readFileSync(ctxPath, 'utf8') : '';
+
+    const useWorktree = !!opts.worktree && isInsideGitRepo();
+    if (opts.worktree && !useWorktree) {
+      ui.fail('--worktree requested but not inside a git repo — falling back to flat run');
+    }
+
+    ui.title(`swarm: ${todoPath}  (${tasks.length} task${tasks.length === 1 ? '' : 's'})${useWorktree ? '  · worktree-isolated' : ''}`);
+    if (sharedContext) ui.info(`shared context loaded from ${basename(ctxPath)} (${sharedContext.length} chars)`);
     ui.divider();
+
+    const repoRoot = gitRepoRoot();
+    const worktreeRootAbs = resolve(repoRoot, opts.worktreeRoot);
 
     let pass = 0;
     let fail = 0;
     const receipts: string[] = [];
+    const worktrees: string[] = [];
 
     for (let i = 0; i < tasks.length; i++) {
       const t = tasks[i]!;
       const label = `task ${i + 1}/${tasks.length}`;
+      const slug = shortBranchSlug(t);
+      const branch = `swarm/${Date.now()}-${i + 1}-${slug}`;
+      const wtPath = useWorktree ? join(worktreeRootAbs, branch.replace(/\//g, '_')) : null;
+
+      if (useWorktree && wtPath) {
+        mkdirSync(worktreeRootAbs, { recursive: true });
+        const r = tryAddWorktree(branch, wtPath);
+        if (!r.ok) {
+          ui.fail(`[${label}] worktree add failed`, r.reason?.split('\n')[0] ?? 'unknown');
+          fail++;
+          continue;
+        }
+        worktrees.push(wtPath);
+        writeFileSync(
+          join(wtPath, 'CONTEXT.md'),
+          `# Task ${i + 1}/${tasks.length}\n\n## Goal\n${t}\n\n## Shared context\n${sharedContext || '(none)'}\n`,
+          'utf8',
+        );
+        writeFileSync(join(wtPath, 'notes.md'), `# notes — ${slug}\n\n`, 'utf8');
+      }
+
       try {
         const result = await runPipeline({
           skillId: opts.skill,
-          context: '(swarm task — no additional context provided)',
+          context: sharedContext ? `${sharedContext}\n\n--- TASK ---\n${t}` : '(swarm task — no additional context provided)',
           userPrompt: t,
           tier,
           receipt: opts.receipt,
@@ -86,9 +163,31 @@ swarmCommand
         ui.divider();
         if (result.receiptId) receipts.push(result.receiptId);
         pass++;
+
+        if (useWorktree && wtPath) {
+          writeFileSync(
+            join(wtPath, 'result.md'),
+            `# result — ${slug}\n\n${result.finalText}\n\n---\n\n_receipt:_ ${result.receiptId ?? '(none)'}\n_tx:_ ${result.receiptTxHash ?? '(none)'}\n_onchain id:_ ${result.receiptOnchainId?.toString() ?? '(none)'}\n`,
+            'utf8',
+          );
+        }
       } catch (err) {
         ui.fail(`[${label}] failed`, (err as Error).message);
         fail++;
+      }
+    }
+
+    ui.divider();
+    if (useWorktree && worktrees.length > 0) {
+      ui.section('worktrees');
+      for (const w of worktrees) ui.pass(w.replace(repoRoot + (process.platform === 'win32' ? '\\' : '/'), ''));
+      if (opts.cleanup) {
+        ui.divider();
+        ui.pending(`--cleanup: removing ${worktrees.length} worktree${worktrees.length === 1 ? '' : 's'}...`);
+        for (const w of worktrees) removeWorktree(w);
+        ui.pass('cleanup done');
+      } else {
+        ui.hint('inspect each worker\'s `CONTEXT.md` / `notes.md` / `result.md`. Remove with `git worktree remove <path>` or pass --cleanup');
       }
     }
 

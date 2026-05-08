@@ -33,6 +33,7 @@ import { codeCommand } from '../commands/code.js';
 import { auditCommand } from '../commands/audit.js';
 import { swarmCommand } from '../commands/swarm.js';
 import { watchCommand } from '../commands/watch.js';
+import { updateCommand } from '../commands/update.js';
 
 const program = new Command();
 
@@ -71,6 +72,7 @@ program.addCommand(codeCommand);
 program.addCommand(auditCommand);
 program.addCommand(swarmCommand);
 program.addCommand(watchCommand);
+program.addCommand(updateCommand);
 
 program.parseAsync(process.argv).catch((err) => {
   console.error('Error:', err.message);

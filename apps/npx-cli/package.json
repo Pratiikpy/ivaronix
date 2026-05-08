@@ -1,0 +1,45 @@
+{
+  "name": "ivaronix",
+  "version": "0.0.1",
+  "description": "The 0G Agent Operating System — Catch the risks. Keep the receipts.",
+  "license": "Apache-2.0",
+  "homepage": "https://ivaronix.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pratiikpy/ivaronix"
+  },
+  "keywords": [
+    "0g",
+    "ai-agent",
+    "verifiable-ai",
+    "receipts",
+    "consensus",
+    "tee"
+  ],
+  "type": "module",
+  "bin": {
+    "ivaronix": "./dist/ivaronix.mjs"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "node bundle.mjs",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "echo skip",
+    "prepublishOnly": "node bundle.mjs",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.7"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
