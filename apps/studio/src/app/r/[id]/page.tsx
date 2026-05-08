@@ -287,6 +287,79 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
+        {local?.execution?.consensus && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+              <div className="section-label">consensus · {local.execution.consensus.roles?.length ?? 0} roles</div>
+              <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                convergence{' '}
+                <span
+                  className="mono"
+                  style={{
+                    color: (local.execution.consensus.convergenceScore ?? 0) >= 0.85
+                      ? 'var(--color-verified)'
+                      : (local.execution.consensus.convergenceScore ?? 0) >= 0.5
+                        ? 'var(--color-pending)'
+                        : 'var(--color-mismatch)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {(local.execution.consensus.convergenceScore ?? 0).toFixed(3)}
+                </span>
+              </div>
+            </div>
+            {local.execution.consensus.agreementSummary && (
+              <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
+                <strong style={{ color: 'var(--color-fg)' }}>Agreement:</strong>{' '}
+                {local.execution.consensus.agreementSummary}
+              </div>
+            )}
+            {local.execution.consensus.disagreementSummary && (
+              <div style={{ fontSize: 13, color: 'var(--color-muted)' }}>
+                <strong style={{ color: 'var(--color-fg)' }}>Disagreement:</strong>{' '}
+                {local.execution.consensus.disagreementSummary}
+              </div>
+            )}
+            {local.execution.consensus.individualAttestations && local.execution.consensus.individualAttestations.length > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
+                {local.execution.consensus.individualAttestations.map((att) => (
+                  <div
+                    key={att.role}
+                    style={{
+                      padding: 12,
+                      border: '1px solid var(--color-hairline)',
+                      borderRadius: 'var(--radius-md)',
+                      background: 'var(--color-tonal)',
+                      fontSize: 12,
+                    }}
+                  >
+                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>{att.role}</div>
+                    {att.providerAddress && (
+                      <div className="mono" style={{ color: 'var(--color-muted)', fontSize: 11, wordBreak: 'break-all' }}>
+                        {att.providerAddress.slice(0, 14)}…
+                      </div>
+                    )}
+                    <div style={{ color: 'var(--color-muted)', marginTop: 4, fontSize: 11 }}>
+                      independent verify:{' '}
+                      <span
+                        style={{
+                          color: att.independentVerified === true
+                            ? 'var(--color-verified)'
+                            : att.independentVerified === false
+                              ? 'var(--color-mismatch)'
+                              : 'var(--color-muted)',
+                        }}
+                      >
+                        {att.independentVerified === true ? 'PASS' : att.independentVerified === false ? 'FAIL' : 'pending'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div
           style={{
             borderTop: '1px solid var(--color-hairline)',

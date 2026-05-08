@@ -53,6 +53,19 @@ export interface ReceiptBody {
     mode?: string;
     modelSelection?: { requested?: string; final?: string };
     providerRouting?: { finalProvider?: string };
+    consensus?: {
+      roles?: string[];
+      convergenceScore?: number;
+      agreementSummary?: string;
+      disagreementSummary?: string;
+      individualAttestations?: Array<{
+        role: string;
+        providerAddress?: string;
+        attestationHash?: string;
+        chatId?: string;
+        independentVerified?: boolean | null;
+      }>;
+    };
   };
   // …rest of fields are in the file but we don't need them on the public page
   [key: string]: unknown;

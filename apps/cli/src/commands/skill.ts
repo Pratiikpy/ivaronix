@@ -344,6 +344,13 @@ skillCommand
       process.exitCode = 1;
       return;
     }
+    // Manifest demands a receipt — auto-enable so the sandbox doesn't refuse.
+    // We tell the user upfront how much OG this will cost.
+    const requiresReceipt = skill.manifest.og.permissions.receipt_required;
+    if (requiresReceipt && !opts.receipt) {
+      opts.receipt = true;
+      ui.hint(`skill requires receipts — auto-enabling --receipt (≈0.004 OG / fixture)`);
+    }
     const { join: jp } = await import('node:path');
     const { readdirSync, readFileSync, existsSync, statSync } = await import('node:fs');
     const testsDir = jp(skill.rootPath, 'tests');
