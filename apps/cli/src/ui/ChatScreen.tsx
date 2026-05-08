@@ -75,6 +75,11 @@ const SLASH_COMMANDS: { name: string; help: string }[] = [
   { name: '/usage', help: 'detailed token + OG breakdown for this session' },
   { name: '/skills', help: 'list installed first-party skills' },
   { name: '/exit', help: 'quit' },
+  // Direct skill activation (Hermes pattern). /<skill-name> sets footer.skill.
+  { name: '/private-doc-review', help: 'activate private-doc-review skill' },
+  { name: '/github-audit', help: 'activate github-audit skill' },
+  { name: '/plan-step', help: 'activate plan-step skill' },
+  { name: '/code-edit', help: 'activate code-edit skill' },
 ];
 
 const SUPPORTED_MODELS = [
@@ -363,8 +368,23 @@ export function ChatScreen(props: Props): React.ReactElement {
         }
         return true;
       }
-      default:
+      default: {
+        // Hermes pattern — typing /private-doc-review activates that skill
+        // for the rest of the session. Same effect as `/skill <id>` but
+        // shorter to type once you know the skill name.
+        const FIRST_PARTY = ['private-doc-review', 'github-audit', '0g-integration-auditor', 'plan-step', 'code-edit'];
+        if (cmd && FIRST_PARTY.includes(cmd)) {
+          setFooter((f) => ({ ...f, skill: cmd }));
+          setMessages((prev) => [...prev, {
+            id: `m_${Date.now()}_skactivate`,
+            role: 'system',
+            content: `active skill: ${cmd} (use /skill off to clear)`,
+            ts: Date.now(),
+          }]);
+          return true;
+        }
         return false;
+      }
     }
   };
 
