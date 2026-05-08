@@ -6,6 +6,10 @@
 
 A single page a grant reviewer or judge can read in 5 minutes to assess Ivaronix without running it. Cross-references back into `BUILD_PROGRESS.md` (per-round detail) and `TEST_REPORT.md` (matrices) when deeper proof is needed.
 
+## TL;DR — functionality proven
+
+**Both services work end-to-end on testnet.** UI tested with a real `window.ethereum` shim (proxies real RPC, exercises wagmi connect / read / write paths) at desktop + mobile across every route, ~60 screenshots committed as evidence. CLI exercised 22 commands × real on-chain receipts (~287 anchored across all 9 receipt types). 15 real bugs found and fixed. Cross-surface integrity proven (Rounds 36/37): a write originated by either service is observable from the other within seconds. The only remaining work needs you: B-2 mainnet funding, npm publish, public HTTPS deploy.
+
 ## Two services. Both verified.
 
 **1. Studio** (`apps/studio/`, Next.js, `localhost:3300`)
