@@ -70,6 +70,10 @@ const SLASH_COMMANDS: { name: string; help: string }[] = [
   { name: '/resume', help: 'load a saved conversation by id (`/resume <prefix>`)' },
   { name: '/save', help: 'save the conversation; `/save md` exports markdown' },
   { name: '/clear', help: 'start a new conversation in this session' },
+  { name: '/retry', help: 're-run the last assistant turn' },
+  { name: '/undo', help: 'remove the last user+assistant pair' },
+  { name: '/usage', help: 'detailed token + OG breakdown for this session' },
+  { name: '/skills', help: 'list installed first-party skills' },
   { name: '/exit', help: 'quit' },
 ];
 
@@ -264,6 +268,75 @@ export function ChatScreen(props: Props): React.ReactElement {
         } catch (err) {
           setMessages((prev) => [...prev, { id: `m_${Date.now()}_he`, role: 'system', content: `history error: ${(err as Error).message}`, ts: Date.now() }]);
         }
+        return true;
+      }
+      case 'retry': {
+        // Re-run the last user message. Find the most recent user msg, drop
+        // anything after it (the previous assistant reply + system noise),
+        // then submit it through the normal chat path.
+        let lastUserIdx = -1;
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i]!.role === 'user') { lastUserIdx = i; break; }
+        }
+        if (lastUserIdx < 0) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_re`, role: 'system', content: 'no prior user message to retry', ts: Date.now() }]);
+          return true;
+        }
+        const lastUser = messages[lastUserIdx]!.content;
+        // Trim the conversation back to just before that last user msg
+        setMessages((prev) => prev.slice(0, lastUserIdx));
+        // Defer to next tick so the state update settles, then re-submit
+        setTimeout(() => { void handleSubmit(lastUser); }, 0);
+        return true;
+      }
+      case 'undo': {
+        // Remove the last user+assistant pair (Hermes-style undo).
+        let lastUserIdx = -1;
+        for (let i = messages.length - 1; i >= 0; i--) {
+          if (messages[i]!.role === 'user') { lastUserIdx = i; break; }
+        }
+        if (lastUserIdx < 0) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_u`, role: 'system', content: 'nothing to undo', ts: Date.now() }]);
+          return true;
+        }
+        setMessages((prev) => prev.slice(0, lastUserIdx));
+        return true;
+      }
+      case 'usage': {
+        // Detailed breakdown vs /cost which is just a one-liner.
+        const lines = [
+          `── usage for this session ──`,
+          `model        ${footer.model}`,
+          `network      ${footer.network}`,
+          `messages     ${messages.length}`,
+          `input tokens  ${footer.cost.inputTokens}`,
+          `output tokens ${footer.cost.outputTokens}`,
+          `total tokens  ${footer.cost.inputTokens + footer.cost.outputTokens}`,
+          `cost (OG)     ${footer.cost.og.toFixed(10)}`,
+          footer.passport ? `passport      tokenId ${footer.passport.tokenId} · trust ${footer.passport.trust} · receipts ${footer.passport.receipts}` : `passport      not connected`,
+        ];
+        setMessages((prev) => [...prev, { id: `m_${Date.now()}_us`, role: 'system', content: lines.join('\n'), ts: Date.now() }]);
+        return true;
+      }
+      case 'skills': {
+        // Lazy-load to avoid pulling skill loader into the cold-start path.
+        void (async () => {
+          try {
+            const { findSkill } = await import('@ivaronix/skills');
+            const { resolve } = await import('node:path');
+            const candidates = ['private-doc-review', 'github-audit', '0g-integration-auditor', 'plan-step', 'code-edit'];
+            const dirs = [resolve(props.cwd, 'seed-skills'), resolve(props.cwd, '.ivaronix/skills')];
+            const found: string[] = [];
+            for (const id of candidates) {
+              const sk = findSkill(id, dirs);
+              if (sk) found.push(`${id.padEnd(28)} v${sk.manifest.version} · tier=${sk.manifest.og.consensus.default_tier}`);
+            }
+            const text = found.length > 0 ? ['installed first-party skills:', ...found].join('\n') : '(no skills found in seed-skills or .ivaronix/skills)';
+            setMessages((prev) => [...prev, { id: `m_${Date.now()}_sk`, role: 'system', content: text, ts: Date.now() }]);
+          } catch (err) {
+            setMessages((prev) => [...prev, { id: `m_${Date.now()}_sk`, role: 'system', content: `skills error: ${(err as Error).message}`, ts: Date.now() }]);
+          }
+        })();
         return true;
       }
       case 'resume': {
