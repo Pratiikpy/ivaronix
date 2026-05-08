@@ -65,7 +65,8 @@ async function target() {
 }
 
 async function input(value?: string) {
-  const piped = process.stdin.isTTY ? undefined : await Bun.stdin.text()
+  // PASS 77 F-1h-c: Bun.stdin.text() → Node Response wrapper around process.stdin
+  const piped = process.stdin.isTTY ? undefined : await new Response(process.stdin as unknown as ReadableStream).text()
   if (!value) return piped
   if (!piped) return value
   return piped + "\n" + value

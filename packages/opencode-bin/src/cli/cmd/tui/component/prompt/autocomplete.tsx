@@ -1,5 +1,8 @@
 import type { BoxRenderable, TextareaRenderable, KeyEvent, ScrollBoxRenderable } from "@opentui/core"
-import { pathToFileURL } from "bun"
+// PASS 77 F-1h-c: bun's pathToFileURL → node:url's pathToFileURL (same shape)
+import { pathToFileURL } from "node:url"
+// PASS 77 F-1h-c: Bun.stringWidth → string-width npm pkg (same surface)
+import stringWidth from "string-width"
 import fuzzysort from "fuzzysort"
 import path from "path"
 import { firstBy } from "remeda"
@@ -172,7 +175,7 @@ export function Autocomplete(props: {
 
     const virtualText = "@" + text
     const extmarkStart = store.index
-    const extmarkEnd = extmarkStart + Bun.stringWidth(virtualText)
+    const extmarkEnd = extmarkStart + stringWidth(virtualText)
 
     const styleId = part.type === "file" ? props.fileStyleId : part.type === "agent" ? props.agentStyleId : undefined
 
@@ -412,7 +415,7 @@ export function Autocomplete(props: {
           const cursor = props.input().logicalCursor
           props.input().deleteRange(0, 0, cursor.row, cursor.col)
           props.input().insertText(newText)
-          props.input().cursorOffset = Bun.stringWidth(newText)
+          props.input().cursorOffset = stringWidth(newText)
         },
       })
     }

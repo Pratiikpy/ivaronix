@@ -1,5 +1,5 @@
 import { Player } from "cli-sound"
-import { mkdirSync } from "node:fs"
+import { mkdirSync, existsSync, copyFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 import { Process } from "@/util/process"
@@ -62,11 +62,11 @@ function load() {
 }
 
 async function file(path: string) {
+  // PASS 77 F-1h-c: Bun.file/Bun.write → Node fs.copyFile + existsSync
   mkdirSync(DIR, { recursive: true })
   const next = join(DIR, basename(path))
-  const out = Bun.file(next)
-  if (await out.exists()) return next
-  await Bun.write(out, Bun.file(path))
+  if (existsSync(next)) return next
+  copyFileSync(path, next)
   return next
 }
 

@@ -1,4 +1,6 @@
 import { BoxRenderable, RGBA, TextareaRenderable, MouseEvent, PasteEvent, decodePasteBytes } from "@opentui/core"
+// PASS 77 F-1h-c: Bun.stringWidth → string-width npm pkg
+import stringWidth from "string-width"
 import { createEffect, createMemo, onMount, createSignal, onCleanup, on, Show, Switch, Match } from "solid-js"
 import "opentui-spinner/solid"
 import path from "path"
@@ -551,7 +553,7 @@ export function Prompt(props: PromptProps) {
             parts: updatedNonTextParts,
           })
           restoreExtmarksFromParts(updatedNonTextParts)
-          input.cursorOffset = Bun.stringWidth(content)
+          input.cursorOffset = stringWidth(content)
         },
       },
       {

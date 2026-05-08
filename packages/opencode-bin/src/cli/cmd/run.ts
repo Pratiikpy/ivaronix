@@ -344,7 +344,8 @@ export const RunCommand = effectCmd({
         }
       }
 
-      if (!process.stdin.isTTY) message += "\n" + (await Bun.stdin.text())
+      // PASS 77 F-1h-c: Bun.stdin.text() → Node Response wrapper around process.stdin
+      if (!process.stdin.isTTY) message += "\n" + (await new Response(process.stdin as unknown as ReadableStream).text())
 
       if (message.trim().length === 0 && !args.command) {
         UI.error("You must provide a message or a command")

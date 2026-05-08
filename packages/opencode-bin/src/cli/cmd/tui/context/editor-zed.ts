@@ -1,6 +1,8 @@
-import { Database } from "bun:sqlite"
+// PASS 77 F-1h-c: bun:sqlite → better-sqlite3 (same prepare/all surface)
+import Database from "better-sqlite3"
 import os from "node:os"
 import path from "node:path"
+import { readFile } from "node:fs/promises"
 import z from "zod"
 import { Filesystem } from "@/util/filesystem"
 import type { EditorSelection } from "./editor"
@@ -60,9 +62,8 @@ export async function resolveZedSelection(dbPath: string, cwd = process.cwd()): 
   const text =
     contents.type === "contents" && contents.contents != null
       ? contents.contents
-      : await Bun.file(row.buffer_path)
-          .text()
-          .catch(() => undefined)
+      // PASS 77 F-1h-c: Bun.file().text() → fs.readFile
+      : await readFile(row.buffer_path, "utf8").catch(() => undefined)
   if (text == null) return { type: "unavailable" }
 
   const ranges = byteRanges.map((range) => {
