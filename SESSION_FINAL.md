@@ -4,7 +4,7 @@
 
 ## What this document is
 
-A single page a grant reviewer or judge can read in 5 minutes to assess Ivaronix without running it. Cross-references back into `BUILD_PROGRESS.md` (per-round detail) and `TEST_REPORT.md` (matrices) when deeper proof is needed.
+A single page a grant reviewer or judge can read in 5 minutes to assess Ivaronix without running it. Cross-references back into `docs/build/BUILD_PROGRESS.md` (per-round detail) and `docs/build/TEST_REPORT.md` (matrices) when deeper proof is needed.
 
 ## TL;DR — functionality proven
 
@@ -155,8 +155,8 @@ Zero gaps. The CLI follows every canonical OG agent operational rule.
 
 Full per-round detail with receipt ids, tx hashes, and code-line refs lives in:
 
-- `BUILD_PROGRESS.md` — 30-round timeline with bug numbers + commits
-- `TEST_REPORT.md` — surface coverage matrix
+- `docs/build/BUILD_PROGRESS.md` — 30-round timeline with bug numbers + commits
+- `docs/build/TEST_REPORT.md` — surface coverage matrix
 - `test-*.png` — visual evidence at desktop + mobile widths
 - `git log --oneline -50` — 50 commits across the 37 rounds
 

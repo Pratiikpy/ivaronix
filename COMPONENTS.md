@@ -2,7 +2,7 @@
 
 > **Status:** v1 (locked 2026-05-07).
 > **Source:** deep cross-folder pass over `oglabs resources/`, `og-projects-showcase/`, `entries/`, `CLI Open Source Project/`. Every decision below cites concrete source files.
-> **Companion docs:** `PRD.md` (what & why), `HLD.md` (architecture), `BUILD.md` (operational plan), `RECEIPTS_SPEC.md`, `REFERENCE_PATTERNS.md`, `PITCH.md`.
+> **Companion docs:** `PRD.md` (what & why), `HLD.md` (architecture), `docs/build/BUILD.md` (operational plan), `RECEIPTS_SPEC.md`, `docs/reference/REFERENCE_PATTERNS.md`, `docs/pitch/PITCH.md`.
 > **Rule:** this doc holds *user-facing UX decisions per component*. PRD/HLD/BUILD reference this doc for the "how should it actually look and feel?" answers.
 
 ---

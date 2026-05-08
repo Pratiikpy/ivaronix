@@ -1,7 +1,7 @@
 # Ivaronix — High-Level Design
 
 > **Status:** v3 (full Nexus vision, locked 2026-05-07).
-> **Companion docs:** `PRD.md` (what & why), `BUILD.md` (30-day plan), `RECEIPTS_SPEC.md` (canonical schema), `REFERENCE_PATTERNS.md` (patterns), `PITCH.md`.
+> **Companion docs:** `PRD.md` (what & why), `docs/build/BUILD.md` (30-day plan), `RECEIPTS_SPEC.md` (canonical schema), `docs/reference/REFERENCE_PATTERNS.md` (patterns), `docs/pitch/PITCH.md`.
 > **Rule:** this doc holds *architecture*. No re-statements of MVP scope (that's PRD). No SDK quirks (that's BUILD). No receipt-shape bikeshedding (that's RECEIPTS_SPEC).
 
 ---

@@ -94,13 +94,13 @@ This folder is the **single source of truth** for Ivaronix planning. Read in ord
 |---|---|---|---|
 | 1 | **[PRD.md](PRD.md)** | Wedge, 5 surfaces, 7 layers, MVP scope, monetization, success criteria | Start here |
 | 2 | **[HLD.md](HLD.md)** | Architecture: monorepo, contracts, CLI, Studio, daemon, hybrid memory, lifecycle hooks | Before coding |
-| 3 | **[BUILD.md](BUILD.md)** | 30-day testnet-then-mainnet plan, network profiles, SDK quirks, deploy steps | During implementation |
+| 3 | **[BUILD.md](docs/build/BUILD.md)** | 30-day testnet-then-mainnet plan, network profiles, SDK quirks, deploy steps | During implementation |
 | 4 | **[UI_UX_GUIDE.md](UI_UX_GUIDE.md)** | Visual source of truth: design tokens, typography, logo anatomy, layout rules, motion, a11y, Playwright workflow. Pairs with `Ivaronix.html` mockup | Before any Studio / Hub / Proof Explorer code |
 | 5 | **[COMPONENTS.md](COMPONENTS.md)** | Per-component UX decisions (Studio screens, CLI surfaces, visual language) sourced from cross-folder analysis | Before designing or building any UI surface |
 | 6 | **[RECEIPTS_SPEC.md](RECEIPTS_SPEC.md)** | Canonical receipt JSON schema (RFC-style) with 9 types + 3-state verification | Before touching `packages/receipts` |
-| 7 | **[REFERENCE_PATTERNS.md](REFERENCE_PATTERNS.md)** | Extracted contract + pipeline patterns from 0G showcase + entry winners | When designing contracts or pipelines |
-| 8 | **[0G_RESOURCES.md](0G_RESOURCES.md)** | Full 0G Builder Hub catalog: URLs, repos, SDK names, CLI flow, addresses, conflicts | When integrating any 0G primitive |
-| 9 | **[PITCH.md](PITCH.md)** | Grant pitch + per-audience positioning + bounty mapping + 2-gate submission checklist | Before grant submission |
+| 7 | **[REFERENCE_PATTERNS.md](docs/reference/REFERENCE_PATTERNS.md)** | Extracted contract + pipeline patterns from 0G showcase + entry winners | When designing contracts or pipelines |
+| 8 | **[0G_RESOURCES.md](docs/reference/0G_RESOURCES.md)** | Full 0G Builder Hub catalog: URLs, repos, SDK names, CLI flow, addresses, conflicts | When integrating any 0G primitive |
+| 9 | **[PITCH.md](docs/pitch/PITCH.md)** | Grant pitch + per-audience positioning + bounty mapping + 2-gate submission checklist | Before grant submission |
 
 ### Operational notes (kept alongside)
 
@@ -108,13 +108,13 @@ This folder is the **single source of truth** for Ivaronix planning. Read in ord
 |---|---|
 | **[Ivaronix.html](Ivaronix.html)** | Bundled visual mockup — the design source of truth. Open in browser to see the rendered reference. Use Playwright to capture screenshots at 1440×900 / 1280×800 / 390×844. |
 | **[brand/](brand/)** | Logo SVG assets: `ivaronix-mark.svg` (full), `ivaronix-icon.svg` (brackets-with-i), `ivaronix-dot.svg` (favicon), `ivaronix-wordmark.svg` (text). |
-| **[0G_TESTNET_NOTES.md](0G_TESTNET_NOTES.md)** | Live testnet state: Wallet A `0xaa95...`, current Router pricing, confirmed inference endpoint. |
-| **[entries.md](entries.md)** | Competitor scorecard for the 16 grant-track entries. Companion to `REFERENCE_PATTERNS.md`. |
+| **[0G_TESTNET_NOTES.md](docs/reference/0G_TESTNET_NOTES.md)** | Live testnet state: Wallet A `0xaa95...`, current Router pricing, confirmed inference endpoint. |
+| **[entries.md](docs/reference/entries.md)** | Competitor scorecard for the 16 grant-track entries. Companion to `REFERENCE_PATTERNS.md`. |
 | **[.env.example](.env.example)** | Template for credentials (real `.env` is gitignored). |
 
 Single source of truth ordering (when docs disagree):
 ```
-Ivaronix.html (visual) > UI_UX_GUIDE > RECEIPTS_SPEC > REFERENCE_PATTERNS > COMPONENTS > BUILD > HLD > PRD > PITCH
+Ivaronix.html (visual) > UI_UX_GUIDE > RECEIPTS_SPEC > docs/reference/REFERENCE_PATTERNS > COMPONENTS > docs/build/BUILD > HLD > PRD > docs/pitch/PITCH
 ```
 
 For visual decisions specifically: `Ivaronix.html` (open in browser, screenshot via Playwright) wins, then `UI_UX_GUIDE.md` (the codified rules), then `COMPONENTS.md` (per-component UX).
@@ -177,18 +177,18 @@ pnpm add ethers@^6 @0gfoundation/0g-storage-ts-sdk @0gfoundation/0g-compute-ts-s
 pnpm add @0glabs/0g-serving-broker
 forge init contracts/
 
-# 3. Wire up testnet env (BUILD.md §2)
+# 3. Wire up testnet env (docs/build/BUILD.md §2)
 cp .env.example .env  # OG_CHAIN_ID=16602
 
 # 4. Doctor
 ivaronix doctor   # all green = ready for Day 2
 ```
 
-Then walk through `BUILD.md §1` Day 1 → Day 22 (testnet) → Day 23-30 (mainnet promotion).
+Then walk through `docs/build/BUILD.md §1` Day 1 → Day 22 (testnet) → Day 23-30 (mainnet promotion).
 
 ---
 
-## Locked Engineering Defaults (BUILD.md §11)
+## Locked Engineering Defaults (docs/build/BUILD.md §11)
 
 - Chain client (daemon): **ethers v6**
 - Wallet (browser): **viem + wagmi + walletconnect**
@@ -207,4 +207,4 @@ Then walk through `BUILD.md §1` Day 1 → Day 22 (testnet) → Day 23-30 (mainn
 
 (Personal project — single maintainer.)
 
-Submit via the OG Labs grant form when `PITCH.md §8` two-gate checklist is fully green.
+Submit via the OG Labs grant form when `docs/pitch/PITCH.md §8` two-gate checklist is fully green.
