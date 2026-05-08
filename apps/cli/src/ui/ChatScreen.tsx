@@ -28,6 +28,8 @@ import { TOOL_DEFS, dispatchTool } from '../lib/chat-tools.js';
 import {
   newConversation,
   saveConversation,
+  loadConversation,
+  listConversations,
   type ConversationFile,
 } from '../lib/conversation.js';
 import { MultiLineInput } from './MultiLineInput.js';
@@ -61,9 +63,20 @@ const SLASH_COMMANDS: { name: string; help: string }[] = [
   { name: '/help', help: 'show this list' },
   { name: '/cost', help: 'tokens · OG · message count' },
   { name: '/passport', help: 'live passport state from chain' },
+  { name: '/skill', help: 'set active skill (`/skill private-doc-review`, `/skill off`)' },
+  { name: '/model', help: 'switch model (`/model qwen/qwen-2.5-7b-instruct`)' },
+  { name: '/memory', help: 'search the local memory engine (`/memory <query>`)' },
+  { name: '/history', help: 'list saved conversations' },
+  { name: '/resume', help: 'load a saved conversation by id (`/resume <prefix>`)' },
   { name: '/save', help: 'save the conversation; `/save md` exports markdown' },
   { name: '/clear', help: 'start a new conversation in this session' },
   { name: '/exit', help: 'quit' },
+];
+
+const SUPPORTED_MODELS = [
+  'qwen/qwen-2.5-7b-instruct',
+  'qwen/qwen-2.5-14b-instruct',
+  'meta/llama-3-8b-instruct',
 ];
 
 interface Props {
@@ -207,6 +220,76 @@ export function ChatScreen(props: Props): React.ReactElement {
           receipts: [],
         }));
         return true;
+      case 'skill': {
+        if (!arg || arg === 'off') {
+          setFooter((f) => ({ ...f, skill: null }));
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_skill`, role: 'system', content: 'skill cleared', ts: Date.now() }]);
+        } else {
+          setFooter((f) => ({ ...f, skill: arg }));
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_skill`, role: 'system', content: `active skill: ${arg}`, ts: Date.now() }]);
+        }
+        return true;
+      }
+      case 'model': {
+        if (!arg) {
+          const lines = [`current: ${footer.model}`, ...SUPPORTED_MODELS.map((m) => `${m === footer.model ? '●' : '○'} ${m}`)];
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_model`, role: 'system', content: lines.join('\n'), ts: Date.now() }]);
+        } else {
+          setFooter((f) => ({ ...f, model: arg }));
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_model`, role: 'system', content: `model: ${arg}`, ts: Date.now() }]);
+        }
+        return true;
+      }
+      case 'memory': {
+        if (!arg) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_memhelp`, role: 'system', content: 'usage: /memory <query>', ts: Date.now() }]);
+          return true;
+        }
+        // Defer the recall — memory engine is heavyweight; render a placeholder
+        // and run async, then patch the system message.
+        const id = `m_${Date.now()}_mem`;
+        setMessages((prev) => [...prev, { id, role: 'system', content: `searching memory for "${arg}"…`, ts: Date.now() }]);
+        void runMemoryRecall(arg, id, setMessages);
+        return true;
+      }
+      case 'history': {
+        try {
+          const rows = listConversations(8);
+          if (rows.length === 0) {
+            setMessages((prev) => [...prev, { id: `m_${Date.now()}_h`, role: 'system', content: '(no saved conversations)', ts: Date.now() }]);
+          } else {
+            const lines = ['recent conversations:', ...rows.map((r) => `${new Date(r.updatedAt).toISOString().slice(0, 16).replace('T', ' ')}  ${r.id}  ${r.messages} msgs · ${r.model}`)];
+            setMessages((prev) => [...prev, { id: `m_${Date.now()}_h`, role: 'system', content: lines.join('\n'), ts: Date.now() }]);
+          }
+        } catch (err) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_he`, role: 'system', content: `history error: ${(err as Error).message}`, ts: Date.now() }]);
+        }
+        return true;
+      }
+      case 'resume': {
+        if (!arg) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_rh`, role: 'system', content: 'usage: /resume <id|prefix>', ts: Date.now() }]);
+          return true;
+        }
+        try {
+          const loaded = loadConversation(arg);
+          setConv(loaded);
+          const restored: Message[] = loaded.messages
+            .filter((m) => m.role === 'user' || m.role === 'assistant')
+            .map((m, i) => ({
+              id: `prior_${i}_${Date.now()}`,
+              role: m.role as 'user' | 'assistant',
+              content: typeof m.content === 'string' ? m.content : '',
+              ts: loaded.updatedAt,
+            }));
+          setMessages([...restored, { id: `m_${Date.now()}_resumed`, role: 'system', content: `resumed ${loaded.id} · ${restored.length} prior messages`, ts: Date.now() }]);
+          if (loaded.model) setFooter((f) => ({ ...f, model: loaded.model }));
+          if (loaded.skill !== undefined) setFooter((f) => ({ ...f, skill: loaded.skill }));
+        } catch (err) {
+          setMessages((prev) => [...prev, { id: `m_${Date.now()}_re`, role: 'system', content: `resume error: ${(err as Error).message}`, ts: Date.now() }]);
+        }
+        return true;
+      }
       default:
         return false;
     }
@@ -405,6 +488,65 @@ function convMessages(msgs: Message[]): ChatRichMessage[] {
   return msgs
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+}
+
+/**
+ * Recall from the local memory engine, then patch the placeholder system
+ * message. Heavyweight (loads sqlite + embedding model); fire-and-forget.
+ */
+async function runMemoryRecall(
+  query: string,
+  placeholderId: string,
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
+): Promise<void> {
+  try {
+    const { MemoryEngine } = await import('@ivaronix/memory');
+    const { resolve, dirname } = await import('node:path');
+    const { existsSync, mkdirSync } = await import('node:fs');
+    const { loadEnv } = await import('../lib/env.js');
+    const { getDeployedAddress } = await import('@ivaronix/og-chain');
+    const env = loadEnv();
+    if (!env.privateKey || !env.walletAddress) {
+      setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: 'memory: requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env' } : m));
+      return;
+    }
+    let dir = process.cwd();
+    let workspaceRoot: string | null = null;
+    for (let i = 0; i < 8; i++) {
+      if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) { workspaceRoot = dir; break; }
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+    const dbPath = workspaceRoot
+      ? resolve(workspaceRoot, '.ivaronix', 'memory', 'ivaronix.db')
+      : resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
+    mkdirSync(dirname(dbPath), { recursive: true });
+    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+    const engine = MemoryEngine.create({
+      ownerWallet: env.walletAddress as `0x${string}`,
+      ownerPrivateKey: env.privateKey,
+      dbPath,
+      enableOnChainPermissions: Boolean(capAddr && logAddr),
+      capabilityRegistryAddress: capAddr ?? undefined,
+      memoryAccessLogAddress: logAddr ?? undefined,
+      rpcUrl: env.rpcUrl,
+      chainId: env.chainId,
+    });
+    const { hits, logTxHash } = await engine.recall({ text: query, topK: 5 });
+    if (hits.length === 0) {
+      setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: `(no matches for "${query}")` + (logTxHash ? `\naccess log tx ${logTxHash}` : '') } : m));
+      return;
+    }
+    const lines = hits.map((h, i) =>
+      `#${i + 1} score ${h.score.toFixed(3)} [${h.tags.join(', ')}]\n    ${h.text}`,
+    );
+    if (logTxHash) lines.push(`\naccess log tx ${logTxHash}`);
+    setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: lines.join('\n') } : m));
+  } catch (err) {
+    setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: `memory error: ${(err as Error).message}` } : m));
+  }
 }
 
 /**
