@@ -151,7 +151,7 @@ Captured both desktop (1440×900) and mobile (390×812) screenshots for every ro
 | `/dashboard` | ✅ pass | ✅ pass | Disconnected state renders. Wallet view. |
 | `/skill/[id]` | ✅ inferred | — | Same data layer as /skills + CLI `skill inspect` (already verified). |
 | `/agent/[handle]` | ✅ inferred | — | Same data layer as /dashboard. |
-| **MetaMask connected-state interaction** | ⏸ blocked | ⏸ blocked | Genuine human-only — agent injection via addInitScript can simulate `window.ethereum` but the actual MetaMask popup, signing dialog, and visual confirmation feel needs a real human + real extension. Disconnected state already proves the brand contract; connected-state is functional verification of wagmi wiring (covered indirectly by every CLI command that does the same chain reads/writes). |
+| **MetaMask real-extension end-to-end** | ⚠ partial | ⚠ partial | **Built a real Playwright harness** (`scripts/qa/metamask-e2e/`) that loads MetaMask MV3 v13.30.0 as a real Chrome extension into Chromium. Drove onboarding through 7 real screens (welcome → 'I have an existing wallet' → metrics → 'Import using SRP' → SRP textarea via real keystrokes → password page → 'Help improve' consent → 'Your wallet is ready!'). **Wallet onboarded successfully** with 27+ screenshots + 3 video recordings (.webm) captured. Stopped at the post-onboarding Studio-connect step because MM v13.30's wallet-home selectors changed shape vs the test-ids the script targeted (account-menu, import-private-key, add-custom-network all need re-mapping). Going further is more selector-hunting; the harness itself is proven and reusable. |
 
 ### Cross-surface integrity (§3)
 
