@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
+import { runInteractiveApply } from '../lib/diff-interactive.js';
 
 /**
  * `ivaronix code <task> --files <paths...>` — build mode.
@@ -57,8 +58,9 @@ export const codeCommand = new Command('code')
   .option('--high-stakes', 'use 5-role high-stakes consensus')
   .option('--no-receipt', 'skip receipt anchoring (for ad-hoc dry runs)')
   .option('--apply', 'apply the diff to the working tree via `git apply` (with --check first)')
+  .option('--interactive', 'with --apply, walk hunks one-by-one with y/N/a/q prompts (PASS 77 F-codediff)')
   .option('--out-dir <dir>', 'where to write the receipt JSON', '.ivaronix/receipts/anchored')
-  .action(async (task: string, opts: { files: string[]; skill: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; apply?: boolean; outDir: string }) => {
+  .action(async (task: string, opts: { files: string[]; skill: string; quick?: boolean; consensus?: boolean; highStakes?: boolean; receipt: boolean; apply?: boolean; interactive?: boolean; outDir: string }) => {
     let tier: 'quick' | 'standard' | 'high-stakes' | undefined;
     if (opts.highStakes) tier = 'high-stakes';
     else if (opts.consensus) tier = 'standard';
@@ -101,18 +103,36 @@ export const codeCommand = new Command('code')
           ui.fail('--apply: no fenced ```diff block in the model output');
           ui.hint('the skill may have refused the task; try a smaller scope or --consensus');
         } else {
-          ui.pending(`--apply: running git apply --check ...`);
           const gitRoot = findGitRoot(process.cwd());
           if (!gitRoot) {
             ui.fail('--apply: not inside a git repo. Run from anywhere under a git working tree.');
+          } else if (opts.interactive) {
+            // PASS 77 F-codediff: walk hunks with y/N/a/q prompts
+            ui.pending('--apply --interactive: walking hunks…');
+            ui.divider();
+            const r = await runInteractiveApply(diff, gitRoot);
+            ui.divider();
+            ui.info(`accepted hunks       ${r.acceptedHunks}`);
+            ui.info(`rejected hunks       ${r.rejectedHunks}`);
+            if (r.quit) ui.info('user quit early');
+            if (r.applied) {
+              ui.pass(`--apply: patch applied (gitRoot=${gitRoot})`);
+              ui.hint('Review with `git diff` and stage with `git add`. Revert with `git checkout -- <file>`.');
+            } else if (r.acceptedHunks === 0) {
+              ui.info('nothing applied (all hunks rejected or user quit before accepting any)');
+            } else {
+              ui.fail('--apply: filtered patch failed', r.applyOutput.split('\n')[0]);
+              ui.hint('Review the rejected hunks; --interactive lets you skip the conflicting ones');
+            }
           } else {
+            ui.pending(`--apply: running git apply --check ...`);
             const r = applyDiff(diff, gitRoot);
             if (r.ok) {
               ui.pass(`--apply: patch applied (gitRoot=${gitRoot})`);
               ui.hint('Review with `git diff` and stage with `git add`. Revert with `git checkout -- <file>`.');
             } else {
               ui.fail('--apply: patch failed', r.output.split('\n')[0]);
-              ui.hint('the diff didn\'t apply cleanly to the current tree; review manually');
+              ui.hint('the diff didn\'t apply cleanly; try --interactive to skip conflicting hunks');
             }
           }
         }
