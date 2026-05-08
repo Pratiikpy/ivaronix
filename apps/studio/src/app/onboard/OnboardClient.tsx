@@ -121,7 +121,7 @@ function RowCard({ row, children, isCurrent }: { row: Row; children?: React.Reac
             {row.num}. {row.title}
           </span>
           {row.detail && (
-            <span className="mono" style={{ fontSize: 13, color: 'var(--color-muted)' }}>
+            <span className="mono" style={{ fontSize: 13, color: 'var(--color-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {row.detail}
             </span>
           )}
