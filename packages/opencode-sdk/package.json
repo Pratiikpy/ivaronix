@@ -17,16 +17,21 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1b: source vendored, integration pending (catalog deps + bun→node port in F-1h)'",
+    "typecheck": "echo 'PASS 77 F-1: integration pending — see docs/PASS77_F1h_impact_analysis.md'",
     "clean": "rm -rf dist .turbo"
   },
   "_provenance": {
     "vendoredFrom": "CLI Open Source Project/opencode/packages/sdk/js",
     "upstreamVersion": "1.14.40",
     "upstreamLicense": "MIT — see LICENSE.upstream.md",
-    "stage": "PASS 77 F-1b (source vendored, deps not yet resolved)"
+    "stage": "PASS 77 F-1h-a (catalog versions pinned to upstream)"
+  },
+  "dependencies": {
+    "cross-spawn": "7.0.6"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "@types/cross-spawn": "6.0.6",
+    "@types/node": "24.12.2",
+    "typescript": "5.8.2"
   }
 }

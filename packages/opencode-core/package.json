@@ -9,16 +9,37 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1: source vendored, integration pending'",
+    "typecheck": "echo 'PASS 77 F-1: integration pending — see docs/PASS77_F1h_impact_analysis.md'",
     "clean": "rm -rf dist .turbo"
   },
   "_provenance": {
     "vendoredFrom": "CLI Open Source Project/opencode/packages/core",
     "upstreamVersion": "1.14.40",
-    "upstreamLicense": "MIT - see LICENSE.upstream.md",
-    "stage": "PASS 77 F-1 (source vendored, deps not yet resolved)"
+    "upstreamLicense": "MIT — see LICENSE.upstream.md",
+    "stage": "PASS 77 F-1h-a (catalog versions pinned to upstream)"
+  },
+  "dependencies": {
+    "@effect/opentelemetry": "4.0.0-beta.57",
+    "@effect/platform-node": "4.0.0-beta.57",
+    "@npmcli/arborist": "9.4.0",
+    "@npmcli/config": "10.8.1",
+    "@opentelemetry/api": "1.9.0",
+    "@opentelemetry/context-async-hooks": "2.6.1",
+    "@opentelemetry/exporter-trace-otlp-http": "0.214.0",
+    "@opentelemetry/sdk-trace-base": "2.6.1",
+    "cross-spawn": "7.0.6",
+    "effect": "4.0.0-beta.59",
+    "glob": "13.0.5",
+    "mime-types": "3.0.2",
+    "minimatch": "10.2.5",
+    "npm-package-arg": "13.0.2",
+    "semver": "^7.6.3",
+    "xdg-basedir": "5.1.0",
+    "zod": "4.1.8"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "@types/cross-spawn": "6.0.6",
+    "@types/node": "24.12.2",
+    "typescript": "5.8.2"
   }
 }
