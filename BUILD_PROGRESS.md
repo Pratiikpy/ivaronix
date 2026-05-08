@@ -687,6 +687,10 @@ Phase A is now genuinely testnet-complete. Every primitive in PRD/HLD/BUILD has 
 
 ---
 
+### B-1 (Day 4, opened 2026-05-08; **CLOSED 2026-05-08 Round 13**): 0G Storage testnet `FixedPriceFlow.submit()` reverts
+
+**Status update 2026-05-08 (Round 13):** RECOVERED on testnet. Three independent uploads succeeded this session: (1) Round 7 `doc ask --burn` uploaded evidenceRoot `0xbed611af…`, (2) Round 13 `smoke-storage.ts` uploaded rootHash `0x9e2d063e…` with tx `0xeb0c59f4…`, and (3) `automate-receipts-testnet.ts` ran without storage failures. The indexer at `indexer-storage-testnet-turbo.0g.ai` accepts uploads and returns real txSeqs. Either the testnet was flaky earlier in the day or 0G ops fixed it. Removing from active blockers.
+
 ### B-1 (Day 4, opened 2026-05-08): 0G Storage testnet `FixedPriceFlow.submit()` reverts
 - **Symptom:** every upload via `@0glabs/0g-ts-sdk@0.3.3` to indexer `https://indexer-storage-testnet-turbo.0g.ai` reverts with `require(false)` at on-chain `submit()` of FixedPriceFlow `0x22E03a6A89B950F1c82ec5e74F8eCa321a105296` on testnet 16602
 - **Tried:**
