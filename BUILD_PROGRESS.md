@@ -703,6 +703,34 @@ Phase A is now genuinely testnet-complete. Every primitive in PRD/HLD/BUILD has 
   - Try newer SDK version (e.g. `@0glabs/0g-ts-sdk@0.4.x` if released)
   - Use the `0g-storage-cli` Rust CLI directly as a fallback (per `0G_RESOURCES.md §3`)
 - **Impact:** Phase A demos work end-to-end except `evidenceRoot` is local-only; mainnet promotion (Phase B Day 23) likely uses different Storage infrastructure where this may not occur.
+- **2026-05-08 retry:** re-attempted upload via `@0glabs/0g-ts-sdk@0.3.3` against the same indexer; SDK call hung indefinitely (no SDK error, no tx broadcast — the upload primitive itself appears unresponsive on testnet right now). No new data; B-1 remains open with the same workaround.
+
+---
+
+## Phase A finisher round (2026-05-08, post-Day-22 polish)
+
+User audit identified PMF gaps + doc gaps. Tackled all of them in one session, no compromise.
+
+**PMF list (closed):**
+1. `/swarm <task>` in chat REPL → real sub-agent spawn via `runPipeline`, result merged into parent conversation
+2. `watch --on-change <path>` → `fs.watch` with debounce, fires audit on file changes; SIGINT prints summary
+3. **Custom tools per skill** (the moat) — manifest `og.tools.{builtins, custom}`; custom runner: `shell` (with `{{argName}}` template subst) | `builtin`; chat-tools.ts merges per-skill catalog at turn time
+4. **Ink TUI deferred** — readline-based REPL conflicts with ink's stdin/stdout takeover; current picocolors polish covers the editorial visual surface (Four-Light Row, severity counter chips, slash-command help). Ink would be a decoration-grade rewrite. Re-evaluate post-grant.
+5. `ivaronix daemon start --cron <expr>` → 5-field cron parser at `apps/cli/src/lib/cron.ts` (validates `* / */N / N-M / N,M`); smoke-tested on 5 expressions including weekday-only and 30-min boundaries
+6. `ivaronix serve` → embedded Node http server: `/healthz` (live: receipts=145, passports=1), `/v1/skills?q=<sub>` (with manifestHashes), `/v1/passport/<wallet>` (live tokenId/trust/receiptCount), `/v1/receipt/<id>`, `POST /v1/run` (Studio /api/run shape), `POST /v1/chat/completions` (OpenAI-compatible)
+7. `ivaronix skill eval <id>` (claude-mem evals pattern) — runs skill against every fixture in `tests/`, scores on output length + convergence + sibling `<file>.expects.txt` markers (substring or `/regex/`); pass/fail matrix + token + cost summary
+
+**Doc gaps (closed):**
+- **5 missing receipt types anchored on chain** — `scripts/anchor-all-receipt-types.ts` produced one of each: burn (#145), memory_access (#146), skill_exec (#147), passport_update (#148), swarm (#149). All 9 RECEIPTS_SPEC types now have at least one on-chain instance.
+- **PRD §3.5 Trust Layer schema scaffold** — new `packages/trust-layer/` per the PRD's own "designed in schema now" directive: `schema.ts` (Team / TeamMember / PolicyRule / PolicySet / ApprovalGate / SpendLedgerEntry / AuditExport), `policy.ts` (pure `evaluatePolicy(set, candidate)` with allow / deny / require_approval / log_only effects, glob matching, trust-score gate, daily-spend cap), `defaultPolicySet()` starter rules, README explaining how it slots into existing receipt `request.approvalChain` field.
+- **Studio `/api/run` ResultCard polish** — severity counter chips (Critical / High / Medium / Low / Info, color-coded, hidden when count=0), Findings summary line if the skill emitted one, "Public proof URL →" link alongside "Verify on chain →".
+
+**Final cumulative (after this round):**
+- Workspace packages typechecking green: 15 (added trust-layer)
+- Receipt types proven on chain: 9/9
+- Cumulative testnet receipts anchored: ≈149
+- CLI commands wired: 22 (was 13 at Day 12, 20 at session start)
+- All 5 PRD §3 surfaces accounted for (Trust Layer = phase-3 schema scaffold per PRD)
 
 ---
 
