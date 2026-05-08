@@ -13,7 +13,8 @@ export const doctorCommand = new Command('doctor')
   .option('--storage', 'check storage only')
   .option('--chain', 'check chain contracts only')
   .option('--metrics', 'show live metrics from chain')
-  .action(async (opts: { network?: boolean; router?: boolean; storage?: boolean; chain?: boolean; metrics?: boolean }) => {
+  .option('--upload-probe', 'with --storage, do a real testnet upload to confirm B-1 unblocked')
+  .action(async (opts: { network?: boolean; router?: boolean; storage?: boolean; chain?: boolean; metrics?: boolean; uploadProbe?: boolean }) => {
     const env = loadEnv();
     const all = !opts.network && !opts.router && !opts.storage && !opts.chain && !opts.metrics;
 
@@ -76,6 +77,21 @@ export const doctorCommand = new Command('doctor')
           } else {
             ui.fail('indexer unreachable', ping.reason);
             allOk = false;
+          }
+          if (opts.uploadProbe && ping.ok) {
+            ui.pending('upload-probe         submitting 28-byte payload to 0G Storage ...');
+            const start = Date.now();
+            try {
+              const payload = new TextEncoder().encode(`hello-ivaronix-${Date.now()}`);
+              const r = await storage.upload(payload);
+              const ms = Date.now() - start;
+              ui.pass(`upload-probe         OK in ${ms.toLocaleString()} ms`);
+              ui.pass(`rootHash             ${r.rootHash}`);
+              ui.pass(`txHash               ${r.txHash}`);
+            } catch (err) {
+              ui.fail('upload-probe failed', (err as Error).message.split('\n')[0] ?? '');
+              allOk = false;
+            }
           }
         }
       } catch (err) {

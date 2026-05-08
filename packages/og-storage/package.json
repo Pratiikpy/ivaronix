@@ -16,7 +16,7 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
-    "@0glabs/0g-ts-sdk": "^0.3.3",
+    "@0gfoundation/0g-ts-sdk": "^1.2.6",
     "@ivaronix/core": "workspace:*",
     "ethers": "^6.13.0"
   },

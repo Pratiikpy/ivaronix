@@ -1,5 +1,5 @@
 import { JsonRpcProvider, Wallet } from 'ethers';
-import { Indexer, MemData } from '@0glabs/0g-ts-sdk';
+import { Indexer, MemData } from '@0gfoundation/0g-ts-sdk';
 import { NETWORKS, type Network } from '@ivaronix/core';
 import { burnEncrypt, type BurnEncryptResult } from './burn.js';
 
@@ -82,11 +82,12 @@ export class StorageClient {
       }
       throw new Error(`0G Storage upload failed: ${msg}`);
     }
-    return {
-      rootHash: result.rootHash as Hex,
-      txHash: result.txHash as Hex,
-      size: data.length,
-    };
+    // SDK 1.x returns a union: single (rootHash/txHash) or fragmented
+    // (rootHashes[]/txHashes[]) — for our blob sizes we always get single,
+    // but typecheck demands we handle both.
+    const rootHash = ('rootHash' in result ? result.rootHash : result.rootHashes[0]) as Hex;
+    const txHash = ('txHash' in result ? result.txHash : result.txHashes[0]) as Hex;
+    return { rootHash, txHash, size: data.length };
   }
 
   /**
