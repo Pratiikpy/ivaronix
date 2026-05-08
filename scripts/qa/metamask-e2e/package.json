@@ -1,0 +1,11 @@
+{
+  "name": "qa-metamask-e2e",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "tsx run.ts"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
