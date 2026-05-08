@@ -1,12 +1,99 @@
 import { Command } from 'commander';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { verifyClaimed, ReceiptV1Schema, type ReceiptV1 } from '@ivaronix/receipts';
 import { ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { NETWORKS, RECEIPT_TYPES, type Hash, type ReceiptType } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+
+/** Walk up + canonical sibling locations for `.ivaronix/receipts/anchored/`. */
+function findAnchoredDirs(): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  let dir = process.cwd();
+  let workspaceRoot: string | null = null;
+  for (let i = 0; i < 12; i++) {
+    const candidate = resolve(dir, '.ivaronix', 'receipts', 'anchored');
+    if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) workspaceRoot = dir;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  if (workspaceRoot) {
+    for (const sib of ['apps/cli', 'apps/mcp-server', 'apps/studio']) {
+      const candidate = resolve(workspaceRoot, sib, '.ivaronix', 'receipts', 'anchored');
+      if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
+    }
+  }
+  return out;
+}
+
+/**
+ * Resolve a verify input to a local receipt JSON file path. Accepts:
+ *   - on-chain numeric id (e.g. "169") — queries ReceiptRegistry for receiptRoot, then searches dirs
+ *   - 0x bytes32 receiptRoot — searches dirs by storage.receiptRoot field
+ *   - ULID (rcpt_01HV...) — searches dirs by file basename
+ *   - file path (existing behavior)
+ */
+async function resolveReceiptInput(
+  input: string,
+  network: 'testnet' | 'mainnet',
+  rpcUrl: string,
+): Promise<string | null> {
+  // 1. Direct file path (absolute or relative to cwd)
+  const direct = resolve(process.cwd(), input);
+  if (existsSync(direct)) return direct;
+
+  const dirs = findAnchoredDirs();
+
+  // 2. ULID: rcpt_<26 base32-crockford chars>
+  if (/^rcpt_[0-9A-Z]{26}$/.test(input)) {
+    for (const dir of dirs) {
+      const candidate = resolve(dir, `${input}.json`);
+      if (existsSync(candidate)) return candidate;
+    }
+    return null;
+  }
+
+  // 3. bytes32 receiptRoot — scan files for matching storage.receiptRoot
+  const isRoot = /^0x[0-9a-fA-F]{64}$/.test(input);
+  let targetRoot: string | null = isRoot ? input.toLowerCase() : null;
+
+  // 4. Numeric on-chain id — resolve to receiptRoot via ReceiptRegistry
+  if (!targetRoot && /^\d+$/.test(input)) {
+    const registryAddr = getDeployedAddress(network, 'ReceiptRegistry');
+    if (!registryAddr) return null;
+    const provider = new JsonRpcProvider(rpcUrl);
+    const reg = new ReceiptRegistryClient(registryAddr, provider);
+    try {
+      const onChain = await reg.getReceipt(BigInt(input));
+      if (!onChain) return null;
+      targetRoot = onChain.receiptRoot.toLowerCase();
+    } catch {
+      return null;
+    }
+  }
+
+  if (!targetRoot) return null;
+
+  for (const dir of dirs) {
+    let entries: string[];
+    try { entries = readdirSync(dir); } catch { continue; }
+    for (const e of entries) {
+      if (!e.endsWith('.json')) continue;
+      const path = resolve(dir, e);
+      try {
+        const json = JSON.parse(readFileSync(path, 'utf8'));
+        const root = (json?.storage?.receiptRoot as string | undefined)?.toLowerCase();
+        if (root === targetRoot) return path;
+      } catch { /* skip unparseable */ }
+    }
+  }
+  return null;
+}
 
 export const receiptCommand = new Command('receipt')
   .description('Manage and verify Action Receipts');
@@ -19,9 +106,10 @@ receiptCommand
   .action(async (pathOrId: string, opts: { teeIndependent?: boolean }) => {
     const env = loadEnv();
 
-    const filePath = resolve(process.cwd(), pathOrId);
-    if (!existsSync(filePath)) {
-      ui.fail(`No receipt at ${filePath}`);
+    const filePath = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
+    if (!filePath) {
+      ui.fail(`No receipt resolves "${pathOrId}"`);
+      ui.hint('Pass a file path, an on-chain id (e.g. "169"), a 0x bytes32 receiptRoot, or a ULID (rcpt_01...).');
       process.exitCode = 1;
       return;
     }
@@ -35,7 +123,7 @@ receiptCommand
       return;
     }
 
-    ui.title(`Verifying ${pathOrId}`);
+    ui.title(`Verifying ${pathOrId}` + (pathOrId !== filePath ? ` (${filePath})` : ''));
     ui.divider();
 
     // ─── 1. CLAIMED checks (offline) ──────────────────────────────────────
