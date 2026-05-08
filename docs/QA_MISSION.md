@@ -96,6 +96,30 @@ These exist so you don't have to guess. **Use them when they save time. Don't fe
 
 If in doubt, that line is the answer.
 
+### 00.8 No skipping rule (locked, no compromise)
+
+Before skipping ANY test, you must:
+1. **Think twice.** Is this truly something you can't do in this environment, or is it just inconvenient?
+2. **Write down why.** In `QA_TEST_PROGRESS.md`, mark the test `BLOCKED` with a one-sentence reason (e.g. "needs MetaMask interaction in browser — agent has no GUI") and the unblock action ("user runs this manually after primary CLI tier is green").
+3. **Do not skip silently.** Skipping without recording it in `QA_TEST_PROGRESS.md` is a violation of CLAUDE.md §1.
+
+You have every tool you need. Bash, Edit, Read, the Studio dev server, the CLI, Foundry, the indexer, real testnet OG, real on-chain reads. The only legitimate blockers are:
+- Live human MetaMask flow (you have no browser GUI)
+- Live MCP attached to Claude Desktop / Cursor (you can verify the server boots, not the IDE pairing)
+- BotFather token-issued Telegram chat (you have no real bot token)
+- Cross-OS verification on macOS / Linux (you're on Windows)
+
+Everything else: NO SKIP. If a CLI command fails, fix it. If a Studio route 500s, fix it. If a screenshot reveals a brand-contract violation, fix it. Root cause, not a lazy patch.
+
+### 00.9 Progress tracker — `QA_TEST_PROGRESS.md` is mandatory
+
+For every test attempted, append a row to `QA_TEST_PROGRESS.md`:
+- ✅ pass — what was tested + screenshot/output proof
+- ❌ fail — what was tested + the error + the fix commit hash
+- ⏸ blocked — what was tested + WHY it couldn't run + unblock action
+
+Never run a test without writing it down. Without the tracker, "I tested everything" is just a claim. With it, each row is a receipt.
+
 ---
 
 ## 0. Setup (one-time)
