@@ -15,7 +15,7 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1a: source vendored, integration pending (zod@4 + effect@4-beta migration in F-1h)'",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "_provenance": {

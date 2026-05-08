@@ -2,8 +2,27 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true
+    "noEmit": true,
+    // PASS 77 F-1h-g: redirect upstream @opencode-ai/* package names to our
+    // renamed @ivaronix/opencode-* workspace packages so vendored source
+    // can stay byte-identical for clean upstream rebases.
+    "baseUrl": ".",
+    "paths": {
+      "@opencode-ai/sdk": ["../opencode-sdk/src/index.ts"],
+      "@opencode-ai/sdk/client": ["../opencode-sdk/src/client.ts"],
+      "@opencode-ai/sdk/server": ["../opencode-sdk/src/server.ts"],
+      "@opencode-ai/sdk/v2": ["../opencode-sdk/src/v2/index.ts"],
+      "@opencode-ai/sdk/v2/client": ["../opencode-sdk/src/v2/client.ts"],
+      "@opencode-ai/sdk/v2/server": ["../opencode-sdk/src/v2/server.ts"],
+      "@opencode-ai/sdk/v2/gen/client": ["../opencode-sdk/src/v2/gen/client/index.ts"],
+      "@opencode-ai/plugin": ["./src/index.ts"],
+      "@opencode-ai/plugin/tool": ["./src/tool.ts"],
+      "@opencode-ai/plugin/tui": ["./src/tui.ts"],
+      "@opencode-ai/plugin/shell": ["./src/shell.ts"],
+      "@opencode-ai/script": ["../opencode-sdk/src/index.ts"],
+      "@opencode-ai/core": ["../opencode-core/src/index.ts"],
+      "@opencode-ai/core/*": ["../opencode-core/src/*"]
+    }
   },
   "include": ["src/**/*"]
 }
