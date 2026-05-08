@@ -62,6 +62,7 @@
     "@hono/node-ws": "1.3.0",
     "@hono/standard-validator": "0.1.5",
     "@hono/zod-validator": "0.4.2",
+    "@lydell/node-pty": "1.1.0",
     "@modelcontextprotocol/sdk": "1.27.1",
     "@octokit/graphql": "9.0.2",
     "@octokit/rest": "22.0.0",
@@ -125,10 +126,12 @@
     "zod-to-json-schema": "3.24.5"
   },
   "_intentionally_dropped": {
-    "@lydell/node-pty": "node-pty postinstall fixup not needed in our pure-Node workspace; we use Ink TUI for terminal interaction. Drop in F-1h-e.",
     "@opentui/core": "Solid-based TUI, peer dep — replaced by our Ink TUI in chat-v2",
     "@opentui/solid": "see above",
     "drizzle-kit": "Bun-only build tool; we'll quarantine drizzle and use it via drizzle-orm only"
+  },
+  "_kept_with_caveat": {
+    "@lydell/node-pty": "F-1h-e re-added — pty.node.ts imports it directly; ships native bindings, requires a working build toolchain on Windows (windows-build-tools or VS Build Tools). Acceptable cost since it only matters when users invoke a nested shell tool from the TUI."
   },
   "devDependencies": {
     "@types/node": "24.12.2",
