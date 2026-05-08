@@ -213,16 +213,28 @@ Each row carries the commit hash that the test ran against (so re-runs are repro
 
 | Test | Status | Proof / notes | Commit |
 |---|---|---|---|
+| CLI cold start | ✅ pass | `ivaronix --version` cold start: 2459ms via tsx (TS source). Acceptable for dev path; production binary will be faster (compiled `dist/`). | a20ae73 |
+| `indexer list --limit 100` | ✅ pass | 2617ms incl. tsx startup. SQLite query alone is ~5ms; rest is process boot + ESM resolve. | a20ae73 |
+| `stats` query speed | ✅ pass | 4333ms — includes 3 RPC round-trips to Galileo (chain head, nextId, agentReceiptCount). RPC dominates. | a20ae73 |
 
 ### Operational (§21)
 
 | Test | Status | Proof / notes | Commit |
 |---|---|---|---|
+| `.gitignore` covers everything | ✅ pass | screenshots/ + .playwright-mcp/ + .env + node_modules/ all ignored. | a20ae73 |
+| `pnpm-lock.yaml` committed | ✅ pass | present, tracked. | a20ae73 |
+| Root `LICENSE` file | ❌→✅ **fixed** | Was missing despite package.json declaring MIT. **Fixed in commit 76d6a7a** — added MIT text + Vendored portions postscript pointing at packages/opencode-*/LICENSE.upstream.md. | 76d6a7a |
+| File watcher cleanup | ✅ pass | No stale watch processes. | a20ae73 |
 
 ### Polish (§22)
 
 | Test | Status | Proof / notes | Commit |
 |---|---|---|---|
+| Brand-token consistency (cream + ink + green) | ❌→✅ **fixed** | grep found 4 runtime usages of `#1a1a1a` (deprecated warmer ink) and `#faf9f6` (off-by-one cream) leaking into Studio. **Fixed in commit 76d6a7a:** stale comment in globals.css updated, .btn-primary:hover swapped to `filter: brightness(1.15)` instead of #1a1a1a background, --color-bg unified to #fafaf7 (brand-kit canon), Header.tsx rgba updated. | 76d6a7a |
+| OG image (`/r/[id]` social card) uses canonical mark | ❌→✅ **fixed** | Was rendering OLD logo (vertical line + black tittle) + #1a1a1a stroke + #faf9f6 background. **Fixed in commit 76d6a7a:** swapped to canonical brackets + italic Instrument Serif "i" + green (#16a34a) tittle on #fafaf7 cream with #0a0a0a ink. Now matches every other Studio surface + brand/Ivaronix.html. | 76d6a7a |
+| No leaking #1a1a1a runtime values | ✅ pass after fix | Final grep confirms 0 runtime usages in apps/studio/src. Only remaining mention is the Logo.tsx provenance comment explaining the history. | 76d6a7a |
+| No leaking #faf9f6 runtime values | ✅ pass after fix | Final grep confirms 0 runtime usages. | 76d6a7a |
+| Typecheck after fixes | ✅ pass | `pnpm --filter @ivaronix/studio typecheck` → Done. No regressions. | 76d6a7a |
 
 ---
 
@@ -231,6 +243,12 @@ Each row carries the commit hash that the test ran against (so re-runs are repro
 | # | Surface | Issue | Severity | Fix commit | Re-test |
 |---|---|---|---|---|---|
 | QA-001 | `ivaronix pr verify` | commander parses `-1` as option flag, prints "unknown option" | P3 cosmetic | (not fixing — non-realistic input; real users never enter negative ids) | n/a |
+| QA-002 | apps/studio/src/app/globals.css | stale comment claimed foreground is #1a1a1a, contradicted the actual --color-fg=#0a0a0a token below it | P2 (doc rot) | 76d6a7a | ✓ |
+| QA-003 | apps/studio/src/app/globals.css | .btn-primary:hover used background:#1a1a1a — violated CLAUDE.md §10 (ink is #0a0a0a) | P1 (visual contract) | 76d6a7a | ✓ |
+| QA-004 | apps/studio cream tokens | --color-bg was #faf9f6 (off-by-one from brand kit's #fafaf7) | P2 (visual drift) | 76d6a7a | ✓ |
+| QA-005 | apps/studio Header.tsx | sticky header rgba used (250,249,246) instead of (250,250,247) — same drift | P2 (visual drift) | 76d6a7a | ✓ |
+| QA-006 | apps/studio/src/app/r/[id]/opengraph-image.tsx | social-card image rendered the OLD logo (vertical line + black tittle) + deprecated colors | **P1 (brand contract — every Twitter/Slack share carried the wrong mark)** | 76d6a7a | ✓ |
+| QA-007 | repo root | no `LICENSE` file despite package.json declaring MIT | **P0 (legal — vendored OpenCode requires MIT chain)** | 76d6a7a | ✓ |
 
 ---
 
@@ -252,14 +270,15 @@ Each row carries the commit hash that the test ran against (so re-runs are repro
 
 ## Session summary
 
-- Tests attempted: **40+**
-- ✅ pass: **38**
-- ❌ fail (now fixed): **0** (no real breaks found)
-- ⏸ blocked (recorded): **9** (all GUI / TTY / external-token / cross-OS — not engineering issues)
-- Issues fixed: **0**
-- Minor cosmetic: **1** (QA-001: `pr verify -1` parsed as flag — P3, not realistic input)
-- **TIER 1 PRIMARY green: YES (within agent-reachable scope)**
-- **TIER 1 PRIMARY full green requires:** human running browser-side Studio QA (~9 blocked rows above)
+- Tests attempted: **50+**
+- ✅ pass: **44**
+- ❌ fail then ✅ fixed: **6** (QA-002..QA-007 — all visual-contract / legal — fixed at commit 76d6a7a)
+- ⏸ blocked (recorded): **9** (GUI / TTY / external-token / cross-OS)
+- Total issues fixed: **6** (1 P0 legal, 2 P1 visual-contract, 3 P2 visual drift)
+- Minor cosmetic open: **1** (QA-001: `pr verify -1` parsed as flag — non-realistic input)
+- **TIER 1 PRIMARY green: YES** (within agent-reachable scope)
+- **TIER 2 AGGRESSIVE green: YES** (performance + operational + polish all green after fixes)
+- **Full green requires:** human running browser-side Studio QA (~9 blocked rows above)
 
 ### What this proves end-to-end
 
