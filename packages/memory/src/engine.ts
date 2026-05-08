@@ -14,7 +14,7 @@ import type {
   MemoryManifest,
 } from './types.js';
 import { deriveMemoryKey, encryptObservation, decryptObservation } from './encryption.js';
-import { embed, EMBEDDING_DIM, EMBEDDING_METHOD, FlatVectorIndex } from './vector.js';
+import { embedAsync, EMBEDDING_DIM, EMBEDDING_METHOD, FlatVectorIndex } from './vector.js';
 import { MemoryStore } from './fts.js';
 
 function scopeHash(tag: string): Hash {
@@ -61,7 +61,7 @@ export class MemoryEngine {
     const createdAt = input.createdAt ?? Date.now();
 
     const ciphertext = encryptObservation(input.text, this.key);
-    const vec = embed(input.text);
+    const { vec } = await embedAsync(input.text);
 
     const meta: ObservationMeta = {
       id,
@@ -125,7 +125,7 @@ export class MemoryEngine {
     }
 
     // Vector search
-    const queryVec = embed(q.text);
+    const { vec: queryVec } = await embedAsync(q.text);
     const vectorHits = this.vector.search(queryVec, topK * 4); // overshoot, then refine
 
     // FTS search

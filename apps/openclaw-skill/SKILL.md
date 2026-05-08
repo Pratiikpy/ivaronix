@@ -1,12 +1,38 @@
 ---
 name: ivaronix
 version: 0.0.1
-description: Install Ivaronix as an OpenClaw skill — gives any OpenClaw agent the ability to produce verifiable Action Receipts anchored on 0G Chain, run consensus audits, and read/write encrypted memory with on-chain capability grants.
+description: Install Ivaronix as an OpenClaw skill. Gives any OpenClaw agent the ability to produce verifiable Action Receipts anchored on 0G Chain, run consensus audits, and read/write encrypted memory with on-chain capability grants.
 license: Apache-2.0
 entrypoint: README.md
 homepage: https://ivaronix.app
 repository: https://github.com/Pratiikpy/ivaronix
 
+# OpenClaw native contract (skills-install reads this).
+# Schema: src/agents/skills/types.ts → SkillInstallSpec.kind ∈ brew|node|go|uv|download.
+metadata:
+  openclaw:
+    emoji: "🦞"
+    homepage: https://ivaronix.app
+    os: ["darwin", "linux", "win32"]
+    requires:
+      bins: ["ivaronix"]
+      env: ["EVM_PRIVATE_KEY", "ZG_API_SECRET", "ZG_SERVICE_URL"]
+    install:
+      - id: node
+        kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        label: "Install Ivaronix CLI (npm/pnpm/yarn/bun -g)"
+      - id: github-release
+        kind: download
+        url: "https://github.com/Pratiikpy/ivaronix/releases/latest/download/ivaronix-cli.tar.gz"
+        archive: "tar.gz"
+        extract: true
+        stripComponents: 1
+        bins: ["ivaronix"]
+        label: "Install Ivaronix CLI (GitHub release tarball)"
+
+# Ivaronix-native extension (read by our runtime; OpenClaw ignores unknown keys).
 og:
   permissions:
     memory_access: project_only
