@@ -270,6 +270,13 @@ skillCommand
     if (githubBlob) {
       fetchUrl = `https://raw.githubusercontent.com/${githubBlob[1]}/${githubBlob[2]}/${githubBlob[3]}`;
     }
+    // Rewrite Git-Bash style file URLs: file:///c/Users/... → file:///C:/Users/...
+    // Node's URL parser rejects /c/... as non-absolute on Windows; the spec
+    // requires file:///C:/path. Same fix pattern as chat-tools (Round 9).
+    if (process.platform === 'win32') {
+      const gitBash = fetchUrl.match(/^file:\/\/\/([a-z])\/(.*)$/);
+      if (gitBash) fetchUrl = `file:///${gitBash[1]!.toUpperCase()}:/${gitBash[2]!}`;
+    }
 
     ui.title(`skill install ${url}`);
     if (fetchUrl !== url) ui.info(`rewritten URL        ${fetchUrl}`);
