@@ -8,6 +8,80 @@
 
 ---
 
+## 00. Mindset (read this first — every line)
+
+The single most important section. If the engineer skips this, the rest is busywork.
+
+### 00.1 The rule: make it work, then make it beautiful
+
+Primary task is **confirm every feature works once, end-to-end, like a real user would use it.** That's the test.
+
+For every feature:
+1. Use it ONCE the way a real user would (not 100 times)
+2. Take a screenshot OR record a short video that proves it worked
+3. If it works → tick the box, move on
+4. If it doesn't work → file precisely, then fix it properly (not a lazy patch)
+
+**Don't overtest.** If `ivaronix demo` runs once cleanly with a real receipt URL, that feature is verified — move on. Don't run it 50 times. Don't fuzz it with random prompts. That's aggressive testing (later, optional).
+
+The analogy: testing Claude Code = install it, set a model, send one real prompt, get one real response. That's the primary test. NOT "send 100 prompts and check token counts." Same here.
+
+### 00.2 Two tiers — primary first, aggressive only after
+
+**Tier 1 — PRIMARY (must finish all of these before Tier 2 starts):**
+Every feature works once, end-to-end, with screenshot/video proof. This is what wins the grant. This is the entire shipping bar (CLAUDE.md §1).
+
+**Tier 2 — AGGRESSIVE (only if Tier 1 is fully green):**
+Load tests, fuzzing, 100× prompts, stress, edge-case probing, accessibility deep-dive, performance instrumentation. Nice-to-have. Don't start this until Tier 1 is 100% green and signed off.
+
+If the engineer is short on time, Tier 1 wins. Always.
+
+### 00.3 Visual proof is mandatory
+
+For every feature, the engineer captures one of:
+- A screenshot of the working state
+- A short screen-recording (≤30s) of the flow
+- Stdout copy-pasted into the issue tracker
+
+Without one of those, the feature is **not verified** — even if it "looked like it worked."
+
+### 00.4 Fix what you find — don't be lazy
+
+If the engineer finds a real bug while testing, they fix it properly:
+- Not a one-line patch that hides the symptom
+- Not "add a try/catch and silence the error"
+- Find the root cause, fix it, write the commit message that explains why
+
+This is in CLAUDE.md §1: no compromise. We're trying to win.
+
+### 00.5 Be balanced, not perfectionist
+
+Don't bikeshed. Don't argue about pixel-perfect kerning. Don't run a 50-page accessibility audit on a one-button page. Use judgment. The bar is "premium and smooth like Claude Code / OpenCode but on 0G with our brand." That's it.
+
+### 00.6 Reference resources — consult these before quitting
+
+If something looks wrong, broken, or unclear, **check these folders before giving up or filing a question**:
+
+| When you're stuck on… | Look here |
+|---|---|
+| Anything 0G-related (SDK behavior, contract patterns, KV semantics, broker calls) | `C:\Users\prate\Downloads\oglabs\oglabs resources` |
+| Anything CLI-related (chat UX, slash commands, debug subtree, plugin system, streaming render) | `C:\Users\prate\Downloads\oglabs\CLI Open Source Project` (OpenCode + HermesAgent + Octogent + claude-mem + awesome-claude-skills) |
+| Working code from projects already shipped on 0G | `C:\Users\prate\Downloads\oglabs\og-projects-showcase` |
+| What competing grant entries did + how they handled the same problem | `C:\Users\prate\Downloads\oglabs\entries` and `C:\Users\prate\Downloads\new-entries` |
+| The visual contract (what every Studio surface MUST match) | `C:\Users\prate\Downloads\Ivaronix Brand Kit _standalone_.html` (also at `brand/Ivaronix.html`) |
+| Receipt schema details, canonical hash rules | `RECEIPTS_SPEC.md` (root) |
+| Which receipts are tier-1/tier-2 + the honesty rules | `CLAUDE.md` §1, §6, §7, §8 |
+
+The engineer has a giant reference library. Use it. Don't ask "is this how it should work?" without checking first.
+
+### 00.7 The mindset summary (one line)
+
+> **"Test like a real user. Use every feature once. Screenshot or video everything. Fix what's broken properly. Match the brand kit HTML exactly. Skip aggressive testing until primary is green."**
+
+If in doubt, that line is the answer.
+
+---
+
 ## 0. Setup (one-time)
 
 Repo: `git clone <repo-url> && cd oglabs`
@@ -470,9 +544,11 @@ When done: every box ticked = we're ready to demo to OG Labs grant judges.
 
 ---
 
-## 14. Test mode (how the engineer works)
+## 14. Test mode (how the engineer works) [TIER 1 — PRIMARY]
 
 **This is human testing — no DOM scripts, no headless automation, no shortcuts.** Real mouse, real cursor, real MetaMask. Every visual claim is verified with screenshot or screen-recording. No exceptions.
+
+> **Tier note:** sections §14–§19 below are **PRIMARY** (do these first, must all pass). Sections §20–§22 are **AGGRESSIVE** (start only after PRIMARY is fully green).
 
 ### 14.1 Roles to walk through
 
@@ -624,7 +700,9 @@ The engineer plays each role for one full pass. Same wallet, different mindsets.
 
 ---
 
-## 20. Performance checklist
+## 20. Performance checklist [TIER 2 — AGGRESSIVE]
+
+> Skip this entire section until §0–§19 are 100% green.
 
 - Cold start time CLI
 - Studio time-to-interactive
@@ -637,7 +715,7 @@ The engineer plays each role for one full pass. Same wallet, different mindsets.
 
 ---
 
-## 21. Operational checklist
+## 21. Operational checklist [TIER 2 — AGGRESSIVE]
 
 - gitignore covers everything
 - License files present
@@ -650,7 +728,7 @@ The engineer plays each role for one full pass. Same wallet, different mindsets.
 
 ---
 
-## 22. Polish checklist
+## 22. Polish checklist [TIER 2 — AGGRESSIVE]
 
 - No browser console errors
 - No deprecation warnings
