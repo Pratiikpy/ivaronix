@@ -17,7 +17,6 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
-import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import { highlight } from 'cli-highlight';
 import { writeFileSync } from 'node:fs';
@@ -31,6 +30,7 @@ import {
   saveConversation,
   type ConversationFile,
 } from '../lib/conversation.js';
+import { MultiLineInput } from './MultiLineInput.js';
 
 interface FooterState {
   network: 'testnet' | 'mainnet';
@@ -383,10 +383,18 @@ export function ChatScreen(props: Props): React.ReactElement {
         </Box>
       )}
 
-      <Box>
-        <Text color="green">{'› '}</Text>
-        <TextInput value={input} onChange={setInput} onSubmit={handleSubmit} placeholder="…" />
-      </Box>
+      <MultiLineInput
+        value={input}
+        onChange={setInput}
+        onSubmit={(v) => { handleSubmit(v); }}
+        placeholder="…  shift+enter for newline · backslash-enter to continue"
+        disabled={busy}
+      />
+      {input.length === 0 && !busy && (
+        <Box marginTop={0}>
+          <Text dimColor>shift+enter newline · enter submit · esc quit · ctrl+a/e line-edges</Text>
+        </Box>
+      )}
       <Footer state={footer} />
     </Box>
   );
