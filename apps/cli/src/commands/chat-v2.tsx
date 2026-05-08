@@ -19,7 +19,8 @@ import { listConversations, loadConversation, type ConversationFile } from '../l
  * `chat-classic`.
  */
 export const chatV2Command = new Command('chat-v2')
-  .description('[Phase B\'] Ink-based interactive TUI — premium CLI surface (opt-in)')
+  .alias('chat')
+  .description('Interactive Ink TUI (default) — streaming, tool panels, slash palette, multi-line input, syntax highlighting, auto-resume')
   .option('--model <id>', 'model id', 'qwen/qwen-2.5-7b-instruct')
   .option('--skill <id>', 'active skill id')
   .option('--resume <id>', 'resume a saved conversation by id (or short prefix)')

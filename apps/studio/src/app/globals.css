@@ -246,11 +246,12 @@ body {
   header > div {
     padding: 0 16px !important;
   }
-  /* Below 480px, drop the two least-used nav links — Skills + Connect
-   * wallet remain. Users can still reach /global and /dashboard from
-   * footer + /skills internal nav. Prevents header overflow at 375px. */
+  /* Below 480px, drop secondary nav links — only the WalletConnect pill
+   * remains. Users can still reach /global, /skills, /dashboard from the
+   * footer + the home-page hero buttons. Prevents header overflow at 375px. */
   @media (max-width: 480px) {
     header nav a[href="/global"],
+    header nav a[href="/skills"],
     header nav a[href="/dashboard"] {
       display: none !important;
     }
@@ -260,6 +261,8 @@ body {
   [style*="grid-template-columns: 1fr 1fr"],
   [style*="grid-template-columns: minmax(0, 2fr)"],
   [style*="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)"],
+  [style*="repeat(auto-fit, minmax(280px"],
+  [style*="repeat(auto-fit, minmax(240px"],
   .skill-detail-grid {
     grid-template-columns: 1fr !important;
   }

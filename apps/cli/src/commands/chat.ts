@@ -352,8 +352,8 @@ async function chatTurn(state: ChatState, userText: string): Promise<void> {
   console.log(costMeter(state));
 }
 
-export const chatCommand = new Command('chat')
-  .description('Interactive REPL with tool-use, streaming, slash commands, and workspace awareness')
+export const chatCommand = new Command('chat-classic')
+  .description('Legacy readline REPL — for SSH / piped workflows where the Ink TUI raw-mode isn\'t available. The new `chat` (alias of `chat-v2`) is the default interactive surface.')
   .option('--model <id>', 'model id', 'qwen/qwen-2.5-7b-instruct')
   .option('--skill <id>', 'active skill (changes system prompt)')
   .option('--resume <id>', 'resume a saved conversation by id (or short prefix)')

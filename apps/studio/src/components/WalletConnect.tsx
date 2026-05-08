@@ -13,11 +13,14 @@ export function WalletConnect() {
 
   if (isConnected && address) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span className="mono" style={{ color: 'var(--color-muted)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <span
+          className="mono"
+          style={{ color: 'var(--color-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+        >
           {shortAddr(address)}
         </span>
-        <button onClick={() => disconnect()} className="btn-ghost" aria-label="Disconnect wallet">
+        <button onClick={() => disconnect()} className="btn-ghost" aria-label="Disconnect wallet" style={{ whiteSpace: 'nowrap' }}>
           Disconnect
         </button>
       </div>

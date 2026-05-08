@@ -88,9 +88,14 @@ program.addCommand(modelCommand);
 program.addCommand(openclawCommand);
 program.addCommand(daCommand);
 
-// Bare `ivaronix` (no subcommand) → drop into interactive chat (claude-code style)
+// Bare `ivaronix` (no subcommand) drops into the Ink TUI (claude-code style).
+// chat-v2 is now the default; the readline `chat` is renamed to `chat-classic`
+// for SSH / piped workflows where raw-mode TTY isn't available. Detect TTY:
+// fall back to chat-classic automatically when stdout isn't a TTY (piped input,
+// CI, etc.).
 if (process.argv.length === 2) {
-  process.argv.push('chat');
+  const isTty = !!process.stdout.isTTY && !!process.stdin.isTTY;
+  process.argv.push(isTty ? 'chat-v2' : 'chat-classic');
 }
 
 program.parseAsync(process.argv).catch((err) => {
