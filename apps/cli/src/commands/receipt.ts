@@ -323,7 +323,40 @@ receiptCommand
 receiptCommand
   .command('list')
   .description('List recent receipts from ReceiptRegistry events')
-  .option('--since <date>', 'filter by date (YYYY-MM-DD)')
-  .action(() => {
-    ui.hint('Receipt listing arrives Day 11+ (event log scan).');
+  .option('--agent <addr>', 'filter to receipts anchored by this wallet (default: configured wallet)')
+  .option('--since <date>', 'only show receipts after this ISO date (YYYY-MM-DD)')
+  .option('--limit <n>', 'max rows to print', '20')
+  .action(async (opts: { agent?: string; since?: string; limit: string }) => {
+    const env = loadEnv();
+    const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    if (!addr) {
+      ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const reg = new ReceiptRegistryClient(addr, provider);
+    const agent = (opts.agent ?? env.walletAddress) as `0x${string}` | undefined;
+    if (!agent) {
+      ui.fail('No agent address — pass --agent or set EVM_WALLET_ADDRESS');
+      process.exitCode = 1;
+      return;
+    }
+    const limit = Math.max(1, parseInt(opts.limit, 10) || 20);
+    const sinceTs = opts.since ? Math.floor(new Date(opts.since).getTime() / 1000) : 0;
+
+    ui.title(`receipts by ${agent.slice(0, 10)}…${agent.slice(-4)} on ${env.network}`);
+    const events = await reg.findByAgent(agent, limit, 200_000);
+    const filtered = sinceTs > 0 ? events.filter((e) => Number(e.timestamp) >= sinceTs) : events;
+    if (filtered.length === 0) {
+      ui.hint(`no receipts found${opts.since ? ` since ${opts.since}` : ''}`);
+      return;
+    }
+    ui.divider();
+    for (const r of filtered) {
+      const iso = new Date(Number(r.timestamp) * 1000).toISOString().replace('T', ' ').slice(0, 19);
+      ui.pass(`#${r.id.toString().padStart(3, ' ')}  type=${r.receiptType}  ${iso}  ${r.receiptRoot.slice(0, 10)}…${r.receiptRoot.slice(-6)}`);
+    }
+    ui.divider();
+    ui.hint(`${filtered.length} row${filtered.length === 1 ? '' : 's'}`);
   });
