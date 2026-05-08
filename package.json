@@ -24,7 +24,9 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "ivaronix": "pnpm --filter @ivaronix/cli exec ivaronix",
     "doctor": "pnpm --filter @ivaronix/cli exec ivaronix doctor",
-    "wording-lint": "tsx scripts/wording-lint.ts"
+    "wording-lint": "tsx scripts/wording-lint.ts",
+    "dev:kv": "tsx scripts/dev/start-local-0g-kv.ts",
+    "dev:kv:stop": "docker rm -f ivaronix-kv-node"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

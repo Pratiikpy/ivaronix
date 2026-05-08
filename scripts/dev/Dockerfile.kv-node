@@ -1,0 +1,35 @@
+# Local 0G Storage KV node (PASS 76 S-1)
+#
+# Drops the official prebuilt zgs_kv Linux binary into a slim Debian image
+# so the same `docker run` works on macOS / Linux / Windows. Built once,
+# cached forever. Container reads its config from /etc/zgs-kv/config.toml
+# (mounted at run time from scripts/dev/start-local-0g-kv.ts).
+#
+# Sourced from the official 0G releases at:
+#   https://github.com/0gfoundation/0g-storage-kv/releases
+# Same binary the OpenClaw_Hackathon entry uses (per claude-thinking.md S-1).
+
+FROM debian:bookworm-slim
+
+ARG ZGS_KV_VERSION=v1.5.1
+ENV ZGS_KV_VERSION=${ZGS_KV_VERSION}
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl unzip ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L --fail \
+      -o /tmp/zgs_kv.zip \
+      "https://github.com/0gfoundation/0g-storage-kv/releases/download/${ZGS_KV_VERSION}/zgs_kv_linux.zip" \
+ && unzip -o /tmp/zgs_kv.zip -d /tmp/zgs_kv \
+ && find /tmp/zgs_kv -type f -name 'zgs_kv' -exec cp {} /usr/local/bin/zgs_kv \; \
+ && chmod +x /usr/local/bin/zgs_kv \
+ && rm -rf /tmp/zgs_kv /tmp/zgs_kv.zip
+
+# Default config + log paths inside the container.
+RUN mkdir -p /etc/zgs-kv /var/lib/zgs-kv
+
+EXPOSE 6789
+
+# Honest default: blow up clearly if the config wasn't mounted.
+CMD ["sh", "-c", "test -f /etc/zgs-kv/config.toml || (echo 'ERROR: /etc/zgs-kv/config.toml not mounted. Pass it via -v.' >&2 && exit 1); exec /usr/local/bin/zgs_kv --config /etc/zgs-kv/config.toml"]

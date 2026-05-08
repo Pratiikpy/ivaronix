@@ -14,7 +14,8 @@ export const doctorCommand = new Command('doctor')
   .option('--chain', 'check chain contracts only')
   .option('--metrics', 'show live metrics from chain')
   .option('--upload-probe', 'with --storage, do a real testnet upload to confirm B-1 unblocked')
-  .action(async (opts: { network?: boolean; router?: boolean; storage?: boolean; chain?: boolean; metrics?: boolean; uploadProbe?: boolean }) => {
+  .option('--kv-local', 'check the local 0G KV node (started via `pnpm dev:kv`)')
+  .action(async (opts: { network?: boolean; router?: boolean; storage?: boolean; chain?: boolean; metrics?: boolean; uploadProbe?: boolean; kvLocal?: boolean }) => {
     const env = loadEnv();
     const all = !opts.network && !opts.router && !opts.storage && !opts.chain && !opts.metrics;
 
@@ -143,6 +144,32 @@ export const doctorCommand = new Command('doctor')
         ui.pass(`balance              ${balance} OG`);
       } catch (err) {
         ui.fail('wallet balance error', (err as Error).message);
+      }
+    }
+
+    // Local KV node (PASS 76 S-1) — only when explicitly requested
+    if (opts.kvLocal) {
+      ui.section('06 · Local 0G KV node');
+      const port = Number(process.env.IVARONIX_KV_PORT ?? 6789);
+      const url = `http://127.0.0.1:${port}/`;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'kv_getValue', params: ['0x', '0x'] }),
+          signal: AbortSignal.timeout(3000),
+        });
+        if (res.status >= 200 && res.status < 600) {
+          ui.pass(`url                  ${url}`);
+          ui.pass(`http status          ${res.status}  (RPC alive)`);
+        } else {
+          ui.fail(`unexpected status    ${res.status}`);
+          allOk = false;
+        }
+      } catch (err) {
+        ui.fail('kv-local unreachable', (err as Error).message);
+        ui.hint('Start it with: pnpm dev:kv');
+        allOk = false;
       }
     }
 
