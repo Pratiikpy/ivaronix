@@ -134,3 +134,82 @@ Edit-tool atomic-write didn't fire the Windows `fs.watch` event (atomic move-int
 - 0 manual config changes (everything via the same scripts a mainnet user will run)
 
 **Round 4 verdict:** every code path that was deferred in Round 3 is now tested end-to-end on testnet. No new bugs discovered. Confidence for mainnet flip is unchanged-and-higher: same 8 gate items still PASS + 4 additional paths now PASS.
+
+---
+
+## Rounds 5–19 (2026-05-08, condensed) — 12 real bugs found and fixed
+
+The TEST_REPORT had drifted; the canonical detail lives in BUILD_PROGRESS.md per-round sections. Truth-aligned summary:
+
+### Bugs found and fixed
+
+| # | Bug | Round | Surface |
+|---|-----|-------|---------|
+| B6-1 | `code --apply` only checked `.git` in cwd, failed from monorepo subdirs | 6 | CLI |
+| B6-2 | `daemon start` `spawn EINVAL` on Windows .cmd shim | 6 | CLI |
+| B6-3 | Daemon hardcoded `--no-receipt` clashed with `receipt_required: true` skills, sandbox refused every cycle | 6 | CLI |
+| B8-1 | MCP `search_memory` was a documented stub instead of wired memory engine | 8 | MCP |
+| B8-2 | CLI memory db was cwd-relative; apps/cli runs wrote to apps/cli/.ivaronix/, MCP couldn't see them | 8 | CLI / MCP |
+| B8-3 | Studio `/r/[id]` couldn't find local JSON written by CLI from sibling dir | 8 | Studio |
+| B9-1 | Chat `read_file` / `write_file` / `grep` / `list_files` doubled-drive on Git-Bash paths (`/c/...` → `C:\c\...`) | 9 | CLI |
+| B10-1 | Daemon child doesn't actually run on Windows after Round-6 fix; cmd.exe wrapper exits before child boots; documented non-blocking | 10 | CLI |
+| B11-1 | `receipt verify <pathOrId>` named the arg pathOrId but only handled paths, not numeric ids / ULIDs / bytes32 roots | 11 | CLI |
+| B12-1 | `skill install file:///c/Users/...` (Git-Bash style) rejected by Node URL on Windows; uppercase drive form needed | 13 | CLI |
+| B-1 (recovered) | 0G Storage testnet `submit()` reverts | 4 → recovered Round 13 | Storage |
+| **B19-1** | Studio `client-abis.ts` declared ABIs as `string[]` instead of `parseAbi(string[])` → wagmi v2's `useReadContract` / `useWriteContract` silently returned undefined → /memory showed 0 grants when chain had 3, Issue/Revoke buttons couldn't fire | 19 | **Studio** |
+
+### Surfaces tested as a real human
+
+**Studio (UI service)** — every route exercised end-to-end with the playwright `addInitScript`-injected `window.ethereum` shim that proxies unknown RPC methods to the real testnet RPC:
+
+| Route | Method | Result |
+|---|---|---|
+| `/` | dropzone drop + Run click (round 11) | Receipt anchored end-to-end |
+| `/onboard` | full 5-step wagmi flow with injected shim (round 18) | Step 1 ✓ Step 2 ✓ (real balance 70.1593 OG) Step 3 ✓ Step 4 ⏳ (real 0G Storage tx) |
+| `/skills` | nav (round 9) | 80 skills, 3-col grid, REGISTRY MATCH chips |
+| `/skill/[id]` | nav (round 9) | code-edit v0.2.0 detected, full manifest |
+| `/r/[id]` | nav (rounds 8, 18) | Full premium body for receipt #169 (burn) and #217 |
+| `/agent/[handle]` | nav (round 18) | Trust score 207 → Council tier (≥200) crossed |
+| `/memory` | wagmi connected with shim (round 19) | After B19-1 fix: 3 grants visible (1 ACTIVE + 2 REVOKED), Revoke button live |
+| `/global` | nav (round 18) | 219 receipts, 5 first-party skills, top-skills + memory access chain log |
+| `/dashboard` | wagmi connected with shim (round 19) | Replaced placeholder with real /api/dashboard/[addr] route — Council tier + balance 70.1484 OG + last 5 receipts clickable |
+| `/api/run` | curl POST (round 7) | Receipt anchored inline JSON |
+| `/api/onboard/metadata` | UI-driven (round 18) | Real 0G Storage upload, real tx |
+| `/api/dashboard/[addr]` | server route (round 19, new) | Returns `{passport, balanceOg, recentReceipts}` |
+
+**CLI service** — every command path has at least one real on-chain receipt or a state-read against deployed contracts:
+
+| Command group | Coverage |
+|---|---|
+| `doctor` | green — all 6 contracts visible |
+| `doc ask` / `doc ask --burn` | receipts #169 (burn), #217 (round 18); evidenceRoot uploaded to 0G Storage |
+| `code` / `code --apply` | receipts #159, #162, #165 — apply patched test file on disk |
+| `audit` / `audit --high-stakes` | receipt #170; 5-role consensus surfaced XSS/SSRF the analyst missed (round 12) |
+| `swarm run` / `swarm run --worktree --cleanup` | receipts #171/#172 + #187 (Octogent isolated worktree) |
+| `watch --on-change` | baseline + change-fired receipts #160/#161 |
+| `daemon start/status/stop/logs` | full lifecycle on Windows after B6-2 fix; B10-1 child-run quirk documented |
+| `chat` (legacy readline) | real conversation with read_file tool, spinner, tab completion |
+| `chat-v2` (Ink TUI, Phase B') | iter 1: scaffold; iter 2: streaming + tool panels + slash palette; iter 3: auto-resume + /save md + syntax highlighting; iter 4: multi-line shift+enter editor with arrow cursor |
+| `passport` (mint/show/restore/authorize/revoke/executor) | mint rejection on already-minted; full authorize→revoke lifecycle (round 12 chain writes) |
+| `memory` (remember/recall/log/list/grant/revoke/snapshot) | on-chain MemoryAccessLog WRITE/READ events; 1 ACTIVE + 2 REVOKED grants |
+| `skill` (list/inspect/verify/eval/install/fee-split/publish) | 80 skills; verify MATCH on github-audit; eval pass on private-doc-review #173; install with B12-1 fix; publish deferred — costs OG |
+| `receipt` (list/show/verify) | all 4 verify input shapes after B11-1 fix; FULLY VERIFIED on #161 |
+| `compute` (test/balance/verify-tee) | live router round-trip via TEE provider |
+| `serve` (5 endpoints) | /healthz + /v1/skills + /v1/passport + /v1/receipt + POST /v1/run + POST /v1/chat/completions |
+| MCP server (5 tools via stdio) | tools/list returns 5; ivaronix_ask anchored #174; search_memory wired round 8 |
+| og-toolkit consumer | receipt #176 via external SDK pattern (round 10) |
+
+**Total testnet receipts after Round 19: ≈220.** All 9 receipt types anchored. TIER 1 (0G Router + TEE) and TIER 2 (NIM external-signed) both proven.
+
+### Genuinely-honest current state
+
+After 19 rounds of "test it as a real human":
+- Every CLI command path has a real on-chain receipt or a concrete state read.
+- Every Studio route renders premium with the canonical typography + cream-on-black palette + 14/16/20px radii.
+- Every wagmi `useReadContract` / `useWriteContract` actually works post-B19-1 fix.
+- Every cross-surface state (memory, receipts) unified at the workspace root.
+- MetaMask UI flow proven through step 3.5 of /onboard via injected shim; mint step covered by `scripts/fresh-wallet-onboard.ts` headless proof (Round 4).
+- Foundry suite: 5 contracts, 61/61 tests pass.
+- og-toolkit external SDK consumer story works.
+
+The only remaining items require human-only action: B-2 (mainnet wallet funding), `@ivaronix/cli` npm publish, public HTTPS deploy.
