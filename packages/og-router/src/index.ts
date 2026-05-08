@@ -230,3 +230,11 @@ export interface ChatRichResult {
 }
 
 export { Keyring } from './keyring.js';
+export {
+  NvidiaNimClient,
+  nvidiaFromEnv,
+  tierFor,
+  type NvidiaCredential,
+  type ProviderKind,
+  type ProviderTier,
+} from './nvidia.js';

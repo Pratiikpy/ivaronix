@@ -108,9 +108,25 @@ export const ReceiptV1Schema = z.object({
     routerVerified: z.boolean(),
     independentVerified: z.boolean().nullable(),
     providerAddress: HexAddress.optional(),
-    verificationMethod: z.enum(['router_flag', 'compute_sdk_process_response']),
+    verificationMethod: z.enum([
+      'router_flag',
+      'compute_sdk_process_response',
+      // External providers (TIER 2 — no TEE; signed + chain-anchored only).
+      // Used when receipts are anchored from inference done outside 0G Compute.
+      'external-signed',
+    ]),
     verifiedAt: z.number().nullable(),
     attestationHash: HexHash.optional(),
+    /**
+     * Trust tier for the public Proof URL. Optional + defaulted in the verifier
+     * UI so older receipts (which omit this field) still render correctly:
+     *   - "tier-1-tee"               0G Router + TEE attestation in the receipt
+     *   - "tier-2-external-signed"   non-0G provider (NVIDIA NIM, OpenAI, ...);
+     *                                receipt is signed + chain-anchored but the
+     *                                inference itself is outside the TEE
+     */
+    tier: z.enum(['tier-1-tee', 'tier-2-external-signed']).optional(),
+    providerKind: z.enum(['0g-router', 'nvidia-nim', 'openai', 'anthropic', 'ollama']).optional(),
   }),
 
   billing: z.object({

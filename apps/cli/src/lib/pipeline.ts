@@ -23,5 +23,8 @@ export type PipelineInput = Omit<CorePipelineInput, 'logger'>;
 export type PipelineOutput = CorePipelineOutput;
 
 export async function runPipeline(input: PipelineInput): Promise<PipelineOutput> {
-  return runPipelineCore({ ...input, logger: cliLogger });
+  // If the caller didn't pin a provider, take it from the env (so users can
+  // `OG_PROVIDER=nvidia ivaronix doc ask ...` without re-flagging every cmd).
+  const provider = input.provider ?? (process.env.OG_PROVIDER as '0g' | 'nvidia' | undefined);
+  return runPipelineCore({ ...input, provider, logger: cliLogger });
 }

@@ -16,6 +16,7 @@ import {
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
+import { nvidiaFromEnv } from '@ivaronix/og-router';
 import { runConsensus, TIER_COST_OG, type ConsensusResult } from '@ivaronix/consensus';
 import {
   findSkill,
@@ -59,6 +60,14 @@ export interface PipelineInput {
   label?: string;
   /** Logger; defaults to no-op. CLI passes a ui-bound logger. */
   logger?: PipelineLogger;
+  /**
+   * Inference provider. Default `'0g'` uses the 0G Router with TEE attestation
+   * (TIER 1). `'nvidia'` uses NVIDIA NIM (TIER 2 — external-signed). Receipts
+   * are tagged so verifiers can show the trust tier honestly.
+   */
+  provider?: '0g' | 'nvidia';
+  /** Optional model override (provider-specific id). */
+  model?: string;
 }
 
 export interface PipelineOutput {
@@ -178,19 +187,62 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     }
   }
 
-  // 6. Router
-  const keyring = keyringFromEnv();
-  if (!keyring) throw new Error('Router not configured (.env: ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS)');
+  // 6. Router — branch by provider
+  const providerKind = input.provider ?? '0g';
   const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
   const startTime = Date.now();
-  const consensus = await runConsensus({
-    tier,
-    keyring,
-    model: env.defaultModel,
-    context: enrichedContext,
-    userPrompt: activePrompt,
-    rawBytes: Buffer.from(activeContext, 'utf8'),
-  });
+  let consensus: ConsensusResult;
+
+  if (providerKind === 'nvidia') {
+    // TIER 2 path — NVIDIA NIM, single-shot, no role-based consensus.
+    const nim = nvidiaFromEnv();
+    if (!nim) throw new Error('NVIDIA NIM not configured (.env: NVIDIA_API_KEY=nvapi-...)');
+    log.info(tag(`provider             nvidia-nim · TIER 2 (external-signed)`));
+    const r = await nim.chatRich({
+      model: input.model ?? process.env.NVIDIA_DEFAULT_MODEL ?? 'qwen/qwen3.5-397b-a17b',
+      messages: [
+        { role: 'system', content: enrichedContext },
+        { role: 'user', content: activePrompt },
+      ],
+      stream: false,
+    });
+    // Synthesize a ConsensusResult so downstream receipt-builder is unchanged.
+    consensus = {
+      tier: 'quick',
+      roles: ['analyst'],
+      reviewerOutputs: [{ role: 'analyst', content: r.content }],
+      judgement: null,
+      convergence: { score: 1, pairwise: {}, method: 'jaccard-tokens', agreementSummary: '', disagreementSummary: '' },
+      attestations: [{
+        role: 'analyst',
+        providerAddress: null,
+        zgResKey: null,
+        attestationHash: null,
+        routerVerified: false,
+        independentVerified: null,
+        inputTokens: r.inputTokens ?? 0,
+        outputTokens: r.outputTokens ?? 0,
+      }] as ConsensusResult['attestations'],
+      billing: {
+        totalInputTokens: r.inputTokens ?? 0,
+        totalOutputTokens: r.outputTokens ?? 0,
+        estimatedCostOg: 0,
+      },
+      gateResult: { pass: true, warnings: [] },
+    };
+  } else {
+    // TIER 1 default — 0G Router with TEE attestation
+    const keyring = keyringFromEnv();
+    if (!keyring) throw new Error('Router not configured (.env: ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS)');
+    consensus = await runConsensus({
+      tier,
+      keyring,
+      model: input.model ?? env.defaultModel,
+      context: enrichedContext,
+      userPrompt: activePrompt,
+      rawBytes: Buffer.from(activeContext, 'utf8'),
+    });
+  }
   const elapsedMs = Date.now() - startTime;
   log.pass(tag(`consensus complete   ${elapsedMs}ms · ${consensus.billing.totalInputTokens}+${consensus.billing.totalOutputTokens} tok · ${consensus.billing.estimatedCostOg.toFixed(8)} OG`));
 
@@ -233,6 +285,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       receiptType: input.receiptType ?? 'doc_ask',
       tag,
       log,
+      provider: providerKind,
     });
     receiptPath = result.path;
     receiptId = result.id;
@@ -263,6 +316,7 @@ interface AnchorArgs {
   consensus: ConsensusResult;
   outDir: string;
   receiptType: ReceiptType;
+  provider: '0g' | 'nvidia';
   tag: (msg: string) => string;
   log: PipelineLogger;
 }
@@ -335,12 +389,14 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       rateLimit: {},
     },
     teeVerification: {
-      requested: true,
-      routerVerified: !!primaryAtt?.routerVerified,
+      requested: a.provider === '0g',
+      routerVerified: a.provider === '0g' && !!primaryAtt?.routerVerified,
       independentVerified: null,
       providerAddress: (primaryAtt?.providerAddress ?? undefined) as `0x${string}` | undefined,
-      verificationMethod: 'router_flag',
+      verificationMethod: a.provider === 'nvidia' ? 'external-signed' : 'router_flag',
       verifiedAt: null,
+      tier: a.provider === 'nvidia' ? 'tier-2-external-signed' : 'tier-1-tee',
+      providerKind: a.provider === 'nvidia' ? 'nvidia-nim' : '0g-router',
     },
     billing: {
       inputTokens: consensus.billing.totalInputTokens,
