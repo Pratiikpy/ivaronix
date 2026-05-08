@@ -211,6 +211,50 @@ export function RunPanel() {
   );
 }
 
+/** Parse the finalText for severity counts so we can render a counter row. */
+function severityCounts(text: string): { critical: number; high: number; medium: number; low: number; informational: number } {
+  const lower = text.toLowerCase();
+  const count = (re: RegExp) => (lower.match(re) ?? []).length;
+  return {
+    critical: count(/severity:\s*critical|\bcritical\b/g),
+    high: count(/severity:\s*high|\bhigh\b/g),
+    medium: count(/severity:\s*medium|\bmedium\b/g),
+    low: count(/severity:\s*low|\blow\b/g),
+    informational: count(/severity:\s*informational|\binformational\b/g),
+  };
+}
+
+/** Try to pull a `Findings: N · Critical: X · …` summary line if the skill emitted one. */
+function findingsSummary(text: string): string | null {
+  const m = text.match(/Findings:\s*\d+(?:\s*·\s*\w+:\s*\d+)+/i);
+  return m ? m[0] : null;
+}
+
+function CountChip({ label, count, tone }: { label: string; count: number; tone: 'red' | 'amber' | 'green' | 'gray' }) {
+  if (count === 0) return null;
+  const palette = {
+    red:   { bg: 'var(--color-mismatch-bg)', fg: '#991b1b', border: 'var(--color-mismatch)' },
+    amber: { bg: 'var(--color-pending-bg)', fg: '#92400e', border: 'var(--color-pending)' },
+    green: { bg: 'var(--color-verified-bg)', fg: '#166534', border: 'var(--color-verified)' },
+    gray:  { bg: 'var(--color-tonal)', fg: 'var(--color-muted)', border: 'var(--color-hairline)' },
+  }[tone];
+  return (
+    <span style={{
+      background: palette.bg,
+      color: palette.fg,
+      border: `1px solid ${palette.border}`,
+      padding: '4px 10px',
+      borderRadius: 4,
+      fontSize: 11,
+      letterSpacing: '1px',
+      textTransform: 'uppercase',
+      fontWeight: 600,
+    }}>
+      {label}: {count}
+    </span>
+  );
+}
+
 function ResultCard({ result }: { result: RunResponse }) {
   if (!result.ok) {
     return (
@@ -230,6 +274,9 @@ function ResultCard({ result }: { result: RunResponse }) {
     );
   }
 
+  const counts = severityCounts(result.finalText ?? '');
+  const summary = findingsSummary(result.finalText ?? '');
+
   return (
     <div
       style={{
@@ -242,15 +289,32 @@ function ResultCard({ result }: { result: RunResponse }) {
         gap: 16,
       }}
     >
-      <div className="section-label">§ AUDIT REPORT</div>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="section-label" style={{ marginRight: 8 }}>§ AUDIT REPORT</div>
+        {result.scan?.matches && <span className="chip-verified">REGISTRY MATCH</span>}
+        {result.scan?.registered === false && <span className="chip-pending">LOCAL ONLY</span>}
+      </div>
 
-      {result.scan?.matches && (
-        <span className="chip-verified">REGISTRY MATCH</span>
+      {/* Severity counter row — only renders chips with count > 0 */}
+      {(counts.critical + counts.high + counts.medium + counts.low + counts.informational) > 0 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <CountChip label="Critical" count={counts.critical} tone="red" />
+          <CountChip label="High" count={counts.high} tone="red" />
+          <CountChip label="Medium" count={counts.medium} tone="amber" />
+          <CountChip label="Low" count={counts.low} tone="green" />
+          <CountChip label="Info" count={counts.informational} tone="gray" />
+        </div>
       )}
 
       <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 14, lineHeight: 1.6 }}>
         {result.finalText}
       </pre>
+
+      {summary && (
+        <div className="mono" style={{ fontSize: 11, color: 'var(--color-muted)', borderTop: '1px solid var(--color-hairline)', paddingTop: 8 }}>
+          {summary}
+        </div>
+      )}
 
       <dl
         style={{
@@ -283,15 +347,24 @@ function ResultCard({ result }: { result: RunResponse }) {
           <span className="mono" style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             on-chain id {result.receiptOnchainId} · {result.receiptId}
           </span>
-          <a
-            href={EXPLORER_TX(result.receiptTxHash)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-ghost"
-            style={{ marginLeft: 'auto', textDecoration: 'underline' }}
-          >
-            Verify on chain →
-          </a>
+          <span style={{ marginLeft: 'auto', display: 'flex', gap: 12 }}>
+            <a
+              href={`/r/${result.receiptOnchainId}`}
+              className="btn-ghost"
+              style={{ textDecoration: 'underline' }}
+            >
+              Public proof URL →
+            </a>
+            <a
+              href={EXPLORER_TX(result.receiptTxHash)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-ghost"
+              style={{ textDecoration: 'underline' }}
+            >
+              Verify on chain →
+            </a>
+          </span>
         </div>
       )}
     </div>
