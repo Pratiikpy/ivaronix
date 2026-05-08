@@ -39,6 +39,7 @@ import { chatCommand } from '../commands/chat.js';
 import { serveCommand } from '../commands/serve.js';
 import { modelCommand } from '../commands/model.js';
 import { openclawCommand } from '../commands/openclaw.js';
+import { daCommand } from '../commands/da.js';
 
 const program = new Command();
 
@@ -83,6 +84,7 @@ program.addCommand(chatCommand);
 program.addCommand(serveCommand);
 program.addCommand(modelCommand);
 program.addCommand(openclawCommand);
+program.addCommand(daCommand);
 
 // Bare `ivaronix` (no subcommand) → drop into interactive chat (claude-code style)
 if (process.argv.length === 2) {

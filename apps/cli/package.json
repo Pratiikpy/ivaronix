@@ -22,6 +22,7 @@
     "@ivaronix/og-chain": "workspace:*",
     "@ivaronix/og-router": "workspace:*",
     "@ivaronix/og-storage": "workspace:*",
+    "@ivaronix/og-da": "workspace:*",
     "@ivaronix/og-kv": "workspace:*",
     "@ivaronix/consensus": "workspace:*",
     "@ivaronix/memory": "workspace:*",
