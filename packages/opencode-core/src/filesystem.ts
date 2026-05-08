@@ -56,12 +56,12 @@ export namespace AppFileSystem {
 
       const isDir = Effect.fn("FileSystem.isDir")(function* (path: string) {
         const info = yield* fs.stat(path).pipe(Effect.catch(() => Effect.void))
-        return info?.type === "Directory"
+        return (info as { type?: string } | undefined)?.type === "Directory"
       })
 
       const isFile = Effect.fn("FileSystem.isFile")(function* (path: string) {
         const info = yield* fs.stat(path).pipe(Effect.catch(() => Effect.void))
-        return info?.type === "File"
+        return (info as { type?: string } | undefined)?.type === "File"
       })
 
       const readDirectoryEntries = Effect.fn("FileSystem.readDirectoryEntries")(function* (dirPath: string) {

@@ -7,7 +7,15 @@
     "paths": {
       "@opencode-ai/core": ["./src/index.ts"],
       "@opencode-ai/core/*": ["./src/*"]
-    }
+    },
+    // PASS 77 F-1h-g: relax for vendored code. OpenCode targets bun's
+    // implicit-any tolerance + Array.toSorted (ES2023). Our own packages
+    // stay strict (tsconfig.base.json). Quarantine doc: imported types
+    // never cross opencode-* boundary, so this relaxation is contained.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
+    "strictNullChecks": false
   },
   "include": ["src/**/*"]
 }

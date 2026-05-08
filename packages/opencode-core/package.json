@@ -9,7 +9,7 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1h-g iterating: needs lib:es2023 + @types/mime-types + @types/npm-package-arg + cross-spawn-spawner null fixes (see commit log)'",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "_provenance": {

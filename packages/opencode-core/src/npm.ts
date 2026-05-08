@@ -47,6 +47,8 @@ export function sanitize(pkg: string) {
 const resolveEntryPoint = (name: string, dir: string): EntryPoint => {
   let entrypoint: Option.Option<string>
   try {
+    // PASS 77 F-1h-g: declared Bun lookup → typeof check; we always run on Node so the second arg form is never used.
+    // @ts-ignore — Bun is a global only in Bun runtime; in Node this falls through to the Node resolve path.
     const resolved = typeof Bun !== "undefined" ? import.meta.resolve(name, dir) : import.meta.resolve(dir)
     entrypoint = Option.some(resolved)
   } catch {
