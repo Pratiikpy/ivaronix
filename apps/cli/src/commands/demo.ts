@@ -30,7 +30,25 @@ export const demoCommand = new Command('demo')
   .description('Single-shot end-to-end proof — anchors one receipt and prints the public proof URL')
   .option('--skill <id>', 'skill to use', 'private-doc-review')
   .option('--question <q>', 'question to ask', 'Which clause is most concerning?')
-  .action(async (opts: { skill: string; question: string }) => {
+  .option('--tier <tier>', 'consensus tier: quick | standard | high-stakes', 'quick')
+  .option('--burn', 'enable burn mode — encrypt evidence, destroy session key after run', false)
+  .action(async (opts: { skill: string; question: string; tier: string; burn?: boolean }) => {
+    if (!['quick', 'standard', 'high-stakes'].includes(opts.tier)) {
+      ui.fail(`invalid --tier "${opts.tier}"`, 'must be quick | standard | high-stakes');
+      process.exitCode = 1;
+      return;
+    }
+    if (opts.burn) {
+      // Burn mode is wired through doc ask's bespoke pipeline (it owns the
+      // session-key lifecycle + AES-256-GCM encrypt + Storage upload). Don't
+      // pretend we can do it from this command — point the user at the real
+      // path so the demo stays honest.
+      ui.fail('--burn is wired through `ivaronix doc ask --burn`, not `demo`');
+      ui.hint('Run:    ivaronix doc ask <file> "..." --burn --quick');
+      ui.hint('Example: see scripts/round25-doc.txt for canonical sensitive doc');
+      process.exitCode = 1;
+      return;
+    }
     const env = loadEnv();
     ui.title('ivaronix demo · one-shot end-to-end proof');
     ui.divider();
@@ -81,9 +99,10 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
     const tmp = mkdtempSync(join(tmpdir(), 'ivaronix-demo-'));
     const docPath = join(tmp, 'demo-lease.txt');
     writeFileSync(docPath, canonicalDoc);
+    const roleCount = opts.tier === 'quick' ? 1 : opts.tier === 'standard' ? 3 : 5;
     ui.info(`question             "${opts.question}"`);
     ui.info(`skill                ${opts.skill}`);
-    ui.info(`tier                 quick (1 role)`);
+    ui.info(`tier                 ${opts.tier} (${roleCount} role${roleCount === 1 ? '' : 's'})`);
     ui.divider();
 
     // ─── Run pipeline ──────────────────────────────────────────────
@@ -92,7 +111,7 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
       skillId: opts.skill,
       context: canonicalDoc,
       userPrompt: opts.question,
-      tier: 'quick',
+      tier: opts.tier as 'quick' | 'standard' | 'high-stakes',
       receipt: true,
     });
     ui.divider();
