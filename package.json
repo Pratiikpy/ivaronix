@@ -43,6 +43,7 @@
       "blake-hash",
       "bufferutil",
       "utf-8-validate"
-    ]
+    ],
+    "_zodComment": "PASS 77 F-1h-f: per-package versions are correct (3.x for our code, 4.x for opencode-*). overrides only here if drift becomes a problem."
   }
 }
