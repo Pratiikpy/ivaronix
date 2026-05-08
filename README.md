@@ -4,6 +4,23 @@
 > **Status:** **Phase A complete (testnet) · 2026-05-08** — all 22 Phase-A days closed with real on-chain artifacts. Phase B mainnet promotion (Day 23-30) next.
 > **Submission target:** OG Labs grant.
 
+## Run this in 30 seconds
+
+```bash
+git clone <this-repo> && cd oglabs
+pnpm install
+cp .env.example .env   # add your ZG_API_SECRET + EVM_PRIVATE_KEY
+pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
+```
+
+`ivaronix demo` anchors one real receipt on 0G Galileo Testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs:
+
+- `/r/<id>` — Studio public proof page (start `pnpm --filter @ivaronix/studio dev` for the UI)
+- `chainscan-galileo.0g.ai/tx/<hash>` — third-party explorer
+- `ivaronix receipt verify <id> --tee-independent` — broker.processResponse re-check
+
+Want a richer view? `demo --tier standard` runs 3-role consensus (analyst/critic/judge); `--tier high-stakes` runs 5 roles. Real disagreement surfaces; the judge synthesis is the receipt body. Drop a sensitive document into `ivaronix doc ask <file> "..." --burn --quick` for AES-256-GCM encrypted evidence + session-key destruction (TIER 1 burn-mode). The bare `ivaronix` invocation drops you into the Ink TUI chat with streaming, tool panels, slash palette, and 19 slash commands; `ivaronix chat-classic` is the readline fallback for SSH / piped workflows.
+
 ## Phase A · Live testnet (Galileo, chainId 16602)
 
 All five contracts deployed and feeding live data into Studio + CLI + MCP:
