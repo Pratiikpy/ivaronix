@@ -17,7 +17,7 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1: integration pending — see docs/PASS77_F1h_impact_analysis.md'",
+    "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
   "_provenance": {

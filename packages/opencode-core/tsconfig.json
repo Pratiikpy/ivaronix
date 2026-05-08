@@ -2,8 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@opencode-ai/core": ["./src/index.ts"],
+      "@opencode-ai/core/*": ["./src/*"]
+    }
   },
   "include": ["src/**/*"]
 }
