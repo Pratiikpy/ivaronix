@@ -2,8 +2,23 @@ import { Command } from 'commander';
 import { spawn, execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync, mkdirSync, openSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { platform as osPlatform } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { ui } from '../lib/ui.js';
+import {
+  NATIVE_HOST_NAME,
+  manifestPathFor,
+  registryKeyFor,
+  buildManifest,
+  writeManifest,
+  readManifest,
+  deleteManifest,
+  writeShim,
+  writeRegistryKey,
+  deleteRegistryKey,
+  readRegistryValue,
+  type SupportedBrowser,
+} from '../lib/native-host.js';
 
 /**
  * `ivaronix daemon` — Hermes-pattern detached background daemon.
@@ -232,4 +247,184 @@ daemonCommand
     const tail = all.slice(-n).join('\n');
     process.stdout.write(tail);
     if (!tail.endsWith('\n')) process.stdout.write('\n');
+  });
+
+// ─── native-host pairing (PASS 76 S-4) ──────────────────────────────────────
+// Lift from Trapezohe companion-cli's register-native-host pattern. Writes
+// the Chromium-family native-messaging manifest (and on Windows, the HKCU
+// registry key pointing at it) so a future browser extension can discover
+// the daemon without users hand-copying tokens. Manifest contents per
+// developer.chrome.com/docs/extensions/develop/concepts/native-messaging.
+
+const DEFAULT_BROWSERS: SupportedBrowser[] = ['chrome', 'brave', 'edge'];
+
+function parseBrowsers(input?: string): SupportedBrowser[] {
+  if (!input) return DEFAULT_BROWSERS;
+  const list = input
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean) as SupportedBrowser[];
+  for (const b of list) {
+    if (!DEFAULT_BROWSERS.includes(b)) throw new Error(`unsupported browser: ${b}`);
+  }
+  return list;
+}
+
+/**
+ * Resolve the absolute path to the running CLI's bin entry. Used as the
+ * target the shim file forwards to. Resolves from import.meta.url so it
+ * works whether running from src (tsx) or dist (built bin).
+ */
+function cliEntryPath(): string {
+  const here = fileURLToPath(import.meta.url);
+  // We're at .../apps/cli/{src,dist}/commands/daemon.ts (.js)
+  // The bin lives at .../apps/cli/{src,dist}/bin/ivaronix.ts (.js)
+  const cliRoot = resolve(here, '..', '..');
+  const ts = resolve(cliRoot, 'bin', 'ivaronix.ts');
+  const js = resolve(cliRoot, 'bin', 'ivaronix.js');
+  return existsSync(ts) ? ts : js;
+}
+
+daemonCommand
+  .command('register-host')
+  .description('Register the Ivaronix daemon as a browser native-messaging host')
+  .option(
+    '--browser <list>',
+    'Comma-separated list of chrome,brave,edge — default all',
+  )
+  .option(
+    '--allowed-origin <origin>',
+    'Origin allowed to message the host. Replace with your real extension id later.',
+    'chrome-extension://REPLACE_WITH_REAL_EXTENSION_ID/',
+  )
+  .action((opts: { browser?: string; allowedOrigin: string }) => {
+    let browsers: SupportedBrowser[];
+    try {
+      browsers = parseBrowsers(opts.browser);
+    } catch (err) {
+      ui.fail((err as Error).message);
+      process.exitCode = 1;
+      return;
+    }
+    const cli = cliEntryPath();
+    const shim = writeShim(cli);
+    const manifest = buildManifest({
+      allowedOrigin: opts.allowedOrigin,
+      cliEntryAbsolutePath: cli,
+    });
+
+    ui.title('ivaronix daemon · register-host');
+    ui.info(`name                 ${NATIVE_HOST_NAME}`);
+    ui.info(`shim                 ${shim}`);
+    ui.info(`allowed-origin       ${opts.allowedOrigin}`);
+    ui.divider();
+
+    for (const browser of browsers) {
+      const manifestPath = writeManifest(manifest, browser);
+      ui.pass(`${browser.padEnd(8)} manifest    ${manifestPath}`);
+      if (osPlatform() === 'win32') {
+        writeRegistryKey(browser, manifestPath);
+        ui.pass(`${browser.padEnd(8)} reg-key     ${registryKeyFor(browser)}`);
+      }
+    }
+    ui.divider();
+    ui.hint('Verify: ivaronix daemon host-info');
+    if (opts.allowedOrigin.includes('REPLACE_WITH_REAL_EXTENSION_ID')) {
+      ui.hint('Re-run with --allowed-origin "chrome-extension://<your-extension-id>/" once you have one.');
+    }
+  });
+
+daemonCommand
+  .command('unregister-host')
+  .description('Remove the Ivaronix native-messaging manifest + registry keys')
+  .option('--browser <list>', 'Comma-separated list of chrome,brave,edge — default all')
+  .action((opts: { browser?: string }) => {
+    let browsers: SupportedBrowser[];
+    try {
+      browsers = parseBrowsers(opts.browser);
+    } catch (err) {
+      ui.fail((err as Error).message);
+      process.exitCode = 1;
+      return;
+    }
+    ui.title('ivaronix daemon · unregister-host');
+    for (const browser of browsers) {
+      const removedManifest = deleteManifest(browser);
+      ui.info(`${browser.padEnd(8)} manifest    ${removedManifest ? 'removed' : '(absent)'}`);
+      if (osPlatform() === 'win32') {
+        const removedKey = deleteRegistryKey(browser);
+        ui.info(`${browser.padEnd(8)} reg-key     ${removedKey ? 'removed' : '(absent)'}`);
+      }
+    }
+  });
+
+daemonCommand
+  .command('host-info')
+  .description('Print the currently registered native-messaging host(s)')
+  .option('--browser <list>', 'Comma-separated list of chrome,brave,edge — default all')
+  .action((opts: { browser?: string }) => {
+    let browsers: SupportedBrowser[];
+    try {
+      browsers = parseBrowsers(opts.browser);
+    } catch (err) {
+      ui.fail((err as Error).message);
+      process.exitCode = 1;
+      return;
+    }
+    ui.title('ivaronix daemon · host-info');
+    for (const browser of browsers) {
+      const manifest = readManifest(browser);
+      ui.info(`---- ${browser} ----`);
+      if (!manifest) {
+        ui.info(`  manifest             (not registered)`);
+      } else {
+        ui.pass(`  manifest             ${manifestPathFor(browser)}`);
+        ui.info(`  name                 ${manifest.name}`);
+        ui.info(`  path (shim)          ${manifest.path}`);
+        ui.info(`  type                 ${manifest.type}`);
+        ui.info(`  allowed_origins      ${manifest.allowed_origins.join(', ')}`);
+      }
+      if (osPlatform() === 'win32') {
+        const reg = readRegistryValue(browser);
+        if (reg) {
+          ui.pass(`  reg-key value        ${reg}`);
+        } else {
+          ui.info(`  reg-key value        (not set)`);
+        }
+      }
+    }
+  });
+
+// Stdio bridge stub. Real protocol handling lands when an extension exists;
+// for now the subcommand exists so the registered shim has a real target —
+// `daemon register-host` writes a shim that execs us with this verb. Echoes
+// a length-prefixed JSON ack per Chrome's framed-stdio protocol so a manual
+// test (echo a framed message in, see a framed message out) verifies
+// end-to-end pairing without needing the extension.
+daemonCommand
+  .command('native-host-stdio', { hidden: true })
+  .description('Internal: stdio bridge for browser native-messaging hosts')
+  .action(() => {
+    process.stdin.on('data', (chunk: Buffer) => {
+      // Parse Chrome's framed protocol: 4-byte little-endian length + JSON body.
+      let i = 0;
+      while (i + 4 <= chunk.length) {
+        const len = chunk.readUInt32LE(i);
+        if (i + 4 + len > chunk.length) break;
+        const body = chunk.slice(i + 4, i + 4 + len).toString('utf8');
+        i += 4 + len;
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(body);
+        } catch {
+          parsed = { error: 'invalid-json', raw: body };
+        }
+        const reply = JSON.stringify({ ok: true, echo: parsed, host: NATIVE_HOST_NAME });
+        const replyBuf = Buffer.from(reply, 'utf8');
+        const lenBuf = Buffer.alloc(4);
+        lenBuf.writeUInt32LE(replyBuf.length, 0);
+        process.stdout.write(Buffer.concat([lenBuf, replyBuf]));
+      }
+    });
+    process.stdin.on('end', () => process.exit(0));
   });
