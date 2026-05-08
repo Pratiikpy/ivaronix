@@ -138,7 +138,8 @@ export const openclawCommand = new Command('openclaw').description('OpenClaw int
 openclawCommand
   .command('verify <skillMdPath>')
   .description('Parse a SKILL.md and validate it against the OpenClaw frontmatter contract')
-  .action(async (skillMdPath: string) => {
+  .option('--check-env', 'also assert that every metadata.openclaw.requires.env var is set in the current shell')
+  .action(async (skillMdPath: string, opts: { checkEnv?: boolean }) => {
     const abs = resolve(process.cwd(), skillMdPath);
     if (!existsSync(abs)) {
       ui.fail(`SKILL.md not found at ${skillMdPath}`);
@@ -176,14 +177,40 @@ openclawCommand
     }
     const og = fm.og ? '✓' : '✗';
     ui.info(`og: extension        ${og}`);
+
+    // --check-env: assert every requires.env var is set in the current shell.
+    // Lets a CI step or pre-publish hook catch missing config before the
+    // skill is invoked. Reports per-var pass/fail; missing vars fail the
+    // whole verify run.
+    let envFailures: string[] = [];
+    if (opts.checkEnv) {
+      const requires = (fm.metadata as { openclaw?: { requires?: { env?: string[] } } } | undefined)?.openclaw?.requires;
+      const envVars = Array.isArray(requires?.env) ? requires!.env! : [];
+      if (envVars.length === 0) {
+        ui.info(`env check            (no metadata.openclaw.requires.env declared)`);
+      } else {
+        ui.divider();
+        ui.info(`env check            ${envVars.length} required var(s)`);
+        for (const v of envVars) {
+          if (process.env[v]) {
+            ui.pass(`  ${v.padEnd(22)} set`);
+          } else {
+            ui.fail(`  ${v.padEnd(22)} MISSING`);
+            envFailures.push(v);
+          }
+        }
+      }
+    }
     ui.divider();
 
-    if (errors.length === 0) {
+    if (errors.length === 0 && envFailures.length === 0) {
       ui.pass(`PASS · ${installs?.length ?? 0} install spec(s) valid · ${warns.length} warning(s)`);
       warns.forEach((w) => ui.hint(`warn  · ${w.field}: ${w.msg}`));
     } else {
-      ui.fail(`FAIL · ${errors.length} error(s)`);
+      const total = errors.length + envFailures.length;
+      ui.fail(`FAIL · ${total} error(s)`);
       errors.forEach((e) => ui.hint(`error · ${e.field}: ${e.msg}`));
+      envFailures.forEach((v) => ui.hint(`error · env: ${v} not set in shell`));
       warns.forEach((w) => ui.hint(`warn  · ${w.field}: ${w.msg}`));
       process.exitCode = 1;
     }
