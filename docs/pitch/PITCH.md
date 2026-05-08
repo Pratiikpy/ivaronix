@@ -170,6 +170,25 @@ Every Ivaronix feature maps to a 0G ecosystem bounty/track when applicable:
 
 ---
 
+## 5.5 Internal-Priority Alignment Signals (timing matters)
+
+The 0G team has signaled — through recent partnerships, public statements, and organizational moves — exactly which problems are in their attention window right now. Name these alignments explicitly in the application.
+
+| 0G internal signal | Source / date | Our match — call out by name |
+|---|---|---|
+| **AI agents as the unit of work** — Heinrich's May-2026 layoff memo: "We build the infrastructure for the AI agent economy. Every day we talk about a world where AI agents handle the work humans used to do." | CEO email to staff, May 2026 | We are an **AI Agent Operating System**. Every action is a verifiable receipt produced by an agent. This is not adjacent to their thesis — this is their thesis, in code. |
+| **Agent-to-agent payments** | OKX Agent Payments Protocol partnership (months-old) | Our **SkillRegistry creator-fee-split** is on-chain agent monetization with basis-point precision. Track 3 (Agentic Economy) wedge. |
+| **TEE / private compute as flagship** | 0G Private Computer launch; Ming Wu's repeated TEE posts | Our **TIER-1 receipt marking** + `--tee-independent` re-verify is more honest than soft-fail-to-mock peers (AIsphere). |
+| **Open-model priority** | Alibaba Qwen integration; Ming Wu promotes Qwen + GLM-5 | Our **default model is `qwen/qwen-2.5-7b-instruct`** on 0G Compute broker — locked in BUILD.md §11.4. |
+| **Hardware-grade trust framing** | NVIDIA Inception membership | Our **TEE-tier honesty** mirrors hardware-rooted-trust framing: receipts mark whether attestation was actually fetched, not just claimed. |
+| **APAC / bilingual reach** | JT Song's APAC events; Ming Wu posts bilingually; Ada Heinrich East-West narrative role | Bilingual README pass (English + 中文) is on the roadmap. Costs little, doubles addressable judge audience. |
+| **"Don't trust, verify" as core philosophy** | Heinrich's repeated public framing | Our entire receipts thesis is the literal sentence "don't trust, verify" applied to AI actions. Use the phrase verbatim in the pitch. |
+| **Apollo Accelerator** (4% acceptance) | Public program — Stanford-level selectivity | The deeper-engagement path post-grant. Frame the application with Apollo as the next step. |
+
+**Rule:** when a 0G announcement, partnership, or staff statement matches one of our features, **name it by name** in the relevant pitch slide. Judges read alignment with their roadmap as proof we did the homework. This is not flattery — it's evidence that the receipts thesis is timely, not speculative.
+
+---
+
 ## 6. Resources / Official Links (verified)
 
 > All links verified against `oglabs resources/0g-doc/` and `0g-doc/docs/ai-context.md` on 2026-05-07. **The chain ID `16600` previously listed in `0G_OFFICIAL_LINKS.md` was incorrect.** Correct mainnet chain ID is `16661`.
