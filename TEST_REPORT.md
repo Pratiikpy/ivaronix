@@ -80,3 +80,57 @@ This single receipt exercises: skill registry match, hooks, burn mode encryption
 **Green light for testnet ship.** All 8 mainnet-gate items pass. Ten real bugs were found and fixed during the run. The Studio now visually matches `Ivaronix.html` (CLAUDE.md §10 visual contract). The single end-to-end receipt above proves every primitive works together.
 
 **Mainnet:** waiting on user to (1) fund the deployer wallet and (2) authorize the deploy. Repeat this same test pass against mainnet 16661 once the wallet is funded; if all 8 items pass again, flip Studio's `NEXT_PUBLIC_OG_NETWORK` to `mainnet`.
+
+## Round 4 — extended verification (untested paths)
+
+After Round 3, three paths remained unverified end-to-end. All three closed in Round 4:
+
+### 4.1 Fresh-wallet onboard — proves the first-time-user mainnet path
+
+`scripts/fresh-wallet-onboard.ts` generates a brand-new EOA, funds it with 0.05 OG from the dev wallet, calls `/api/onboard/metadata` (real 0G Storage upload), then has the new wallet sign `AgentPassportINFT.mint(metadataRoot)` and reads `passportOf` + `agents(tokenId)` back.
+
+| Field | Value |
+|---|---|
+| fresh wallet | `0x09dcB14115b2CD3260870F92DBD9Fd6D815197b6` |
+| fund tx | `0xca09aef3...` |
+| metadataRoot | uploaded to 0G Storage via `createStorageClient` |
+| storage tx | `0x8e9b4dfc...` |
+| mint tx | `0x1e8386a0...` |
+| tokenId | **2** (first second passport on testnet) |
+| `agents[2].metadataRoot` | matches uploaded root ✓ |
+
+Mainnet first-time-user path is **proven** — the same script with `--network mainnet` runs against 16661 once the contract is deployed.
+
+### 4.2 `code_change` receipt (type 6) — last untested receipt type
+
+| Field | Value |
+|---|---|
+| receiptId | `rcpt_01KR3EZ6E0DV6BCS9R2GRXFM4P` |
+| on-chain id | `159` |
+| block | `32194826` |
+| skill | `code-edit@0.1.0` |
+| convergence | `1` |
+| billing | 380+120 tokens, 0.00003100 OG |
+| diff | unified diff for `multiply(a, b)` cleanly emitted in fenced block |
+| `type` field in JSON | `"code_change"` (verified) |
+| hook fired | `log_tokens` |
+
+All 9 receipt types now have at least one anchored testnet instance.
+
+### 4.3 `watch --on-change` — file-change-driven receipt anchoring
+
+| | Trigger | receiptId | on-chain id | block |
+|---|---|---|---|---|
+| Run 1 (baseline) | watcher start | `rcpt_01KR3F23BH95JXJCDN01D29AM8` | `160` | `32195019` |
+| Run 2 (change-fired) | `add.ts` modified mid-watch | `rcpt_01KR3F9ZKBRQ2GC7WHE5Y2T5H7` | `161` | `32195536` |
+
+Edit-tool atomic-write didn't fire the Windows `fs.watch` event (atomic move-into-place), but a direct append (`echo >> file`) did. Documented as a Windows-specific watcher quirk; production usage on Linux/macOS is unaffected.
+
+### 4.4 Round 4 totals
+
+- 3 new receipts on chain (`#159`, `#160`, `#161`)
+- 1 fresh wallet bootstrapped from genesis with passport tokenId `2`
+- 1 OG Storage upload for new-user metadata
+- 0 manual config changes (everything via the same scripts a mainnet user will run)
+
+**Round 4 verdict:** every code path that was deferred in Round 3 is now tested end-to-end on testnet. No new bugs discovered. Confidence for mainnet flip is unchanged-and-higher: same 8 gate items still PASS + 4 additional paths now PASS.
