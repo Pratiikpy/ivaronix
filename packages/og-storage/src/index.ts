@@ -125,3 +125,5 @@ export function createStorageClient(opts: StorageClientOptions): StorageClient {
 
 export { burnEncrypt, decryptWithKey } from './burn.js';
 export type { BurnEncryptResult } from './burn.js';
+
+export { memoryStreamId, MEMORY_STREAM_NAMESPACE } from './streamId.js';

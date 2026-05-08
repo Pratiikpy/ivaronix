@@ -10,6 +10,7 @@ import {
   type MemoryAccessType,
 } from '@ivaronix/og-chain';
 import { MemoryEngine } from '@ivaronix/memory';
+import { memoryStreamId, MEMORY_STREAM_NAMESPACE } from '@ivaronix/og-storage';
 import { NETWORKS, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -183,6 +184,38 @@ memoryCommand
     } finally {
       engine.close();
     }
+  });
+
+// ─── stream-id ───────────────────────────────────────────────────────────────
+// Per docs/PLAN_pass76.md S-2 — wallet-derived deterministic stream ID for the
+// memory store. Same wallet → same ID anywhere, so memory is portable across
+// machines without needing a server-side index. Defaults to the env wallet;
+// pass an explicit address to inspect another wallet's slot.
+memoryCommand
+  .command('stream-id [address]')
+  .description('Print the deterministic 0G KV stream-ID for a wallet\'s memory snapshots')
+  .action((address?: string) => {
+    const env = loadEnv();
+    const target = address ?? env.walletAddress;
+    if (!target) {
+      ui.fail('No address. Pass one as argument or set EVM_WALLET_ADDRESS in .env.');
+      process.exitCode = 1;
+      return;
+    }
+    let id: string;
+    try {
+      id = memoryStreamId(target);
+    } catch (err) {
+      ui.fail(`invalid address: ${(err as Error).message}`);
+      process.exitCode = 1;
+      return;
+    }
+    ui.title('Memory stream-ID');
+    ui.info(`namespace            ${MEMORY_STREAM_NAMESPACE}`);
+    ui.info(`address              ${target}`);
+    ui.info(`stream-ID            ${id}`);
+    ui.divider();
+    ui.hint('Same address → same ID on any machine. Wired into snapshot/restore once S-1 (local KV) lands.');
   });
 
 // ─── snapshot ────────────────────────────────────────────────────────────────
