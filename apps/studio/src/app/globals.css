@@ -238,8 +238,7 @@ body {
     padding-top: 48px !important;
     padding-bottom: 48px !important;
   }
-  /* Header: condense secondary links + tighten gutters. Don't fully hide;
-   * a navless header on mobile leaves users stranded. */
+  /* Header: condense secondary links + tighten gutters. */
   header nav {
     gap: 16px !important;
     font-size: 13px !important;
@@ -247,9 +246,21 @@ body {
   header > div {
     padding: 0 16px !important;
   }
+  /* Below 480px, drop the two least-used nav links — Skills + Connect
+   * wallet remain. Users can still reach /global and /dashboard from
+   * footer + /skills internal nav. Prevents header overflow at 375px. */
+  @media (max-width: 480px) {
+    header nav a[href="/global"],
+    header nav a[href="/dashboard"] {
+      display: none !important;
+    }
+  }
   /* Stack any 2-col grid */
   [style*="grid-template-columns: 2fr 1fr"],
-  [style*="grid-template-columns: 1fr 1fr"] {
+  [style*="grid-template-columns: 1fr 1fr"],
+  [style*="grid-template-columns: minmax(0, 2fr)"],
+  [style*="grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)"],
+  .skill-detail-grid {
     grid-template-columns: 1fr !important;
   }
   /* Card padding shrink */
