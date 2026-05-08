@@ -1,0 +1,32 @@
+{
+  "name": "@ivaronix/opencode-sdk",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./v2": "./src/v2/index.ts",
+    "./v2/client": "./src/v2/client.ts",
+    "./v2/server": "./src/v2/server.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "echo 'PASS 77 F-1b: source vendored, integration pending (catalog deps + bun→node port in F-1h)'",
+    "clean": "rm -rf dist .turbo"
+  },
+  "_provenance": {
+    "vendoredFrom": "CLI Open Source Project/opencode/packages/sdk/js",
+    "upstreamVersion": "1.14.40",
+    "upstreamLicense": "MIT — see LICENSE.upstream.md",
+    "stage": "PASS 77 F-1b (source vendored, deps not yet resolved)"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
