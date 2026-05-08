@@ -12,7 +12,9 @@ A feature ships only when all three pass on a clean machine:
 2. **One screenshot or URL proves it worked.** TUI screenshot, Studio receipt URL, chain tx in the explorer. Visible interaction, not "tests pass."
 3. **A judge on a different machine reproduces it without our help.** Public Proof URL works without auth; `ivaronix receipt verify --tee-independent` works against any anchored receipt; `ivaronix debug receipt N` returns a complete report.
 
-No compromise on UI / UX / functional interaction. The peer audit (see `new-entries/Codex Thinking/claude-thinking.md`) showed everyone else overpromises in READMEs and underdelivers in code. Our edge is reproducibility — every claim survives a 5-second eye-test. The OpenCode fork inherits a battle-tested chat UI; the re-skin and the 0G plugin layer must hit the same bar before deprecating `apps/cli/`. Per CLAUDE.md §1, §7, §8 and §10 (visual contract).
+No compromise on UI / UX / functional interaction. The peer audit (see `new-entries/Codex Thinking/claude-thinking.md`) showed everyone else overpromises in READMEs and underdelivers in code. Our edge is reproducibility — every claim survives a 5-second eye-test.
+
+**No mocks. Real or nothing.** Every plugin we layer onto the OpenCode fork must call the real 0G primitive. `og-receipts` anchors real receipts on `ReceiptRegistry`. `og-identity` resolves real `passportOf(wallet)`. `og-skills` mints to the real `SkillRegistry` with real manifestHash matching. `og-memory` writes to real KV streams via real Indexer. **No "if `EVM_PRIVATE_KEY` missing, dummy-sign locally." No "if broker unreachable, mark TIER-1 anyway." No "stub manifestHash, fix later."** A receipt that isn't anchored isn't a receipt. The OpenCode fork inherits a battle-tested chat UI; the re-skin and 0G plugin layer must hit this bar before deprecating `apps/cli/`. Per CLAUDE.md §1, §6, §7, §8, §10.
 
 ## 0. The verdict (revised)
 

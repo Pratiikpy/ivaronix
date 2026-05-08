@@ -12,7 +12,9 @@ A feature is not "done" until **all three** of these pass on a clean machine:
 2. **One screenshot or URL proves it worked.** Visible receipt URL, visible chain tx, visible UI state. Not "tests pass" — *visible end-to-end working*.
 3. **A judge on a different machine re-verifies without our help.** Public Proof URL, third-party explorer, or `ivaronix receipt verify --tee-independent` — at least one of those works for them.
 
-No compromise on UI / UX / functional interaction. Every claim in this plan must survive a 5-second eye-test. The deep-read of competitors showed they overpromise in READMEs and underdeliver in code (TEE soft-failing to mock, in-memory fallback for "0G Storage", README-bait upvoting). Our edge is being the one project where every claim is reproducible. Keep that edge per CLAUDE.md §1, §7, §8.
+No compromise on UI / UX / functional interaction. Every claim in this plan must survive a 5-second eye-test.
+
+**No mocks. Real or nothing.** Receipts are real on-chain anchors. 0G Storage uploads are real Indexer + Merkle root. 0G Compute is the real broker round-trip with TEE verification fetched, not "teeVerified: true" set in code. Memory snapshots write to real KV streams. PR receipts come from real `code_change` events. **No "if endpoint unavailable, fall back to in-memory Map." No "if broker not reachable, mark as TEE-verified anyway." No "stub for now, wire up later."** That's exactly the anti-pattern the peer audit caught (AIsphere soft-fails to mock; AgentPay in-memory fallback for 0G Storage; AgentPay hardcoded prices when oracle missing; OpenClaw_Hackathon silent skip on KV failure). Our edge — the only edge — is that everything we ship is real. Per CLAUDE.md §1, §6, §7, §8.
 
 ## 0. Why this pass
 
