@@ -1175,3 +1175,23 @@ User direction: "buodl our clii exactly hwo open code and claud ecod eprform okk
 - Document the matrix of "what works in pipe mode vs interactive TUI mode"
 
 **Why this is the right wedge for OG:** the dev-CLI is the only daily-driver surface in this category. Every other 0G project either has no CLI (Studio-only) or a basic API client. Shipping a CLI that *feels* like Claude Code on top of a 0G receipt spine is the marketing artifact judges and developers will both notice. Per the brand spec, premium = receipts > rhetoric. The CLI is where receipts become felt.
+
+### Phase B' — Iteration progress
+
+**Iteration 1 (Round 14, commit `c4bef4c`):** scaffold landed. Ink TUI rendered banner + message bubbles + bottom-anchored input + persistent footer with live network/model/skill/passport/chain-receipts/cost. Pinned to ink@5 because ink@7 imports an experimental React useEffectEvent hook. Wired as opt-in `chat-v2` command beside the readline `chat`.
+
+**Iteration 2 (Round 15, this commit):**
+- **Streaming token render** — assistant text fills in as it arrives (`stream: true`, `onToken` updates a per-message React state slot). Removes the dead-air pause between submit and response.
+- **Tool-call dispatch + framed panels** — wires `chat-tools.ts` (`dispatchTool`) into the Ink loop. Each tool call renders as a bordered box with `⚙ tool_name · running/ok/failed` header, args preview (truncated to 80 chars), and result preview (truncated to 800). Border color goes cyan→green/red as the tool runs.
+- **Slash command palette** — when the user types `/`, a green-bordered popup appears above the input listing matching commands with descriptions. Implemented `/help`, `/cost`, `/passport`, `/clear`, `/exit` for parity with the readline version's most-used commands.
+- **Tool-loop semantics** — up to 4 iterations of tool-use → final answer, mirroring `chat.ts`. Conversation history accumulates across the iter loop; tool results feed back as `role: tool` messages.
+- **Slash command unknown handler** — typing `/foo` shows "unknown command: /foo. /help for available commands." instead of submitting it as a message.
+
+**Still deferred to iteration 3:**
+- Syntax-highlighted code blocks during streaming (cli-highlight + a controlled flush)
+- Multi-line input editor (shift-enter newline; current single-line TextInput is enough for most prompts)
+- Tab completion for non-slash inputs (file paths in `read_file` args, skill ids in `/skill <id>`)
+- Auto-resume last conversation (load `.ivaronix/conversations/<id>.json` on startup)
+- `/save --md` markdown export
+
+**Smoke-test caveat:** Ink TUI can't be driven via piped stdin (raw-mode TTY required). Verification: `pnpm --filter @ivaronix/cli exec tsx src/bin/ivaronix.ts chat-v2` from an interactive terminal. The build is green, the command shows `--help` correctly, and the legacy `chat` command keeps working for SSH / piped workflows.

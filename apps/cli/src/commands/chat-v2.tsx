@@ -70,6 +70,7 @@ export const chatV2Command = new Command('chat-v2')
         walletAddress={(env.walletAddress as Address | undefined) ?? null}
         fetchPassport={fetchPassport}
         fetchTotalReceipts={fetchTotalReceipts}
+        cwd={process.cwd()}
       />,
     );
     await waitUntilExit();

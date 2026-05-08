@@ -1,43 +1,27 @@
 /**
- * Phase B' — Ink TUI scaffold for the premium CLI rewrite.
+ * Phase B' Ink TUI — iteration 2.
  *
- * Goal (per BUILD_PROGRESS Phase B'): replace the readline REPL with an
- * OpenCode + Claude Code grade interactive surface. This file is the
- * minimum viable scaffold:
+ * What's added since iteration 1:
+ *   - streaming token render (assistant text fills in as it arrives)
+ *   - tool-call dispatch with framed-box panels (read_file / grep /
+ *     run_bash / list_files / write_file / web_fetch)
+ *   - slash command handler with live palette popup as the user types `/`
+ *   - cost meter increments live during streaming
  *
- *   - banner header with the brackets-with-i mark
- *   - scrollable message list (assistant / user / tool-result rendered
- *     as distinct bubbles)
- *   - persistent footer with live network + passport + receipts state
- *   - bottom-anchored text input (multi-line via paste; shift-enter
- *     newline support added in the next iteration)
- *
- * Wired behind the new `ivaronix chat-v2` subcommand. The legacy
- * readline `ivaronix chat` stays put for SSH / piped workflows. When
- * the TUI reaches feature parity with the readline version, we'll
- * switch the bare-name `ivaronix` invocation to chat-v2 and rename
- * the legacy command to `chat-classic`.
- *
- * What ships in this scaffold:
- *   - banner, footer, message list, input field, send-on-enter
- *   - one round-trip to the router for assistant replies (no tools
- *     yet — tool dispatch comes in iteration 2)
- *   - cost meter increments live as tokens flow through
- *
- * What's deferred to later iterations:
- *   - streaming token render (need a controlled reducer)
- *   - syntax-highlighted code blocks
- *   - slash command palette
- *   - tab completion
- *   - tool-call panels
+ * Still deferred to iteration 3:
+ *   - syntax-highlighted code blocks (cli-highlight integration)
+ *   - multi-line input editor (shift-enter newline; current single-line
+ *     TextInput is fine for the demo)
+ *   - tab completion for non-slash inputs (file paths, skill ids)
  */
 
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput, useApp } from 'ink';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Text, useApp, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
 import type { Keyring, ChatRichMessage } from '@ivaronix/og-router';
 import type { Address } from '@ivaronix/core';
+import { TOOL_DEFS, dispatchTool } from '../lib/chat-tools.js';
 
 interface FooterState {
   network: 'testnet' | 'mainnet';
@@ -48,12 +32,29 @@ interface FooterState {
   cost: { inputTokens: number; outputTokens: number; og: number };
 }
 
+type ToolCallView = {
+  id: string;
+  name: string;
+  args: string;
+  result: string | null;
+  ok: boolean | null; // null = running, true/false = done
+};
+
 interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
+  toolCalls?: ToolCallView[];
   ts: number;
 }
+
+const SLASH_COMMANDS: { name: string; help: string }[] = [
+  { name: '/help', help: 'show this list' },
+  { name: '/cost', help: 'tokens · OG · message count' },
+  { name: '/passport', help: 'live passport state from chain' },
+  { name: '/clear', help: 'start a new conversation in this session' },
+  { name: '/exit', help: 'quit' },
+];
 
 interface Props {
   keyring: Keyring;
@@ -63,6 +64,7 @@ interface Props {
   walletAddress: Address | null;
   fetchPassport: () => Promise<{ tokenId: string; trust: string; receipts: string } | null>;
   fetchTotalReceipts: () => Promise<bigint | null>;
+  cwd: string;
 }
 
 export function ChatScreen(props: Props): React.ReactElement {
@@ -70,6 +72,7 @@ export function ChatScreen(props: Props): React.ReactElement {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const [footer, setFooter] = useState<FooterState>({
     network: props.network,
     model: props.initialModel,
@@ -79,9 +82,6 @@ export function ChatScreen(props: Props): React.ReactElement {
     cost: { inputTokens: 0, outputTokens: 0, og: 0 },
   });
 
-  // Hydrate the footer with chain state once at startup. Refreshed every
-  // time the user submits a message so the receipts/trust counters track
-  // the receipts the agent itself anchors during the session.
   const hydrate = async () => {
     try {
       const [passport, totalReceipts] = await Promise.all([
@@ -96,19 +96,72 @@ export function ChatScreen(props: Props): React.ReactElement {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Ctrl+C / Esc → exit cleanly. /exit slash command also exits.
   useInput((_, key) => {
     if (key.escape) exit();
   });
+
+  const handleSlash = (line: string): boolean => {
+    const [cmd] = line.slice(1).trim().split(/\s+/);
+    switch (cmd) {
+      case 'exit':
+      case 'quit':
+        exit();
+        return true;
+      case 'help': {
+        const m: Message = {
+          id: `m_${Date.now()}_h`,
+          role: 'system',
+          content: SLASH_COMMANDS.map((s) => `${s.name.padEnd(12)} ${s.help}`).join('\n'),
+          ts: Date.now(),
+        };
+        setMessages((prev) => [...prev, m]);
+        return true;
+      }
+      case 'cost': {
+        const m: Message = {
+          id: `m_${Date.now()}_c`,
+          role: 'system',
+          content: `tokens: ${footer.cost.inputTokens}+${footer.cost.outputTokens} · cost: ${footer.cost.og.toFixed(10)} OG · messages: ${messages.length}`,
+          ts: Date.now(),
+        };
+        setMessages((prev) => [...prev, m]);
+        return true;
+      }
+      case 'passport': {
+        const p = footer.passport;
+        const m: Message = {
+          id: `m_${Date.now()}_p`,
+          role: 'system',
+          content: p ? `tokenId=${p.tokenId} · trust=${p.trust} · receipts=${p.receipts}` : '(no passport for the configured wallet)',
+          ts: Date.now(),
+        };
+        setMessages((prev) => [...prev, m]);
+        return true;
+      }
+      case 'clear':
+        setMessages([]);
+        return true;
+      default:
+        return false;
+    }
+  };
 
   const handleSubmit = async (line: string) => {
     const trimmed = line.trim();
     if (!trimmed || busy) return;
     setInput('');
-    if (trimmed === '/exit' || trimmed === '/quit') {
-      exit();
+    if (trimmed.startsWith('/')) {
+      if (handleSlash(trimmed)) return;
+      const m: Message = {
+        id: `m_${Date.now()}_u`,
+        role: 'system',
+        content: `unknown command: ${trimmed}. /help for available commands.`,
+        ts: Date.now(),
+      };
+      setMessages((prev) => [...prev, m]);
       return;
     }
+
     const userMsg: Message = {
       id: `m_${Date.now()}_u`,
       role: 'user',
@@ -117,29 +170,99 @@ export function ChatScreen(props: Props): React.ReactElement {
     };
     setMessages((prev) => [...prev, userMsg]);
     setBusy(true);
+
+    const conversation: ChatRichMessage[] = [
+      { role: 'system', content: `You are Ivaronix's CLI assistant. Network: ${footer.network}. Model: ${footer.model}.${footer.skill ? ` Active skill: ${footer.skill}.` : ''}` },
+      ...messages
+        .filter((m) => m.role !== 'system')
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+      { role: 'user', content: trimmed },
+    ];
+
     try {
-      const history: ChatRichMessage[] = [
-        { role: 'system', content: `You are Ivaronix's CLI assistant. Network: ${footer.network}. Model: ${footer.model}.` },
-        ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
-        { role: 'user', content: trimmed },
-      ];
-      const res = await props.keyring.chatRich({ model: footer.model, messages: history, stream: false });
-      const assistantMsg: Message = {
-        id: `m_${Date.now()}_a`,
-        role: 'assistant',
-        content: res.content || '(empty response)',
-        ts: Date.now(),
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-      setFooter((f) => ({
-        ...f,
-        cost: {
-          inputTokens: f.cost.inputTokens + (res.inputTokens ?? 0),
-          outputTokens: f.cost.outputTokens + (res.outputTokens ?? 0),
-          og: f.cost.og + ((res.inputTokens ?? 0) * 5e-8) + ((res.outputTokens ?? 0) * 1e-7),
-        },
-      }));
-      // refresh passport + receipts after every turn (cheap chain reads)
+      // Tool-loop: up to 4 iterations of tool-use → final answer
+      for (let iter = 0; iter < 4; iter++) {
+        const assistantId = `m_${Date.now()}_a${iter}`;
+        const initial: Message = {
+          id: assistantId,
+          role: 'assistant',
+          content: '',
+          toolCalls: [],
+          ts: Date.now(),
+        };
+        setMessages((prev) => [...prev, initial]);
+        setStreamingId(assistantId);
+
+        const res = await props.keyring.chatRich({
+          model: footer.model,
+          messages: conversation,
+          tools: TOOL_DEFS,
+          stream: true,
+          onToken: (delta) => {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantId ? { ...m, content: m.content + delta } : m)),
+            );
+          },
+        });
+        setStreamingId(null);
+
+        // If model didn't stream content but has it in res.content, fold it in
+        if (res.content && !messages.find((m) => m.id === assistantId)?.content) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, content: res.content || '' } : m)),
+          );
+        }
+
+        const assistantMsg: ChatRichMessage = {
+          role: 'assistant',
+          content: res.content || null,
+          tool_calls: res.toolCalls.length > 0 ? res.toolCalls : undefined,
+        };
+        conversation.push(assistantMsg);
+
+        setFooter((f) => ({
+          ...f,
+          cost: {
+            inputTokens: f.cost.inputTokens + (res.inputTokens ?? 0),
+            outputTokens: f.cost.outputTokens + (res.outputTokens ?? 0),
+            og: f.cost.og + ((res.inputTokens ?? 0) * 5e-8) + ((res.outputTokens ?? 0) * 1e-7),
+          },
+        }));
+
+        if (res.toolCalls.length === 0) break;
+
+        // Render each tool call as a panel + dispatch in sequence
+        for (const tc of res.toolCalls) {
+          const tcView: ToolCallView = {
+            id: tc.id,
+            name: tc.function.name,
+            args: tc.function.arguments,
+            result: null,
+            ok: null,
+          };
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, toolCalls: [...(m.toolCalls ?? []), tcView] } : m)),
+          );
+          const r = await dispatchTool(props.cwd, tc.function.name, tc.function.arguments, new Map());
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? {
+                    ...m,
+                    toolCalls: (m.toolCalls ?? []).map((t) =>
+                      t.id === tc.id ? { ...t, result: r.output.slice(0, 800), ok: r.ok } : t,
+                    ),
+                  }
+                : m,
+            ),
+          );
+          conversation.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            content: r.output.slice(0, 8 * 1024),
+          });
+        }
+      }
       hydrate();
     } catch (err) {
       const errMsg: Message = {
@@ -151,25 +274,44 @@ export function ChatScreen(props: Props): React.ReactElement {
       setMessages((prev) => [...prev, errMsg]);
     } finally {
       setBusy(false);
+      setStreamingId(null);
     }
   };
+
+  // Slash palette: when input starts with /, show the matching commands
+  const palette = useMemo(() => {
+    if (!input.startsWith('/')) return [];
+    return SLASH_COMMANDS.filter((s) => s.name.startsWith(input));
+  }, [input]);
 
   return (
     <Box flexDirection="column" paddingY={1}>
       <Banner network={footer.network} />
       <Box flexDirection="column" marginY={1}>
         {messages.length === 0 ? (
-          <Text dimColor>type a message and press enter · /exit to quit</Text>
+          <Text dimColor>type a message · /help for commands · esc to quit</Text>
         ) : (
-          messages.map((m: Message) => <MessageBubble key={m.id} message={m} />)
+          messages.map((m: Message) => <MessageBubble key={m.id} message={m} streaming={streamingId === m.id} />)
         )}
-        {busy && (
+        {busy && !streamingId && (
           <Box marginTop={1}>
             <Text color="cyan"><Spinner type="dots" /></Text>
-            <Text dimColor>  querying router…</Text>
+            <Text dimColor>  thinking…</Text>
           </Box>
         )}
       </Box>
+
+      {palette.length > 0 && (
+        <Box flexDirection="column" borderStyle="round" borderColor="green" paddingX={1}>
+          {palette.map((s) => (
+            <Box key={s.name}>
+              <Text color="green">{s.name.padEnd(12)}</Text>
+              <Text dimColor>  {s.help}</Text>
+            </Box>
+          ))}
+        </Box>
+      )}
+
       <Box>
         <Text color="green">{'› '}</Text>
         <TextInput value={input} onChange={setInput} onSubmit={handleSubmit} placeholder="…" />
@@ -185,21 +327,50 @@ function Banner({ network }: { network: 'testnet' | 'mainnet' }): React.ReactEle
       <Text bold>{'[ | ] IVARONIX'}</Text>
       <Text dimColor>{'  · '}</Text>
       <Text color={network === 'testnet' ? 'yellow' : 'green'}>{network}</Text>
-      <Text dimColor>{'  · type your message · /exit to quit'}</Text>
+      <Text dimColor>{'  · streaming · tools · /help'}</Text>
     </Box>
   );
 }
 
-function MessageBubble({ message }: { message: Message }): React.ReactElement {
+function MessageBubble({ message, streaming }: { message: Message; streaming: boolean }): React.ReactElement {
   const role = message.role;
   const tag = role === 'user' ? 'you' : role === 'assistant' ? 'ai' : 'sys';
   const color = role === 'user' ? 'green' : role === 'assistant' ? 'white' : 'red';
   return (
     <Box marginTop={1} flexDirection="column">
-      <Text color={color} bold>{tag}</Text>
-      <Box paddingLeft={2}>
-        <Text>{message.content}</Text>
+      <Box>
+        <Text color={color} bold>{tag}</Text>
+        {streaming && <Text dimColor>{'  · streaming'}</Text>}
       </Box>
+      {message.content && (
+        <Box paddingLeft={2}>
+          <Text>{message.content}</Text>
+        </Box>
+      )}
+      {message.toolCalls?.map((tc) => <ToolPanel key={tc.id} tool={tc} />)}
+    </Box>
+  );
+}
+
+function ToolPanel({ tool }: { tool: ToolCallView }): React.ReactElement {
+  const status = tool.ok === null ? 'running' : tool.ok ? 'ok' : 'failed';
+  const color = tool.ok === null ? 'cyan' : tool.ok ? 'green' : 'red';
+  const argsPreview = tool.args.length > 80 ? tool.args.slice(0, 77) + '…' : tool.args;
+  return (
+    <Box marginTop={1} marginLeft={2} flexDirection="column" borderStyle="single" borderColor={color} paddingX={1}>
+      <Box>
+        <Text color={color} bold>⚙ {tool.name}</Text>
+        <Text dimColor>  · </Text>
+        <Text color={color}>{status}</Text>
+      </Box>
+      <Box>
+        <Text dimColor>{argsPreview}</Text>
+      </Box>
+      {tool.result && (
+        <Box marginTop={1}>
+          <Text dimColor>{tool.result}</Text>
+        </Box>
+      )}
     </Box>
   );
 }
