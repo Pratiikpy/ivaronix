@@ -3,6 +3,7 @@ import { redactPii } from './builtin/redact-pii.js';
 import { balanceCheck } from './builtin/balance-check.js';
 import { logTokens } from './builtin/log-tokens.js';
 import { printPassport } from './builtin/print-passport.js';
+import { logAnchor } from './builtin/log-anchor.js';
 
 /** All built-in hooks the runtime knows about. Keep this list small + audited. */
 export const BUILTIN_HOOKS: readonly BuiltinHook[] = [
@@ -10,6 +11,7 @@ export const BUILTIN_HOOKS: readonly BuiltinHook[] = [
   balanceCheck,
   logTokens,
   printPassport,
+  logAnchor,
 ] as const;
 
 const BY_NAME = new Map<string, BuiltinHook>(BUILTIN_HOOKS.map((h) => [h.name, h]));

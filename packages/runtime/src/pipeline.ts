@@ -30,6 +30,9 @@ import {
   type HookEvent_PreConsensus,
   type HookEvent_PostConsensus,
   type HookEvent_SessionStart,
+  type HookEvent_PreAnchor,
+  type HookEvent_PostAnchor,
+  type HookEvent_SessionEnd,
 } from '@ivaronix/skills';
 import { loadEnv, type Env } from './env.js';
 import { noopLogger, type PipelineLogger } from './logger.js';
@@ -97,6 +100,7 @@ export function defaultSearchDirs(): string[] {
 }
 
 export async function runPipeline(input: PipelineInput): Promise<PipelineOutput> {
+  const pipelineStart = Date.now();
   const env = loadEnv();
   const log = input.logger ?? noopLogger;
   const tag = (msg: string) => (input.label ? `[${input.label}] ${msg}` : msg);
@@ -286,11 +290,29 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       tag,
       log,
       provider: providerKind,
+      callerTrust,
     });
     receiptPath = result.path;
     receiptId = result.id;
     receiptTxHash = result.txHash;
     receiptOnchainId = result.onchainId;
+  }
+
+  // 8. session.end hooks (always last, even if anchor was skipped)
+  const sessionEndHooks = resolveHooks(skill.manifest.og.hooks?.session_end, 'session.end');
+  if (sessionEndHooks.length > 0) {
+    const evt: HookEvent_SessionEnd = {
+      kind: 'session.end',
+      skill,
+      network: env.network,
+      caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+      trustScore: callerTrust,
+      totalMs: Date.now() - pipelineStart,
+      receiptsAnchored: receiptId ? [receiptId] : [],
+      exitCode: 0,
+    };
+    const r = await runHooks(sessionEndHooks, evt);
+    for (const lg of r.logs) log.info(tag(`hook                 ${lg}`));
   }
 
   return {
@@ -319,6 +341,7 @@ interface AnchorArgs {
   provider: '0g' | 'nvidia';
   tag: (msg: string) => string;
   log: PipelineLogger;
+  callerTrust: number;
 }
 
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
@@ -445,6 +468,26 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   const path = resolve(dir, `${signed.id}.json`);
   writeFileSync(path, JSON.stringify(signed, null, 2));
 
+  // receipt.pre-anchor — local sign done, on-chain submit pending. Allows a
+  // skill to emit a final audit log or refuse the anchor (e.g. if a policy
+  // gate flagged the output post-hoc). Refusal throws and the receipt stays
+  // local-only.
+  const preAnchorHooks = resolveHooks(skill.manifest.og.hooks?.pre_anchor, 'receipt.pre-anchor');
+  if (preAnchorHooks.length > 0) {
+    const evt: HookEvent_PreAnchor = {
+      kind: 'receipt.pre-anchor',
+      skill,
+      network: env.network,
+      caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+      trustScore: a.callerTrust,
+      receiptId: signed.id,
+      receiptRoot: signed.storage.receiptRoot,
+    };
+    const r = await runHooks(preAnchorHooks, evt);
+    for (const lg of r.logs) log.info(tag(`hook                 ${lg}`));
+    if (!r.allow) throw new Error(`receipt.pre-anchor hook "${r.blockingHook}" refused: ${r.reason}`);
+  }
+
   const registry = new ReceiptRegistryClient(registryAddr, wallet);
   const typeCode = RECEIPT_TYPES[draft.type];
   const evidenceBytes32 = ('0x' + evidenceDigest.replace(/^sha256:/, '')) as Hash;
@@ -496,6 +539,24 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       2,
     ),
   );
+
+  // receipt.post-anchor — receipt is now on chain. Use this to push to
+  // off-chain index, ping a webhook, or update a creator-fee dashboard.
+  const postAnchorHooks = resolveHooks(skill.manifest.og.hooks?.post_anchor, 'receipt.post-anchor');
+  if (postAnchorHooks.length > 0) {
+    const evt: HookEvent_PostAnchor = {
+      kind: 'receipt.post-anchor',
+      skill,
+      network: env.network,
+      caller: (env.walletAddress as `0x${string}` | undefined) ?? null,
+      trustScore: a.callerTrust,
+      receiptId: signed.id,
+      txHash: tx.hash,
+      blockNumber: txReceipt?.blockNumber ?? 0,
+    };
+    const r = await runHooks(postAnchorHooks, evt);
+    for (const lg of r.logs) log.info(tag(`hook                 ${lg}`));
+  }
 
   return { path, id: signed.id, txHash: tx.hash, onchainId };
 }

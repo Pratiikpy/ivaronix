@@ -1,6 +1,6 @@
 ---
 name: code-edit
-version: 0.1.0
+version: 0.2.0
 description: Propose minimal code changes for a task given source files. Outputs a unified diff that the user can apply. Does not actually write to disk — `build` mode emits the diff and the user (or follow-up tooling) applies it.
 license: Apache-2.0
 entrypoint: prompt.md
@@ -27,6 +27,7 @@ og:
   hooks:
     pre_consensus: ["redact_pii"]
     post_consensus: ["log_tokens"]
+    post_anchor: ["log_anchor"]
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
 ---

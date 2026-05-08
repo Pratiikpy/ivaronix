@@ -741,3 +741,51 @@ When the next iteration of `/loop` fires, read this file FIRST. Pick up from the
 If the latest "in progress" item shows recent file timestamps but no completion, it means the previous iteration was interrupted — resume from where the files indicate.
 
 Run `git log --oneline -20` to see the actual code state regardless of what this file says.
+
+---
+
+## Round 5 — polish list cleanup (2026-05-08, post-Round-4)
+
+After Round 4 (fresh-wallet onboard + code_change + watch --on-change all verified end-to-end), audited the post-Day-22 polish list against actual code. Two of the four open items closed in this round.
+
+### Polish #10 — receipt.pre-anchor / receipt.post-anchor / session.end hooks ✅
+The `HookEventKind` type and the manifest-schema fields for all six events were already declared in `packages/skills/src/hooks/types.ts` + `manifest.ts`. The runtime pipeline only fired three of them (session.start, consensus.pre, consensus.post). Wired the missing three:
+
+- `pipeline.ts:165–183` — `receipt.pre-anchor` fires after the receipt is signed + written locally but before `registry.anchor()`. A blocking hook can refuse the chain submit and the receipt stays local-only.
+- `pipeline.ts:497–517` — `receipt.post-anchor` fires after `tx.wait()` + passport update with `txHash` + `blockNumber`.
+- `pipeline.ts:298–315` — `session.end` fires at the very end of `runPipeline` with `totalMs`, `receiptsAnchored[]`, `exitCode`.
+
+Added one new built-in hook `log_anchor` (subscribes to `receipt.post-anchor`) so opt-in can be verified end-to-end. Bumped `code-edit` skill to `0.2.0` with `og.hooks.post_anchor: ["log_anchor"]`. The 0.2.0 manifest is intentionally not yet republished on-chain — the skill runs as `not registered (local-only)` until Phase B re-publishes from mainnet.
+
+**Evidence on testnet:**
+| | Value |
+|---|---|
+| receipt | `rcpt_01KR3G36X8VTKQ74CMS2JCY86Z` |
+| on-chain id | `162` |
+| block | `32197188` |
+| anchor tx | `0xd4c17afbf3d8a020ced80bba9fcc245d084f1169d2aebe9e6edcc0b1052d6524` |
+| post_consensus hook log | `log_tokens: 421+108 tokens (2316 ms, 0.00003185 OG), convergence=1` |
+| **post_anchor hook log** | `log_anchor: rcpt_01KR3G36X8VTKQ74CMS2JCY86Z anchored at block 32197188 · <chainscan url>` |
+
+All six hook events are now usable from a skill manifest. The runtime BUILTIN_HOOKS catalog is now 5 (was 4) — the new entry is `log_anchor`.
+
+### Polish #12 — `?skill=<id>` query-param pre-select ✅ (already implemented)
+`apps/studio/src/components/RunPanel.tsx:39–47` already reads `URLSearchParams(window.location.search).get('skill')` in a `useEffect` and pre-selects the dropdown when the requested id is in `SKILLS`. This was committed silently in an earlier round and never logged here. No code changes needed; just documenting the truth.
+
+### Polish #11 + #13 — deferred, with reasons
+- **#11 vanity `/@<handle>` URL** — needs an on-chain handle→tokenId index. The current `/agent/[handle]` page only resolves `0x...` addresses; vanity-handle resolution would require either (a) a `handleOf(string) → tokenId` view function on `AgentPassportINFT` (contract change → mainnet redeploy → blocked on B-2), or (b) an O(N) off-chain scan over every passport's metadata JSON (brittle while B-1 storage is also flaky). Neither is testable in one command today. **Punt to Phase B Day 24+ when the contract is being mainnet-deployed anyway.**
+- **#13 ERC-7857 sealed-data attestation transfer** — the `Erc7857Verifier` contract is deployed and tested locally (61/61 Foundry suite covers the verifier). Wiring the Studio + CLI flow for "transfer your AgentPassport to another wallet, re-encrypt the metadata under their pubkey, prove freshness via the verifier" is real work — needs a transfer-ceremony UI, a sealed-key derivation step, and a re-upload to 0G Storage. **Scoping this to a focused 1–2 day session post-mainnet-cutover** so the receipt for the transfer event lands on the production registry, not on testnet trash data.
+
+### Round 5 totals
+- Built-in hooks: 5 (was 4) — added `log_anchor`
+- Receipt anchored on testnet to prove the chain: **#162** (cumulative testnet anchors: 162)
+- Skill version bumped: code-edit 0.1.0 → 0.2.0 (manifestHash will be republished in Phase B)
+- Polish list closed: 2 of 4 (#10, #12); 2 deferred with explicit reasons (#11, #13)
+
+### What's left across the whole project
+Per CLAUDE.md §1 — "the only blocker is money":
+1. **B-2** — fund mainnet deployer wallet 0xaa954c33…77Ce on chainId 16661 (~2 OG). Only the user can do this.
+2. **`@ivaronix/cli` npm publish** — needs npm credentials.
+3. **Public HTTPS deploy** — Vercel / Render / Fly auth, not testable from inside the agent.
+
+Everything else either ships or has an explicit punt-with-reason. There's no "yes, build it" item left that doesn't require one of those three human-only actions.
