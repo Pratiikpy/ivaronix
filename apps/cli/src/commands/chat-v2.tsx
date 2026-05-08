@@ -8,6 +8,7 @@ import type { Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { ChatScreen } from '../ui/ChatScreen.js';
+import { listConversations, loadConversation, type ConversationFile } from '../lib/conversation.js';
 
 /**
  * `ivaronix chat-v2` — opt-in Ink TUI (Phase B' scaffold).
@@ -21,7 +22,9 @@ export const chatV2Command = new Command('chat-v2')
   .description('[Phase B\'] Ink-based interactive TUI — premium CLI surface (opt-in)')
   .option('--model <id>', 'model id', 'qwen/qwen-2.5-7b-instruct')
   .option('--skill <id>', 'active skill id')
-  .action(async (opts: { model: string; skill?: string }) => {
+  .option('--resume <id>', 'resume a saved conversation by id (or short prefix)')
+  .option('--new', 'force a new conversation, even if a recent one is auto-resumable')
+  .action(async (opts: { model: string; skill?: string; resume?: string; new?: boolean }) => {
     const env = loadEnv();
     const keyring = keyringFromEnv();
     if (!keyring) {
@@ -61,16 +64,38 @@ export const chatV2Command = new Command('chat-v2')
       }
     };
 
+    // Resume logic: explicit --resume wins; else auto-pick the most recent
+    // conversation if its updatedAt is within 24h (Claude Code pattern). --new
+    // overrides everything and starts fresh.
+    let priorConv: ConversationFile | null = null;
+    if (!opts.new) {
+      if (opts.resume) {
+        try {
+          priorConv = loadConversation(opts.resume);
+        } catch (err) {
+          ui.fail((err as Error).message);
+          process.exitCode = 1;
+          return;
+        }
+      } else {
+        const recent = listConversations(1)[0];
+        if (recent && Date.now() - recent.updatedAt < 24 * 3600_000) {
+          try { priorConv = loadConversation(recent.id); } catch { /* ignore, fall through */ }
+        }
+      }
+    }
+
     const { waitUntilExit } = render(
       <ChatScreen
         keyring={keyring}
-        initialModel={opts.model}
-        initialSkillId={opts.skill ?? null}
+        initialModel={priorConv?.model ?? opts.model}
+        initialSkillId={priorConv?.skill ?? opts.skill ?? null}
         network={env.network}
         walletAddress={(env.walletAddress as Address | undefined) ?? null}
         fetchPassport={fetchPassport}
         fetchTotalReceipts={fetchTotalReceipts}
         cwd={process.cwd()}
+        priorConv={priorConv}
       />,
     );
     await waitUntilExit();

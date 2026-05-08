@@ -19,9 +19,18 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useApp, useInput } from 'ink';
 import TextInput from 'ink-text-input';
 import Spinner from 'ink-spinner';
+import { highlight } from 'cli-highlight';
+import { writeFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { mkdirSync } from 'node:fs';
 import type { Keyring, ChatRichMessage } from '@ivaronix/og-router';
 import type { Address } from '@ivaronix/core';
 import { TOOL_DEFS, dispatchTool } from '../lib/chat-tools.js';
+import {
+  newConversation,
+  saveConversation,
+  type ConversationFile,
+} from '../lib/conversation.js';
 
 interface FooterState {
   network: 'testnet' | 'mainnet';
@@ -52,6 +61,7 @@ const SLASH_COMMANDS: { name: string; help: string }[] = [
   { name: '/help', help: 'show this list' },
   { name: '/cost', help: 'tokens · OG · message count' },
   { name: '/passport', help: 'live passport state from chain' },
+  { name: '/save', help: 'save the conversation; `/save md` exports markdown' },
   { name: '/clear', help: 'start a new conversation in this session' },
   { name: '/exit', help: 'quit' },
 ];
@@ -65,11 +75,33 @@ interface Props {
   fetchPassport: () => Promise<{ tokenId: string; trust: string; receipts: string } | null>;
   fetchTotalReceipts: () => Promise<bigint | null>;
   cwd: string;
+  priorConv?: ConversationFile | null;
 }
 
 export function ChatScreen(props: Props): React.ReactElement {
   const { exit } = useApp();
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Hydrate from prior conversation if --resume / auto-resume picked one.
+  const initialMessages: Message[] = (props.priorConv?.messages ?? [])
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .map((m, i) => ({
+      id: `prior_${i}`,
+      role: m.role as 'user' | 'assistant',
+      content: typeof m.content === 'string' ? m.content : '',
+      ts: props.priorConv!.updatedAt,
+    }));
+  const [conv, setConv] = useState<ConversationFile>(() =>
+    props.priorConv ??
+    newConversation({
+      network: props.network,
+      model: props.initialModel,
+      skill: props.initialSkillId,
+      messages: [],
+      tokens: { input: 0, output: 0 },
+      costOg: 0,
+      receipts: [],
+    }),
+  );
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [streamingId, setStreamingId] = useState<string | null>(null);
@@ -101,10 +133,14 @@ export function ChatScreen(props: Props): React.ReactElement {
   });
 
   const handleSlash = (line: string): boolean => {
-    const [cmd] = line.slice(1).trim().split(/\s+/);
+    const parts = line.slice(1).trim().split(/\s+/);
+    const cmd = parts[0];
+    const arg = parts.slice(1).join(' ');
     switch (cmd) {
       case 'exit':
       case 'quit':
+        // Auto-save before exit so the conversation is recoverable.
+        try { saveConversation({ ...conv, messages: convMessages(messages) }); } catch { /* ignore */ }
         exit();
         return true;
       case 'help': {
@@ -138,8 +174,38 @@ export function ChatScreen(props: Props): React.ReactElement {
         setMessages((prev) => [...prev, m]);
         return true;
       }
+      case 'save': {
+        const updated: ConversationFile = { ...conv, messages: convMessages(messages) };
+        const jsonPath = saveConversation(updated);
+        let extra = '';
+        if (arg === 'md') {
+          // Export markdown beside the JSON file.
+          const mdPath = jsonPath.replace(/\.json$/, '.md');
+          mkdirSync(dirname(mdPath), { recursive: true });
+          const md = renderMarkdown(updated, messages);
+          writeFileSync(mdPath, md, 'utf8');
+          extra = ` · markdown → ${mdPath}`;
+        }
+        const m: Message = {
+          id: `m_${Date.now()}_s`,
+          role: 'system',
+          content: `saved → ${jsonPath}${extra}`,
+          ts: Date.now(),
+        };
+        setMessages((prev) => [...prev, m]);
+        return true;
+      }
       case 'clear':
         setMessages([]);
+        setConv(newConversation({
+          network: props.network,
+          model: footer.model,
+          skill: footer.skill,
+          messages: [],
+          tokens: { input: 0, output: 0 },
+          costOg: 0,
+          receipts: [],
+        }));
         return true;
       default:
         return false;
@@ -264,6 +330,11 @@ export function ChatScreen(props: Props): React.ReactElement {
         }
       }
       hydrate();
+      // Persist after every turn so an unexpected exit (Ctrl-C) is recoverable.
+      setMessages((prev) => {
+        try { saveConversation({ ...conv, messages: convMessages(prev) }); } catch { /* best-effort */ }
+        return prev;
+      });
     } catch (err) {
       const errMsg: Message = {
         id: `m_${Date.now()}_e`,
@@ -321,6 +392,71 @@ export function ChatScreen(props: Props): React.ReactElement {
   );
 }
 
+/** Convert in-memory Message[] to ChatRichMessage[] for persistence. */
+function convMessages(msgs: Message[]): ChatRichMessage[] {
+  return msgs
+    .filter((m) => m.role === 'user' || m.role === 'assistant')
+    .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+}
+
+/**
+ * Run cli-highlight on every fenced code block in the content. Returns the
+ * original text for the prose between fences and ANSI-highlighted text for
+ * the code spans. Ink's <Text> component honors ANSI escape codes, so the
+ * highlight renders inline when used as <Text>{highlightContent(c)}</Text>.
+ */
+function highlightContent(content: string): string {
+  if (!content.includes('```')) return content;
+  return content.replace(/```(\w+)?\n([\s\S]*?)```/g, (_match, lang, body) => {
+    try {
+      const language = (lang as string | undefined) || 'plaintext';
+      const colored = highlight(body as string, { language, ignoreIllegals: true });
+      return '```' + (lang ?? '') + '\n' + colored + '```';
+    } catch {
+      return '```' + (lang ?? '') + '\n' + body + '```';
+    }
+  });
+}
+
+/** Markdown export for `/save md`. Includes role headers, content, and the cost footer. */
+function renderMarkdown(c: ConversationFile, msgs: Message[]): string {
+  const lines: string[] = [];
+  lines.push(`# Ivaronix conversation ${c.id}`);
+  lines.push('');
+  lines.push(`- network: \`${c.network}\``);
+  lines.push(`- model: \`${c.model}\``);
+  if (c.skill) lines.push(`- skill: \`${c.skill}\``);
+  lines.push(`- created: ${new Date(c.createdAt).toISOString()}`);
+  lines.push(`- updated: ${new Date(Date.now()).toISOString()}`);
+  lines.push('');
+  lines.push('---');
+  for (const m of msgs) {
+    lines.push('');
+    if (m.role === 'user') lines.push('## you');
+    else if (m.role === 'assistant') lines.push('## assistant');
+    else lines.push('## system');
+    lines.push('');
+    lines.push(m.content);
+    if (m.toolCalls && m.toolCalls.length > 0) {
+      for (const tc of m.toolCalls) {
+        lines.push('');
+        lines.push(`### tool: ${tc.name} · ${tc.ok === true ? 'ok' : tc.ok === false ? 'failed' : 'running'}`);
+        lines.push('');
+        lines.push('```json');
+        lines.push(tc.args);
+        lines.push('```');
+        if (tc.result) {
+          lines.push('');
+          lines.push('```');
+          lines.push(tc.result);
+          lines.push('```');
+        }
+      }
+    }
+  }
+  return lines.join('\n');
+}
+
 function Banner({ network }: { network: 'testnet' | 'mainnet' }): React.ReactElement {
   return (
     <Box>
@@ -344,7 +480,7 @@ function MessageBubble({ message, streaming }: { message: Message; streaming: bo
       </Box>
       {message.content && (
         <Box paddingLeft={2}>
-          <Text>{message.content}</Text>
+          <Text>{role === 'assistant' ? highlightContent(message.content) : message.content}</Text>
         </Box>
       )}
       {message.toolCalls?.map((tc) => <ToolPanel key={tc.id} tool={tc} />)}
