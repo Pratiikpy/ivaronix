@@ -468,4 +468,210 @@ If a claim in this doc fails any of those three, file it.
 
 When done: every box ticked = we're ready to demo to OG Labs grant judges.
 
+---
+
+## 14. Test mode (how the engineer works)
+
+**This is human testing — no DOM scripts, no headless automation, no shortcuts.** Real mouse, real cursor, real MetaMask. Every visual claim is verified with screenshot or screen-recording. No exceptions.
+
+### 14.1 Roles to walk through
+
+The engineer plays each role for one full pass. Same wallet, different mindsets.
+
+- New user journey
+- Wallet owner flow
+- Power user flow
+- Team lead flow
+- Skeptic flow
+- Failure hunter
+- Visual judge
+- Mobile user
+
+### 14.2 Core passes (functional)
+
+- Wallet connect flow
+- Private doc flow
+- Receipt proof flow
+- Memory grant flow
+- Memory revoke flow
+- Burn mode flow
+- Skill install flow
+- CLI parity flow
+
+### 14.3 Visual passes
+
+- Desktop visual pass
+- Mobile visual pass
+- Empty state pass
+- Loading state pass
+- Error state pass
+- Slow network pass
+- Modal alignment pass
+- Text overflow pass
+
+### 14.4 Trust passes (the receipts thesis)
+
+- Chain evidence check
+- Receipt verification check
+- No-mock enforcement
+- Real-key enforcement
+- Permission gate check
+- Reconnect recovery check
+- Cross-device sync check
+- Audit trail check
+
+### 14.5 Premium passes
+
+- Screenshot quality pass
+- Video walkthrough pass
+- Keyboard-only pass
+- Accessibility pass
+- Brand consistency pass
+- Smooth transition pass
+
+---
+
+## 15. Visual / UI verification checklist
+
+- MetaMask manual every flow
+- Real mouse, no DOM
+- Screenshot every page state
+- Record golden-path video
+- Side-by-side with HTML
+- Desktop, tablet, mobile viewports
+- Empty state per page
+- Loading state per page
+- Error state per page
+- Skeleton state per page
+- Hover, focus, active states
+- Disabled button states
+- Form validation messages
+- Toast notification timing
+- Modal close behaviors
+- Mobile gestures (swipe, pinch)
+- Long hash truncation
+- Long agent name overflow
+- Long receipt body wrap
+- Slow network throttle (3G)
+- Reduced-motion preference
+- Browser back-button safety
+- Refresh mid-flow recovery
+- Multi-tab same wallet
+- Chinese font rendering
+- Right-to-left preview
+
+---
+
+## 16. Accessibility checklist
+
+- Keyboard tab order
+- Focus ring visibility
+- Screen reader labels
+- Color contrast WCAG AA
+- Image alt text
+- Form labels associated
+- Skip-to-content link
+- Heading hierarchy correct
+- ARIA roles validated
+- Color-blind palette safe
+
+---
+
+## 17. CLI smoothness checklist
+
+- Tab completion bash
+- Tab completion powershell
+- Help text quality every cmd
+- Error messages actionable
+- Spinner during long ops
+- Progress bars uploads
+- Ctrl-C cleanup safe
+- Concurrent invocation safety
+- Output piping (--json)
+- Exit codes correct
+- Wide terminal 200 cols
+- Narrow terminal 80 cols
+- ANSI off in pipes
+- Color codes meaningful
+
+---
+
+## 18. Functional integrity checklist
+
+- Real chain everywhere
+- No cached fakes
+- Fresh-wallet round-trip
+- Concurrent tx nonce
+- Gas estimation real
+- Rate-limit handling
+- Receipt schema strict
+- Canonical hash deterministic
+- Subscription time-warp test
+- Memory TTL expiry
+- Burn-mode key destroyed
+- Independent re-verify works
+- Indexer cursor resume
+
+---
+
+## 19. Cross-surface integrity (the moat)
+
+- CLI grant → Studio updates
+- Studio revoke → CLI sees
+- Within five seconds
+- Both directions verified
+- Same chain, same ABI
+
+---
+
+## 20. Performance checklist
+
+- Cold start time CLI
+- Studio time-to-interactive
+- Receipt page TTFB
+- Indexer query p95
+- Backfill rows-per-second
+- Memory recall latency
+- 100 receipts page
+- 10000 receipts scroll
+
+---
+
+## 21. Operational checklist
+
+- gitignore covers everything
+- License files present
+- Lock file committed
+- Pre-commit hook runs
+- CI matrix passes
+- Backup `.ivaronix/` usable
+- Cross-OS path handling
+- File watcher cleanup
+
+---
+
+## 22. Polish checklist
+
+- No browser console errors
+- No deprecation warnings
+- No layout shift (CLS)
+- 60fps animations
+- Hover lift exact 2px
+- Cream `#fafaf7` exact
+- Ink `#0a0a0a` exact
+- Green tittle `#16a34a`
+
+---
+
+## 23. Main mission (the standard the engineer enforces)
+
+- End-to-end trust loop
+- Premium visual polish
+- Real chain proof
+- Real wallet flow
+- Real error handling
+- No fake states
+
+---
+
 — locked 2026-05-08
