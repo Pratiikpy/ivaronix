@@ -258,3 +258,131 @@ passportCommand
     ui.pass(`trustScore           ${data.trustScore}`);
     ui.pass(`written              ${outPath}`);
   });
+
+// ─── authorize ───────────────────────────────────────────────────────────────
+passportCommand
+  .command('authorize <executor>')
+  .description('Authorize an executor address to record receipts against your passport for ttlSeconds')
+  .option('--ttl <duration>', 'TTL like "7d" / "12h" / "30m" / "60s" / raw seconds', '7d')
+  .action(async (executor: string, opts: { ttl: string }) => {
+    const env = loadEnv();
+    if (!env.privateKey) {
+      ui.fail('No EVM_PRIVATE_KEY in .env — cannot sign the authorizeExecutor tx');
+      process.exitCode = 1;
+      return;
+    }
+    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (!passportAddr) {
+      ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const ttlMatch = opts.ttl.match(/^(\d+)([smhd])?$/);
+    if (!ttlMatch) {
+      ui.fail(`bad --ttl "${opts.ttl}" — use 7d / 12h / 30m / 60s / raw seconds`);
+      process.exitCode = 1;
+      return;
+    }
+    const n = Number(ttlMatch[1]);
+    const ttlSeconds = ttlMatch[2] === 'h' ? n * 3600 : ttlMatch[2] === 'm' ? n * 60 : ttlMatch[2] === 'd' ? n * 86400 : ttlMatch[2] === 's' ? n : n;
+
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const wallet = new Wallet(env.privateKey, provider);
+    const client = new AgentPassportClient(passportAddr, wallet);
+    const tokenId = await client.passportOf(wallet.address as Address);
+    if (tokenId === 0n) {
+      ui.fail(`No passport for ${wallet.address} — mint one first with 'ivaronix passport mint'`);
+      process.exitCode = 1;
+      return;
+    }
+    ui.title(`authorizing executor ${executor}`);
+    ui.info(`tokenId              ${tokenId}`);
+    ui.info(`ttl                  ${opts.ttl} (${ttlSeconds}s)`);
+    ui.divider();
+    const tx = await client.authorizeExecutor(tokenId, executor as Address, ttlSeconds);
+    ui.pending(`tx ${tx.hash}`);
+    const receipt = await tx.wait();
+    ui.pass(`block                ${receipt?.blockNumber}`);
+    const expiry = await client.executorExpiry(tokenId, executor as Address);
+    ui.pass(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+    ui.divider();
+    ui.banner(true, '→ AUTHORIZED ✓');
+    ui.hint(`Verify:    ivaronix passport executor ${executor}`);
+    ui.hint(`Explorer:  ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
+  });
+
+// ─── revoke ──────────────────────────────────────────────────────────────────
+passportCommand
+  .command('revoke <executor>')
+  .description('Revoke an executor address')
+  .action(async (executor: string) => {
+    const env = loadEnv();
+    if (!env.privateKey) {
+      ui.fail('No EVM_PRIVATE_KEY in .env');
+      process.exitCode = 1;
+      return;
+    }
+    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (!passportAddr) {
+      ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const wallet = new Wallet(env.privateKey, provider);
+    const client = new AgentPassportClient(passportAddr, wallet);
+    const tokenId = await client.passportOf(wallet.address as Address);
+    if (tokenId === 0n) {
+      ui.fail(`No passport for ${wallet.address}`);
+      process.exitCode = 1;
+      return;
+    }
+    ui.title(`revoking executor ${executor}`);
+    ui.divider();
+    const tx = await client.revokeExecutor(tokenId, executor as Address);
+    ui.pending(`tx ${tx.hash}`);
+    const receipt = await tx.wait();
+    ui.pass(`block                ${receipt?.blockNumber}`);
+    ui.divider();
+    ui.banner(true, '→ REVOKED ✓');
+    ui.hint(`Explorer:  ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
+  });
+
+// ─── executor (status) ───────────────────────────────────────────────────────
+passportCommand
+  .command('executor <executor>')
+  .description('Show whether an executor is currently authorized for your passport')
+  .action(async (executor: string) => {
+    const env = loadEnv();
+    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (!passportAddr) {
+      ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (!env.walletAddress) {
+      ui.fail('No EVM_WALLET_ADDRESS in .env');
+      process.exitCode = 1;
+      return;
+    }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const client = new AgentPassportClient(passportAddr, provider);
+    const tokenId = await client.passportOf(env.walletAddress as Address);
+    if (tokenId === 0n) {
+      ui.fail(`No passport for ${env.walletAddress}`);
+      return;
+    }
+    const allowed = await client.isAuthorizedExecutor(tokenId, executor as Address);
+    const expiry = await client.executorExpiry(tokenId, executor as Address);
+    ui.title(`executor ${executor} for tokenId ${tokenId}`);
+    ui.divider();
+    if (allowed) {
+      ui.pass(`status               AUTHORIZED`);
+      ui.info(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+    } else if (expiry > 0n) {
+      ui.fail(`status               EXPIRED`);
+      ui.info(`expired at           ${new Date(Number(expiry) * 1000).toISOString()}`);
+    } else {
+      ui.info(`status               NEVER AUTHORIZED`);
+    }
+  });

@@ -143,4 +143,36 @@ export class AgentPassportClient {
     const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
     return this.contract.updateSkillManifestRoot!(id, newRoot);
   }
+
+  /** Authorize an executor address for tokenId for ttlSeconds (sliding window). */
+  async authorizeExecutor(
+    tokenId: bigint | number,
+    executor: Address,
+    ttlSeconds: bigint | number,
+  ): Promise<ContractTransactionResponse> {
+    const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
+    const ttl = typeof ttlSeconds === 'number' ? BigInt(ttlSeconds) : ttlSeconds;
+    return this.contract.authorizeExecutor!(id, executor, ttl);
+  }
+
+  /** Revoke an executor's authorization for a tokenId. */
+  async revokeExecutor(
+    tokenId: bigint | number,
+    executor: Address,
+  ): Promise<ContractTransactionResponse> {
+    const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
+    return this.contract.revokeExecutor!(id, executor);
+  }
+
+  /** True iff the executor is currently authorized (and not expired) for the tokenId. */
+  async isAuthorizedExecutor(tokenId: bigint | number, executor: Address): Promise<boolean> {
+    const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
+    return (await this.contract.isAuthorizedExecutor!(id, executor)) as boolean;
+  }
+
+  /** Returns the absolute unix-second expiry for the executor (0 = never authorized). */
+  async executorExpiry(tokenId: bigint | number, executor: Address): Promise<bigint> {
+    const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
+    return (await this.contract.executorAuthorizations!(id, executor)) as bigint;
+  }
 }
