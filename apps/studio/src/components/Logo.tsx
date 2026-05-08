@@ -1,11 +1,19 @@
 /**
- * Brackets-with-i mark, per UI_UX_GUIDE §3.
- * Uses the strong near-black (#1a1a1a), not pure black — the warm tone
- * is part of the editorial feel.
+ * Brackets-with-italic-i mark — canonical per /brand and the standalone
+ * Brand Kit (Vol.01). Two structural brackets framing an italic
+ * Instrument Serif "i" whose tittle is replaced by a #16a34a green
+ * pulse. The green dot is load-bearing — it signals "live", "currently
+ * thinking." A black dot defeats the mark's whole purpose.
  *
- * Sizes: header (compact, 22px tall), nav (compact, 18px), hero (large, 96px+).
+ * Color is the canonical `#0a0a0a` ink (not the warmer `#1a1a1a` we
+ * shipped on Day 13 — superseded by Brand Kit v1.0).
+ *
+ * Sizes: header (22-24px tall), nav (18px), hero (96px+).
  */
 export function Logo({ size = 22, label = 'Ivaronix' }: { size?: number; label?: string }) {
+  // 32×20 viewbox stays so existing layout math (size × 1.6 width) is
+  // unchanged. Glyph is rendered as Instrument Serif italic; the green
+  // circle is drawn ON TOP of the natural tittle to replace it.
   const w = Math.round(size * 1.6);
   return (
     <span
@@ -21,12 +29,24 @@ export function Logo({ size = 22, label = 'Ivaronix' }: { size?: number; label?:
         aria-hidden="true"
       >
         {/* Left bracket */}
-        <path d="M4 2 H1 V18 H4" stroke="#1a1a1a" strokeWidth="2.5" strokeLinejoin="miter" fill="none" />
-        {/* The 'i' — italic stroke + dot */}
-        <line x1="16" y1="6" x2="16" y2="17" stroke="#1a1a1a" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx="16" cy="3" r="1.5" fill="#1a1a1a" />
+        <path d="M5 2 L1 2 L1 18 L5 18" stroke="#0a0a0a" strokeWidth="2.4" strokeLinejoin="miter" fill="none" />
+        {/* Italic "i" glyph (Instrument Serif) — natural tittle is covered
+            by the green circle below */}
+        <text
+          x="16"
+          y="16"
+          textAnchor="middle"
+          fontFamily="'Instrument Serif', Times New Roman, serif"
+          fontStyle="italic"
+          fontSize="20"
+          fill="#0a0a0a"
+        >
+          i
+        </text>
+        {/* Green tittle replacing the natural one — the live pulse */}
+        <circle cx="16.6" cy="4.6" r="1.6" fill="#16a34a" />
         {/* Right bracket */}
-        <path d="M28 2 H31 V18 H28" stroke="#1a1a1a" strokeWidth="2.5" strokeLinejoin="miter" fill="none" />
+        <path d="M27 2 L31 2 L31 18 L27 18" stroke="#0a0a0a" strokeWidth="2.4" strokeLinejoin="miter" fill="none" />
       </svg>
       <span className="wordmark" style={{ fontSize: Math.round(size * 0.6) }}>
         Ivaronix
