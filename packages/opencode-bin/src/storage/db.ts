@@ -14,7 +14,8 @@ import { Flag } from "@opencode-ai/core/flag/flag"
 import { InstallationChannel } from "@opencode-ai/core/installation/version"
 import { InstanceState } from "@/effect/instance-state"
 import { iife } from "@/util/iife"
-import { init } from "#db"
+// PASS 77 F-1h-d: #db → direct Node-only path
+import { init } from "./db.node.js"
 
 declare const OPENCODE_MIGRATIONS: { sql: string; timestamp: number; name: string }[] | undefined
 

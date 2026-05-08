@@ -1,6 +1,7 @@
 import { generateSpecs } from "hono-openapi"
 import { Hono } from "hono"
-import { adapter } from "#hono"
+// PASS 77 F-1h-d: #hono → direct Node adapter path
+import { adapter } from "./adapter.node.js"
 import { lazy } from "@/util/lazy"
 import * as Log from "@opencode-ai/core/util/log"
 import { Flag } from "@opencode-ai/core/flag/flag"
@@ -8,7 +9,8 @@ import { WorkspaceID } from "@/control-plane/schema"
 import { ConfigProvider, Context, Effect, Exit, Layer, Scope } from "effect"
 import { HttpRouter, HttpServer } from "effect/unstable/http"
 import { OpenApi } from "effect/unstable/httpapi"
-import * as HttpApiServer from "#httpapi-server"
+// PASS 77 F-1h-d: #httpapi-server → direct Node-only path
+import * as HttpApiServer from "./httpapi-server.node.js"
 import { MDNS } from "./mdns"
 import { AuthMiddleware, CompressionMiddleware, CorsMiddleware, ErrorMiddleware, LoggerMiddleware } from "./middleware"
 import { FenceMiddleware } from "./fence"
