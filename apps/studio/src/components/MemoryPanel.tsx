@@ -23,6 +23,23 @@ const SCOPE_PRESETS = [
   { label: 'personal', namespace: 'personal' },
 ] as const;
 
+/**
+ * Skill-scoped grants — mirror the manifest ids on disk so users can
+ * authorise a single skill rather than a whole namespace. Scope hash
+ * is `keccak256("skill:" + id)`. Adding a skill to this list is the
+ * only change needed for it to appear in the grant form.
+ */
+const SKILL_SCOPES = [
+  'private-doc-review',
+  'github-audit',
+  '0g-integration-auditor',
+  'plan-step',
+  'code-edit',
+] as const;
+type SkillId = (typeof SKILL_SCOPES)[number];
+
+type ScopeKind = 'namespace' | 'skill';
+
 const ACCESS_LABELS = ['read', 'write', 'delete', 'grant_used'];
 
 function shortAddr(a: string): string {
@@ -31,6 +48,10 @@ function shortAddr(a: string): string {
 
 function scopeHashFor(namespace: string): Hex {
   return keccak256(toBytes(`namespace:${namespace}`));
+}
+
+function skillScopeHashFor(skillId: string): Hex {
+  return keccak256(toBytes(`skill:${skillId}`));
 }
 
 interface Props {
@@ -54,8 +75,14 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
   const { isLoading: isWaitingTx, isSuccess: isTxConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
   const [grantee, setGrantee] = useState('0x');
+  const [scopeKind, setScopeKind] = useState<ScopeKind>('namespace');
   const [namespace, setNamespace] = useState<string>('project');
+  const [skillId, setSkillId] = useState<SkillId>('private-doc-review');
   const [ttlSeconds, setTtlSeconds] = useState<number>(7 * 24 * 60 * 60); // 7 days
+
+  const activeScopeHash: Hex = scopeKind === 'skill'
+    ? skillScopeHashFor(skillId)
+    : scopeHashFor(namespace);
 
   // Read grants where the connected wallet is the owner
   const { data: grantIds, refetch: refetchGrantIds } = useReadContract({
@@ -93,7 +120,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
       address: capabilityAddr as Hex,
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'issueGrant',
-      args: [grantee as Hex, scopeHashFor(namespace), BigInt(ttlSeconds), MAX_READS],
+      args: [grantee as Hex, activeScopeHash, BigInt(ttlSeconds), MAX_READS],
     });
   };
 
@@ -134,21 +161,53 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
                 }}
               />
             </label>
-            <label style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-              scope
-              <select
-                value={namespace}
-                onChange={(e) => setNamespace(e.target.value)}
-                style={{ marginTop: 4, marginLeft: 8, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13 }}
-              >
-                {SCOPE_PRESETS.map((s) => (
-                  <option key={s.namespace} value={s.namespace}>{s.label}</option>
-                ))}
-              </select>
-              <span className="mono" style={{ marginLeft: 12, fontSize: 11, color: 'var(--color-muted)' }}>
-                {scopeHashFor(namespace).slice(0, 14)}…
-              </span>
-            </label>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
+              <span style={{ color: 'var(--color-muted)' }}>scope kind</span>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <input type="radio" name="scopeKind" value="namespace" checked={scopeKind === 'namespace'} onChange={() => setScopeKind('namespace')} />
+                namespace
+              </label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <input type="radio" name="scopeKind" value="skill" checked={scopeKind === 'skill'} onChange={() => setScopeKind('skill')} />
+                skill
+              </label>
+            </div>
+            {scopeKind === 'namespace' ? (
+              <label style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                namespace
+                <select
+                  value={namespace}
+                  onChange={(e) => setNamespace(e.target.value)}
+                  style={{ marginTop: 4, marginLeft: 8, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13 }}
+                >
+                  {SCOPE_PRESETS.map((s) => (
+                    <option key={s.namespace} value={s.namespace}>{s.label}</option>
+                  ))}
+                </select>
+                <span className="mono" style={{ marginLeft: 12, fontSize: 11, color: 'var(--color-muted)' }}>
+                  {activeScopeHash.slice(0, 14)}…
+                </span>
+              </label>
+            ) : (
+              <label style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                skill
+                <select
+                  value={skillId}
+                  onChange={(e) => setSkillId(e.target.value as SkillId)}
+                  style={{ marginTop: 4, marginLeft: 8, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13 }}
+                >
+                  {SKILL_SCOPES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+                <span className="mono" style={{ marginLeft: 12, fontSize: 11, color: 'var(--color-muted)' }}>
+                  {activeScopeHash.slice(0, 14)}…
+                </span>
+                <p style={{ margin: '8px 0 0 0', fontSize: 11, color: 'var(--color-muted)' }}>
+                  Skill-scoped grants only let runs of <span className="mono">{skillId}</span> read this slice — useful for sharing with a creator without exposing every namespace.
+                </p>
+              </label>
+            )}
             <label style={{ fontSize: 12, color: 'var(--color-muted)' }}>
               TTL: <strong style={{ color: 'var(--color-fg)' }}>{Math.floor(ttlSeconds / 86400)}d {Math.floor((ttlSeconds % 86400) / 3600)}h</strong>
               <input

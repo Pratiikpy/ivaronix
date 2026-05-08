@@ -19,7 +19,7 @@ export interface ReceiptBody {
   id: string;
   type: string;
   signature?: string;
-  storage?: { receiptRoot: string };
+  storage?: { receiptRoot: string; evidenceRoot?: string };
   outputs?: {
     outputHash?: string;
     citations?: string[];
@@ -35,8 +35,25 @@ export interface ReceiptBody {
     independentVerified?: boolean | null;
     providerAddress?: string;
   };
-  billing?: { totalCostOg?: string; inputTokens?: number; outputTokens?: number };
-  execution?: { burnMode?: boolean; consensusMode?: boolean; mode?: string };
+  billing?: {
+    totalCostOg?: string;
+    inputTokens?: number;
+    outputTokens?: number;
+    feeSplit?: {
+      creatorBps: number;
+      treasuryBps: number;
+      creatorNeuron: string;
+      treasuryNeuron: string;
+      creatorPassport?: string;
+    };
+  };
+  execution?: {
+    burnMode?: boolean;
+    consensusMode?: boolean;
+    mode?: string;
+    modelSelection?: { requested?: string; final?: string };
+    providerRouting?: { finalProvider?: string };
+  };
   // …rest of fields are in the file but we don't need them on the public page
   [key: string]: unknown;
 }

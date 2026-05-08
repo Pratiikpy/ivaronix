@@ -228,6 +228,52 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               </dd>
             </>
           )}
+          {local?.execution?.modelSelection?.final && (
+            <>
+              <dt style={{ color: 'var(--color-muted)' }}>model</dt>
+              <dd className="mono" style={{ margin: 0 }}>
+                {local.execution.modelSelection.final}
+                {local.execution.modelSelection.requested !== local.execution.modelSelection.final && (
+                  <span style={{ color: 'var(--color-muted)', marginLeft: 8 }}>
+                    (requested {local.execution.modelSelection.requested})
+                  </span>
+                )}
+              </dd>
+            </>
+          )}
+          {local?.execution?.providerRouting?.finalProvider &&
+            local.execution.providerRouting.finalProvider !== '0x0000000000000000000000000000000000000000' && (
+            <>
+              <dt style={{ color: 'var(--color-muted)' }}>provider</dt>
+              <dd className="mono" style={{ margin: 0 }}>
+                <a href={explorerAddrUrl(local.execution.providerRouting.finalProvider)} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                  {local.execution.providerRouting.finalProvider}
+                </a>
+              </dd>
+            </>
+          )}
+          {local?.storage?.evidenceRoot && (
+            <>
+              <dt style={{ color: 'var(--color-muted)' }}>storage root</dt>
+              <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>
+                {local.storage.evidenceRoot}
+                <span style={{ color: 'var(--color-muted)', marginLeft: 8, fontSize: 11 }}>
+                  0G Storage Merkle root — anyone with the SDK can re-download this blob.
+                </span>
+              </dd>
+            </>
+          )}
+          {local?.billing?.feeSplit && (
+            <>
+              <dt style={{ color: 'var(--color-muted)' }}>fee split</dt>
+              <dd className="mono" style={{ margin: 0 }}>
+                creator {(local.billing.feeSplit.creatorBps / 100).toFixed(0)}% · treasury {(local.billing.feeSplit.treasuryBps / 100).toFixed(0)}%
+                <span style={{ color: 'var(--color-muted)', marginLeft: 8, fontSize: 11 }}>
+                  ({local.billing.feeSplit.creatorNeuron} + {local.billing.feeSplit.treasuryNeuron} neuron)
+                </span>
+              </dd>
+            </>
+          )}
         </dl>
 
         {citations.length > 0 && (
