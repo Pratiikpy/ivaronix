@@ -4,6 +4,16 @@
 >
 > Locked: 2026-05-08. Status: pending kickoff.
 
+## Shipping bar (non-negotiable, applies to every step below)
+
+A feature ships only when all three pass on a clean machine:
+
+1. **One command runs it.** `ivaronix <something>` — single line. If parity with the existing CLI requires a setup ritual, the parity isn't there yet.
+2. **One screenshot or URL proves it worked.** TUI screenshot, Studio receipt URL, chain tx in the explorer. Visible interaction, not "tests pass."
+3. **A judge on a different machine reproduces it without our help.** Public Proof URL works without auth; `ivaronix receipt verify --tee-independent` works against any anchored receipt; `ivaronix debug receipt N` returns a complete report.
+
+No compromise on UI / UX / functional interaction. The peer audit (see `new-entries/Codex Thinking/claude-thinking.md`) showed everyone else overpromises in READMEs and underdelivers in code. Our edge is reproducibility — every claim survives a 5-second eye-test. The OpenCode fork inherits a battle-tested chat UI; the re-skin and the 0G plugin layer must hit the same bar before deprecating `apps/cli/`. Per CLAUDE.md §1, §7, §8 and §10 (visual contract).
+
 ## 0. The verdict (revised)
 
 **Fork OpenCode. Re-skin to Ivaronix brand. Add 0G receipts as a plugin layer.**

@@ -4,6 +4,16 @@
 >
 > Locked: 2026-05-08. Status: pending kickoff.
 
+## Shipping bar (non-negotiable, applies to every item below)
+
+A feature is not "done" until **all three** of these pass on a clean machine:
+
+1. **One command runs it.** No multi-step setup, no "first export this env var then ssh into the box." If a judge can't reproduce it from one line in this doc, it isn't shipped.
+2. **One screenshot or URL proves it worked.** Visible receipt URL, visible chain tx, visible UI state. Not "tests pass" — *visible end-to-end working*.
+3. **A judge on a different machine re-verifies without our help.** Public Proof URL, third-party explorer, or `ivaronix receipt verify --tee-independent` — at least one of those works for them.
+
+No compromise on UI / UX / functional interaction. Every claim in this plan must survive a 5-second eye-test. The deep-read of competitors showed they overpromise in READMEs and underdeliver in code (TEE soft-failing to mock, in-memory fallback for "0G Storage", README-bait upvoting). Our edge is being the one project where every claim is reproducible. Keep that edge per CLAUDE.md §1, §7, §8.
+
 ## 0. Why this pass
 
 After deep-reading 9 competitor repos, two facts stand out:
