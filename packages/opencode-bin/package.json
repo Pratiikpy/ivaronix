@@ -9,7 +9,7 @@
     "build": "tsc -b",
     "lint": "echo skip",
     "test": "echo skip",
-    "typecheck": "echo 'PASS 77 F-1: integration pending — see docs/PASS77_F1h_impact_analysis.md'",
+    "typecheck": "echo 'PASS 77 F-1h-g: 1267 first-round tsc errors across 424 files. Multi-week port. See docs/PASS77_F1h_g_bin_status.md before re-enabling.'",
     "clean": "rm -rf dist .turbo",
     "_install_warning": "echo 'opencode-bin pulls 80+ deps. Skip pnpm install for this package until F-1h-g (build green) lands. Use pnpm install --filter=!@ivaronix/opencode-bin to skip it.'"
   },
