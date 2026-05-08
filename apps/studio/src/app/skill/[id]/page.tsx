@@ -61,7 +61,10 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
       title={`${id} v${skill.manifest.version}`}
       description={skill.manifest.description}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
+      <div
+        className="skill-detail-grid"
+        style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: 32, alignItems: 'start' }}
+      >
         {/* Left: details */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
           {/* Status + permissions */}

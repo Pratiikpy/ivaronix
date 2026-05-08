@@ -1,6 +1,6 @@
 ---
 name: private-doc-review
-version: 0.2.0
+version: 0.3.0
 description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Burn-mode-aware; produces an Action Receipt.
 license: Apache-2.0
 entrypoint: prompt.md

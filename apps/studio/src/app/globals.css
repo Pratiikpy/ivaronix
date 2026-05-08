@@ -10,12 +10,13 @@
  */
 @theme inline {
   --color-bg: #faf9f6;
-  --color-fg: #1a1a1a;
+  /* CLAUDE.md §10: ink is #0a0a0a (HTML ref), not the warmer #1a1a1a */
+  --color-fg: #0a0a0a;
   --color-muted: #6b6b66;
   --color-soft: #999999;
   --color-card: #ffffff;
   --color-tonal: #f4f3ef;
-  --color-hairline: rgba(26, 26, 26, 0.08);
+  --color-hairline: rgba(10, 10, 10, 0.08);
 
   --color-accent: #16a34a;
   --color-accent-soft: #dcfce7;
@@ -33,17 +34,22 @@
   --color-tee: #9333ea;
   --color-chain: #2563eb;
 
-  --font-display: "Times New Roman", "Georgia", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  /* Loaded by next/font in layout.tsx — fallbacks kick in only if Google
+   * Fonts is unreachable. Real values: Outfit (sans), Instrument Serif
+   * (display), JetBrains Mono (mono). See CLAUDE.md §10. */
+  --font-display: var(--font-display, "Instrument Serif", "Times New Roman", "Georgia", serif);
+  --font-sans: var(--font-sans, "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif);
+  --font-mono: var(--font-mono, "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace);
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* CLAUDE.md §10: bigger radii for premium feel. Sharp corners read as draft. */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
 
-  --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.12);
+  --shadow-soft: 0 1px 4px rgba(10, 10, 10, 0.08);
+  --shadow-card: 0 4px 16px rgba(10, 10, 10, 0.12);
+  --shadow-lift: 0 8px 24px rgba(10, 10, 10, 0.10);
 }
 
 * {
@@ -84,16 +90,20 @@ body {
   font-weight: 600;
 }
 
-/* Card surface */
+/* Card surface — CLAUDE.md §10 hover-lift micro-interaction */
 .card {
   background: var(--color-card);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-lg);
   padding: 32px;
-  transition: box-shadow 200ms ease-out;
+  transition: box-shadow 200ms ease-out, transform 200ms ease-out, border-color 200ms ease-out;
 }
-.card:hover {
-  box-shadow: var(--shadow-soft);
+@media (hover: hover) {
+  .card:hover {
+    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+    border-color: rgba(10, 10, 10, 0.15);
+  }
 }
 
 /* Tonal surface (slightly darker cream) */
@@ -105,16 +115,18 @@ body {
 .btn-primary {
   background: var(--color-fg);
   color: var(--color-bg);
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
+  padding: 14px 28px;
+  border-radius: 999px;
   font-weight: 500;
   font-size: 14px;
+  letter-spacing: 0.2px;
   border: none;
   cursor: pointer;
-  transition: background 150ms ease;
+  transition: background 150ms ease, transform 150ms ease;
 }
 .btn-primary:hover {
-  background: #333;
+  background: #1a1a1a;
+  transform: translateY(-1px);
 }
 .btn-primary:disabled {
   opacity: 0.5;
@@ -124,10 +136,11 @@ body {
 .btn-secondary {
   background: transparent;
   color: var(--color-fg);
-  padding: 12px 24px;
-  border-radius: var(--radius-md);
+  padding: 14px 28px;
+  border-radius: 999px;
   font-weight: 500;
   font-size: 14px;
+  letter-spacing: 0.2px;
   border: 1px solid var(--color-fg);
   cursor: pointer;
   transition: all 150ms ease;
@@ -135,6 +148,7 @@ body {
 .btn-secondary:hover {
   background: var(--color-fg);
   color: var(--color-bg);
+  transform: translateY(-1px);
 }
 
 .btn-ghost {
@@ -224,9 +238,11 @@ body {
     padding-top: 48px !important;
     padding-bottom: 48px !important;
   }
-  /* Header: hide secondary links, keep logo + wallet button */
-  header nav a {
-    display: none;
+  /* Header: condense secondary links + tighten gutters. Don't fully hide;
+   * a navless header on mobile leaves users stranded. */
+  header nav {
+    gap: 16px !important;
+    font-size: 13px !important;
   }
   header > div {
     padding: 0 16px !important;
@@ -275,6 +291,20 @@ body {
 /* Smooth focus ring transition */
 :focus-visible {
   transition: outline-color 150ms ease;
+}
+
+/* Long mono strings (hashes, addresses) must wrap inside cards instead of
+ * forcing horizontal scroll. dl rows use minmax(0, 1fr) for the value column. */
+.mono {
+  font-family: var(--font-mono);
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+dd.mono, .card .mono {
+  min-width: 0;
+}
+.skill-detail-grid > * {
+  min-width: 0;
 }
 
 /* Reduce motion — respect user preference */

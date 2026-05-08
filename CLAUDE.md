@@ -76,3 +76,31 @@ When you write **anything that ships** (READMEs, docs, marketing copy, PR descri
 - **Match Ivaronix's voice**: terse, technical, blunt. Editorial cream-on-black. Receipts > rhetoric.
 
 If you catch yourself writing AI slop: stop, delete the paragraph, write one sentence that is true, ship that.
+
+## 10. Visual contract — match `Ivaronix.html`
+
+`Ivaronix.html` at the repo root is the **canonical visual reference** for every Studio surface. The Next.js app at `apps/studio/` must look indistinguishable from that file when rendered side-by-side.
+
+Non-negotiables:
+- **Cream background** `#faf9f6`, **near-black ink** `#0a0a0a` (not the warmer `#1a1a1a`).
+- **Typography:** Outfit (geometric sans, weights 500/600/700) for body + headings, Instrument Serif italic for accents, JetBrains Mono for hashes/code. Load via `next/font/google`. **System fonts are a regression — never ship them as a default.**
+- **Border radii:** `10px` / `14px` / `16px` / `20px`. Sharper radii (`4–8px`) read as draft-quality.
+- **Hero density:** every landing surface (`/`, `/onboard`, `/skills`) has a hero band with concrete numbers (live receipt count, agent count) — not just a headline + button.
+- **Hover micro-interactions:** cards lift `translateY(-2px)` + border-color tint on hover. Pure box-shadow without lift looks static.
+- **Header:** sticky, `backdrop-filter: blur(20px)`, 64px tall, brackets-only logo on the left, nav links on the right.
+- **Footer:** multi-column grid (Product / Docs / Network / Social), not a single-line flex.
+- **Section eyebrows:** uppercase micro-labels with letterspacing; both `§ 01 · THING` and `— Thesis` styles are acceptable as long as the chosen one is consistent within a page.
+
+Verification before shipping any UI change:
+1. Open `Ivaronix.html` in a headless browser, screenshot at 1440×900 + 375×812.
+2. Open the changed Studio route at the same viewports.
+3. Lay them side-by-side. If the Studio screenshot reads as "less designed" — colours weaker, type blander, radii sharper, hero emptier — fix the Studio render first; do not commit.
+
+What "match" means:
+- **Same** colour palette tokens, identical hex values.
+- **Same** type ramp (display sizes, leading, letter-spacing).
+- **Same** spacing scale (8/12/16/24/32/48/96).
+- **Same** card surface treatment (white on cream, hairline border, lift-on-hover).
+- **Same** four-light-row chip set wherever verification is shown.
+
+The HTML file is updated when the brand evolves; treat it as the brand spec, not as legacy demo HTML. Any divergence is a Studio bug, not a brand drift.

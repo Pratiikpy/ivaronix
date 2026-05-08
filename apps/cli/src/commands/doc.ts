@@ -4,10 +4,10 @@ import { resolve, basename } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
-import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
+import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
 import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
-import { burnEncrypt } from '@ivaronix/og-storage';
+import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
 import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, resolveHooks, runHooks, type LoadedSkill, type ScanResult, type HookEvent_PreConsensus, type HookEvent_PostConsensus, type HookEvent_SessionStart, type HookEvent_SessionEnd } from '@ivaronix/skills';
 import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
@@ -184,6 +184,25 @@ docCommand
     }
     const evidenceDigest = sha256HexAsync(evidenceBytes);
     ui.info(`evidence digest:     ${evidenceDigest}`);
+
+    // ─── 2b. Upload evidence to 0G Storage ────────────────────────────────
+    // B-1 unblocked: we now upload the (encrypted, if burn-mode) bytes to 0G
+    // Storage and use the canonical Merkle root as `storage.evidenceRoot`.
+    // On transient failure, fall back to the local sha256 digest so the run
+    // still completes (TIER 2 evidence — receipt remains valid).
+    let evidenceRoot: `0x${string}` | undefined;
+    if (env.privateKey) {
+      try {
+        const sc = createStorageClient({ network: env.network, privateKey: env.privateKey });
+        ui.pending('uploading evidence to 0G Storage...');
+        const sr = await sc.upload(evidenceBytes);
+        evidenceRoot = sr.rootHash;
+        ui.pass(`evidence on 0G Storage: ${sr.rootHash}`);
+      } catch (err) {
+        ui.fail('0G Storage upload failed; falling back to sha256 evidenceRoot', (err as Error).message.split('\n')[0]);
+        evidenceRoot = ('0x' + evidenceDigest.replace(/^sha256:/, '')) as `0x${string}`;
+      }
+    }
 
     // ─── 3. Inference ─────────────────────────────────────────────────────
     const keyring = keyringFromEnv();
@@ -374,16 +393,33 @@ docCommand
         verificationMethod: 'router_flag',
         verifiedAt: null,
       },
-      billing: {
-        inputTokens: consensusResult.billing.totalInputTokens,
-        outputTokens: consensusResult.billing.totalOutputTokens,
-        inputCostNeuron: String(Math.floor(consensusResult.billing.totalInputTokens * 5e10)),
-        outputCostNeuron: String(Math.floor(consensusResult.billing.totalOutputTokens * 1e11)),
-        totalCostNeuron: String(Math.floor(consensusResult.billing.totalInputTokens * 5e10 + consensusResult.billing.totalOutputTokens * 1e11)),
-        totalCostOg: consensusResult.billing.estimatedCostOg.toFixed(10),
-      },
+      billing: (() => {
+        const totalCostNeuron = String(
+          Math.floor(consensusResult.billing.totalInputTokens * 5e10 + consensusResult.billing.totalOutputTokens * 1e11),
+        );
+        const fs = skill.manifest.og.creator?.fee_split;
+        const passport = skill.manifest.og.creator?.passport;
+        const feeSplit = fs
+          ? allocateFeeSplit({
+              totalCostNeuron,
+              creatorBps: fs.creator,
+              treasuryBps: fs.treasury,
+              creatorPassport: passport,
+            })
+          : undefined;
+        return {
+          inputTokens: consensusResult.billing.totalInputTokens,
+          outputTokens: consensusResult.billing.totalOutputTokens,
+          inputCostNeuron: String(Math.floor(consensusResult.billing.totalInputTokens * 5e10)),
+          outputCostNeuron: String(Math.floor(consensusResult.billing.totalOutputTokens * 1e11)),
+          totalCostNeuron,
+          totalCostOg: consensusResult.billing.estimatedCostOg.toFixed(10),
+          feeSplit,
+        };
+      })(),
       storage: {
         proofDownloadVerified: false,
+        evidenceRoot: evidenceRoot ?? undefined,
         encryption: burnMode
           ? {
               enabled: true,
