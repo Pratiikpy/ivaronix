@@ -73,19 +73,29 @@ export interface ReceiptBody {
 
 /**
  * Returns ALL `.ivaronix/receipts/anchored` directories found while walking
- * ancestors of cwd. The first-match approach broke when a sub-dir (like
- * `apps/studio/.ivaronix/`) had its own receipts folder — receipts anchored
- * from the repo root never got discovered. We now check every ancestor.
+ * ancestors of cwd, plus the canonical sibling locations under the
+ * workspace root (apps/cli, apps/mcp-server, etc.). The CLI typically
+ * writes receipts to apps/cli/.ivaronix/, which is a sibling of
+ * apps/studio/ — a pure ancestor walk would never find it.
  */
 function findReceiptsDirs(): string[] {
   const out: string[] = [];
+  const seen = new Set<string>();
   let dir = process.cwd();
+  let workspaceRoot: string | null = null;
   for (let i = 0; i < 12; i++) {
     const candidate = resolve(dir, '.ivaronix', 'receipts', 'anchored');
-    if (existsSync(candidate)) out.push(candidate);
+    if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) workspaceRoot = dir;
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
+  }
+  if (workspaceRoot) {
+    for (const sib of ['apps/cli', 'apps/mcp-server']) {
+      const candidate = resolve(workspaceRoot, sib, '.ivaronix', 'receipts', 'anchored');
+      if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
+    }
   }
   return out;
 }

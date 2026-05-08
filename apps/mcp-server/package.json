@@ -19,6 +19,7 @@
   "dependencies": {
     "@ivaronix/core": "workspace:*",
     "@ivaronix/og-chain": "workspace:*",
+    "@ivaronix/memory": "workspace:*",
     "@ivaronix/runtime": "workspace:*",
     "@ivaronix/skills": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.4",

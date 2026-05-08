@@ -14,9 +14,10 @@ import {
 } from '@ivaronix/og-chain';
 import { runPipeline, loadEnv } from '@ivaronix/runtime';
 import { loadSkillsFromDir, type LoadedSkill } from '@ivaronix/skills';
+import { MemoryEngine } from '@ivaronix/memory';
 import { resolve, dirname } from 'node:path';
-import { existsSync } from 'node:fs';
-import type { ConsensusTier } from '@ivaronix/core';
+import { existsSync, mkdirSync } from 'node:fs';
+import type { ConsensusTier, Address } from '@ivaronix/core';
 
 /**
  * Ivaronix MCP Server.
@@ -108,15 +109,71 @@ async function handleVerifyReceipt(params: z.infer<typeof VerifyReceiptInput>): 
 }
 
 async function handleSearchMemory(params: z.infer<typeof SearchMemoryInput>): Promise<CallToolResult> {
-  // The full memory engine lives in `@ivaronix/memory` and binds to better-sqlite3
-  // — that's a server-only path. For Day 20 we expose a stub that points the
-  // caller at the CLI; Day 22 wires the engine into the server runtime.
-  return {
-    content: [{
-      type: 'text',
-      text: `Search "${params.query}" (k=${params.k}) — run \`ivaronix memory search\` from the CLI; engine integration in MCP arrives Day 22.`,
-    }],
-  };
+  // Wires the @ivaronix/memory engine into the MCP runtime. Reads the same
+  // SQLite db the CLI writes to (.ivaronix/memory/ivaronix.db), so an
+  // observation stored via `ivaronix memory remember` is immediately
+  // recallable from any MCP-aware client. Skips the on-chain access-log
+  // emission because read paths already log via engine.recall().
+  const env = loadEnv();
+  if (!env.privateKey || !env.walletAddress) {
+    return {
+      content: [{
+        type: 'text',
+        text: 'memory engine requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in the server env',
+      }],
+    };
+  }
+  // The CLI writes the memory db to `<cwd>/.ivaronix/memory/ivaronix.db`,
+  // which in practice is `apps/cli/.ivaronix/...` for most workflows.
+  // Resolve relative to the workspace root (parent of pnpm-workspace.yaml)
+  // so the MCP server picks up whichever package's db exists. Search order:
+  //   1. existing .ivaronix/memory/ivaronix.db at workspace root
+  //   2. existing one under apps/cli/.ivaronix/memory/ (the CLI default)
+  //   3. fall back to creating at workspace root
+  const dbPath = (() => {
+    let dir = process.cwd();
+    let workspaceRoot: string | null = null;
+    for (let i = 0; i < 8; i++) {
+      if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) { workspaceRoot = dir; break; }
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+    const candidates = [
+      workspaceRoot && resolve(workspaceRoot, '.ivaronix', 'memory', 'ivaronix.db'),
+      workspaceRoot && resolve(workspaceRoot, 'apps', 'cli', '.ivaronix', 'memory', 'ivaronix.db'),
+    ].filter(Boolean) as string[];
+    for (const c of candidates) if (existsSync(c)) return c;
+    return candidates[0] ?? resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
+  })();
+  mkdirSync(dirname(dbPath), { recursive: true });
+  const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+  const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+  const engine = MemoryEngine.create({
+    ownerWallet: env.walletAddress as Address,
+    ownerPrivateKey: env.privateKey,
+    dbPath,
+    enableOnChainPermissions: Boolean(capAddr && logAddr),
+    capabilityRegistryAddress: (capAddr ?? undefined) as Address | undefined,
+    memoryAccessLogAddress: (logAddr ?? undefined) as Address | undefined,
+    rpcUrl: env.rpcUrl,
+    chainId: env.chainId,
+  });
+  const { hits, logTxHash } = await engine.recall({ text: params.query, topK: params.k });
+  if (hits.length === 0) {
+    return {
+      content: [{
+        type: 'text',
+        text: `No matches for "${params.query}".${logTxHash ? `\n(access log tx ${logTxHash})` : ''}`,
+      }],
+    };
+  }
+  const lines = hits.map(
+    (h, i) =>
+      `#${i + 1}  score ${h.score.toFixed(3)}  vec ${h.vectorScore.toFixed(3)}  fts ${h.ftsScore.toFixed(3)}  [${h.tags.join(', ')}]\n    ${h.text}`,
+  );
+  if (logTxHash) lines.push(`\naccess log tx ${logTxHash}`);
+  return { content: [{ type: 'text', text: lines.join('\n') }] };
 }
 
 function findSeedSkillsRoot(): string | null {

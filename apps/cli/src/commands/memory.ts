@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { keccak256, toUtf8Bytes, Wallet, JsonRpcProvider } from 'ethers';
 import { resolve, dirname } from 'node:path';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, existsSync } from 'node:fs';
 import {
   CapabilityRegistryClient,
   MemoryAccessLogClient,
@@ -38,8 +38,24 @@ function scopeHash(scope: string): Hash {
   return keccak256(toUtf8Bytes(`namespace:${scope}`)) as Hash;
 }
 
-/** Resolve the local memory SQLite path under .ivaronix/memory/ivaronix.db */
+/**
+ * Resolve the memory SQLite path. Anchors on the workspace root (parent of
+ * pnpm-workspace.yaml) so a single canonical db is shared by every surface
+ * — CLI, MCP server, og-toolkit consumers. Without this, the CLI invoked
+ * from apps/cli/ wrote to apps/cli/.ivaronix/memory/, and the MCP server
+ * couldn't see those observations from its own cwd. Falls back to cwd
+ * when invoked outside the workspace.
+ */
 function memoryDbPath(): string {
+  let dir = process.cwd();
+  for (let i = 0; i < 8; i++) {
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) {
+      return resolve(dir, '.ivaronix', 'memory', 'ivaronix.db');
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
   return resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
 }
 
