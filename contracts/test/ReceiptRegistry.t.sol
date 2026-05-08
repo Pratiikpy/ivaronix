@@ -84,9 +84,18 @@ contract ReceiptRegistryTest is Test {
     }
 
     function test_RevertsOnInvalidType() public {
+        // Cap raised to 9 (TYPE_SUBSCRIPTION_SKILL_EXEC) by PASS 76 B-1.
+        // 10 is the next-invalid value.
         vm.prank(alice);
         vm.expectRevert("ReceiptRegistry: invalid type");
-        registry.anchor(bytes32("r"), bytes32("s"), 9, bytes32(0));
+        registry.anchor(bytes32("r"), bytes32("s"), 10, bytes32(0));
+    }
+
+    function test_AcceptsSubscriptionSkillExecType() public {
+        vm.prank(alice);
+        uint256 id = registry.anchor(bytes32("r"), bytes32("s"), 9, bytes32(0));
+        (,,,,, uint8 receiptType) = registry.receipts(id);
+        assertEq(receiptType, 9, "type 9 = subscription_skill_exec accepted");
     }
 
     function test_PauseBlocksAnchor() public {

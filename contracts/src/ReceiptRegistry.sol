@@ -24,6 +24,8 @@ contract ReceiptRegistry is Ownable2Step, Pausable {
     uint8 public constant TYPE_CODE_CHANGE = 6;
     uint8 public constant TYPE_PASSPORT_UPDATE = 7;
     uint8 public constant TYPE_SWARM = 8;
+    /// @dev Added 2026-05-08 (PASS 76 B-1) for SubscriptionEscrow check-ins
+    uint8 public constant TYPE_SUBSCRIPTION_SKILL_EXEC = 9;
 
     struct Receipt {
         bytes32 receiptRoot;        // keccak256 of canonical receipt JSON
@@ -70,7 +72,7 @@ contract ReceiptRegistry is Ownable2Step, Pausable {
     ) external whenNotPaused returns (uint256 id) {
         require(receiptRoot != bytes32(0), "ReceiptRegistry: empty receiptRoot");
         require(storageRoot != bytes32(0), "ReceiptRegistry: empty storageRoot");
-        require(receiptType <= TYPE_SWARM, "ReceiptRegistry: invalid type");
+        require(receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC, "ReceiptRegistry: invalid type");
 
         id = nextId++;
         receipts[id] = Receipt({

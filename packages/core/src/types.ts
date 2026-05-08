@@ -54,6 +54,11 @@ export const RECEIPT_TYPES = {
   code_change: 6,
   passport_update: 7,
   swarm: 8,
+  // Slot 9 (PASS 76 B-1): a single recurring-billing tick under a
+  // SubscriptionEscrow agreement. Distinct from skill_exec because the
+  // billing context (escrow id, drain amount, period) is the load-bearing
+  // metadata, not just the skill that ran.
+  subscription_skill_exec: 9,
 } as const;
 
 export type ReceiptType = keyof typeof RECEIPT_TYPES;
