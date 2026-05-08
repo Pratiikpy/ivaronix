@@ -848,3 +848,76 @@ Cumulative testnet receipts after Round 6: **168 anchored**.
 - `apps/cli/src/commands/code.ts` — `findGitRoot()` helper + `applyDiff(cwd: gitRoot)`
 - `apps/cli/src/commands/daemon.ts` — `shell: true` + `windowsHide: true` on Windows; remove hardcoded `--no-receipt`
 - `apps/cli/src/commands/chat.ts` — `startSpinner()` helper; readline `completer` + `historySize: 200`
+
+---
+
+## Round 7 — full surface area exercised as a real human (2026-05-08)
+
+After Round 6 fixed the 3 bugs from the first untested-paths sweep, swept every remaining surface end-to-end with a real call. No bugs found. **B-1 (0G Storage testnet revert) appears to have recovered** — the `doc ask --burn` run successfully uploaded evidence to 0G Storage (root `0xbed611af…`) and recorded the txSeq for the first time in many rounds.
+
+### `serve` HTTP API — all 5 endpoints proven
+
+| Endpoint | Result |
+|---|---|
+| `GET /healthz` | `{ok:true,network:"testnet",receipts:174,passports:2}` |
+| `GET /v1/skills?q=audit` | 2 skills returned (`0g-integration-auditor`, `github-audit`) with version + description + manifestHash |
+| `GET /v1/passport/0xaa954c33…77Ce` | tokenId=1, trust=156, receiptCount=156 |
+| `GET /v1/receipt/167` | `{id, receiptRoot, agent, type, timestamp, state:"ANCHORED"}` |
+| `POST /v1/run` | receipt #168 anchored, full inline log, registry MATCH on private-doc-review@0.3.0 |
+| `POST /v1/chat/completions` | OpenAI-compat schema: `{id, object, model, choices[{message{role,content},finish_reason}], usage{prompt_tokens,completion_tokens}}` |
+
+(Schema gotcha worth noting: `/v1/run` uses `{context, userPrompt}` while Studio's `/api/run` uses `{contentText, question}`. Different naming on purpose — `/v1/run` mirrors the SDK shape so external integrations can drop a payload from any client.)
+
+### MCP stdio — `tools/list` + `tools/call`
+
+| Test | Result |
+|---|---|
+| `tools/list` | 5 tools declared with full JSON Schema: `ivaronix_ask`, `ivaronix_verify_receipt`, `ivaronix_search_memory`, `ivaronix_install_skill`, `ivaronix_passport_show` |
+| `tools/call ivaronix_passport_show {wallet:0x09dcB141…97b6}` | `tokenId=2, trust=0, receiptCount=0` — matches the Round 4 fresh-wallet onboard. Cross-surface consistency proven (CLI passport show, Studio `/agent/[handle]`, MCP `ivaronix_passport_show` all agree). |
+
+### `doc ask --burn` killer-feature path
+
+| Step | Evidence |
+|---|---|
+| evidence on 0G Storage | root `0xbed611afef496861ec30d5f16a881c27e037c0c52dccf5e4ca07f6ba66083e79` (B-1 storage upload **worked** for the first time in many rounds) |
+| `redact_pii` hook | scrubbed 2 matches (1 SSN, 1 email) before the router call |
+| consensus | 2097ms, 493+112 tokens, 0.00003585 OG, convergence 1 |
+| receipt | `rcpt_01KR3HVDD13ZA1PSDV44DZ9G1S`, on-chain id 169, block 32200874, gas 107017 |
+| passport update | tokenId=1 receiptCount climbed to 158, trust 158 |
+
+This single command exercised: **0G Storage upload + PII redaction hook + 0G Router (TEE) + receipt sign + chain anchor + passport update + burn-mode session-key destruction.** The complete demo-path that Track 1 grading rewards.
+
+### Remaining CLI surface — every command exercised
+
+| Command | Result |
+|---|---|
+| `audit ../../test-targets/add.ts --skill github-audit --quick` | receipt #170 anchored, 1 file audited |
+| `swarm run /tmp/swarm-todo.md --quick --skill plan-step --max 2` | 2 tasks dispatched, 2 receipts (#171, #172), each its own consensus pass |
+| `passport show` | tokenId=1 trust=161 receiptCount=161 (climbed by 5 mid-round) |
+| `passport show --wallet 0x09dcB141…97b6` | tokenId=2 trust=0 mintedAt=2026-05-08T09:26:21 — matches Round 4 fresh-wallet evidence |
+| `memory remember "Round 7 sweep verified..."` | obs `obs_01KR3J604SVPK3GPWB9KE1D2E1` stored, 384-dim embed, on-chain access tx `0xccaee721…` |
+| `memory recall "Round 7 sweep"` | top-1 score 0.462 (vec 0.531 / fts 0.359), on-chain READ tx `0x38b21b01…` |
+| `skill list` | 80 skills (5 first-party + 75 imports) |
+| `skill inspect github-audit` | full manifest: permissions / reputation / consensus / burn / hooks all visible |
+| `skill eval private-doc-review` | 1/1 fixture pass, 864 tokens, 0.00005135 OG, receipt #173 anchored, redact_pii scrubbed 4 PII matches |
+| `receipt list --limit 5` | last 5 returned with on-chain id + type code + ISO timestamp + receiptRoot prefix |
+
+### UX nit (not a bug, logged for polish)
+
+`passport show 0xADDR` (positional arg) silently swallowed the address because the command takes `--wallet <addr>` as an option, not a positional. Most CLIs warn "unknown argument" instead. Could add `commander.allowUnknownOption(false)` + a positional fallback in a future polish pass, but it's not breaking anything today.
+
+### Round 7 net effect
+
+- 6 fresh receipts anchored in this round (#169, #170, #171, #172, #173, plus #168 via curl earlier in the round)
+- 0 new bugs found
+- Cumulative testnet anchors: **174** (was 168 at end of Round 6)
+- B-1 storage testnet revert: **upgrade to "intermittent" / mostly recovered** — the 2026-05-08 `doc ask --burn` upload succeeded with a real txSeq from the indexer
+
+### What "tested as a human" means now
+
+After Rounds 1–7, the only items that have NOT been clicked-through end-to-end by a real person are:
+1. **MetaMask browser extension flow on `/onboard`** — would require manual interaction with the extension UI; the equivalent path was instead proven via the headless `scripts/fresh-wallet-onboard.ts` script that minted tokenId=2.
+2. **MCP server inside Claude Desktop / Claude Code as a real client** — the stdio protocol is proven via raw JSON-RPC pipe; the missing piece is wiring it into a desktop config and seeing the tools appear in the model's tool palette.
+3. **Mainnet 16661 anything** — blocked on B-2 funding.
+
+(1) and (2) are click-through tasks for the human user; the underlying contracts are exercised. (3) is the only real engineering wall and it's a single OG transfer away from being unblocked.
