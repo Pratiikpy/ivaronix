@@ -46,18 +46,22 @@ export default async function Image({ params }: { params: { id: string } }) {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#faf9f6',
-          color: '#1a1a1a',
+          background: '#fafaf7',
+          color: '#0a0a0a',
           padding: '64px 80px',
           fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          {/* Canonical mark per CLAUDE.md §10 + brand/Ivaronix.html:
+              brackets framing italic Instrument Serif "i" with green
+              tittle (#16a34a). Replaces the prior vertical-line+black-dot
+              variant that diverged from the brand kit. */}
           <svg width={48} height={32} viewBox="0 0 32 20" fill="none">
-            <path d="M4 2 H1 V18 H4" stroke="#1a1a1a" strokeWidth={3} fill="none" />
-            <line x1={16} y1={6} x2={16} y2={17} stroke="#1a1a1a" strokeWidth={3} strokeLinecap="round" />
-            <circle cx={16} cy={3} r={2} fill="#1a1a1a" />
-            <path d="M28 2 H31 V18 H28" stroke="#1a1a1a" strokeWidth={3} fill="none" />
+            <path d="M5 2 L1 2 L1 18 L5 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
+            <text x={16} y={16} textAnchor="middle" fontFamily="'Instrument Serif', 'Times New Roman', serif" fontStyle="italic" fontSize={20} fill="#0a0a0a">i</text>
+            <circle cx={16.6} cy={4.6} r={1.6} fill="#16a34a" />
+            <path d="M27 2 L31 2 L31 18 L27 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
           </svg>
           <span style={{ fontSize: 28, letterSpacing: 6, fontWeight: 600 }}>IVARONIX</span>
         </div>

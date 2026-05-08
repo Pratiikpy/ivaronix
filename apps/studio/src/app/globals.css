@@ -4,12 +4,13 @@
  * Brand tokens — copied verbatim from UI_UX_GUIDE.md §1 (locked 2026-05-08).
  * The HTML mockup at brand/Ivaronix.html is the visual source of truth.
  *
- * IMPORTANT: foreground is #1a1a1a, NOT #000. Pure black is too aggressive
- * against the cream background — the warm near-black is part of the
- * editorial feel.
+ * IMPORTANT: foreground is #0a0a0a, NOT #000 and NOT the warmer #1a1a1a.
+ * Per CLAUDE.md §10 the canonical ink matches brand/Ivaronix.html.
  */
 @theme inline {
-  --color-bg: #faf9f6;
+  /* Per CLAUDE.md §10: brand/Ivaronix.html is the visual source of truth.
+   * Cream paper is #fafaf7 (HTML ref) — earlier #faf9f6 was off-by-one. */
+  --color-bg: #fafaf7;
   /* CLAUDE.md §10: ink is #0a0a0a (HTML ref), not the warmer #1a1a1a */
   --color-fg: #0a0a0a;
   --color-muted: #6b6b66;
@@ -125,7 +126,9 @@ body {
   transition: background 150ms ease, transform 150ms ease;
 }
 .btn-primary:hover {
-  background: #1a1a1a;
+  /* CLAUDE.md §10: keep ink at canonical #0a0a0a; lift comes from
+   * translateY + a subtle filter. No #1a1a1a backgrounds in Studio. */
+  filter: brightness(1.15);
   transform: translateY(-1px);
 }
 .btn-primary:disabled {

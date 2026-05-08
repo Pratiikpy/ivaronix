@@ -13,7 +13,7 @@ export function Header() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        background: 'rgba(250, 249, 246, 0.92)',
+        background: 'rgba(250, 250, 247, 0.92)',
         backdropFilter: 'saturate(150%) blur(12px)',
         borderBottom: '1px solid var(--color-hairline)',
         height: 64,
