@@ -21,6 +21,7 @@
     "@0gfoundation/0g-compute-ts-sdk": "^0.8.1",
     "@ivaronix/consensus": "workspace:*",
     "@ivaronix/core": "workspace:*",
+    "@ivaronix/indexer": "workspace:*",
     "@ivaronix/memory": "workspace:*",
     "@ivaronix/og-chain": "workspace:*",
     "@ivaronix/og-da": "workspace:*",

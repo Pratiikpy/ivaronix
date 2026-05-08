@@ -14,6 +14,8 @@ export const ReceiptTypeSchema = z.enum([
   'code_change',
   'passport_update',
   'swarm',
+  // Slot 9 (PASS 76 B-1): SubscriptionEscrow check-in tick.
+  'subscription_skill_exec',
 ]);
 
 export const NetworkSchema = z.enum(['testnet', 'mainnet']);
