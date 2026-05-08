@@ -120,9 +120,22 @@ function safeRel(cwd: string, target: string): string {
   return relative(cwd, target) || target;
 }
 
+/**
+ * Normalize a path the model gave us. On Windows, models often emit
+ * Git-Bash style `/c/Users/...` — Node's path.resolve treats that as
+ * relative-to-current-drive (returning `C:\c\Users\...`, the wrong path).
+ * Convert to native drive notation before resolving.
+ */
+function normalizePath(p: string): string {
+  if (process.platform !== 'win32') return p;
+  const m = p.match(/^\/([a-zA-Z])\/(.*)$/);
+  if (m) return `${m[1]!.toUpperCase()}:/${m[2]!}`;
+  return p;
+}
+
 async function readFileTool(cwd: string, path: string): Promise<ToolExecResult> {
   try {
-    const abs = resolve(cwd, path);
+    const abs = resolve(cwd, normalizePath(path));
     const stat = statSync(abs);
     if (!stat.isFile()) return { ok: false, output: `not a file: ${path}` };
     if (stat.size > MAX_FILE_BYTES) {
@@ -137,7 +150,7 @@ async function readFileTool(cwd: string, path: string): Promise<ToolExecResult> 
 
 function writeFileTool(cwd: string, path: string, content: string): ToolExecResult {
   try {
-    const abs = resolve(cwd, path);
+    const abs = resolve(cwd, normalizePath(path));
     mkdirSync(dirname(abs), { recursive: true });
     writeFileSync(abs, content, 'utf8');
     return { ok: true, output: `wrote ${content.length} bytes to ${safeRel(cwd, abs)}` };
@@ -164,7 +177,7 @@ function* walk(root: string, maxDepth: number, depth = 0): Iterable<string> {
 
 function listFilesTool(cwd: string, dir: string, ext?: string): ToolExecResult {
   try {
-    const root = resolve(cwd, dir || '.');
+    const root = resolve(cwd, normalizePath(dir || '.'));
     if (!existsSync(root)) return { ok: false, output: `no such dir: ${dir}` };
     const out: string[] = [];
     for (const f of walk(root, 3)) {
@@ -181,7 +194,7 @@ function listFilesTool(cwd: string, dir: string, ext?: string): ToolExecResult {
 function grepTool(cwd: string, pattern: string, dir?: string, ext?: string): ToolExecResult {
   try {
     const re = new RegExp(pattern, 'g');
-    const root = resolve(cwd, dir || '.');
+    const root = resolve(cwd, normalizePath(dir || '.'));
     const hits: string[] = [];
     for (const f of walk(root, 3)) {
       if (ext && !f.endsWith(ext)) continue;
