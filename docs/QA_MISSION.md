@@ -12,6 +12,21 @@
 
 The single most important section. If the engineer skips this, the rest is busywork.
 
+### 00.0 The intent (signed off — this is what we want)
+
+- Test every shipped feature **end-to-end as a real user**
+- Use the app — **not DOM-level** or fake-mock testing
+- Verify **one clean working flow first** for each feature
+- Then do deeper or aggressive testing **only if needed**
+- Judge quality by **visual polish, smoothness, and real functionality**
+- Compare the result against **the brand HTML and a premium app feel**
+- Use **screenshots and video** to catch UI/UX bugs code-only can't
+- Fix issues **properly, not lazily**
+
+> **One-line summary:** *Build it, use it like a real person, confirm it works, confirm it feels premium, then only do heavier stress testing if the feature needs it.*
+
+If you remember nothing else from this doc, remember that line.
+
 ### 00.1 The rule: make it work, then make it beautiful
 
 Primary task is **confirm every feature works once, end-to-end, like a real user would use it.** That's the test.
@@ -58,25 +73,26 @@ This is in CLAUDE.md §1: no compromise. We're trying to win.
 
 Don't bikeshed. Don't argue about pixel-perfect kerning. Don't run a 50-page accessibility audit on a one-button page. Use judgment. The bar is "premium and smooth like Claude Code / OpenCode but on 0G with our brand." That's it.
 
-### 00.6 Reference resources — consult these before quitting
+### 00.6 Reference resources — these EXIST, you choose when to consult
 
-If something looks wrong, broken, or unclear, **check these folders before giving up or filing a question**:
+You have a substantial reference library on disk. **You don't have to consult them for every test** — the testing flow is "use the app, see if it works." But know they're here. When something looks wrong, unclear, or you want to compare to how others solved the same problem, these are the places to look.
 
-| When you're stuck on… | Look here |
-|---|---|
-| Anything 0G-related (SDK behavior, contract patterns, KV semantics, broker calls) | `C:\Users\prate\Downloads\oglabs\oglabs resources` |
-| Anything CLI-related (chat UX, slash commands, debug subtree, plugin system, streaming render) | `C:\Users\prate\Downloads\oglabs\CLI Open Source Project` (OpenCode + HermesAgent + Octogent + claude-mem + awesome-claude-skills) |
-| Working code from projects already shipped on 0G | `C:\Users\prate\Downloads\oglabs\og-projects-showcase` |
-| What competing grant entries did + how they handled the same problem | `C:\Users\prate\Downloads\oglabs\entries` and `C:\Users\prate\Downloads\new-entries` |
-| The visual contract (what every Studio surface MUST match) | `C:\Users\prate\Downloads\Ivaronix Brand Kit _standalone_.html` (also at `brand/Ivaronix.html`) |
-| Receipt schema details, canonical hash rules | `RECEIPTS_SPEC.md` (root) |
-| Which receipts are tier-1/tier-2 + the honesty rules | `CLAUDE.md` §1, §6, §7, §8 |
+| Folder | What it has | When to consult |
+|---|---|---|
+| `oglabs resources/` | Official 0G SDKs (TS / Rust / Go), agent-skills patterns, fine-tuning examples, KV/DA SDKs, agent-id docs | When 0G primitive behavior surprises you |
+| `CLI Open Source Project/` | OpenCode, HermesAgent, Octogent, claude-mem, awesome-claude-skills — the CLIs we benchmark against | When CLI UX feels off vs the field |
+| `og-projects-showcase/` | 8 projects featured by the OG Labs team | When you want to see what production 0G code looks like |
+| `entries/` | 16 grant-track competitor entries from a prior round | When testing a feature, want to see how peers shipped it |
+| `new-entries/` | 9 newer competitor projects (deep-read in `new-entries/Codex Thinking/claude-thinking.md` + `claude-thinking.md`) | Same — competitor reference |
+| `Ivaronix Brand Kit _standalone_.html` (also at `brand/Ivaronix.html`) | The visual contract every Studio surface MUST match | Anytime visual polish feels off — compare side by side |
+| `RECEIPTS_SPEC.md` (root) | Receipt schema, canonical hash rules, the 10 types | When a receipt looks malformed or you're verifying TIER markings |
+| `CLAUDE.md` (root) | The agent contract — §1 no compromise, §6 TIER honesty, §7 receipts spine, §8 verification rules, §9 voice contract, §10 visual contract | Anytime you're unsure if a behavior is acceptable |
 
-The engineer has a giant reference library. Use it. Don't ask "is this how it should work?" without checking first.
+These exist so you don't have to guess. **Use them when they save time. Don't feel obligated to read them for tests where they wouldn't help.**
 
 ### 00.7 The mindset summary (one line)
 
-> **"Test like a real user. Use every feature once. Screenshot or video everything. Fix what's broken properly. Match the brand kit HTML exactly. Skip aggressive testing until primary is green."**
+> *"Build it, use it like a real person, confirm it works, confirm it feels premium, then only do heavier stress testing if the feature needs it."*
 
 If in doubt, that line is the answer.
 
