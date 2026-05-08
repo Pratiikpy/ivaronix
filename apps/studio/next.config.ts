@@ -23,6 +23,13 @@ const config: NextConfig = {
       ...(cfg.resolve.extensionAlias ?? {}),
       '.js': ['.ts', '.tsx', '.js'],
     };
+    // wagmi v2's MetaMask connector tries to import mobile-only deps
+    // (@react-native-async-storage/async-storage) for React Native parity.
+    // We don't ship a mobile build, so noop them to silence the webpack warning.
+    cfg.resolve.fallback = {
+      ...(cfg.resolve.fallback ?? {}),
+      '@react-native-async-storage/async-storage': false,
+    };
     return cfg;
   },
   env: {

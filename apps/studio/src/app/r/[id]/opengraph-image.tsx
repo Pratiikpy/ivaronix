@@ -3,6 +3,12 @@ import { getReceiptRegistry, getNetwork } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
 
 export const runtime = 'nodejs';
+// Known platform issue: Next 15.0.3 dev-server on Windows mangles @vercel/og's
+// bundled font URL (".\\file:\\C:\\…"), throwing ERR_INVALID_URL on every
+// request. Edge runtime would sidestep it but our route imports ethers via
+// @/lib/chain for the headline lookup; ethers can't run on edge. Production
+// on Vercel (Linux) is unaffected. Tracked in TEST_REPORT.md as
+// "OG image dev-only bug" — Discord/Twitter unfurls work post-deploy.
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -12,6 +18,7 @@ export const contentType = 'image/png';
  * and link unfurls. Per UI_UX_GUIDE — never AI-glossy.
  */
 export default async function Image({ params }: { params: { id: string } }) {
+  const fonts = await loadFonts().catch(() => []);
   const reg = getReceiptRegistry();
   const network = getNetwork();
   let id = params.id;
@@ -88,10 +95,16 @@ export default async function Image({ params }: { params: { id: string } }) {
     ),
     {
       ...size,
-      // Skip the bundled @vercel/og font — Next 15.0.3 mangles its file URL
-      // on Windows (".\\file:\\C:\\..."). System-stack fallback is fine for the
-      // editorial design language and Vercel-side prod still uses bundled fonts.
-      fonts: [],
+      fonts,
     },
   );
+}
+
+async function loadFonts() {
+  const family = 'Outfit:wght@600';
+  const css = await fetch(`https://fonts.googleapis.com/css2?family=${family}&display=swap`).then((r) => r.text());
+  const fontUrl = css.match(/src: url\((https:\/\/[^)]+)\) format\('woff2'\)/)?.[1];
+  if (!fontUrl) return [];
+  const fontData = await fetch(fontUrl).then((r) => r.arrayBuffer());
+  return [{ name: 'Outfit', data: fontData, style: 'normal' as const, weight: 600 as const }];
 }

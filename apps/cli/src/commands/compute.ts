@@ -40,14 +40,36 @@ computeCommand
 
 computeCommand
   .command('balance')
-  .description('Show Router balance via 0g-compute-cli')
-  .action(() => {
-    ui.hint('Run `0g-compute-cli get-account` directly for now. Programmatic balance polling arrives Day 5.');
+  .description('Show 0G Compute ledger balance for the configured wallet')
+  .action(async () => {
+    const { execFile } = await import('node:child_process');
+    const { promisify } = await import('node:util');
+    const execFileAsync = promisify(execFile);
+    const IS_WIN = process.platform === 'win32';
+    ui.title('0G Compute · ledger balance');
+    ui.divider();
+    try {
+      const argv = ['-y', '--package=@0gfoundation/0g-compute-ts-sdk', '--', '0g-compute-cli', 'get-account'];
+      const { stdout } = await execFileAsync(IS_WIN ? 'npx.cmd' : 'npx', argv, {
+        timeout: 90_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true, shell: IS_WIN,
+      });
+      // Parse the SDK's text output for the balance line.
+      const balanceLine = stdout.split('\n').find((l) => /balance/i.test(l));
+      if (balanceLine) ui.pass(balanceLine.trim());
+      else process.stdout.write(stdout);
+    } catch (err) {
+      ui.fail('balance lookup failed', (err as Error).message.split('\n')[0]);
+      ui.hint('Did you run `0g-compute-cli setup-network && 0g-compute-cli login` first?');
+      process.exitCode = 1;
+    }
   });
 
 computeCommand
-  .command('verify-tee <receipt-id>')
-  .description('Independently verify TEE attestation for a receipt')
-  .action(() => {
-    ui.hint('Independent TEE verify arrives Phase A Day 5 (broker.inference.processResponse).');
+  .command('verify-tee <receipt-id-or-path>')
+  .description('Independently verify TEE attestation (alias for `ivaronix receipt verify <file> --tee-independent`)')
+  .action((id: string) => {
+    ui.title('compute verify-tee → forwarding to receipt verify');
+    ui.divider();
+    ui.hint(`Run: ivaronix receipt verify ${id} --tee-independent`);
+    ui.hint('The verify command auto-resolves on-chain ids, ULIDs, and file paths.');
   });

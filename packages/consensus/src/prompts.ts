@@ -8,7 +8,13 @@
  * legal / contract / financial / medical work via `--high-stakes`.
  */
 
-export type RoleId = 'analyst' | 'critic' | 'risk-reviewer' | 'evidence-checker' | 'judge';
+export type RoleId =
+  | 'analyst'
+  | 'critic'
+  | 'risk-reviewer'
+  | 'evidence-checker'
+  | 'red-team-critic'
+  | 'judge';
 
 export interface RolePrompt {
   id: RoleId;
@@ -66,6 +72,17 @@ For the user's question, list:
 - Inferred: claims a reader might draw but the document doesn't quite say
 - Unsupported: claims a reader should NOT make from this document
 Format as three labeled lists.`,
+  },
+
+  'red-team-critic': {
+    id: 'red-team-critic',
+    systemPrompt: (context, _user) => `You are a red-team adversary. Read the document below and assume the asking party WILL act on it. Your job is to design the worst-case scenario the document permits — what an attacker, opportunistic counterparty, or hostile auditor could do under this exact wording. ${READ_HARD}
+
+--- DOCUMENT START ---
+${context}
+--- DOCUMENT END ---
+
+Output: a numbered list of attack scenarios. For each: 1-line attack vector + concrete clause cited + which party benefits. Be specific, not theoretical.`,
   },
 
   judge: {

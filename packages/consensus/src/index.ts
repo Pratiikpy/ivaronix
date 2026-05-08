@@ -91,12 +91,11 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
   const judgeRoleId = roleIds.find((r) => r === 'judge');
   const reviewerRoleIds = roleIds.filter((r) => r !== 'judge');
 
-  // ─── Run all reviewers in parallel ──────────────────────────────────
-  const reviewerCalls: Promise<{
-    role: RoleId;
-    content: string;
-    raw: RouterCallResult;
-  }>[] = reviewerRoleIds.map(async (roleId) => {
+  // ─── Run reviewers ──────────────────────────────────────────────────
+  // Standard tier (3 reviewers) runs in parallel; high-stakes (4 reviewers)
+  // runs sequentially to stay under the testnet 10-req/min Router cap. Once
+  // the rate limit lifts on mainnet we can flip back to parallel.
+  const runReviewer = async (roleId: RoleId) => {
     const prompt = ROLE_PROMPTS[roleId];
     const raw = await input.keyring.chat({
       model: input.model,
@@ -105,9 +104,17 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
       verifyTee: true,
     });
     return { role: roleId, content: raw.content, raw };
-  });
+  };
 
-  const reviewerResults = await Promise.all(reviewerCalls);
+  let reviewerResults: { role: RoleId; content: string; raw: RouterCallResult }[];
+  if (tier === 'high-stakes') {
+    reviewerResults = [];
+    for (const roleId of reviewerRoleIds) {
+      reviewerResults.push(await runReviewer(roleId));
+    }
+  } else {
+    reviewerResults = await Promise.all(reviewerRoleIds.map(runReviewer));
+  }
   const reviewerOutputs = reviewerResults.map((r) => ({ role: r.role, content: r.content }));
 
   // ─── Convergence ────────────────────────────────────────────────────
