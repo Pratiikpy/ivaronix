@@ -45,6 +45,7 @@ import { daCommand } from '../commands/da.js';
 import { indexerCommand } from '../commands/indexer.js';
 import { debugCommand } from '../commands/debug.js';
 import { statsCommand } from '../commands/stats.js';
+import { exportCommand, importCommand } from '../commands/export.js';
 
 const program = new Command();
 
@@ -95,6 +96,8 @@ program.addCommand(daCommand);
 program.addCommand(indexerCommand);
 program.addCommand(debugCommand);
 program.addCommand(statsCommand);
+program.addCommand(exportCommand);
+program.addCommand(importCommand);
 
 // Bare `ivaronix` (no subcommand) drops into the Ink TUI (claude-code style).
 // chat-v2 is now the default; the readline `chat` is renamed to `chat-classic`
