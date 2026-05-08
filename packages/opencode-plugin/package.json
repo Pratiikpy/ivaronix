@@ -1,0 +1,48 @@
+{
+  "name": "@ivaronix/opencode-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tool": "./src/tool.ts",
+    "./tui": "./src/tui.ts",
+    "./shell": "./src/shell.ts"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "lint": "echo skip",
+    "test": "echo skip",
+    "typecheck": "echo 'PASS 77 F-1a: source vendored, integration pending (zod@4 + effect@4-beta migration in F-1h)'",
+    "clean": "rm -rf dist .turbo"
+  },
+  "_provenance": {
+    "vendoredFrom": "CLI Open Source Project/opencode/packages/plugin",
+    "vendoredAt": "2026-05-08",
+    "upstreamVersion": "1.14.40",
+    "upstreamLicense": "MIT — see LICENSE.upstream.md",
+    "stage": "PASS 77 F-1a (source vendored, deps not yet resolved)"
+  },
+  "_blockers": [
+    "F-1b: vendor @opencode-ai/sdk source (workspace dep)",
+    "F-1h: pin effect@4.0.0-beta.59, zod@4.1.8 + plan zod-v3-to-v4 migration for @ivaronix/receipts",
+    "F-1h: sst-env.d.ts ambient types (used by effect runtime)"
+  ],
+  "dependencies": {
+    "effect": "4.0.0-beta.59",
+    "zod": "4.1.8"
+  },
+  "peerDependencies": {
+    "@opentui/core": "0.2.2",
+    "@opentui/solid": "0.2.2"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": { "optional": true },
+    "@opentui/solid": { "optional": true }
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
