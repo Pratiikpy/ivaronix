@@ -136,6 +136,22 @@ export const ReceiptV1Schema = z.object({
     outputCostNeuron: z.string(),
     totalCostNeuron: z.string(),
     totalCostOg: z.string(),
+    /**
+     * Track 3 (Agentic Economy) settlement: when the executing skill's
+     * manifest declares `og.creator.fee_split`, this records the
+     * per-actor allocation in neuron + the creator's passport address.
+     * Optional — older receipts (and receipts for skills without a
+     * fee_split) omit it. Sum of allocations equals `totalCostNeuron`.
+     */
+    feeSplit: z
+      .object({
+        creatorBps: z.number().int().min(0).max(10000),
+        treasuryBps: z.number().int().min(0).max(10000),
+        creatorNeuron: z.string(),
+        treasuryNeuron: z.string(),
+        creatorPassport: z.string().optional(),
+      })
+      .optional(),
   }),
 
   storage: z.object({

@@ -191,6 +191,31 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
 
+          {skill.manifest.og.creator?.fee_split && (
+            <div className="card">
+              <div className="section-label">fee split (track 3)</div>
+              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12 }}>
+                <dt style={{ color: 'var(--color-muted)' }}>creator</dt>
+                <dd style={{ margin: 0 }}>
+                  {(skill.manifest.og.creator.fee_split.creator / 100).toFixed(2)}%
+                  <span style={{ color: 'var(--color-muted)', fontSize: 11, marginLeft: 8 }}>
+                    ({skill.manifest.og.creator.fee_split.creator} bps)
+                  </span>
+                </dd>
+                <dt style={{ color: 'var(--color-muted)' }}>treasury</dt>
+                <dd style={{ margin: 0 }}>
+                  {(skill.manifest.og.creator.fee_split.treasury / 100).toFixed(2)}%
+                  <span style={{ color: 'var(--color-muted)', fontSize: 11, marginLeft: 8 }}>
+                    ({skill.manifest.og.creator.fee_split.treasury} bps)
+                  </span>
+                </dd>
+              </dl>
+              <p style={{ marginTop: 8, fontSize: 11, color: 'var(--color-muted)' }}>
+                Recorded as <span className="mono">billing.feeSplit</span> on every <span className="mono">skill_exec</span> receipt.
+              </p>
+            </div>
+          )}
+
           <div className="card">
             <div className="section-label">reputation</div>
             <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12 }}>

@@ -419,3 +419,45 @@ skillCommand
       process.exitCode = 1;
     }
   });
+
+// ─── fee-split ───────────────────────────────────────────────────────────────
+skillCommand
+  .command('fee-split <id>')
+  .description('Show og.creator.fee_split + simulate the per-actor allocation for a given total cost')
+  .option('--total <neuron>', 'total cost in neuron (default 1e15 = 0.001 OG)', '1000000000000000')
+  .action(async (id: string, opts: { total: string }) => {
+    const { allocateFeeSplit } = await import('@ivaronix/receipts');
+    const skill = findSkill(id, skillSearchDirs());
+    if (!skill) {
+      ui.fail(`No skill named "${id}"`);
+      process.exitCode = 1;
+      return;
+    }
+    const fs = skill.manifest.og.creator?.fee_split;
+    const passport = skill.manifest.og.creator?.passport;
+    ui.title(`${skill.id} · fee split`);
+    ui.divider();
+    if (!fs) {
+      ui.info('og.creator.fee_split  (none declared)');
+      ui.hint('Add `og.creator.fee_split: { creator: 9000, treasury: 1000 }` to the manifest');
+      return;
+    }
+    ui.info(`creator passport     ${passport ?? '(none — set og.creator.passport)'}`);
+    ui.info(`creator bps          ${fs.creator}  (${(fs.creator / 100).toFixed(2)}%)`);
+    ui.info(`treasury bps         ${fs.treasury}  (${(fs.treasury / 100).toFixed(2)}%)`);
+    ui.divider();
+    const alloc = allocateFeeSplit({
+      totalCostNeuron: opts.total,
+      creatorBps: fs.creator,
+      treasuryBps: fs.treasury,
+      creatorPassport: passport,
+    });
+    const totalOg = (Number(BigInt(opts.total)) / 1e18).toFixed(8);
+    const creatorOg = (Number(BigInt(alloc.creatorNeuron)) / 1e18).toFixed(8);
+    const treasuryOg = (Number(BigInt(alloc.treasuryNeuron)) / 1e18).toFixed(8);
+    ui.section(`for total ${totalOg} OG`);
+    ui.pass(`creator earns        ${creatorOg} OG  (${alloc.creatorNeuron} neuron)`);
+    ui.pass(`treasury earns       ${treasuryOg} OG  (${alloc.treasuryNeuron} neuron)`);
+    ui.divider();
+    ui.hint('Each skill_exec receipt anchors `billing.feeSplit` with the same shape — verifiable on chain.');
+  });

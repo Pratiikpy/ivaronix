@@ -32,6 +32,12 @@ og:
     post_consensus: ["log_tokens"]
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
+    # Track 3 (Agentic Economy) settlement: 90% of every doc-review fee
+    # routes to the creator, 10% to the protocol treasury. Recorded on
+    # every skill_exec receipt as `billing.feeSplit` (BigInt-precise).
+    fee_split:
+      creator: 9000
+      treasury: 1000
 ---
 
 # Private Document Review

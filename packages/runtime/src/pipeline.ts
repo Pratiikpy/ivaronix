@@ -9,7 +9,7 @@ import {
   type Hash,
   type ReceiptType,
 } from '@ivaronix/core';
-import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
+import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
 import {
   ReceiptRegistryClient,
   AgentPassportClient,
@@ -398,16 +398,30 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       tier: a.provider === 'nvidia' ? 'tier-2-external-signed' : 'tier-1-tee',
       providerKind: a.provider === 'nvidia' ? 'nvidia-nim' : '0g-router',
     },
-    billing: {
-      inputTokens: consensus.billing.totalInputTokens,
-      outputTokens: consensus.billing.totalOutputTokens,
-      inputCostNeuron: String(Math.floor(consensus.billing.totalInputTokens * 5e10)),
-      outputCostNeuron: String(Math.floor(consensus.billing.totalOutputTokens * 1e11)),
-      totalCostNeuron: String(
+    billing: (() => {
+      const totalCostNeuron = String(
         Math.floor(consensus.billing.totalInputTokens * 5e10 + consensus.billing.totalOutputTokens * 1e11),
-      ),
-      totalCostOg: consensus.billing.estimatedCostOg.toFixed(10),
-    },
+      );
+      const fs = skill.manifest.og.creator?.fee_split;
+      const passport = skill.manifest.og.creator?.passport;
+      const feeSplit = fs
+        ? allocateFeeSplit({
+            totalCostNeuron,
+            creatorBps: fs.creator,
+            treasuryBps: fs.treasury,
+            creatorPassport: passport,
+          })
+        : undefined;
+      return {
+        inputTokens: consensus.billing.totalInputTokens,
+        outputTokens: consensus.billing.totalOutputTokens,
+        inputCostNeuron: String(Math.floor(consensus.billing.totalInputTokens * 5e10)),
+        outputCostNeuron: String(Math.floor(consensus.billing.totalOutputTokens * 1e11)),
+        totalCostNeuron,
+        totalCostOg: consensus.billing.estimatedCostOg.toFixed(10),
+        feeSplit,
+      };
+    })(),
     storage: {
       proofDownloadVerified: false,
       encryption: { enabled: false, type: 'none', headerDetected: false },

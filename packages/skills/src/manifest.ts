@@ -144,8 +144,16 @@ const OgBlock = z.object({
   creator: z
     .object({
       passport: z.string().optional(),
+      // Basis points (sum to 10000 = 100%). 9000/1000 = creator gets 90%,
+      // treasury gets 10%. Validated in `validateFeeSplit` below.
       fee_split: z
-        .object({ creator: z.number().int(), treasury: z.number().int() })
+        .object({
+          creator: z.number().int().min(0).max(10000),
+          treasury: z.number().int().min(0).max(10000),
+        })
+        .refine((v) => v.creator + v.treasury === 10000, {
+          message: 'creator + treasury must sum to 10000 basis points (100%)',
+        })
         .optional(),
     })
     .optional(),
