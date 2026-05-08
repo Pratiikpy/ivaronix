@@ -3,6 +3,16 @@ name: plan-step
 version: 0.1.0
 description: Read-only planning skill — produces a numbered, executable plan for a goal given context (project README, existing code, prior decisions). Used by `ivaronix plan`. No writes, no shell, no wallet.
 license: Apache-2.0
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

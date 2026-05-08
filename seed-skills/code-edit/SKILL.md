@@ -3,6 +3,16 @@ name: code-edit
 version: 0.2.0
 description: Propose minimal code changes for a task given source files. Outputs a unified diff that the user can apply. Does not actually write to disk — `build` mode emits the diff and the user (or follow-up tooling) applies it.
 license: Apache-2.0
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 
 og:

@@ -3,6 +3,16 @@ name: 0g-integration-auditor
 version: 0.1.0
 description: Audit a GitHub repo's 0G integration quality. Checks chain ID correctness, SDK version pinning, encryption pattern, receipt usage, and 0G primitive coverage. Used by the Day-21 automation that anchors 100 mainnet receipts against public 0G OSS repos.
 license: Apache-2.0
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
 entrypoint: prompt.md
 tests:
   - tests/sample-package-json.json
