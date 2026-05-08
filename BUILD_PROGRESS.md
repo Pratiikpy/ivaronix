@@ -1265,3 +1265,56 @@ For the dev wallet a real mint would revert anyway (tokenId 1 already exists per
 | `og-toolkit` consumer | 10 | Receipt #176 via external-SDK pattern |
 
 Every command path has at least one real on-chain receipt, a state read against deployed contracts, or an explicit "deferred — costs OG / B-2 funding" note. **Total testnet receipts after Round 18: 219.**
+
+---
+
+## Rounds 19–29 — final polish + canonical-config audit (2026-05-08, condensed)
+
+After Round 18 the session continued for 11 more rounds of polish + truth-alignment.
+
+**Real bugs found and fixed in this stretch (4 more, total session 15):**
+- B19-1 (Studio-wide silent break): `client-abis.ts` declared ABIs as string[] not parseAbi'd → every wagmi useReadContract / useWriteContract returned undefined. /memory showed 0 grants; Issue + Revoke buttons couldn't fire. Fixed.
+- B22-1 (header wallet wrap): mono span in WalletConnect wrapped char-by-char at <430px viewport. Added whiteSpace: nowrap + flexShrink: 0.
+- B22-2 (onboard step meta wrap): same root cause inside step rows. Same fix.
+- Round 26 surfaced a real spec gap (openclaw verify FAIL on all 5 first-party skills) — closed in Round 27.
+
+**Real features shipped:**
+- Round 19 dashboard rewrite: replaced "Live profile arrives Day 14" placeholder with a real `/api/dashboard/[addr]` server route + Tier badge + balance + recent receipts (5 clickable links).
+- Round 19 cross-surface state: dev wallet (Council/232 receipts) + fresh wallet (Newcomer/0 receipts) both render correctly via the same component. Cross-wallet integrity proven.
+- Rounds 20–22: chat-v2 reaches functional parity with legacy chat (slash command parity) → flipped bare `ivaronix` invocation to `chat-v2` in TTY mode, `chat-classic` in piped mode (both registered).
+- Round 27: `metadata.openclaw` block on all 5 first-party SKILL.md (zero on-chain impact thanks to Zod's `.strip()`).
+- Round 28: `openclaw verify --check-env` flag for pre-publish CI hooks.
+
+**Canonical chain config audit (Round 29):**
+
+| Value | Ours | Canonical (oglabs resources/0g-doc) | Match |
+|---|---|---|---|
+| Testnet chainId | 16602 | 16602 | ✓ |
+| Mainnet chainId | 16661 | 16661 | ✓ |
+| Testnet RPC | evmrpc-testnet.0g.ai | same | ✓ |
+| Mainnet RPC | evmrpc.0g.ai | same | ✓ |
+| Testnet explorer | chainscan-galileo.0g.ai | same | ✓ |
+| Storage indexer | indexer-storage-testnet-turbo.0g.ai | same | ✓ |
+| Stale chain rejection | `{16600, 16601}` rejected by doctor + og-chain | guide warns to avoid old values | ✓ pre-empted |
+
+**ERC-7857 conformance note:** our `AgentPassportINFT` implements the substance (sealed-data transfer with TEE attestation + clone + authorize/revoke executor) but uses our own function names (`iTransferFrom` instead of the spec's `transfer(from, to, tokenId, sealedKey, proof)`). Foundry tests cover the sealed-key flow. Renaming to match the spec is a contract change → mainnet redeploy → blocked on B-2. Substance is correct today; signatures align in Phase B Day 23+.
+
+**OG resources guide audit (rounds 28-29):**
+- "Always call `processResponse` after every inference" applies to direct-broker clients. We use the Router which handles billing internally. The `receipt verify --tee-independent` is the deeper-check option. Not a gap.
+- "Always acknowledge a compute provider before first use" applies to direct-broker. Router-based clients (us) skip this step. Not a gap.
+- "Always check balance before inference" — shipped as `balance_check` built-in hook; skills opt in via manifest. Not auto-injected to keep the hook surface skill-controlled.
+
+**Cumulative session totals after 29 rounds:**
+- 15 real bugs found and fixed
+- 6 chat-v2 iterations (now the default `ivaronix` surface)
+- ~256 testnet receipts across all 9 receipt types
+- 17/17 packages typecheck clean
+- 61/61 forge tests pass
+- All Studio routes verified disconnected + connected at desktop + mobile
+- All CLI commands proven with on-chain receipts or state reads
+- Cross-wallet integrity proven (dev + fresh both render correctly)
+- Chain config matches canonical 0g-doc gold source
+- OpenClaw distribution path unblocked for first-party skills
+- ERC-7857 substance verified; signature alignment scoped for Phase B Day 23+
+
+The session has now exhausted every "no compromise, ship if testable" item that doesn't require user authorization. All remaining work requires one of: B-2 funding, npm publish, public deploy.
