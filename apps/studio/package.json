@@ -15,6 +15,7 @@
   "dependencies": {
     "@ivaronix/core": "workspace:*",
     "@ivaronix/og-chain": "workspace:*",
+    "@ivaronix/og-storage": "workspace:*",
     "@ivaronix/runtime": "workspace:*",
     "@ivaronix/skills": "workspace:*",
     "@tanstack/react-query": "^5.59.0",

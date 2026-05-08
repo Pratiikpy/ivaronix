@@ -136,6 +136,9 @@ importers:
       '@ivaronix/og-chain':
         specifier: workspace:*
         version: link:../../packages/og-chain
+      '@ivaronix/og-storage':
+        specifier: workspace:*
+        version: link:../../packages/og-storage
       '@ivaronix/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
