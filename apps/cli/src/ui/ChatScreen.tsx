@@ -525,10 +525,40 @@ export function ChatScreen(props: Props): React.ReactElement {
     }
   };
 
-  // Slash palette: when input starts with /, show the matching commands
+  // Slash palette: fuzzy subsequence match (PASS 77 F-autocomplete, A2).
+  // Each input char must appear in the candidate name in order; matches with
+  // fewer character gaps rank higher. Prefix matches still beat fuzzy
+  // matches by tie-breaking on .startsWith() before score.
   const palette = useMemo(() => {
     if (!input.startsWith('/')) return [];
-    return SLASH_COMMANDS.filter((s) => s.name.startsWith(input));
+    const q = input.toLowerCase();
+    if (q === '/') return SLASH_COMMANDS;
+
+    const ranked: { cmd: typeof SLASH_COMMANDS[number]; score: number; prefix: boolean }[] = [];
+    for (const cmd of SLASH_COMMANDS) {
+      const name = cmd.name.toLowerCase();
+      // Subsequence match: walk q through name; count gap-chars between hits.
+      let qi = 0;
+      let lastHit = -1;
+      let gaps = 0;
+      for (let i = 0; i < name.length && qi < q.length; i++) {
+        if (name[i] === q[qi]) {
+          if (lastHit >= 0) gaps += i - lastHit - 1;
+          lastHit = i;
+          qi++;
+        }
+      }
+      if (qi !== q.length) continue; // not all query chars matched
+      const prefix = name.startsWith(q);
+      // Lower score = better match. Penalize gaps + length difference.
+      const score = gaps + (name.length - q.length);
+      ranked.push({ cmd, score, prefix });
+    }
+    ranked.sort((a, b) => {
+      if (a.prefix !== b.prefix) return a.prefix ? -1 : 1;
+      return a.score - b.score;
+    });
+    return ranked.slice(0, 8).map((r) => r.cmd);
   }, [input]);
 
   return (
