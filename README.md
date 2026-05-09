@@ -8,8 +8,9 @@
 The single command that no other 0G project ships:
 
 ```bash
-pnpm install -g @ivaronix/cli
-ivaronix receipt verify 1304 --tee-independent
+git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs
+pnpm install
+pnpm --filter @ivaronix/cli exec ivaronix receipt verify 1304 --tee-independent
 ```
 
 Expected output:
@@ -22,6 +23,8 @@ Status: → FULLY VERIFIED ✓
 ```
 
 No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the TEE attestation against the public 0G Compute broker. Receipt body is on `/r/1304`; anchor tx on `chainscan-galileo.0g.ai`.
+
+> A global `pnpm install -g @ivaronix/cli` install path lands once `@ivaronix/widget` and `@ivaronix/cli` are npm-published (operator action, tracked in [docs/USER_TODO.md](docs/USER_TODO.md) B-3). Today the repo-clone path above is the only honest entry point — and still verifies a real on-chain receipt in one shell command.
 
 That's the spine. Everything else in this repo exists to make that command produce useful answers about real documents.
 
