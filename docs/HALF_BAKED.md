@@ -595,7 +595,49 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 
 ### K-15 · Canonical hash is keccak256 of a JS-specific JSON serialization, not RFC-8785  *(High)*
 - `packages/core/src/canonical.ts:10-30`. Sorts keys alphabetically; excludes a hard-coded set; `JSON.stringify` direct on values. RFC-8785 (JCS) demands UTF-8 NFC, ECMAScript number formatting rules, explicit array order. A future Node version that changes formatting breaks every existing receipt's hash. **Independent verifiers in Rust/Go must replicate JS-specific behavior.**
-- **Fix:** adopt RFC-8785 (JCS) properly. Document hash function as `keccak256(jcs(receipt))`. Provide reference Rust + Go verifiers with published test vectors.
+
+**No-compromise fix plan (locked 2026-05-10).** "Anyone re-verifies on any machine" is a foundation claim. The fix is not "swap the hash function." The fix is the full polyglot proof.
+
+**Hash function side:**
+1. Adopt RFC-8785 (JCS) strictly. UTF-8 NFC normalization, ECMAScript number rules (reject NaN/Infinity, no `-0`, no scientific where 64-bit-float roundtrip allows decimal), explicit array order preservation, escape sequence rules per RFC §3.2.2.
+2. New impl in `packages/core/src/jcs.ts` with line-by-line RFC citations.
+3. Test vectors in `packages/core/test/jcs-vectors.test.ts`: numbers (0, -0, 1e3, 1.5e-300, NaN→reject, Infinity→reject), strings (NFC, escape sequences, surrogate pairs, control chars), nested objects, arrays, null vs undefined, booleans, deep >10 levels, mixed-key-type rejection.
+4. Differential fuzz: random object → TS impl ↔ pinned `@cyberphone/json-canonicalization` reference → byte-for-byte equality.
+
+**Schema versioning (forward-only, no chain rewrite):**
+5. Add `schemaVersion: '1.0' | '2.0'` at receipt root (not inside body). Required, enforced by Zod.
+6. New receipts default to `2.0`, anchored under `keccak256(jcs(receipt))`.
+7. `verifyClaimed` branches on `schemaVersion`: 1.0 → legacy `canonicalize` preserved verbatim forever; 2.0 → JCS.
+8. The 1,330 existing v1 receipts are never touched, never re-hashed, never re-anchored. Their on-chain `receiptRoot` stays exactly what it is. No migration call.
+
+**Polyglot reference verifiers (the actual proof):**
+9. **Rust crate** `ivaronix-verifier-rs/` published to crates.io. `cargo run --release -- verify <receipt.json> --rpc <url>`. Re-implements JCS + keccak256 + ECDSA recover + EIP-1186 `eth_call` against `ReceiptRegistry.receipts(id)`. Identical test vectors as TS, byte-for-byte equality enforced.
+10. **Go module** `verifier-go/` published as a Go module. `go run ./cmd/ivaronix-verify <receipt.json> --rpc <url>`. Same surface as Rust.
+11. **Python script** in repo as the "five-line independence proof" demo. Not packaged; one file, runnable from any clean machine.
+
+**CI cross-impl proof:**
+12. New CI job `jcs-roundtrip-test`: builds TS + Rust + Go verifiers in the same pipeline, feeds 100 random objects + 100 fixed vectors through all three, asserts byte-identical hashes. Block merge on divergence.
+13. Foundry test that recomputes a known receiptRoot from JCS bytes + keccak256 and asserts equality with `ReceiptRegistry.receipts(id).receiptRoot`. Closes the loop on-chain.
+
+**Studio surface (honest tier marking, per CLAUDE.md §6):**
+14. `/r/<id>` reads `schemaVersion`. v1 receipts get a muted `LEGACY-HASH (v1)` chip next to the tier chip. v2 receipts get nothing — clean.
+15. Receipt page footer adds: "Hash version: v2 · RFC-8785 (JCS) · keccak256. Reproducible from any language: [Rust ↗] [Go ↗] [Python ↗]" with the three links.
+16. `/embed/r/<id>` and `/r/<id>/print` inherit the chip + version line.
+
+**CLI:**
+17. `ivaronix receipt verify <id>` works for both versions transparently — branches inside.
+18. `--hash-version 1|2` flag for round-trip regression tests.
+19. `ivaronix receipt jcs-roundtrip <file>` for users to verify their own receipts against the spec.
+20. `ivaronix demo` produces v2 by default; v1 accessible behind `--hash-version 1` for regression only.
+
+**Documentation:**
+21. New `docs/HASH_FUNCTION.md` — 2 pages: algorithm spec line by line, test vectors, three reference verifiers. `RECEIPT_SCHEMA.md` links to it.
+22. `README.md` §0: "Receipt hashes are RFC-8785 (JCS) + keccak256. Reference verifiers in Rust, Go, Python."
+23. `JUDGE_GUIDE.md` Step 5: "Verify a receipt from a non-JS environment" — the proof that "any machine, any language" is real.
+
+**Effort:** ~15h total. Day 1 (6h) JCS + schema + verifier branch + Studio chip + CI test. Day 2 (4h) Rust crate + crates.io publish. Day 3 (3h) Go module + module publish. Day 4 (2h) Python + docs.
+
+**Why this is the correct no-compromise shape:** the headline claim — "anyone, any machine, any language" — becomes provable, not promised. EIP-712, JWS, COSE all ship polyglot reference impls. Without them, "independent verification" is a JS-only oxymoron. The 1,330 v1 receipts stay byte-perfect; the chain history is preserved; the migration is forward-only by version field.
 
 ### K-16 · Studio Burn Mode `keyFingerprint` is sha256 of plaintext label  *(Critical — duplicates I-2)*
 - See I-2. The headline Burn Mode privacy claim is partially fictional in the Studio surface judges use first.
