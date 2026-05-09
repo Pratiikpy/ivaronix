@@ -187,13 +187,29 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
   - Passport: receiptCount = 1254, trustScore = 1254.
 - **Closes Criterion 2.1 vs AlphaDawg:** the agent reads its own past receipts as context, just like AlphaDawg's `priorCids` loop, but every prior load is verifiable from the chain (the new receipt's body lists which past receipts it consumed; anyone can fetch each one and confirm).
 
-### 3B. Visual skill creation flow
-- **Why:** Agent0G (showcase) ships a no-code workflow builder. Our skills require TypeScript module authoring — Track 3 onboarding bar is high.
-- **What to add:**
-  - Studio page `/skill/new` where a creator composes a skill from primitives without editing code: system prompt textarea + role config dropdown + fee split sliders + permission checkboxes + tier default selector.
-  - Live preview of the resulting `SKILL.md` frontmatter as the creator edits.
-  - One-click "Publish to SkillRegistry" that mints the skill on chain.
-- **Lowers** the bar for non-dev creators dramatically.
+### 3B. Visual skill creation flow → ✅ DONE (form + live preview + real local save; on-chain publish via existing CLI)
+
+- **Studio route shipped (`apps/studio/src/app/skill/new/page.tsx`):**
+  - Form-driven SKILL.md generator: skill id (slug), version, description, system prompt, license, default tier, memory access, shell access, four-checkbox permission cluster (burn auto-enable, consensus required, wallet access, writes files), passport min trust, fee-split slider (0-10000 bps in 500-bps steps).
+  - Live `SKILL.md` preview on the right, updates in real time as the creator edits. Shows YAML frontmatter + system-prompt body in the canonical shape that `findSkill` expects.
+  - Connected wallet's address auto-fills the creator passport line (`did:0g:passport:0xaa…:1`). Form works without a connected wallet too — the manifest just omits the passport line.
+  - "Save manifest locally" button POSTs to `/api/skill/save`, which writes the manifest to `<repo>/.ivaronix/skills/<id>/SKILL.md`. The skill becomes immediately runnable: the success message includes the exact `ivaronix doc ask <file> "..." --skill <id>` invocation.
+  - Honest disclosure paragraph at the bottom: publishing on-chain still uses `ivaronix skill publish <id>` from the operator's terminal so the user's signing key stays out of the operator path. Phase B will wire wallet-side signing into the form via wagmi.
+- **API route shipped (`apps/studio/src/app/api/skill/save/route.ts`):**
+  - POST `{skillId, manifest}` → writes to workspace-root `.ivaronix/skills/<id>/SKILL.md`.
+  - Validates skillId against `/^[a-z0-9][a-z0-9-]*[a-z0-9]$/` to block path traversal.
+  - 64 KiB manifest size limit. Refuses to overwrite an existing skill — caller bumps the version or removes the dir.
+- **Header / Skills nav wiring:** `/skills` page Section CTA now exposes "+ Compose a new skill" → `/skill/new`.
+- **§11 e2e visual proof captured** (`screenshots/3b-skill-builder/`):
+  - Desktop top/mid/bottom: form + live preview side-by-side, all field types rendered.
+  - After-edits snap: skill id + system prompt updates flow into the live preview character-by-character.
+  - After-save snap: green "Saved ✓" button + path confirmation + run-it-now command.
+  - Mobile: form + preview stack vertically.
+- **Verification script:** `scripts/qa/metamask-e2e/verify-3b.ts` — 7 assertions all pass:
+  - Form headline rendered. Live preview block rendered. Fee split slider rendered. System prompt field rendered. Phase B publish disclosure rendered.
+  - Preview reflects skill id + system prompt edits.
+  - Save endpoint writes the file with the form values; cleanup removes the test artifact.
+- **Closes Track 3 onboarding bar:** a non-dev creator can compose a skill in a couple of minutes without touching TypeScript. Agent0G's no-code wedge is now mirrored, but every saved manifest hashes into the same canonical `findSkill` path the dev-authored skills use — so registry, scanner, sandbox, and receipt machinery all apply identically.
 
 ### 3C. Receipt-as-firewall wiring → ✅ DONE (library code-complete + Foundry-tested · 5/5; deployment Phase B)
 

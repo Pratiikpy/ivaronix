@@ -74,6 +74,11 @@ export default async function SkillsPage() {
       label="§ 01 · SKILL CATALOG"
       title="First-party skills"
       description="Each skill ships with a manifest hash anchored on the SkillRegistry contract. Sorted by registry verification — MATCH first."
+      cta={
+        <Link href="/skill/new" className="btn-primary" style={{ textDecoration: 'none' }}>
+          + Compose a new skill
+        </Link>
+      }
     >
       <div
         style={{
