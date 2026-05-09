@@ -314,3 +314,516 @@ Ranked by what closes the biggest gap with the least time. Every one is shippabl
 5. **Sprint-language leakage (section B)** — every `Day N` / `Phase B` reference in user-visible code or docs gets re-written as a capability statement.
 
 Re-run the 5-subagent audit after the next polish pass to track which gaps closed. The user said "look like a brutal honest judge" — this list is the result. None of these are acceptable in a real product. All of them are fixable.
+
+---
+
+# Round 2 — five more parallel audits (added 2026-05-09)
+
+Five subagents ran in parallel: 0G integration depth, functional integrity, code quality, security & contract correctness, competitive gap vs `entries/` + `new-entries/` + `og-projects-showcase/`. Net-new findings only; round-1 items in Sections A-F not duplicated.
+
+## Section H · 0G integration depth (Criterion 1)
+
+For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Provus / Aishi.
+
+### H-1 · 0G Chain · `attestationHash` is permanently zero on chain  *(severity A)*
+- `packages/consensus/src/index.ts:174` hardcodes `attestationHash: null`. Every TIER 1 anchor passes `0x000…000` for the on-chain attestation slot. A reviewer reading `ReceiptRegistry.receipts(id)` on chainscan sees zero. The independent re-verifier still works because it re-runs `processResponse`, but the chain field is dead weight.
+- **Fix:** `keccak256(toUtf8Bytes(zgResKey))` for TIER 1; thread through `anchorReceipt`. ~5 lines.
+
+### H-2 · 0G Compute · `processResponse` called with two args, the SDK supports three  *(severity S)*
+- `apps/cli/src/commands/receipt.ts:253` calls `broker.inference.processResponse(providerAddress, chatID)`. Provus's `entries/provus-protocol/scripts/probe-compute.ts` and AIsphere's docs both pass the **content** as the third argument. We verify the chat ID was billed but not that the content corresponds to it.
+- **Fix:** look up content via `contentMap` already populated at `packages/consensus/src/index.ts:208-211` and pass it. ~2 lines.
+
+### H-3 · 0G Storage · runtime pipeline + `/api/run` never call `storage.upload`  *(severity S — most damaging in this section)*
+- `packages/runtime/src/pipeline.ts` and `apps/studio/src/app/api/run/route.ts` have **zero** references to `createStorageClient` (verified via grep). Every receipt produced from the home Run button gets a local sha256 evidenceRoot, not a 0G Storage Merkle root. The pipeline source even comments: "Studio's /api/run does not yet upload the encrypted blob to 0G Storage." The four-light Storage chip lights green anyway (Round-1 A-4, A-5).
+- **Fix:** copy the upload block from `apps/cli/src/commands/doc.ts:196-207` into `route.ts` before `anchorReceipt`. ~25 lines including failure-mode tagging.
+
+### H-4 · 0G Persistent Memory · the pipeline reads but never writes  *(severity S — broken promise)*
+- `packages/runtime/src/memory-client.ts:24-26` comment: "every anchor stores the receipt body keyed by skillId + walletAddress." Reality: grep shows zero callers of `memoryClient.store()` in the entire repo. The pipeline searches and prepends results to the prompt context (`pipeline.ts:201-219`) but never persists. The store is empty forever; `request.memoryQuery.retrievedCount` is 0 on every call.
+- The zgs-kv Docker container `ivaronix-kv-node` IS running per `docker ps`. No SDK code connects to it.
+- **Fix:** call `memoryClient.store({ group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory', content: ..., metadata: ... })` post-anchor. ~12 lines.
+
+### H-5 · 0G DA · gRPC client is the deepest in the field but no live blob exists  *(severity S — claim without evidence)*
+- `packages/og-da/src/index.ts:105-236` ships real gRPC client over `@grpc/grpc-js` with three full RPCs (`DisperseBlob`, `GetBlobStatus`, `RetrieveBlob`) against the upstream `disperser.proto`. **No competitor in the field has this.** AIsphere mentions DA only as a future cross-chain step; Provus doesn't integrate it.
+- The disperser container is not running. We have zero live blobs to point at. The README claim "DA wired" is true at the code level and false at the artefact level.
+- **Fix:** operator action. Start `0g-da-client` container, run `ivaronix da disperse <file>` once, capture request_id, link in README. Docker is running per memory.
+
+### H-6 · `Erc7857Verifier` uses ECDSA-attestor sigs, not TEE/ZKP  *(severity A — category-wide gap)*
+- `contracts/src/Erc7857Verifier.sol:9-14` admits: "Day 6 MVP ships an attestor-signed verifier... Future work (Phase B+) will swap this attestor for a TEE-backed remote attestation or ZKP verifier." The deployer is the bootstrap attestor (`:31-32`).
+- ERC-7857's value prop is the integrity proof being TEE/ZKP-backed. Aishi and SealedMind ship the same shape; AIsphere is also attestor-signed. **Nobody in the field ships real TEE-attested ERC-7857.**
+- **Fix:** can't add real remote attestation in 90min. Ship a second attestor that is the operator's TEE wallet from 0G Compute; document 2-of-2 attestation as the current integrity story; ZKP path Phase B.
+
+### H-7 · 0G Router · `routerVerified` defaults to `false` on testnet  *(severity B)*
+- `packages/og-router/src/index.ts:97`: when `x_0g_trace.tee_verified` is missing (testnet default), `routerVerified` falls back to `false`. The Router-flag check is best-effort. The trustworthy check is `--tee-independent`.
+- **Fix:** cosmetic. Add `keyring.list()` printout in studio onboarding so judge sees four credentials rotating.
+
+### Top-3 ship-today fixes from H
+
+1. Wire `memoryClient.store()` after every anchor. Closes the broken-promise gap. ~12 lines. (H-4)
+2. Pass content as third arg to `processResponse`. Matches Provus + AIsphere's depth. ~2 lines. (H-2)
+3. Populate `attestationHash: keccak256(zgResKey)` for TIER 1. Stops anchoring zeros. ~5 lines. (H-1)
+
+### Top-3 ship-this-week fixes from H
+
+1. Storage upload in `/api/run`. The headline demo's Storage light goes green over a sha256, not a Storage root. 1-2h. (H-3)
+2. Live DA disperse. Operator action. We are the only project with the code; let's be the only project with the artefact. 2-3h. (H-5)
+3. Real KV client against `ivaronix-kv-node`. Replaces `StubKvClient` (Round-1 A-2). 3-4h.
+
+### What's genuinely strong in 0G depth
+**TEE re-verify and gRPC DA client.** `apps/cli/src/commands/receipt.ts` + `packages/consensus/src/index.ts:202-234` is the only project in the cohort that ships an end-to-end `processResponse` re-verify pipeline against signed receipts on chain. AIsphere mentions it in docs; Provus has a one-shot probe script. We have it as a CLI verb operating over already-anchored receipts. `packages/og-da/src/index.ts` is the deepest TS wrapper of `0g-da-rust-sdk` we have seen. Two competitors mention DA; neither ships a client.
+
+---
+
+## Section I · Functional integrity (claim vs reality)
+
+20 net-new findings. Pattern: schema or UI advertises a property the code path fakes, short-circuits, or admits to with sprint-tagged comments.
+
+### I-1 · `/r/[id]` "VERIFIED" chip gated on file existence, not on hash/signature  *(severity S)*
+- `apps/studio/src/app/r/[id]/page.tsx:147-148`: `overallState = hasLocalBody ? 'verified' : 'pending'`. The page never invokes `verifyClaimed()`. A locally-tampered JSON whose `receiptRoot` no longer matches its content still renders "VERIFIED" green so long as a file exists.
+- **Fix:** call `verifyClaimed(local)` server-side; gate `verified` on `result.state !== 'INVALID'`.
+
+### I-2 · `/api/run` Burn Mode `keyFingerprint` is sha256 over a label string, not over an AES key  *(severity S — schema lie)*
+- `packages/runtime/src/pipeline.ts:444-447`: `keyFingerprint = sha256("burn:" + skillId + userPromptHash + sessionKeyDestroyedAt)`. **No AES-256-GCM key is generated, no encryption happens, nothing is destroyed.** Code comment admits the schema record is "schema-faithful burn proof without the full evidence-encryption pipeline." That is fabrication of a security property.
+- **Fix:** when Studio cannot run the real burn pipeline, OMIT `storage.encryption.keyFingerprint` and `burn` entirely. Or wire the real burn path from `apps/cli/src/commands/doc.ts:170-186` into the runtime.
+
+### I-3 · "Operator-on-behalf-of-user" receipts FAIL the project's own verifier  *(severity S — most embarrassing finding)*
+- `packages/runtime/src/pipeline.ts:451-453, 577` sets `agent.ownerWallet = delegatedOwnerWallet` (user) but `signReceipt` always uses the operator's signer. `packages/receipts/src/verify.ts:85-89` rejects when `signature.signer !== agent.ownerWallet` → `state: 'INVALID'`.
+- Every W9 run produces a receipt that fails offline verification. A judge running `ivaronix receipt verify <W9-id>` sees `INVALID`.
+- **Fix:** either (a) require browser-side `signMessage` of the receiptRoot via wagmi before /api/run anchors, or (b) drop W9 entirely and admit ownerWallet is the operator. Today's middle path produces invalid receipts.
+
+### I-4 · RunPanel TEE light flips green on registry-match, not on TEE attestation  *(severity S)*
+- `apps/studio/src/components/RunPanel.tsx:136`: `TEE: data.scan?.matches ? 'verified' : 'pending'`. `scan.matches` is a SkillRegistry manifest-hash check, not a TEE check. NIM-routed TIER 2 runs against a registered skill light the TEE chip green.
+- **Fix:** read `scan.matches` for the registry chip only; gate TEE on `data.tier === 'tier-1-tee'` AND `data.routerVerified === true`.
+
+### I-5 · `/r/[id]` Chain light hardcoded `verified` even when no anchor tx in body  *(severity A)*
+- `apps/studio/src/app/r/[id]/page.tsx:154`: `Chain: 'verified'` is hardcoded with comment "we got onChain, so chain is verified." But the page also renders for receipts whose `local.chainAnchor.anchorTxHash` is missing.
+- **Fix:** `Chain: txHash ? 'verified' : 'mismatch'`.
+
+### I-6 · `bin/ivaronix.ts` advertises "TEE-Bound Delegated AI Agent" — no TEE binding ships  *(severity S)*
+- `apps/cli/src/bin/ivaronix.ts:85` comment + `apps/cli/src/commands/delegate.ts:33-38` admit: "Today the key is held server-side; the trust boundary is 'the operator does not export the key.'" Delegate keys are `Wallet.createRandom()` in plaintext under `.ivaronix/delegates/<id>/key.json`. Zero TEE involvement.
+- **Fix:** strip "TEE-Bound" from descriptions. Replace with "Operator-Held Delegate Wallet (Phase A)."
+
+### I-7 · `compute verify-tee` does not verify; prints a hint and exits 0  *(severity A)*
+- `apps/cli/src/commands/compute.ts:69-77` says help "alias for `receipt verify --tee-independent`." Action body prints a hint and exits 0, never invoking it.
+- **Fix:** `await receiptCommand.parseAsync(['node', 'verify', id, '--tee-independent']);` propagate exit code.
+
+### I-8 · Build-path receipts omit `attestationHash` entirely  *(severity A)*
+- `apps/cli/src/commands/doc.ts:512-519` Build path has no `attestationHash` write. JUDGE_GUIDE example would mislead.
+- **Fix:** populate from `primaryAtt.zgResKey` when present.
+
+### I-9 · `/skills` page header "First-party skills" but loads 156 imports  *(severity A)*
+- `apps/studio/src/app/skills/page.tsx:75-76` header copy promises "first-party"; `loadAllSkills()` returns every skill under `seed-skills/` including 150 third-party imports per `registry.json`. Most have not been anchored.
+- **Fix:** filter to `source: 'first-party'` (already in registry.json), or split into two sections with honest counts.
+
+### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A)*
+- `packages/runtime/src/pipeline.ts:259-295` NVIDIA branch. When `provider: 'nvidia'`, receipt is correctly tagged TIER 2 but the sandbox does not refuse despite manifest's TEE requirement. The dead-branch bug from Round-1 A-1 makes this reachable from a future code path.
+- **Fix:** in `runPipeline` after computing `providerKind`, throw if `manifest.og.permissions.compute_tee_required && providerKind !== '0g'`.
+
+### I-11 · `passport mint` writes sha256 of plaintext metadata to chain `metadataRoot`  *(severity A)*
+- `apps/cli/src/commands/passport.ts:78-92`: `metadataRoot = '0x' + sha256(JSON.stringify(metadata))`. No Storage upload, no DA dispersal. The chain holds a hash with no retrievable preimage.
+- **Fix:** upload metadata to 0G Storage first; use returned Merkle root as `metadataRoot`.
+
+### I-12 · `memory snapshot` prints sprint-tagged TODO; manifest is never persisted  *(severity A)*
+- `apps/cli/src/commands/memory.ts:240` says "Day 11+ will upload this manifest." The command computes a manifest in memory and never uploads it anywhere.
+- **Fix:** upload to 0G Storage now (the engine has a path), or rename `memory snapshot --print-only`.
+
+### I-13 · `/r/[id]` "RISK" pill reads from receipt's claimed `riskLevel`; pipeline always writes 'low'  *(severity A)*
+- `packages/runtime/src/pipeline.ts:568-572` and `apps/cli/src/commands/doc.ts:569` both write `outputs.riskLevel: 'low'` unconditionally. Every receipt anywhere claims `low`. The pill is decorative.
+- **Fix:** parse `severity:` markers from `finalText` server-side (RunPanel already has the regex).
+
+### I-14 · README `1,330+`, JUDGE_GUIDE `1,400+`, PITCH `1,165`, MAINNET_READINESS `1,071` — same date  *(severity A)*
+- Round-1 C noted drift; the new finding is README's hero number `1,330+` is the **first thing a judge sees** and contradicts the JUDGE_GUIDE the same judge reads next.
+- **Fix:** Studio home already loads `ReceiptRegistry.nextId()` server-side. Replace all four hardcoded numbers with one `<LiveCount/>` component plus a stamped "as of" line.
+
+### I-15 · `/api/run` returns no `tier` / `providerKind` / `verificationMethod` to client  *(severity A)*
+- `apps/studio/src/app/api/run/route.ts:80-102` and `RunPanel.tsx:39-54`. ResultCard cannot honestly render TIER 1 vs TIER 2 from a fresh run. Judge has to click through to `/r/[id]`.
+- **Fix:** add `tier`, `providerKind`, `routerVerified` to route response; show matching chip in ResultCard.
+
+### I-16 · `daBlobRef.status` records `PROCESSING` as terminal  *(severity A)*
+- `apps/cli/src/commands/doc.ts:224-237` calls `daClient.disperseBlob()` once and never polls. `result.status` is typically `PROCESSING`. Receipt records a provisional state as a permanent fact.
+- **Fix:** call `disperseAndFinalize` (already exists in `og-da/src/index.ts`).
+
+### I-17 · `/r/[id]` storage caption "anyone with the SDK can re-download this blob" without proof of upload  *(severity A)*
+- `apps/studio/src/app/r/[id]/page.tsx:290-292`. Caption stays the same when `doc ask` falls back from Storage upload to local sha256.
+- **Fix:** add `storage.evidenceOnStorage: boolean`; gate caption on it.
+
+### I-18 · `priorReceiptIds` lineage claim unverifiable from the receipt alone  *(severity B)*
+- `apps/studio/src/app/r/[id]/page.tsx:357-360` says "lineage is verifiable." Code just lists local-FS receipts keyed by owner+skill. Nothing in the receipt body proves the agent **read** them. No model-input hash.
+- **Fix:** include `request.priorContextHash` in the canonical hash. Then chain receipt commits to which prior bodies were folded in.
+
+### I-19 · `passport revoke` / `delegate revoke` submit chain txs with no confirmation  *(severity B)*
+- New on top of Round-1 E (memory revoke). `delegate.ts revoke <id>` is silent on irreversibility. Mistype + enter spends gas to revoke a grant the user wanted.
+- **Fix:** `--confirm` flag or interactive `[y/N]`.
+
+### I-20 · "14 packages typecheck-clean" claim — actual count is 25 packages + 8 apps  *(severity A)*
+- `JUDGE_GUIDE.md:108` and `README.md:4` claim "14 packages." `ls packages/` returns 25 directories; `apps/` has 8. Either some aren't typechecked, or the number is stale.
+- **Fix:** `pnpm -r typecheck` and report the exact count. One source of truth in CI.
+
+---
+
+## Section J · Code quality
+
+### J-1 · Studio tsconfig forks the strictness contract  *(severity A)*
+- `apps/studio/tsconfig.json` does not extend `tsconfig.base.json`. Sets `strict: true` but drops `noUncheckedIndexedAccess`. Studio is the largest typecheck surface and the one judges open in DevTools.
+- **Fix:** `"extends": "../../tsconfig.base.json"`. Run `pnpm --filter @ivaronix/studio typecheck` and fix what falls out.
+
+### J-2 · Three API routes cast `req.json()` without runtime validation  *(severity A)*
+- `apps/studio/src/app/api/run/route.ts:51` (`as RunBody`), `apps/studio/src/app/api/skill/save/route.ts:21`, `apps/studio/src/app/api/onboard/metadata/route.ts:32`. Combined with no rate limit, an attacker posts `{ contentText: "<10MB string>" }` and reaches `runPipeline`.
+- **Fix:** `RunBodySchema = z.object({...}).parse(await req.json())`.
+
+### J-3 · 14 `JSON.parse(readFileSync) as T` casts (disk-as-truth)  *(severity A)*
+- Worst 5: `apps/studio/src/lib/local-receipt.ts:142` (receipt body straight to `ReceiptBody`), `local-receipts.ts:66`, `apps/cli/src/lib/conversation.ts:57,63,74`, `apps/cli/src/commands/delegate.ts:94,108`, `passport.ts:230`. A migration-stale local receipt crashes `/r/<id>` first paint with `Cannot read 'X' of undefined`.
+- **Fix:** every load-receipt-from-disk path runs `ReceiptV1Schema.safeParse()`; show `INVALID — schema mismatch` on failure.
+
+### J-4 · 12 non-null assertions in CLI commands  *(severity B)*
+- `doc.ts:553,559`, `doc-bulk.ts:264,272,305`, `passport-consolidate.ts:320,336,374`, `room.ts:355,565`, `openclaw.ts:188`. `signed.storage!.receiptRoot` after a fallback that may set storage null.
+- **Fix:** explicit `if (!signed.storage) throw new Error('storage anchor missing')`.
+
+### J-5 · `apps/studio/src/app/global/page.tsx:44` reaches into a private contract field  *(severity A)*
+- `(client as unknown as { contract: { queryFilter: Function; filters: { MemoryAccessed: Function } } }).contract`. Type-laundering through `unknown` to call a private field. Rename of `MemoryAccessLogClient.contract` breaks `/global` at runtime.
+- **Fix:** add `queryRecentAccessEvents(fromBlock)` to `MemoryAccessLog.ts`. Delete the cast.
+
+### J-6 · Receipt schema accepts empty strings on identifier fields  *(severity A)*
+- `packages/receipts/src/schema.ts:63,79,80,93`. `passportId: z.string()`, `skillId: z.string()` — no `.min(1)`, no shape regex. Empty `skillId` validates and gets canonical-hashed and anchored.
+- **Fix:** `passportId: z.string().regex(/^pas_[0-9A-HJ-NP-Z]{26}$/)`, `skillId: z.string().min(3).max(80)`, `mode: z.enum([...])`.
+
+### J-7 · `@ivaronix/trust-layer` — entire package, zero importers  *(severity A)*
+- `packages/trust-layer/`. `evaluatePolicy()` exported, zero callers anywhere. README claims approval gates that fire on nothing.
+- **Fix:** wire into `pipeline.ts` before consensus, OR move to `packages/_design/` and remove from workspace until shipped.
+
+### J-8 · Three TS unit tests in 23 first-party packages  *(severity S)*
+- All of them: `consensus/convergence.test.ts`, `memory/engine.test.ts`, `receipts/builder.test.ts`. **Worst ratios:** `packages/skills` 14 src / 0 tests, `packages/og-chain` 7 / 0, `packages/runtime` 5 / 0. `runPipeline` has zero unit tests; central orchestration is exercised only by manual E2E.
+- **Fix:** start with three: `pipeline.test.ts` (stub Router + stub anchor; assert receipt schema parses, canonical hash stable), `sandbox.test.ts` (assert `compute_tee_required` branch fires), `ReceiptRegistry.test.ts` (mocked Contract; assert calldata).
+
+### J-9 · CI silently passes broken Studio builds  *(severity S)*
+- `.github/workflows/ci.yml:54-58` Studio `next build` step has `continue-on-error: true`. CI badge says green while production builds fail.
+- **Fix:** fix the underlying preload issue or split into separate `[optional]` job. Restore CI as a real signal.
+
+### J-10 · 13 hardcoded `http://localhost:3300` strings in CLI user output  *(severity A)*
+- `commands/{room,demo,delegate,doc-bulk,passport-consolidate,pr,skill-schedule}.ts` plus `apps/telegram-bot/src/index.ts:56`. The proof URL printed is the one a judge copies; today it's localhost regardless of `STUDIO_BASE`.
+- **Fix:** `studioUrl(path)` helper in `core/src/env.ts` reads `IVARONIX_STUDIO_BASE`.
+
+### J-11 · 13 packages have `lint: echo skip` and `test: echo skip`  *(severity A)*
+- `packages/{core,memory,og-chain,og-router,og-storage,og-toolkit,og-da,og-kv,runtime,skills,trust-layer}/package.json`. CI's `pnpm -r run lint` is green for free.
+- **Fix:** wire `eslint .` against a workspace-root config. Three rules (`no-explicit-any`, `no-console` in libs, `no-non-null-assertion`) catch most of J-2 and J-4.
+
+### J-12 · 35+ swallowed catches across CLI and Studio  *(severity B)*
+- `} catch { /* skip malformed */ }` — uniform. No log, no telemetry. When a real bug arrives, the CLI silently iterates past it.
+- **Fix:** `silentSkip(err, where)` helper that increments a debug counter when `IVARONIX_DEBUG=1`.
+
+### J-13 · Seven empty packages drag CI time  *(severity B)*
+- `packages/widget/`, `tui/`, `ui/`, `sdk/`, `orchestrator/`, `policy/`, `hooks/` — zero `.ts` files in `src/`. `pnpm-workspace.yaml` enumerates them.
+- **Fix:** delete the empties. Re-add when needed.
+
+### J-14 · Most package.json missing publishable metadata  *(severity B)*
+- Every `packages/*/package.json` and `apps/*/package.json` except `og-toolkit`. Missing `description`, `repository`, `license`, `homepage`, `bugs`, `engines.node`.
+- **Fix:** shared block via `pnpm pkg set`.
+
+### TypeScript strictness scorecard
+- `strict: true` — yes (base + studio). **First flip:** Studio extends base.
+- `noUncheckedIndexedAccess` — yes in base, **no in Studio**. Same fix.
+- `noImplicitAny` — yes (implied). **First flip:** add `@typescript-eslint/no-explicit-any` lint rule.
+- `exactOptionalPropertyTypes` — explicitly off in base. Multi-day cleanup; defer.
+
+### Top-5 production-readiness gaps (J)
+1. **3 unit tests in 23 packages.** `runPipeline` has none. Fix J-8.
+2. **API routes accept un-validated JSON.** Combined with no rate limit, this is the first attack surface a security-minded reviewer probes. Fix J-2.
+3. **`@ivaronix/trust-layer` is dead code in the public surface.** Fix J-7.
+4. **CI lies about Studio builds.** Fix J-9.
+5. **`compute_tee_required` is `&& false` and `attestationHash` is null.** Two of three security claims advertised but unenforced. Fix Round-1 A-1 + H-1.
+
+---
+
+## Section K · Security & contract correctness
+
+26 findings; 5 Critical, 5 High, 7 Medium, 9 Low. Critical = loses funds or forges receipts. High = compromises a feature. Medium = DoS or info leak.
+
+### K-1 · `AgentPassport.recordReceipt` lets the token owner forge unbounded trustScore  *(Critical)*
+- `contracts/src/AgentPassportINFT.sol:107-125`. Function gates on `msg.sender == _ownerOf(tokenId) || authorizedRecorders[msg.sender]`. Owner branch lets ANY token holder write any score with no link to a real `ReceiptRegistry` row. `trustScore += anyDelta`. **Every dashboard, fee-split tier, and "agent reputation" UI reads this value.**
+- **Fix:** restrict to `authorizedRecorders` only. Verify `receiptRoot` exists on `ReceiptRegistry`. Cap `trustScoreDelta` per call ([-100, +100]).
+
+### K-2 · Anyone can anchor any receiptRoot on `ReceiptRegistry`, claiming any agent identity  *(Critical)*
+- `contracts/src/ReceiptRegistry.sol:67-90`. `anchor()` writes `agentAddress: msg.sender` with zero check that `msg.sender` actually signed the referenced receipt. An attacker writes a receipt offline, signs with their key, anchors a different `receiptRoot` claiming someone else's wallet. Chain-only verifiers see the lie.
+- **Fix:** EIP-712 signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)` recovered inside `anchor()`. Stop trusting `msg.sender` as the agent.
+
+### K-3 · `attestationHash` allowed `bytes32(0)`, never validated against any TEE source  *(High)*
+- `ReceiptRegistry.sol:67-90` accepts zero. Pipeline writes `0x000…0`. The TIER 1 claim has no on-chain commitment.
+- **Fix:** require `attestationHash != bytes32(0)` for TIER 1 types. Maintain a separate `AttestationRegistry` keyed by `chatId → attestationHash`.
+
+### K-4 · `iTransferFrom` clears no executor authorizations  *(High)*
+- `AgentPassportINFT.sol:200-229`. Doc-string says "Authorizations are cleared on transfer for security." Implementation does not iterate or delete. After transfer, every executor authorized by the previous owner can still run the agent until TTL expires.
+- **Fix:** per-token version counter checked in `isAuthorizedExecutor`, OR maintain an array of authorized executors and zero them in `_update`. Doc and code must agree.
+
+### K-5 · `Erc7857Verifier` not EIP-712; uses `abi.encodePacked` + raw `_recover`  *(Medium)*
+- `Erc7857Verifier.sol:54-82`. No domain separator with `address(this)`/`chainid`. No `deadline`. `_recover` accepts `s` in upper half of curve (signature malleability). Nonce key is `keccak(recipient, metadataHash, nonce)` so a future V2 deployment lets V1 sigs replay against V2.
+- **Fix:** EIP-712 typed data with full domain separator + deadline. OZ `ECDSA.recover` (handles malleability + length).
+
+### K-6 · `mint()` reentrancy via `onERC721Received`  *(Medium)*
+- `AgentPassportINFT.sol:_safeMint` happens BEFORE `passportOf[to] = tokenId` is set on line 96. A malicious recipient contract re-enters `mint` from inside `onERC721Received` for the same `to`; second-level `passportOf == 0` check still passes. One wallet ends up with two passports.
+- **Fix:** set `passportOf[msg.sender] = tokenId` BEFORE `_safeMint`, OR add `nonReentrant` to `mint()`.
+
+### K-7 · `recordViolation` callable by token owner  *(Low)*
+- `AgentPassportINFT.sol:130-144`. Combined with K-1, owner can pump trustScore arbitrarily then choose not to record bad-faith violations.
+- **Fix:** restrict to `authorizedRecorders`.
+
+### K-8 · `/api/run` zero auth + zero rate limit  *(Critical)*
+- `apps/studio/src/app/api/run/route.ts:47-113`. Anonymous POST. Body trusts client-supplied `userWallet`. Operator's `EVM_PRIVATE_KEY` signs receipts on their behalf. **A single attacker drains operator OG balance, NIM quota, 0G Compute credits in minutes.**
+- **Fix:** Upstash rate-limit (per-IP and per-`userWallet`). Require SIWE session cookie tied to `userWallet` before anchoring on behalf of a user.
+
+### K-9 · `/api/skill/save` writes to disk with no auth — RCE-class  *(Critical)*
+- `apps/studio/src/app/api/skill/save/route.ts:18-71`. Anonymous POST writes a 64 KiB file to operator's `<workspace>/.ivaronix/skills/<skillId>/SKILL.md`. The next CLI run loads the planted manifest and executes hooks declared in it via `runHooks`.
+- **Fix:** SIWE session, rate-limit, scope per-wallet, validate manifest with the same Zod schema CLI uses, refuse manifests whose `og.hooks.*` paths point outside per-wallet sandbox.
+
+### K-10 · `/api/dashboard/[addr]` filesystem walk reads arbitrary `.json` from disk  *(Medium)*
+- `apps/studio/src/app/api/dashboard/[addr]/route.ts:23-71`. Any user who can write to operator's `.ivaronix/schedules` (see K-9 — same operator runtime) gets schedules surfaced under any address.
+- **Fix:** treat schedules as authoritative only when signed by claimed wallet.
+
+### K-11 · Error messages leak operator paths and stack traces  *(Medium)*
+- All four API routes return `(err as Error).message` to client. Includes filesystem paths, env-misconfig details, indexer URLs.
+- **Fix:** in production, log full error server-side; return `{ error: 'internal error', requestId }`.
+
+### K-12 · No HTTP security headers anywhere  *(Medium)*
+- `apps/studio/src/middleware.ts:1-23` only does vanity-URL rewrites. No `next.config.ts` `headers()`. Missing CSP / XFO / XCTO / Referrer-Policy / HSTS / Permissions-Policy. `/embed/r/[id]` has no `frame-ancestors` policy.
+- **Fix:** `headers()` in `next.config.ts` with the standard set.
+
+### K-13 · No CSRF protection on any state-changing route  *(Medium)*
+- All four routes. Once SIWE auth lands, third-party `fetch('/api/run', {credentials:'include'})` burns the user's quota.
+- **Fix:** `Origin === self` check; `SameSite=Strict` cookies; custom `X-Ivaronix-CSRF` header.
+
+### K-14 · "Operator-on-behalf-of-user" receipts are forgeries by our own verifier  *(Critical — duplicates I-3, repeated for security framing)*
+- See I-3. The W9 path produces receipts that our `verify.ts:85-92` rejects.
+- **Fix:** branch verify on `agent.signedBy`; for `'operator-on-behalf-of-user'` require operator signer in an allow-list AND `agent.ownerWallet` matches the SIWE-authenticated user. Until SIWE handshake exists, do not advertise this tier.
+
+### K-15 · Canonical hash is keccak256 of a JS-specific JSON serialization, not RFC-8785  *(High)*
+- `packages/core/src/canonical.ts:10-30`. Sorts keys alphabetically; excludes a hard-coded set; `JSON.stringify` direct on values. RFC-8785 (JCS) demands UTF-8 NFC, ECMAScript number formatting rules, explicit array order. A future Node version that changes formatting breaks every existing receipt's hash. **Independent verifiers in Rust/Go must replicate JS-specific behavior.**
+- **Fix:** adopt RFC-8785 (JCS) properly. Document hash function as `keccak256(jcs(receipt))`. Provide reference Rust + Go verifiers with published test vectors.
+
+### K-16 · Studio Burn Mode `keyFingerprint` is sha256 of plaintext label  *(Critical — duplicates I-2)*
+- See I-2. The headline Burn Mode privacy claim is partially fictional in the Studio surface judges use first.
+- **Fix:** wire `uploadEncryptedBurn` server-side, OR set `storage.encryption.type = 'none'` and remove burn UI from Studio until real.
+
+### K-17 · `chainId` and `registryAddress` in receipt body not bound to anchor target  *(High)*
+- `packages/receipts/src/schema.ts:245-253`, `verify.ts`. Verifier reads from `env.network` for the registry address, not from the receipt body. An attacker swaps `registryAddress`/`chainId` to a chain they control, deploys a vanilla `ReceiptRegistry`, anchors the same `receiptRoot`. Verifier shows green ANCHORED.
+- **Fix:** require `receipt.chainAnchor.chainId === NETWORKS[env.network].chainId` AND `registryAddress === getDeployedAddress(env.network, 'ReceiptRegistry')`.
+
+### K-18 · Schema enforces no `chainId === 16602` invariant  *(Medium)*
+- `schema.ts:248`: `chainId: z.number().int()`. A receipt with `chainId: 1` parses cleanly. Combined with K-17, makes spoofing trivial.
+- **Fix:** `z.union([z.literal(16602), z.literal(<mainnet-id>)])`.
+
+### K-19 · `signature.signature` regex accepts any hex length  *(Low)*
+- `schema.ts:271-276`: `regex(/^0x[0-9a-fA-F]+$/)`. Matches `0x00`. Schema "PASS" claims well-formed when not.
+- **Fix:** `regex(/^0x[0-9a-fA-F]{130}$/)`.
+
+### K-20 · Memory-at-rest AES-GCM nonce derived from plaintext + ms timestamp  *(Critical — catastrophic crypto break)*
+- `packages/memory/src/encryption.ts:28-34`. `nonce = sha256(plaintext || Date.now()).slice(0, 12)`. Two calls in the same millisecond with the same plaintext produce the same nonce under the same key. **AES-GCM nonce reuse with the same key recovers the keystream and forges GHASH tags.**
+- **Fix:** `nonce = randomBytes(12)`. The current "deterministic-ish" nonce serves no purpose since the IV is stored alongside the ciphertext.
+
+### K-21 · Single operator key signs everything  *(High)*
+- `packages/runtime/src/env.ts`, `pipeline.ts:422-424`. One key signs receipts, anchors, calls `recordReceipt`, uploads, pays. Compromise forges every Studio-anchored receipt and drains every funded contract. Survives unencrypted in process memory and `docker inspect`.
+- **Fix:** separate anchoring key from signing key (two KMS slots). Long-term: SIWE so user signs and operator only anchors.
+
+### K-22 · `CapabilityRegistry.consumeRead` does not authenticate the grantee  *(High)*
+- `contracts/src/CapabilityRegistry.sol:97-109`. `consumeRead(grantId)` decrements `readsRemaining` for any caller. **An attacker reading public `grantsByGrantee` exhausts a victim's caps.**
+- **Fix:** `require(msg.sender == g.grantee, "CapabilityRegistry: not grantee")` at function start.
+
+### K-23 · `MemoryAccessLog` is permissionless — logs prove nothing  *(Medium)*
+- `contracts/src/MemoryAccessLog.sol:43-52`. Anyone calls `logAccess()` with any combination. The on-chain audit trail is pollutable.
+- **Fix:** `onlyAuthorizedLogger`, OR cross-check `grantId` against `CapabilityRegistry` and require `msg.sender == agent`.
+
+### K-24 · Burn-Mode "delete" does not delete underlying storage; schema says `tempPathsZeroed: []`  *(Low)*
+- `packages/og-storage/src/burn.ts` + `pipeline.ts:553-563`. Cryptographic claim is sound (key destroyed → ciphertext unreadable to operator); schema fields lie about local cleanup.
+- **Fix:** populate `tempPathsZeroed` with real overwritten paths, or remove field.
+
+### K-25 · `SubscriptionEscrow.cancel` lets agent grief client  *(Low)*
+- `contracts/src/SubscriptionEscrow.sol:230-238`. Either party cancels with no notice period.
+- **Fix:** `cancelGraceSeconds` window between agent-initiated cancel and EXPIRED.
+
+### K-26 · No private key surfaces in error messages or logs  *(no finding — strength)*
+- Verified: every reference to `EVM_PRIVATE_KEY` checks for missing-ness; none log the value. `.env.example` commits no real key.
+
+### Top-5 must-fix-before-mainnet (Critical + High blocking promotion)
+1. **K-1** — `recordReceipt` authorized recorders only + verify on-chain receipt. Without this, every reputation number is a self-claim.
+2. **K-2** — Move `agentAddress` from `msg.sender` to EIP-712-recovered signer in `ReceiptRegistry.anchor`. Without this, every anchor lies about the agent.
+3. **K-14 / I-3** — Ship real SIWE for delegated signing OR remove the W9 path. Stop emitting receipts our verifier rejects.
+4. **K-16 / I-2** — Studio Burn Mode encrypts for real, OR the burn UI comes down.
+5. **K-20** — AES-GCM nonce → `randomBytes(12)`. Catastrophic crypto break otherwise.
+
+### Top-5 must-fix-before-judge-day (High + Medium a careful judge notices)
+1. **K-8** — Rate-limit `/api/run` + SIWE session. A judge with `curl` should not drain the operator wallet.
+2. **K-9** — Auth + sandbox `/api/skill/save`. RCE-class.
+3. **K-17 / K-18** — Bind `chainAnchor.chainId` and `registryAddress` to deployment in `verifyClaimed`. Trivial chain-spoofing today.
+4. **K-12** — `next.config.ts` `headers()`. CSP, XFO, HSTS, frame-ancestors. 30 minutes.
+5. **K-22** — `require(msg.sender == g.grantee)` in `CapabilityRegistry.consumeRead`. Two-line patch closes a public DoS.
+
+### What's already strong (security)
+Contract surface is small and well-tested. `Ownable2Step` across `ReceiptRegistry`, `AgentPassportINFT`, `Erc7857Verifier`. `Pausable` on the right state-changing functions. `SubscriptionEscrow` follows checks-effects-interactions: state writes before `s.agent.call{value: ...}("")`, `nonReentrant` on `checkIn`/`alert`/`withdrawRemaining`. Burn Mode primitives in `packages/og-storage/src/burn.ts` are textbook AES-256-GCM with `randomBytes(12)` nonce — the bug in K-20 is in `packages/memory/src/encryption.ts` only, not in the storage burn path. `IvaronixReceiptGuard` is a clean stateless library — zero deployment cost, zero new attack surface. `SkillRegistry` ownership locks correctly on first publish. No private key surfaces in any logged error message.
+
+---
+
+## Section L · Competitive gap (vs `entries/`, `new-entries/`, `og-projects-showcase/`)
+
+### Where Ivaronix is GENUINELY ahead
+
+#### L-1 · Independent TEE re-verification as a standalone CLI verb  *(decisive)*
+- AIsphere calls `processResponse` inline during fee settlement, warns "non-fatal" on failure. Provus calls it inside the agent loop. **Neither exposes it as a third-party-runnable verifier.**
+- Ivaronix: `apps/cli/src/bin/ivaronix.ts` ships `ivaronix receipt verify <id> --tee-independent`. Proven on receipts #994, #1004, #1056, #1069.
+- **Action:** Lead the README. Lead the demo. Lead the pitch. Field-unique.
+
+#### L-2 · 0G DA wired in code (gRPC client), not in architecture diagrams  *(decisive)*
+- AIsphere README primitive table omits DA. Their `package.json` has no DA dep. Marketing claim "all 6" but no DA code. Aishi's diagram mentions DA but no client. Provus doesn't integrate.
+- Ivaronix: `packages/og-da/src/index.ts` real gRPC client.
+- **Action:** README §0 line 4: "0G DA wired (gRPC client). Only project that did it."
+
+#### L-3 · Receipt-gated economic split (Track 1 + Track 3 in one flow)
+- AgentPay, zer0Gig, Agentra, AIsphere all ship marketplace contracts. **None gate payout on a TEE-verifiable inference receipt.**
+- Ivaronix: `og.creator.fee_split` schema field keys split to verified receipt ID.
+- **Action:** Add ONE buyer-creator-treasury demo as a CLI sequence; link from README §0.
+
+#### L-4 · ERC-7857 standards compliance
+- Aishi + MUSASHI ship ERC-7857 but as vanity NFTs for one persona. AIsphere's INFT is ERC-721 with custom extensions, **not** the actual standard.
+- Ivaronix: `Erc7857Verifier.sol` + `AgentPassportINFT.sol` + `CapabilityRegistry.sol` is a real triplet.
+- **Action:** Add `ivaronix passport mint --recipient` to demo flow; <60s passport mint visible to judges.
+
+#### L-5 · Honest TIER 1 vs TIER 2 receipt rendering
+- AIsphere mixes Mock badges next to TEE in the same proof rail; no amber/green discipline.
+- Ivaronix: `CLAUDE.md §6` codifies it; Studio renders amber for TIER 2.
+- **Action:** README §1 callout: "we never green-wash NIM-routed receipts."
+
+### Where Ivaronix is BEHIND
+
+#### L-6 · No mainnet deployment  *(severity S)*
+- AIsphere, Provus, Aegis Vault, MUSASHI, og-market-bot, Aishi all on mainnet (16661). Ivaronix is Galileo (16602) only. Blocker = funding (CLAUDE.md §1: "only blocker is money"). 4h once funded.
+
+#### L-7 · No live deployed Studio URL  *(severity S)*
+- AIsphere `agentpay-sigma.vercel.app`, Provus `provus-protocol-frontend.vercel.app`, Aishi `aishi.app`, MUSASHI `musashi-agent.xyz`, Trapezohe `ghast.trapezohe.ai`. Ivaronix Studio is "start `pnpm --filter @ivaronix/studio dev`" only.
+- Vercel deploy of `apps/studio/`, 2-4h. **No funding required.**
+
+#### L-8 · No 19-page whitepaper for non-technical judges  *(severity S)*
+- AIsphere ships `doc/whitepaper.pdf` with formal definitions, IND-CCA2, hash-chain tamper proofs, 32 references. Criterion 5 leaks score without an equivalent.
+- A 3-page narrative is doable in 4-6h. **Ship the 3-pager (`docs/PITCH.md` exists; finish it).**
+
+#### L-9 · No demo video / Loom  *(severity A)*
+- AgentPay has Loom. 0G OpenClaw has YouTube. Ivaronix has none surfaced in README.
+- 60s screen recording of `ivaronix demo` + `--tee-independent`, 30min. **Highest impact-per-hour in this audit.**
+
+#### L-10 · No headline number that differentiates  *(severity A)*
+- Provus: "30,000+ on-chain TXs · 99.7% uptime." AIsphere: "Mainnet Deployed · 94/94 tests."
+- Ivaronix: "1,330+ receipts anchored on 0G Galileo Testnet · 90/90 Foundry tests" — close but "Testnet" leaks. If mainnet won't ship, lead with **"1,330 verifiable receipts · 4 FULLY VERIFIED via independent TEE re-check"**. That number is unique in the field.
+
+#### L-11 · No persona-driven hero  *(severity S)*
+- Aishi: "your AI dream companion." Don't Get Drained: "agent firewall before you sign." Opi: "Telegram shopping concierge." Each one job, one user. Ivaronix: "0G Agent Operating System" is developer-infra, not human-relatable.
+- **Action:** Rewrite home hero. "Drop a contract. Get a verifiable receipt that AI reviewed it. <60s." with `private-doc-review` as protagonist skill.
+
+#### L-12 · No mobile screenshots / multi-image gallery  *(severity A)*
+- Aishi has 8 phone screenshots. Ivaronix README has zero images. Capture 4 at 1440×900 + 375×812.
+
+#### L-13 · No live receipt counter rendered as the hero  *(severity A)*
+- Provus dashboard shows live attestation counter. Trapezohe Ghast publishes "405 users · 750+ tokens deposited (24h)."
+- Studio already reads `nextId()` server-side. Promote to a 96px display number above the fold.
+
+#### L-14 · No CI test-count badge  *(severity B)*
+- AIsphere `Tests-94/94` badge in README. Shields.io badge is ~10 minutes.
+
+### Where Ivaronix is CLAIMING but the field outshines us
+
+#### L-15 · "Marketplace" claim — Trapezohe has 405 real users  *(severity S)*
+- Trapezohe Ghast: 405 registered users, 133 funded, 750+ OG deposited in 24h, 1,500 Discord. Verifiable user traction.
+- Ivaronix: contract deployed, 7 first-party skills, no published external buyer.
+- **Action:** Either get 5 non-team buyers in 24h via Twitter/0G Discord, OR reposition: "the wedge is *receipt-gated payout*, not user count."
+
+#### L-16 · "Memory" claim — Aishi, AIsphere, SealedMind ship deeper  *(severity A)*
+- Aishi: hierarchical daily→monthly→yearly memory consolidation, claimed 99.7% compression. AIsphere: "Living Soul" + hash chain. SealedMind: per-user encryption + vector index.
+- Ivaronix: `packages/memory/` + `MemoryAccessLog.sol` exist; H-4 confirms the store is empty forever.
+- **Action:** Don't fight on memory. Position as plumbing for receipts, not the product.
+
+#### L-17 · "OpenClaw integration" — AIsphere, MUSASHI, SealedMind ship deeper  *(severity A)*
+- AIsphere: 10 OpenClaw API endpoints + skill pipelines + task queue + 5 built-in skills. MUSASHI: one-command-installable from OpenClaw. Trapezohe Ghast IS an OpenClaw fork.
+- Ivaronix: `seed-skills/` has `metadata.openclaw.install` blocks; nobody outside the team has run `openclaw skills install` on one.
+- **Action:** Push 1 skill to public OpenClaw registry as a smoke test. Document outbound OpenClaw composition (Ivaronix calls a foreign OpenClaw skill mid-flow). AIsphere does not have this.
+
+#### L-18 · "TEE-attested inference" — Provus has 30K+ mainnet attestations  *(severity A on volume; S on depth — ours wins on re-verify surface)*
+- Provus: 30,000+ TXs at `0x911E87629756F34190DF34162806f00b35521FD0`, ChainGPT-audited.
+- Ivaronix: 1,330 on Galileo. 4 FULLY VERIFIED via `--tee-independent`.
+- **Action:** Don't compete on volume. Compete on re-verification surface. **"Provus has 30K attestations *they* made; Ivaronix lets *you* re-verify any of ours."**
+
+#### L-19 · ERC-7857 INFT — Aishi + MUSASHI ship live mainnet  *(severity A)*
+- Both have mainnet contract addresses. Ivaronix is Galileo. Closes on L-6.
+
+### Empty quadrants Ivaronix can own
+
+#### L-20 · Public "Verify any receipt" embeddable widget  *(severity S — empty in the field)*
+- Nobody ships a 3-line embeddable verifier. Provus has a dashboard; AIsphere has a chat UI. None ship a `<iframe src="ivaronix.app/embed/r/<id>">` snippet external projects can paste into THEIR README.
+- **Effort:** 4-6h. We already have `apps/studio/src/app/embed/`. Add `</> Embed` button on `/r/<id>` that copies an iframe snippet.
+- **Impact:** Massive. Each external embed is a free judge demo.
+
+#### L-21 · "Compare two receipts" diff view for adjudication  *(empty)*
+- Nobody shows side-by-side of receipt A vs receipt B with a tampered verdict between them.
+- **Effort:** 6-8h. New route `/r/<a>/diff/<b>`.
+- **Impact:** Legal/compliance demo we don't have. "Two AI runs disagreed on the same contract. Here's the cryptographic proof of the disagreement."
+
+#### L-22 · "Anyone can run a verifier node" daemon  *(empty)*
+- Every project assumes verification on the user's machine. Nobody ships a "host a public verifier" mode.
+- **Effort:** 4-6h. Wrap `consensus.processResponse` in Express; ship Docker image; document `docker run ivaronix/verifier`.
+- **Impact:** Lets `verify.alice.com` exist, proves the decentralization claim. The move that makes "decentralized AI receipts" actually decentralized.
+
+### AIsphere head-to-head — who claims "all 6 primitives"
+- Chain: AIsphere ahead on mainnet; Ivaronix ahead on contract count + actual ERC-7857.
+- Compute: Ivaronix decisively ahead on re-verify surface. AIsphere has breadth, Ivaronix has depth.
+- Storage: roughly even. AIsphere "Hive Mind" framing stronger; Ivaronix burn-mode more security-precise.
+- DA: Ivaronix decisively ahead (their "all 6" doesn't survive grep).
+- Router: Ivaronix architecturally separates it; AIsphere folds into Compute.
+- ERC-7857: Ivaronix ahead on standards compliance.
+- **Verdict: AIsphere "6" is paper. Ivaronix "5" is code, with DA gated behind Docker.**
+
+### Top-3 actions by ROI from L
+
+1. **Deploy Studio to Vercel + promote receipt counter to home hero.** 4h. Closes L-7, L-13, half of L-12. $0. **Highest impact-per-hour.**
+2. **Finish 3-page `PITCH.md` + record 60-second demo video.** 6h. Closes L-8, L-9, L-11. Hits Criteria 3+5 directly.
+3. **Ship embeddable receipt verifier widget.** 6h. Closes L-20 (empty quadrant) and amplifies L-1 (lead differentiator). Each external embed is a free judge demo. **Only Action that makes Ivaronix structurally harder to copy by judge day.**
+
+---
+
+## Section M · Updated impact-to-effort top-15 (Round 1 + Round 2 combined)
+
+### Tier 0 · Critical security/correctness — fix this week or stop calling it "production-ready"
+
+1. **K-20** — AES-GCM nonce → `randomBytes(12)` in `packages/memory/src/encryption.ts`. Catastrophic crypto break otherwise. ~3 lines.
+2. **K-1** — `recordReceipt` to `authorizedRecorders` only + bounds-check delta. Forged trustScores break the entire reputation system. ~10 lines.
+3. **K-2** — `ReceiptRegistry.anchor` recovers `agentAddress` from EIP-712 sig instead of trusting `msg.sender`. ~30 lines.
+4. **K-8 + K-9** — `/api/run` and `/api/skill/save` rate-limited + SIWE-gated. The first is a wallet-drain; the second is RCE-class. ~2-3h.
+5. **K-14 / I-3** — fix or kill the W9 "operator-on-behalf-of-user" path. Today every such receipt is INVALID by our own verifier. Quickest: drop the path; honest: ship real SIWE.
+
+### Tier S · One-line lies (already in Section G; restated for cohesion)
+
+6. Delete `&& false` from `sandbox.ts:67`.
+7. `Storage: local?.storage?.evidenceRoot ? 'verified' : 'pending'` in `r/[id]:151`.
+8. Initial Storage light = `pending` in `RunPanel.tsx:113`.
+9. Drop `process.exitCode = 0` from `delegate.ts` finally.
+10. Verify `chat-v2.ts` exists or delete the import.
+
+### Tier A · Round-2 high-impact under-1h fixes
+
+11. **H-2** — pass content as third arg to `processResponse` in `receipt.ts:253`. Matches Provus + AIsphere. ~2 lines.
+12. **H-1 / H-4** — populate `attestationHash`; call `memoryClient.store()` post-anchor. Two TIER 1 broken-promise fixes in one commit.
+13. **I-1** — `/r/[id]` "VERIFIED" chip gated on `verifyClaimed()` not file-existence.
+14. **I-2 / K-16** — Studio Burn Mode either omits `keyFingerprint` or ships real encryption.
+15. **L-7** — Vercel-deploy Studio. 4h. Closes the most embarrassing "no live URL" gap.
+
+### Tier B · Round-2 strategic differentiators (1-4h each)
+
+- **L-20** — embeddable receipt verifier widget. Empty quadrant. Each external embed is a free judge demo.
+- **L-9** — 60s demo video. Highest impact-per-hour in the audit.
+- **K-15** — RFC-8785 canonical hash. Without this, no cross-language verifier reproduces our hash.
+- **K-22** — `require(msg.sender == g.grantee)` in `CapabilityRegistry.consumeRead`. Public DoS, two-line patch.
+- **J-9** — drop `continue-on-error: true` from CI Studio build. Restore CI as a real signal.
+
+---
+
+## Closing — what to surface to the user, in order
+
+1. **Five Critical security findings.** Crypto break (K-20), forged trustScore (K-1), forged anchor identity (K-2), demo wallet drain (K-8), planted-skill RCE (K-9). All five must be fixed before mainnet promotion.
+2. **The W9 path produces invalid receipts (I-3 / K-14).** Every "operator-on-behalf-of-user" receipt fails our own verifier. Ship SIWE or remove the path.
+3. **Two field-unique strengths confirmed:** independent TEE re-verify (L-1) and the only real 0G DA gRPC client (L-2). Lead the README and demo with these.
+4. **Three empty quadrants Ivaronix can own:** embeddable verifier widget (L-20), receipt-diff view (L-21), public verifier daemon (L-22). All under 8h each. None of the field has any of them.
+5. **Three ROI-1 polish actions:** Vercel-deploy Studio (L-7, 4h, $0), 60s demo video (L-9, 30min), 3-page pitch finished (L-8, 4-6h). Closes Criterion 3 + 4 + 5 leak.
+
+This appendix is inventory. No code changed. Smoke testing remains deferred until the next polish pass per the user's instruction.
