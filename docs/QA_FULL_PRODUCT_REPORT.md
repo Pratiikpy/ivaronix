@@ -33,24 +33,36 @@
 | Disconnect path | Header re-renders nav + "Connect wallet" pill, address removed | `035` |
 | Side-by-side brand HTML refs | Both Ivaronix.html files captured at 1440×900 + 375×812 | `002`–`005` |
 
-## 2. Brand-token reality check (rendered, not source)
+## 2. Brand-token reality check — UPDATED after deep audit
 
-The user prompted to compare Studio against **two** brand HTML files:
-- `C:\Users\prate\Downloads\Ivaronix Brand Kit _standalone_.html` — the brand kit doc (Overview/Logo/Color/Type/Voice/Components/Tokens nav, hero "A quiet operating system for *noisy* agents.")
-- `C:\Users\prate\Downloads\oglabs\brand\Ivaronix.html` — the marketing landing reference (hero "The OG *Agent* Operating System.")
+The deep audit (`run-brand-deep.ts`) read Studio `/brand`'s declared color tokens at scroll position y=2700, where the page renders the canonical palette as cards:
+- **paper: `#FAFAF7`** — Default page background
+- **paper-2: `#F4F3EE`** — Tonal cards · headers
+- **elev: `#FFFFFF`** — Elevated surfaces
+- **ink: `#0A0A0A`** — Body · primary buttons
+- **ink-soft: `#111111`** — Headlines · code marks
+- **graphite: `#5A5A5A`** — Captions · meta
+- **muted: `#6B6B66`** — Subtitle · timestamp
+- **live: `#16A34A`** — Verified · pulse · chip
+- **burn: `#7C3AED`** — Burn mode · interactive
+- **warn: `#D97706`** — In-flight · amber chip
+- **deny: `#DC2626`** — Mismatch · refused · revoked
 
-Source diff shows the two files differ in source token values, but both render at runtime to the same computed style.
+The standalone brand kit at y=3600 shows the SAME color section with identical hex values: `Paper / bg #FAFAF7 · oklch(98% .005 95) · "Page background. Warm, low-glare, never pure white."` plus the INK ladder (`Elevated #FFFFFF / Paper Wash #F4F3EE / Lead #8A8A8A / Body Soft #5A5A5A / Headline #111111`) and signals (Live/Warn/Deny/Burn).
 
-| Reference | runtime cream `bg` | runtime ink `color` |
-|---|---|---|
-| Brand standalone (kit doc) | `rgb(250, 250, 247)` = `#fafaf7` | `rgb(17, 17, 17)` = `#111` |
-| Brand repo (marketing landing) | `rgb(250, 250, 247)` = `#fafaf7` | `rgb(17, 17, 17)` = `#111` |
-| **Studio `/`** | `rgb(250, 250, 247)` = `#fafaf7` | **`rgb(10, 10, 10)`** = `#0a0a0a` |
-| **CLAUDE.md §10 mandate** | **`#faf9f6`** | **`#0a0a0a`** |
+**Conclusion (REVISED):**
 
-**Conclusion:** Studio is **internally inconsistent with itself** — its cream matches the brand HTML (`#fafaf7`) but its ink matches the CLAUDE.md mandate (`#0a0a0a`). To converge on one truth, pick one of:
-- **Option A** (recommended): Studio + brand HTML both move to CLAUDE.md tokens (`#faf9f6` + `#0a0a0a`). One-line CSS change in each brand HTML, no Studio change. Aligns with project contract.
-- **Option B**: CLAUDE.md updated to `#fafaf7` + `#111` (matching the existing brand kit). Simpler for future brand work, but accepts the warmer ink CLAUDE.md explicitly rejected.
+| Reference | paper | body ink | aligned? |
+|---|---|---|---|
+| Brand standalone (kit) declared tokens | `#FAFAF7` | `#0A0A0A` (with `#111111` for headline) | source of truth |
+| Brand repo HTML declared tokens | `#FAFAF7` | `#0A0A0A` | ✓ aligned |
+| Studio `/brand` declared tokens | `#FAFAF7` | `#0A0A0A` | ✓ aligned |
+| Studio runtime `/` body | `rgb(250,250,247)` = `#FAFAF7` | `rgb(10,10,10)` = `#0A0A0A` | ✓ aligned |
+| **CLAUDE.md §10** | `#faf9f6` ← **TYPO** | `#0a0a0a` | ✗ paper hex is wrong |
+
+**Action item:** the brand kit, both brand HTMLs, and Studio all agree on `paper = #FAFAF7`. **CLAUDE.md §10 says `#faf9f6` — this is the only document that drifted.** One-character fix to CLAUDE.md (`#faf9f6` → `#FAFAF7`) reconciles all four references.
+
+The earlier "three-way contradiction" reading was wrong — the body ink in the brand HTMLs at runtime computes to `#111111`, but that's because they apply `color: #111` to body for a softer feel; the brand kit's ink-soft token IS `#111111`, used for headlines. So the brand HTML rendering is using the headline-ink value for body, which is a deliberate stylistic choice in those static reference docs — it doesn't override Studio's runtime body ink.
 
 ## 3. Polish items to close before grant/pitch
 
@@ -68,9 +80,13 @@ At 375×812, the header collapses to logo + address chip + Disconnect — Skills
 
 **Fix:** add a hamburger-menu component that appears at `<768px`, opens a drawer with the same four nav links + the connect chip. Existing brand contract allows the four-light + cream-card design language to extend cleanly to a mobile drawer.
 
-### 3.3 Header `backdrop-filter` mismatch
+### 3.3 Header `backdrop-filter` and footer structure both mismatch CLAUDE.md §10
 
-Studio renders `saturate(1.5) blur(12px)` on the sticky header; CLAUDE.md §10 mandates `blur(20px)`. One-line CSS change to align.
+Two header/footer items came out of `run-brand-deep.ts`'s computed-style inspection:
+
+1. **Header backdrop blur**: rendered as `saturate(1.5) blur(12px)`; CLAUDE.md §10 says `blur(20px)`. Header itself is correct in every other dimension — `height: 64px ✓`, `position: sticky ✓`, `border-bottom: 1px solid rgba(10,10,10,0.08) ✓`, `bg: rgba(250,250,247,0.92)` ✓. One-line CSS change.
+
+2. **Footer structure**: Studio's actual `<footer>` element is `display: flex` with content `Catch the risks. Keep the receipts. / network: testnet` — a single-line strip, **118 px tall**. CLAUDE.md §10 explicitly mandates *"multi-column grid (Product / Docs / Network / Social), not a single-line flex"*. The `BUILT ON THE *full* OG STACK · 0G Compute · 0G Storage · ...` row that visually looks footer-y is actually a section above the real `<footer>`, and per §3.6 those items are decorative text, not links. **This is a legitimate structural miss against the brand contract.**
 
 ### 3.4 Receipt copy: "Risk Level: high" inside model text vs RISK chip "LOW"
 
