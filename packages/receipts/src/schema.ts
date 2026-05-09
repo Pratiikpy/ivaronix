@@ -16,6 +16,9 @@ export const ReceiptTypeSchema = z.enum([
   'swarm',
   // Slot 9 (PASS 76 B-1): SubscriptionEscrow check-in tick.
   'subscription_skill_exec',
+  // Slots 10-11: Confidential Data Room (Track 5 headline).
+  'doc_room_create',
+  'doc_room_read',
 ]);
 
 export const NetworkSchema = z.enum(['testnet', 'mainnet']);

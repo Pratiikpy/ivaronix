@@ -59,6 +59,12 @@ export const RECEIPT_TYPES = {
   // billing context (escrow id, drain amount, period) is the load-bearing
   // metadata, not just the skill that ran.
   subscription_skill_exec: 9,
+  // Slot 10: confidential data room — one receipt per room creation
+  // (manifest hash, parties, encrypted blob root) and one per read
+  // (reader wallet, capability grant id, AI summary hash). Burn-mode
+  // is auto-enabled on every read.
+  doc_room_create: 10,
+  doc_room_read: 11,
 } as const;
 
 export type ReceiptType = keyof typeof RECEIPT_TYPES;

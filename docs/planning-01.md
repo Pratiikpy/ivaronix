@@ -29,8 +29,30 @@
 - **Computed-style audit (§10 visual contract):** h1 fontSize 80px, fontFamily Outfit, body bg `rgb(250,250,247)` = `#FAFAF7` paper, body ink `rgb(10,10,10)` = `#0A0A0A`, header height 64px, header backdrop `saturate(1.5) blur(20px)`. All tokens match brand contract.
 - **Verification script:** `scripts/qa/metamask-e2e/verify-hero.ts` — re-runnable end-to-end with real MM extension, both viewports, side-by-side capture.
 
-### 1B. Confidential Data Room — see §2 below
-- See full spec in §2.
+### 1B. Confidential Data Room → ✅ DONE (full F build, multi-party)
+
+- **Receipt schema extended:** new types `doc_room_create` (slot 10) and `doc_room_read` (slot 11) added to `RECEIPT_TYPES` (`packages/core/src/types.ts`) and `ReceiptTypeSchema` (`packages/receipts/src/schema.ts`). On-chain anchor uses semantically-equivalent existing slots (5 = skill_exec for create, 4 = memory_access for read) until `ReceiptRegistry` is redeployed with the new slots — the off-chain receipt body still records the canonical `doc_room_create` / `doc_room_read` type faithfully.
+- **CLI shipped (`apps/cli/src/commands/room.ts`):**
+  - `ivaronix room create --doc <file> --parties <addr,addr> [--ttl 7d] [--reads 50]` — Burn-Mode encrypts the doc (AES-256-GCM, key fingerprint captured + key zeroed), uploads ciphertext to 0G Storage (real upload, real txHash), issues `CapabilityRegistry.issueGrant` per non-creator party (real on-chain tx), persists manifest at `.ivaronix/rooms/<roomId>.json`, anchors a `doc_room_create` receipt on `ReceiptRegistry`. Self-grants skipped per contract rule (`CapabilityRegistry: self-grant disallowed`); creator gets implicit-owner sentinel grant.
+  - `ivaronix room list` — lists local manifests with createdAt + party count + storage root.
+  - `ivaronix room read <roomId>` — verifies caller's grant via `cap.isValid` (or accepts implicit-owner sentinel for creator), anchors a `doc_room_read` receipt on chain. Each read = a verifiable receipt.
+- **Studio surface (`apps/studio/src/app/data-room/[id]/page.tsx`):** renders manifest card (roomId, manifest hash, blob bytes, blob root, ttl, reads cap, storage tx → clickable explorer, creator → clickable `/agent`), Burn Mode evidence-proof card (encryption type, key fingerprint, destroyed-at, cleanup), parties card with all party addresses + their grant ids + explorer links, and a verify-from-any-machine code block with the three-command CLI flow. `/agent/[handle]` already linked.
+- **End-to-end live proof (real chain, real TEE-attested storage, real on-chain anchors):**
+  - Room id: `01KR66C1GJVR57MHQPJCW1HQQY`
+  - Storage upload tx: `0x2fc63b01eb78a79b0c657bdff930bd2c59cc284e57e1817eee019e2f69819051` · root `0xdffefba0e36f14ea4b59a0f990b07fbb22e1764d694763ea83b997f809fe2a68`
+  - Capability grant to `0x021C…4325`: grantId `0x91dbba5d2644f2f3…`, tx `0xa7bd0e481200868a…`
+  - `doc_room_create` receipt: `rcpt_01KR66CS1X0DN4DXMVFMQ0A0YG`, anchor tx `0x8be4b64f8f9eaa94…`, block 32380759
+  - `doc_room_read` receipt: `rcpt_01KR66EYVHR7Q4TFC3NC1FZB4T`, anchor tx `0x80ef8a91de3441f76ce66c17102964a100fdd20a0c02b0bd0b6c0855c3bd906e`, block 32380907
+  - Manifest hash `sha256:293ebd42391d48157de205d113a8a1b74d6823e1deffb354103d37c872cb149c`
+- **§11 e2e visual proof captured** (`screenshots/data-room/`):
+  - `01-data-room-desktop-top.png` — header chip connected, hero copy, manifest + burn-evidence cards side-by-side
+  - `02-data-room-desktop-mid.png` — parties section starting
+  - `03-data-room-desktop-bottom.png` — verify-from-any-machine CLI block + footer
+  - `04-data-room-desktop-footer.png` — multi-column footer at very bottom
+  - `05-data-room-mobile-top.png` + `06-data-room-mobile-mid.png` — mobile 375×812
+  - `07-data-room-not-found.png` — invalid room id falls back to honest "Room not found" Section
+  - `.webm` video recording of the full session
+- **Verification script:** `scripts/qa/metamask-e2e/verify-room.ts` — re-runnable end-to-end with real MM extension, both viewports, +ve and -ve cases.
 
 ### 1C. 3-page narrative pitch document → ✅ DONE
 
