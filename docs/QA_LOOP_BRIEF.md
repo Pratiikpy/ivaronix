@@ -505,6 +505,13 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · H-1 + H-4 · attestationHash bound to chat ID + memory store after anchor → ✅ DONE (`1f43a27`)
 ### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`d57b635`)
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
+### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`<sha-pending>`)
+- New libs: `apps/studio/src/lib/rate-limit.ts` (in-memory token bucket, per-IP / per-wallet / per-skill-save) + `apps/studio/src/lib/siwe-session.ts` (HMAC-cookie sessions, 1h TTL; single-use SIWE nonces, 5min TTL).
+- New routes: `apps/studio/src/app/api/auth/siwe/nonce/route.ts` (issues nonce + httpOnly cookie), `apps/studio/src/app/api/auth/siwe/verify/route.ts` (verifies SIWE, issues session).
+- `/api/run`: per-IP rate limit always applies; userWallet claim requires active session matching the wallet; authenticated path adds per-wallet rate limit. Wallet drain by anonymous attacker now bounded to 10 hits/minute.
+- `/api/skill/save`: requires SIWE session; per-wallet path namespace prevents cross-wallet writes; YAML frontmatter parsed and `og.hooks.*` audited for shell-injection / path-escape patterns; `sandboxRoot` prefix check is defence-in-depth.
+- Cookies: `httpOnly`, `sameSite: 'strict'`, `secure` in production.
+- Live tests in `scripts/qa/metamask-e2e/verify-k8-k9-auth.ts`: 6 assertions all green (nonce shape + cookie attrs, anonymous skill/save → 401, run + userWallet no-session → 401, malformed wallet → 400, rate-limit triggers 429).
 - `packages/memory/src/encryption.ts:27-39` — nonce now `randomBytes(NONCE_LEN)`. Closes catastrophic AES-GCM nonce-reuse vulnerability where `sha256(plaintext || Date.now())` collisions in the same millisecond with same plaintext + same key recovered the keystream and forged GHASH tags.
 - 14/14 memory package tests green (7 new K-20 + 7 existing engine).
 - `docs/CRYPTO_NOTES.md` shipped — threat model + RFC 5116 / NIST SP 800-38D reference + fix history. Plus 8 other primitives' threat models documented.

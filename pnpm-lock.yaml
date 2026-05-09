@@ -205,6 +205,9 @@ importers:
       wagmi:
         specifier: ^2.13.0
         version: 2.19.5(@azure/identity@4.13.1)(@tanstack/query-core@5.100.9)(@tanstack/react-query@5.100.9(react@19.0.0))(@types/react@19.2.14)(aws4fetch@1.0.20)(bufferutil@4.1.0)(immer@11.1.4)(ioredis@5.10.1)(react@19.0.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(viem@2.48.8(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.1.8))(zod@4.1.8)
+      yaml:
+        specifier: ^2.8.4
+        version: 2.8.4
     devDependencies:
       '@tailwindcss/postcss':
         specifier: ^4.0.0-beta.6

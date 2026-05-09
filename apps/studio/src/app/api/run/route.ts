@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
 import type { ConsensusTier } from '@ivaronix/core';
 import { ensureEnv } from '@/lib/boot-env';
+import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
+import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,6 +48,18 @@ interface RunBody {
  */
 export async function POST(req: Request) {
   await ensureEnv();
+
+  // K-8: per-IP rate limit always applies. Prevents anonymous wallet drain
+  // by bounding /api/run to ~10 requests per minute per IP.
+  const clientIp = readClientIp(req.headers);
+  const ipLimit = checkRateLimit('ip', clientIp);
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `rate limit exceeded · ip · retry after ${Math.ceil((ipLimit.resetMs - Date.now()) / 1000)}s` },
+      { status: 429, headers: rateLimitHeaders(ipLimit) },
+    );
+  }
+
   let body: RunBody;
   try {
     body = (await req.json()) as RunBody;
@@ -59,9 +73,43 @@ export async function POST(req: Request) {
     );
   }
 
-  const userWallet = body.userWallet && /^0x[0-9a-fA-F]{40}$/.test(body.userWallet)
-    ? (body.userWallet.toLowerCase() as `0x${string}`)
-    : undefined;
+  // K-8: when the body claims a userWallet, require an active SIWE session
+  // matching that wallet. Without this gate the operator's key would anchor
+  // receipts under arbitrary user identities. Anonymous receipts (no
+  // userWallet claim) are allowed but capped by the per-IP bucket above.
+  const sessionCookie = req.headers.get('cookie')?.match(new RegExp(`${SESSION_COOKIE_NAME}=([^;]+)`))?.[1];
+  const session = readSession(sessionCookie);
+
+  let userWallet: `0x${string}` | undefined;
+  if (body.userWallet) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(body.userWallet)) {
+      return NextResponse.json({ error: 'malformed userWallet' }, { status: 400 });
+    }
+    const claimed = body.userWallet.toLowerCase() as `0x${string}`;
+    if (!session) {
+      return NextResponse.json(
+        { error: 'userWallet claim requires active SIWE session — POST /api/auth/siwe/verify first' },
+        { status: 401 },
+      );
+    }
+    if (session.wallet !== claimed) {
+      return NextResponse.json(
+        { error: `session wallet ${session.wallet} does not match claimed userWallet ${claimed}` },
+        { status: 403 },
+      );
+    }
+    userWallet = claimed;
+
+    // Per-wallet rate limit — additive on top of per-IP. An authenticated
+    // wallet pays both buckets but gets a higher per-hour ceiling.
+    const walletLimit = checkRateLimit('wallet', userWallet);
+    if (!walletLimit.ok) {
+      return NextResponse.json(
+        { error: `rate limit exceeded · wallet · retry after ${Math.ceil((walletLimit.resetMs - Date.now()) / 1000)}s` },
+        { status: 429, headers: rateLimitHeaders(walletLimit) },
+      );
+    }
+  }
 
   const { logger, entries } = createCaptureLogger();
   try {
