@@ -507,6 +507,12 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
 ### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
+### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`<sha-pending>`) · chain deploy = operator-action A-V2-K1
+- `contracts/src/AgentPassportINFTV2.sol` — `recordReceipt` is authorizedRecorders-only, cross-checks receiptId on `ReceiptRegistry` (root + type + agentAddress), caps trustScoreDelta to ±100. K-4: per-token `executorVersion` bumps on transfer; old grants stop matching. K-6: mint writes `passportOf` before `_safeMint` + `nonReentrant`.
+- `contracts/test/AgentPassportINFTV2.t.sol` — 16 tests; full Foundry suite 106/106 (was 90/90).
+- `contracts/script/DeployPassportV2.s.sol` shipped; ~0.05 OG on Galileo (funded, A-1).
+- `docs/USER_TODO.md` §A-V2-K1 has the exact `forge script` runbook.
+- V1 stays live for the 4 existing minted passports; V2 is a fresh deployment with trustScore reset to 0 (V1's self-claimed scores cannot be honestly migrated).
 - `packages/runtime/src/pipeline.ts:489-510` calls `burnEncrypt(Buffer.from(activeContext, 'utf8'))` from `@ivaronix/og-storage`. Real 32-byte session key via `randomBytes`; real `keyFingerprint = sha256(realKey)`; key zeroed after fingerprinting.
 - Old fake-fingerprint pattern (`sha256("burn:" + skillId + ...)`) absent.
 - CLI + Studio burn-mode receipts now identical in shape (CLI was always real; Studio now matches).

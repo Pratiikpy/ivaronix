@@ -24,7 +24,39 @@
 
 ---
 
-## B · Phase-B production hardening (post-grant lift, do whenever)
+## A-V2 · HALF_BAKED Section N · contract V2 redeploys (operator-action gates)
+
+These are code-complete in the repo. The chain deploy itself needs operator-side OG. Each block lists exactly one command sequence.
+
+### A-V2-K1 · Deploy `AgentPassportINFTV2` to Galileo
+- **Why:** closes K-1 (Critical) — the V1 `recordReceipt` accepts unbounded self-claimed trustScore from token owners. V2 requires `authorizedRecorders` only, cross-checks the receipt id on `ReceiptRegistry`, caps `trustScoreDelta` to `[-100, +100]`. Bundles K-4 (executor authorizations cleared on transfer via per-token version counter) and K-6 (mint reentrancy fix) into the same redeploy.
+- **Status:** `contracts/src/AgentPassportINFTV2.sol` shipped; 16/16 Foundry tests pass; deploy script `contracts/script/DeployPassportV2.s.sol` ready.
+- **Cost:** ~0.05 OG on Galileo (already funded, see A-1). No new funding required.
+- **Run:**
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<your-deployer-key>           # already in your .env
+  export PASSPORT_VERIFIER_ADDR=0x...                 # current Erc7857Verifier address
+  export RECEIPT_REGISTRY_ADDR=0x...                  # current ReceiptRegistry address
+  forge script script/DeployPassportV2.s.sol:DeployPassportV2 \
+    --rpc-url https://evmrpc-testnet.0g.ai \
+    --broadcast --legacy
+  ```
+
+  Both addresses are in `contracts/deployments/testnet.json` under `Erc7857Verifier` and `ReceiptRegistry`.
+
+- **Post-deploy:**
+  1. Add the new `AgentPassportINFTV2` address to `contracts/deployments/testnet.json` under a new `AgentPassportINFTV2` key. Leave the V1 `AgentPassportINFT` entry untouched — the four existing minted passports stay readable on V1.
+  2. Authorize the operator wallet as a recorder (so future receipt anchors can write reputation):
+     `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $OG_PRIVATE_KEY --legacy`
+  3. Studio `/agents` will need a follow-up to read V2 first and fall back to V1 with a `LEGACY-PASSPORT` chip — already documented in HALF_BAKED.md K-1; agent picks it up post-deploy.
+
+### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo (after K-2 lands)
+- **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so anyone can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature with replay-protected nonces.
+- **Status:** code work in flight (next item the cron picks up). Same shape as A-V2-K1 once shipped.
+
+
 
 > **Network targeting note:** B-1 through B-7 are **application-layer** items — they all apply to both testnet AND mainnet equally. B-1 can ship on testnet today (A-1 wallet is already funded); the mainnet deploy waits on A-2. B-2 → B-7 are network-agnostic code/UX changes — a single PR ships them everywhere at once.
 
