@@ -372,7 +372,7 @@ Tactical punch-list also cleared. The four remaining tactical lines are explicit
 1. `da preflight` — no public 0G DA testnet; CLI surfaces docker unblock command.
 2. Telegram bot live — needs BotFather-issued token (user action).
 3. `passport mint` confirmed — current wallet holds tokenId 1; mint reverts. Needs a fresh wallet.
-4. `skill install <name>` URL-only — cosmetic ergonomics; works with URLs.
+4. ~~`skill install <name>` URL-only~~ → FIXED (commit `5e08ca8`). Bare names now resolve to `seed-skills/<id>/SKILL.md`. Verified: `ivaronix skill install plan-step` → `Status: → INSTALLED ✓`. Unknown name lists the 5 available bare names + URL fallback hint. URL forms unchanged.
 
 Per brief rule #10 (think 3 times before stopping):
 
