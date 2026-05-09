@@ -32,14 +32,16 @@
 ### 1B. Confidential Data Room — see §2 below
 - See full spec in §2.
 
-### 1C. 3-page narrative pitch document
-- **Why:** closes Criterion 2.5 (Documentation) head-on vs AIsphere's 19-page whitepaper. Judges who don't read code score this.
-- **Structure (one page each):**
-  - **What is Ivaronix · who is it for · why now.** Privileged-document persona up top, the receipt model in the middle.
-  - **The receipt model:** schema → canonical hash → TIER 1 vs TIER 2 → independent re-verify path. Cite `RECEIPT_SCHEMA.md` for depth.
-  - **Growth roadmap:** Year 1 (testnet → mainnet → first 10 firms) → Year 2 (skill marketplace → embeddable verifier) → Year 3 (cross-chain receipts → SOC2-style trust framework).
-- **Effort:** half a day of writing, no code.
-- **Saves score across all 5 criteria simultaneously**, not just 2.5 — the doc is what a non-technical judge reads to understand the rest.
+### 1C. 3-page narrative pitch document → ✅ DONE
+
+- **Shipped at** `docs/PITCH.md`. Three pages with hard-stops:
+  - **Page 1 — What · who · why now.** Lede paragraph names the persona (deal lawyer / founder / DD analyst). Substitution problem in three bullets (ChatGPT trains, VDRs control logs, local LLMs lose the audit trail). Numbers table with **1,165 receipts**, **6 contracts**, **5 first-party skills**, **155-skill catalog**, **61/61 Foundry tests**, **13/13 mainnet readiness**, **0 silent failures** — every number with a clickable chainscan or doc link. Track positioning: Track 1 + Track 3 + Track 5.
+  - **Page 2 — The receipt is the spine.** Schema in 12 lines. Canonical hash in one paragraph. Tampering example from QA edge sweep (verbatim CLI output). Three-value `verificationMethod` switch. Independent re-verify CLI output for receipt #1004. Burn Mode evidence-proof example with real keyFingerprint + destroyedAt timestamp.
+  - **Page 3 — Growth roadmap.** Year 1 (testnet → mainnet → 10 firms, undercut Datasite by 30%). Year 2 (live skill marketplace, embeddable verifier widget, cross-chain receipts). Year 3 (SOC2 + verticalize: clinical-trial, trade-secret, journalist-source data rooms). Explicit "what we will NOT build" section to surface discipline.
+- **Voice check (§9):** zero banned words. One-clause sentences predominate. Real numbers replace adjectives ("1,165 receipts" not "extensively tested"; "$300/hour problem" not "expensive"). No "in today's fast-paced world" openers.
+- **Closes Criterion 2.5 directly.** AIsphere ships 19 pages; this is 3 pages that point at `RECEIPT_SCHEMA.md` and `MAINNET_READINESS.md` for depth. A non-technical judge can read it in five minutes and grade. A technical judge follows the chainscan links and verifies the claims live.
+- **Try-it section** at the end: two CLI commands (`ivaronix demo` then `receipt verify --tee-independent`), the entire pitch reduced to one minute of terminal time.
+- **Note on §11 e2e for documentation:** a doc passes the test by being readable, accurate, and link-verified. Every chainscan URL in the pitch was generated from the live `deployments/testnet.json`; every CLI output block was captured from a real run; every claimed number is in `MAINNET_READINESS.md` or QA logs. The e2e proof for documentation is link integrity + claim integrity, not Playwright.
 
 ---
 
