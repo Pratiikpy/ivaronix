@@ -147,14 +147,26 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const overallState: 'verified' | 'pending' | 'mismatch' =
     hasLocalBody ? 'verified' : 'pending';
 
-  const layers: Partial<Record<'Storage' | 'Compute' | 'TEE' | 'Chain', 'pending' | 'verified' | 'mismatch'>> = {
-    Storage: hasLocalBody ? 'verified' : 'pending', // Day 22: real 0G Storage proof
-    Compute: hasLocalBody ? 'verified' : 'pending',
-    TEE: teeVerified ? 'verified' : 'pending',
-    Chain: 'verified', // we got onChain, so chain is verified
-  };
-
+  // S-2 / I-5 fix · each light reads from real evidence in the receipt body.
+  // Storage: green only when a real 0G Storage Merkle root is present (not
+  //   when the file merely exists locally — sha256 fallback was the lie).
+  // Chain:   green only when the local body's anchor tx hash is populated.
+  //   The on-chain row alone proves anchor-by-root, but the local body is
+  //   what the page actually links to; gating prevents a green light next
+  //   to a "no anchor tx" rendering.
+  // Compute: green when consensus attestations exist (multi-role evidence
+  //   trail). Falls back to local-body-existence for legacy receipts that
+  //   pre-date the consensus block.
+  // TEE:     unchanged — gated on real `routerVerified` flag.
   const txHash = local?.chainAnchor?.anchorTxHash ?? null;
+  const hasStorageRoot = Boolean(local?.storage?.evidenceRoot);
+  const hasConsensusAtt = ((local?.execution?.consensus?.individualAttestations?.length ?? 0) > 0);
+  const layers: Partial<Record<'Storage' | 'Compute' | 'TEE' | 'Chain', 'pending' | 'verified' | 'mismatch'>> = {
+    Storage: hasStorageRoot ? 'verified' : 'pending',
+    Compute: (hasConsensusAtt || hasLocalBody) ? 'verified' : 'pending',
+    TEE: teeVerified ? 'verified' : 'pending',
+    Chain: txHash ? 'verified' : 'pending',
+  };
   const headline = local?.outputs?.wording?.headline ?? `Receipt #${onChain.id} anchored on 0G ${getNetwork()}`;
   const citations = local?.outputs?.citations ?? [];
   const skill = local?.request;

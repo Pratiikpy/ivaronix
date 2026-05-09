@@ -914,15 +914,15 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 
 Each item: the one-line code fix + a regression test that fails if the lie comes back + HALF_BAKED.md status update inline.
 
-### N · S-1 · Delete `&& false` from `sandbox.ts:67`  ·  ✅ FIXED 2026-05-10
+### N · S-1 · Delete `&& false` from `sandbox.ts:67`  ·  ✅ FIXED 2026-05-10 (`d15703f`)
 - **Code:** `packages/skills/src/sandbox.ts:67` — replaced `&& false` placeholder with real check `ctx.providerKind !== undefined && ctx.providerKind !== '0g'`. Added `providerKind?: '0g' | 'nvidia' | 'openai' | 'ollama'` to `SandboxContext`. Both call sites threaded: `packages/runtime/src/pipeline.ts:165` passes `input.provider ?? '0g'`; `apps/cli/src/commands/doc.ts:131` passes literal `'0g'` (CLI doc-ask exposes no `--provider` flag).
 - **Test:** `packages/skills/src/sandbox.test.ts` — 9 cases all green. NIM/OpenAI/Ollama + tee-required → blocks. 0G + tee-required → allows. Omitted providerKind (legacy CLI path) → allows. tee-required=false + nvidia → allows. Multi-violation stacking. Plus a source-file regression test that fails if `&& false /* placeholder */` re-appears anywhere in `sandbox.ts`.
 - **Typecheck:** `@ivaronix/skills`, `@ivaronix/runtime`, `@ivaronix/cli` all green.
 
-### N · S-2 · Storage light reads `local?.storage?.evidenceRoot`
-- **Code:** `apps/studio/src/app/r/[id]/page.tsx:151` — `Storage: hasLocalBody ? 'verified' : 'pending'` → `Storage: local?.storage?.evidenceRoot ? 'verified' : 'pending'`.
-- **Test:** Playwright — render `/r/<v1-id>` against fixture with no `storage` block → light is `pending` not `verified`. Render against fixture with real evidenceRoot → light is `verified`.
-- **Effort:** 30min.
+### N · S-2 · Storage light reads real evidenceRoot · I-5 · Chain light reads real txHash  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+- **Code:** `apps/studio/src/app/r/[id]/page.tsx:160-175` — Storage gates on `local?.storage?.evidenceRoot`; Chain gates on `local?.chainAnchor?.anchorTxHash`. Compute now also gates on `local?.execution?.consensus?.individualAttestations?.length` (with local-body fallback for legacy receipts that pre-date the consensus block). TEE unchanged.
+- **Test:** `scripts/qa/metamask-e2e/verify-s2-i5-lights.ts` — source-file regression guards (no `hasLocalBody ? 'verified'` for Storage; no `Chain: 'verified'` hardcode); HTML assertion via curl against the dev render; per-light state extracted from the dot-color CSS variable; cross-check against the local receipt body's evidence.
+- **Surfaced honesty:** receipt #1004 (the README's headline "FULLY VERIFIED" example) now correctly renders Storage=pending (no real `evidenceRoot` in body — confirms H-3 — Studio's `/api/run` never uploaded) and TEE=pending (`routerVerified: false`, testnet default). The previous chip code lit them green regardless. **The fix is doing exactly what it should.** Honest tier marking per CLAUDE.md §6.
 
 ### N · S-3 · RunPanel Storage light starts pending
 - **Code:** `apps/studio/src/components/RunPanel.tsx:113` — initial state `pending`, transitions to `verified` only on `data.storage.evidenceRoot` populated in the `/api/run` response.
