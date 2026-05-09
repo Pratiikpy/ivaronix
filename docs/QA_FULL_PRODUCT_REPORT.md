@@ -1,5 +1,17 @@
 # Ivaronix · Full Product UX & Brand Audit (2026-05-09)
 
+## Update 2026-05-09 (post-audit) — three fixes landed
+
+After the audit captured the divergences below, the simplest three fixes were merged in commit `8d9e5be`:
+- **CLAUDE.md cream token typo fixed**: `#faf9f6` → `#FAFAF7` (the brand kit's authoritative `paper` value).
+- **Header backdrop blur**: Studio's `<header>` now renders `saturate(150%) blur(20px)` (matches CLAUDE.md §10) — verified via runtime computed style after the change.
+- **`/api/dashboard/{addr}` cache + lookback fix**: per-address LRU (max 64, 60s TTL) + `findByAgent` lookback narrowed from 100k blocks to 5k. Cold first-load **30s → 6.4s (~5×)**, warm cache hit **0.07s** with `x-cache: hit` telemetry header. Verified visually: `/dashboard` now renders "Welcome back, *agent*" with Council tier badge, trust 962, 962 receipts, balance 69.6228 OG, and recent receipts list (`#976`, `#975`, …) instead of stuck on "Loading from chain…".
+
+Items still outstanding (see §3 below): mobile hamburger nav, footer multi-column grid, receipt body/chip ambiguity, footer link semantics, headline alignment, wagmi nonce-cache mitigation at call sites.
+
+---
+
+
 > Captured via real MetaMask v13.30 + Playwright headed Chromium.
 > Funded wallet `0xaa95…77Ce` on 0G Galileo Testnet (chainId 16602).
 > Harness: `scripts/qa/metamask-e2e/run-audit.ts` + `run-full.ts`.
