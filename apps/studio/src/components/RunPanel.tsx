@@ -14,6 +14,26 @@ const SKILLS: { id: string; label: string; defaultTier: Tier }[] = [
   { id: 'code-edit', label: 'code-edit', defaultTier: 'standard' },
 ];
 
+// One-click demo doc for W1 — judges browsing without a wallet can hit
+// "Use sample contract" → Run and produce a real anchored receipt in
+// ~30 seconds. Shorter than a real lease, surfaces enough red flags
+// for the model to find a clear "worst clause" answer.
+const SAMPLE_DOC = `RESIDENTIAL LEASE — SUMMARY (sample, for demo use only)
+
+1. Tenant agrees to a non-refundable security deposit of $4,800, payable in
+   stablecoin within 24 hours of signing.
+2. Tenant is responsible for all repairs regardless of cause, including those
+   resulting from Landlord negligence.
+3. This lease auto-renews for 24-month terms unless Tenant provides written
+   notice 120 days before the renewal date.
+4. Tenant waives the right to a jury trial and agrees to binding arbitration
+   in a jurisdiction of Landlord's choosing.
+5. Landlord may enter the premises at any time, with or without notice, for
+   inspection or maintenance.
+6. Pets, overnight guests, and use of common areas after 9pm are prohibited;
+   violations may result in immediate eviction without cure period.
+`;
+
 interface RunResponse {
   ok: boolean;
   error?: string;
@@ -125,7 +145,20 @@ export function RunPanel() {
         maxWidth: 720,
       }}
     >
-      <p className="section-label">§ 01 · DROP A FILE OR PASTE TEXT</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: 8 }}>
+        <p className="section-label" style={{ margin: 0 }}>§ 01 · DROP A FILE OR PASTE TEXT</p>
+        <button
+          type="button"
+          onClick={() => {
+            setContentText(SAMPLE_DOC);
+            setQuestion('What is the worst clause for the tenant?');
+          }}
+          className="btn-ghost"
+          style={{ fontSize: 11, padding: '4px 10px', textDecoration: 'underline' }}
+        >
+          Use sample contract →
+        </button>
+      </div>
 
       <div
         {...getRootProps()}

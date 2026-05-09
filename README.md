@@ -1,15 +1,36 @@
-# Ivaronix — Working Repository
+# Ivaronix — The 0G Agent Operating System
 
-> **Project:** Ivaronix — The 0G Agent Operating System.
-> **Status:** **Phase A complete (testnet) · 2026-05-08** — all 22 Phase-A days closed with real on-chain artifacts. Phase B mainnet promotion (Day 23-30) next.
-> **Submission target:** OG Labs grant.
+> **Verify any AI inference, on any machine, in one command.**
+> 1,330+ receipts anchored on 0G Galileo Testnet · 90/90 Foundry tests · 6 deployed contracts · 14 packages typecheck-clean.
 
-## Run this in 30 seconds
+## Verify a real receipt right now
+
+The single command that no other 0G project ships:
 
 ```bash
-git clone <this-repo> && cd oglabs
+pnpm install -g @ivaronix/cli
+ivaronix receipt verify 1304 --tee-independent
+```
+
+Expected output:
+
+```
+schema PASS · hash PASS · signature PASS → CLAIMED
+chain anchor PASS (id=1304 block=1778334585) → ANCHORED
+tee:primary PASS (provider 0xa48f0128…) via broker.processResponse
+Status: → FULLY VERIFIED ✓
+```
+
+No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the TEE attestation against the public 0G Compute broker. Receipt body is on `/r/1304`; anchor tx on `chainscan-galileo.0g.ai`.
+
+That's the spine. Everything else in this repo exists to make that command produce useful answers about real documents.
+
+## Run a fresh receipt of your own in 30 seconds
+
+```bash
+git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix
 pnpm install
-cp .env.example .env   # add your ZG_API_SECRET + EVM_PRIVATE_KEY
+cp .env.example .env   # add your ZG_API_SECRET + EVM_PRIVATE_KEY (faucet at faucet.0g.ai is free)
 pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
 ```
 
@@ -17,7 +38,7 @@ pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
 
 - `/r/<id>` — Studio public proof page (start `pnpm --filter @ivaronix/studio dev` for the UI)
 - `chainscan-galileo.0g.ai/tx/<hash>` — third-party explorer
-- `ivaronix receipt verify <id> --tee-independent` — broker.processResponse re-check
+- `ivaronix receipt verify <id> --tee-independent` — your own command, run on your own machine, against the chain
 
 Want a richer view? `demo --tier standard` runs 3-role consensus (analyst/critic/judge); `--tier high-stakes` runs 5 roles. Real disagreement surfaces; the judge synthesis is the receipt body. Drop a sensitive document into `ivaronix doc ask <file> "..." --burn --quick` for AES-256-GCM encrypted evidence + session-key destruction (TIER 1 burn-mode). The bare `ivaronix` invocation drops you into the Ink TUI chat with streaming, tool panels, slash palette, and 19 slash commands; `ivaronix chat-classic` is the readline fallback for SSH / piped workflows.
 

@@ -175,12 +175,12 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 
 > Synthesized from all four subagents. Each item maps to a specific competitor or judging-criterion gap. No guesses. Every line has a citable source.
 
-### W1 · Add "Use sample contract" auto-fill to home RunPanel · 2h · Criterion 2.4
+### W1 · Add "Use sample contract" auto-fill to home RunPanel · 2h · Criterion 2.4 → ✅ DONE
 - **Where:** `apps/studio/src/components/RunPanel.tsx:37-80`
 - **Pattern:** Zero Training's `/demo` zero-click flow + `OnboardClient.tsx:30` already has the `SAMPLE_DOC` constant
 - **Effect:** judge browsing without a wallet can click ONE button → receipt anchored in 30s. Closes the showcase gap subagent B identified as "single highest-impact missing pattern."
 
-### W2 · Server-render live receipt count on home hero · 1h · Criterion 2.4 + 3
+### W2 · Server-render live receipt count on home hero · 1h · Criterion 2.4 + 3 → ✅ DONE
 - **Where:** `apps/studio/src/app/page.tsx` (hero block)
 - **Pattern:** AlphaDawg `app/page.tsx:getStats` server-render. Provus's "30,000+ TXs" headline. AIsphere's "94/94 tests."
 - **Effect:** first-paint number a judge remembers. Server component reads `ReceiptRegistry.nextId()` directly, no JS animation needed.
@@ -206,7 +206,7 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Move:** at room creation, serialize manifest JSON, upload to 0G Storage, store the storageRoot in the manifest's own hash. Page fetches by storageRoot when local FS misses.
 - **Effect:** any data-room URL shared with a judge from a different machine **just works**. Currently breaks 100% of the time (subagent D #3 — HIGH impact).
 
-### W7 · Lead README with the `--tee-independent` headline + a fresh receipt id · 1h · Criterion 5
+### W7 · Lead README with the `--tee-independent` headline + a fresh receipt id · 1h · Criterion 5 → ✅ DONE
 - **Where:** `README.md` top section.
 - **Move:** swap the current narrative opener for "Run this command in any terminal: `pnpm install -g @ivaronix/cli && ivaronix receipt verify 1304 --tee-independent`. Expected: → FULLY VERIFIED ✓. No account needed."
 - **Effect:** AIsphere's whitepaper-as-Criterion-5 advantage neutralized. Ivaronix is **the only competitor** with this command.
@@ -226,12 +226,12 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Pattern:** address the user's "marketing guy" question directly. Promotes content-review from imports/ to first-party.
 - **Effect:** verified skill count goes 5 → 6, with a marketing persona surface (creator economy story).
 
-### W11 · Fix hardcoded "5 verified skills" + "0G DA in stack band" · 1h · Criterion 2
+### W11 · Fix hardcoded "5 verified skills" + "0G DA in stack band" · 1h · Criterion 2 → ✅ DONE
 - **Where:** `apps/studio/src/app/page.tsx:162` (literal 5), `apps/studio/src/app/page.tsx:213` (0G DA claim).
 - **Move:** derive count from `loadAllSkills().length`. Either remove the 0G DA chip or add "(integration path documented)" qualifier per CLAUDE.md §8.
 - **Effect:** subagent D #4 closed. No brand lies on first paint.
 
-### W12 · Add `/thesis` to home hero CTA + improve discoverability · 30m · Criterion 3 + 5
+### W12 · Add `/thesis` to home hero CTA + improve discoverability · 30m · Criterion 3 + 5 → ✅ DONE
 - **Where:** `apps/studio/src/app/page.tsx` (hero CTA row).
 - **Note:** /thesis IS already linked in main nav as "Why" (subagent D was reading older code) — but it's not in the hero CTA row.
 - **Move:** add a "Why Ivaronix" tertiary CTA next to "Run a private audit →" / "See a sample receipt".

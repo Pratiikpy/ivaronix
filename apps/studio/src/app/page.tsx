@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
 import { getReceiptRegistry, getPassportClient, getNetwork } from '@/lib/chain';
+import { loadAllSkills } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic'; // always read live chain state
 
@@ -31,6 +32,9 @@ export default async function HomePage() {
     livePassportCount(),
   ]);
   const network = getNetwork();
+  // W11 — derive the verified-skills count from the manifest loader so it
+  // tracks reality (was hardcoded "5" and would drift silently).
+  const verifiedSkillsCount = loadAllSkills().length;
 
   return (
     <>
@@ -62,32 +66,36 @@ export default async function HomePage() {
           <span>v0.4</span>
           <span>·</span>
           <span>{network === 'testnet' ? 'GALILEO TESTNET' : 'ARISTOTLE MAINNET'}</span>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '4px 10px',
-              borderRadius: 999,
-              border: '1px solid var(--color-verified)',
-              background: 'var(--color-verified-bg)',
-              color: '#166534',
-              fontSize: 11,
-              fontWeight: 500,
-              letterSpacing: '0.5px',
-            }}
-          >
+          {/* W2 — live receipt count as the lead first-paint number. AlphaDawg
+              + Provus pattern: the headline number a judge remembers. */}
+          {totalReceipts !== null && (
             <span
               style={{
-                width: 6,
-                height: 6,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
                 borderRadius: 999,
-                background: 'var(--color-verified)',
-                animation: 'pulse 1.6s ease-in-out infinite',
+                border: '1px solid var(--color-verified)',
+                background: 'var(--color-verified-bg)',
+                color: '#166534',
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: '0.5px',
               }}
-            />
-            Live
-          </span>
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: 999,
+                  background: 'var(--color-verified)',
+                  animation: 'pulse 1.6s ease-in-out infinite',
+                }}
+              />
+              {Number(totalReceipts).toLocaleString()} receipts on-chain · live
+            </span>
+          )}
         </div>
 
         <div
@@ -131,6 +139,12 @@ export default async function HomePage() {
               <Link href="/r/1004" className="btn-secondary" style={{ textDecoration: 'none' }}>
                 See a sample receipt
               </Link>
+              {/* W12 — /thesis is the persona-locked story page. Prior nav
+                  link is "Why" but a hero CTA gets it in front of judges
+                  who never click the nav. */}
+              <Link href="/thesis" className="btn-ghost" style={{ textDecoration: 'underline', alignSelf: 'center' }}>
+                Why Ivaronix →
+              </Link>
             </div>
 
             {/* Stat row — live numbers from chain */}
@@ -159,7 +173,7 @@ export default async function HomePage() {
                 <span style={{ color: 'var(--color-muted)' }}>passports minted</span>
               </div>
               <div>
-                <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>5</span>{' '}
+                <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>{verifiedSkillsCount}</span>{' '}
                 <span style={{ color: 'var(--color-muted)' }}>verified skills</span>
               </div>
             </div>
@@ -210,7 +224,10 @@ export default async function HomePage() {
             <span>0G Compute</span>
             <span>0G Storage</span>
             <span>0G Chain</span>
-            <span>0G DA</span>
+            {/* W11 — 0G DA integration path is documented but not yet wired
+                into the receipt flow (planning-002 W3). Honest qualifier
+                instead of a brand lie. */}
+            <span style={{ color: 'var(--color-muted)' }}>0G DA <span style={{ fontSize: 10, fontStyle: 'italic' }}>(integration documented)</span></span>
             <span>0G Router</span>
             <span>Sealed Inference</span>
           </div>
