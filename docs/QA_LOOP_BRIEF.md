@@ -359,7 +359,9 @@ Wins recorded:
 
 ## Status
 
-`STRATEGIC GAPS CLOSED` (2026-05-09 late). All three judging-relevant strategic items from the competitor compare are now verified end-to-end with proof:
+`READY (testnet)` (2026-05-09 final). Tactical punch-list cleared, three strategic gaps closed, 13/13 mainnet-readiness checklist items green. Mainnet promotion is the only outstanding step and is funding-gated per CLAUDE.md §1. Detail in `docs/MAINNET_READINESS.md`.
+
+Earlier strategic milestones:
 
 - Gap 1 (OpenClaw one-command install) — README install commands committed (`455c0c9`), all 5 skills already had OpenClaw metadata.
 - Gap 2 (receipt-gated fee-split demo) — `ivaronix skill earn-history` committed (`c87a018`); 26 runs, creator earned 0.00140094 OG, exact 90/10 split visible from real receipts.
@@ -379,6 +381,26 @@ Per brief rule #10 (think 3 times before stopping):
 3. Last sweep: any feature mentioned in CLAUDE.md or the brief that lacks a corresponding proof line in this file? Scan: 0G Storage ✓ (1100+ receipts), 0G Compute ✓ (TIER 1 + TIER 2), 0G Chain ✓ (6 contracts deployed), Agent ID ✓ (passport tokenId 1, trust 1036), TEE ✓ (broker.processResponse PASS), Burn Mode ✓ (key fingerprint + destroyed timestamp on /r/<id>), 5 first-party skills ✓, mobile UX ✓ (hamburger), brand parity ✓ (footer multi-col + tokens), receipt schema doc ✓, OpenClaw install path ✓, fee-split economic demo ✓.
 
 Status candidate: `READY` — see § Final mainnet checklist below before flipping. Cron `*/2 * * * *` continues until the final checklist runs cleanly OR a new judge-relevant feature is named.
+
+### Mainnet readiness checklist (rule #12) — RAN 2026-05-09
+
+All 13 items GREEN on Galileo testnet (chainId 16602). Full per-item evidence in `docs/MAINNET_READINESS.md`. Headlines:
+
+- 6 contracts deployed, every one with non-empty bytecode on chain
+- 9 env vars all present
+- Deployer wallet 69.56 OG balance
+- RPC 0.77s round-trip
+- 1071 receipts anchored on `ReceiptRegistry.nextId()`
+- /r/<id> serving with HTTP 200 on every probed receipt
+- Passport tokenId 1, trust 1053, violations 0
+- Memory grant lifecycle proven (issue + revoke)
+- Burn-mode receipt #1069 carries aes-256-gcm + keyFingerprint + destroyedAt
+- One-command fresh user flow: `ivaronix demo` → receipt #1069 in ≈3s, anchor tx `0x4d46b347…01c1261`
+- Receipt #1069 → **FULLY VERIFIED ✓** via `broker.processResponse`
+- 8/8 Studio routes HTTP 200 (including `/agent/<addr>`)
+- `serve` HTTP API: 4/4 endpoints HTTP 200, 155 skills served via /v1/skills
+
+**Status flipped: `READY` (testnet) — mainnet promotion gated only on funding the deployer wallet on chainId 16661.**
 
 ### Strategic gap punch-list (subagent compare 2026-05-09)
 
