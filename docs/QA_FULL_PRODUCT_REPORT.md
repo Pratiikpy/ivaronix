@@ -128,6 +128,7 @@ Studio home (the `/` route) uses: "Catch the *risks*. Keep the receipts." This i
 - All 10 routes render correctly when connected and disconnected
 - Real on-chain receipts render with full provenance: receiptRoot, agent, anchor tx, tokens, fee split
 - Public proof URL (`/r/<id>`) is shareable without auth
+- **Studio `/brand` mirrors the standalone brand kit's full 7-section structure** (Overview / Logo / Color / Type / Voice / Components / Tokens). Color section declares the canonical palette as cards (paper #FAFAF7, ink #0A0A0A, …). Voice section quotes CLAUDE.md §9 verbatim with do/don't cards. Type section uses the connected wallet address as the JetBrains Mono specimen — clever editorial touch. The standalone kit at scroll positions y=0/900/1800/2700/3600/4500/5400 and Studio /brand at the same positions show structurally equivalent sections. See `screenshots/brand-deep/`.
 
 ## 5. Video evidence
 
