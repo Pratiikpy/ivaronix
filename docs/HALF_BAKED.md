@@ -942,11 +942,12 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 
 ## Tier A · Round-2 high-impact under-1h
 
-### N · H-2 · `processResponse` third argument
-- **Code:** `apps/cli/src/commands/receipt.ts:253` — fetch content from receipt body (`receipt.consensus.individualAttestations[*]` content slot via `contentMap` already populated at `packages/consensus/src/index.ts:208-211`) and pass as third arg.
-- **Test:** unit test mocks `broker.inference.processResponse(provider, chatId, content)` and asserts third arg is non-empty; integration test runs `--tee-independent` against receipt #1004 and asserts the broker call signature includes content.
-- **CI:** lint rule blocks `processResponse(*, *)` (two-arg form) repo-wide.
-- **Effort:** 30min.
+### N · H-2 · `processResponse` third argument  ·  ✅ FIXED 2026-05-10 (`77eb746`)
+- **Schema extension:** `packages/receipts/src/schema.ts` — `ConsensusRoleAttestation` declares optional `content?: z.string().optional()`. Optional for backward compat — receipts produced before this field shipped will omit it; their independent verify falls back to the 2-arg form with an explicit `chatId-only; legacy receipt` label.
+- **Pipeline plumbing:** `packages/runtime/src/pipeline.ts:497-525` and `apps/cli/src/commands/doc.ts:490-518` both build a role→content map from `consensus.reviewerOutputs` + `consensus.judgement` and write it into each `individualAttestation`.
+- **CLI verify:** `apps/cli/src/commands/receipt.ts:222-281` — Att type extended with `content?: string`. Verify loop calls 3-arg `broker.inference.processResponse(providerAddress, chatId, content)` when content is present; falls back to 2-arg form with `PASS (chatId-only; legacy receipt)` label when missing. Both Provus and AIsphere's live-inference paths use the 3-arg form; we match on the offline-verify path.
+- **Test:** `scripts/qa/metamask-e2e/verify-h2-process-response.ts` — schema check, pipeline + doc.ts content-population check, receipt.ts 3-arg conditional check, 2-arg fallback retained for legacy receipts.
+- **Typecheck:** `@ivaronix/receipts`, `@ivaronix/runtime`, `@ivaronix/cli` all clean.
 
 ### N · H-1 + H-4 · attestationHash + memoryClient.store after every anchor
 - **Code:** `packages/consensus/src/index.ts:174` — `attestationHash: keccak256(toUtf8Bytes(zgResKey))` for TIER 1 (omit for TIER 2 per honest-by-absence). Thread through `anchorReceipt` in `packages/runtime/src/pipeline.ts`. After successful anchor, call `memoryClient.store({ group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory', content: JSON.stringify({ receiptId, finalText, convergence }), metadata: { receiptOnchainId: receiptOnchainId?.toString(), tier } })` — best-effort, never throws, logs to `silentSkip` (J-12) on failure.

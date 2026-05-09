@@ -501,7 +501,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-3 · RunPanel Storage gated on response evidenceRoot → ✅ DONE (`98f102b`)
 ### N · S-4 · delegate.ts exit-code propagation → ✅ DONE (`38452bc`)
 ### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
-### N · H-2 · processResponse third argument (content) → ✅ DONE (`<sha-pending>`)
+### N · H-2 · processResponse third argument (content) → ✅ DONE (`77eb746`)
 - Schema `ConsensusRoleAttestation.content?: string` (optional, backward-compat).
 - Pipeline + doc.ts build role→content map from `consensus.reviewerOutputs + judgement`, persist on each attestation.
 - CLI `receipt verify --tee-independent` calls 3-arg `broker.inference.processResponse(provider, chatId, content)` when content present; 2-arg fallback for legacy receipts with explicit `chatId-only` label.
