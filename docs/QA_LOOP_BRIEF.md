@@ -509,6 +509,10 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
 ### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
 ### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ CODE-COMPLETE (`c73ee7d`) · chain deploy = operator-action A-V2-K2
+### N · L-7 · Vercel-deploy Studio → ✅ CODE-COMPLETE (`<sha-pending>`) · deploy = operator-action A-V2-L7
+- `apps/studio/.env.production.template` shipped — full env list grouped by purpose; every line REQUIRED or with a documented default.
+- `docs/USER_TODO.md` §A-V2-L7 — exact `vercel login` / `vercel --prod` runbook + custom-domain DNS + Sentry + Upstash signup notes + post-deploy smoke commands.
+- Studio typecheck clean.
 - `contracts/src/ReceiptRegistryV2.sol` — OZ EIP-712 + ECDSA.recover. Anchor's `agentAddress` field is the RECOVERED signer, not `msg.sender`. Replay protection via per-agent monotonic nonces; per-call deadline enforced. Relayer pattern: anyone can submit (msg.sender is just the relayer, recorded separately on the event).
 - `contracts/test/ReceiptRegistryV2.t.sol` — 15 tests covering happy path, forged-agent rejection, replay rejection, deadline enforcement, zero-field rejections, tampered-field recovery failure, monotonic nonces, pause control. Full repo Foundry suite 121/121 (was 106/106).
 - `contracts/script/DeployReceiptRegistryV2.s.sol` shipped; ~0.05 OG on Galileo (funded).

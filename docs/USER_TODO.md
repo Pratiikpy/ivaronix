@@ -52,6 +52,34 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
      `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $OG_PRIVATE_KEY --legacy`
   3. Studio `/agents` will need a follow-up to read V2 first and fall back to V1 with a `LEGACY-PASSPORT` chip — already documented in HALF_BAKED.md K-1; agent picks it up post-deploy.
 
+### A-V2-L7 · Vercel-deploy Studio
+- **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio is `pnpm --filter @ivaronix/studio dev` only. A judge who doesn't clone never sees Studio at all.
+- **Status:** code-complete · `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.
+- **Cost:** Vercel hobby tier is free. Domain `~$12/yr` (your call). Sentry + Upstash both have free tiers.
+- **Run:**
+
+  ```bash
+  ! vercel login
+  cd apps/studio
+  cp .env.production.template .env.production
+  # Fill .env.production with the real values (private key, ZG_API_SECRET, etc.)
+  # Then push the env vars to Vercel:
+  vercel env pull .env.local             # Sanity check: pulls back what's set
+  vercel --prod                          # Deploys to your team's prod URL
+  ```
+
+- **Custom domain (`ivaronix.app` recommended):**
+  1. Buy at any registrar; point DNS at Vercel (CNAME or A record per Vercel's instructions).
+  2. In Vercel project settings → Domains, add the domain.
+  3. After SSL cert issues (~30 seconds), set `IVARONIX_STUDIO_BASE=https://ivaronix.app` in Vercel env.
+- **Post-deploy smoke:**
+  - Hit `https://<your-url>/r/1004` — chip should render VERIFIED, four-light row should show real evidence per S-2 + I-5.
+  - Hit `https://<your-url>/api/auth/siwe/nonce` — must return 200 + `Set-Cookie: iv-siwe-nonce=...; HttpOnly; SameSite=Strict`.
+  - Hit `POST https://<your-url>/api/skill/save` anonymous — must return 401.
+  - Hit `POST https://<your-url>/api/run` anonymous 11 times in a minute — 11th must return 429.
+- **Sentry signup (5 min, free):** create project, copy DSN, set `SENTRY_DSN` in Vercel env. Errors will surface in Sentry instead of disappearing into Vercel logs.
+- **Upstash Redis (recommended for multi-instance):** set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` so rate-limit buckets are shared across Vercel function instances. Without this, each instance has its own in-memory bucket and an attacker can multiply their ceiling by spreading hits.
+
 ### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo
 - **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so any wallet can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature; replay protection via per-agent monotonic nonces.
 - **Status:** code-complete · `contracts/src/ReceiptRegistryV2.sol` ships; 15/15 V2 Foundry tests pass; deploy script `contracts/script/DeployReceiptRegistryV2.s.sol` ready.

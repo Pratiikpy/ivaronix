@@ -1000,10 +1000,11 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Studio dep:** added `@ivaronix/og-storage` to `packages/runtime/package.json`.
 - **Runtime typecheck:** clean.
 
-### N · L-7 · Vercel-deploy Studio
-- **Steps:** (1) operator runs `! vercel login` once; (2) we generate the env list (`apps/studio/.env.production.template`) covering `EVM_PRIVATE_KEY`, `IVARONIX_NETWORK=galileo`, `ZG_API_SECRET`, `NVIDIA_API_KEY`, `IVARONIX_OPERATOR_BOOTSTRAP=true`, plus the new `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` for K-8/K-9; (3) `vercel --prod` deploys; (4) custom domain `ivaronix.app` (operator-purchased separately, $12/yr) pointed via DNS; (5) per-route OG image set (`/r/<id>` shows the receipt headline, `/agents` shows live count); (6) Sentry wired (operator: free tier signup) for live error visibility; (7) status page at `/status` reachable.
-- **Tests:** post-deploy smoke — fetch the live `/r/1004`, verify it renders the same shape as local; fetch `/api/run` rate limit endpoint and confirm 429 after 11 anonymous requests; SIWE handshake works via real wallet.
-- **Effort:** 4h after operator funds domain + signs into Vercel + Upstash + Sentry.
+### N · L-7 · Vercel-deploy Studio  ·  ✅ CODE-COMPLETE 2026-05-10 (`<sha-pending>`) · deploy = operator-action A-V2-L7
+- **Env template:** `apps/studio/.env.production.template` shipped with the full env list grouped by purpose (chain + receipts, 0G Compute, NIM fallback, K-8/K-9 SIWE secret + Upstash rate-limit, Persistent Memory + DA + Storage opt-ins, Sentry, Studio base URL). Every line either REQUIRED or has a documented default.
+- **Operator-action runbook:** `docs/USER_TODO.md` §A-V2-L7 — exact `! vercel login` + `vercel --prod` invocation, custom-domain DNS pointing for `ivaronix.app`, Sentry + Upstash signup notes, post-deploy smoke commands.
+- **Smoke tests on the live URL** (the operator runs after first deploy): `/r/1004` chip renders VERIFIED; `/api/auth/siwe/nonce` returns httpOnly cookie; anonymous `/api/skill/save` returns 401; 11 anonymous `/api/run` hits in a minute trigger 429.
+- **Studio typecheck:** clean.
 
 ## Acceptance gates (no item ships without these)
 
