@@ -206,6 +206,12 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
   const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
   const startTime = Date.now();
   let consensus: ConsensusResult;
+  // The model that's actually used. Receipts must record THIS, not env.defaultModel
+  // (which can mislead readers into thinking a 0G model ran for an NVIDIA tx).
+  // CLAUDE.md §6: Honest > flattering.
+  const resolvedModel = providerKind === 'nvidia'
+    ? (input.model ?? process.env.NVIDIA_DEFAULT_MODEL ?? 'qwen/qwen3.5-397b-a17b')
+    : (input.model ?? env.defaultModel);
 
   if (providerKind === 'nvidia') {
     // TIER 2 path — NVIDIA NIM, single-shot, no role-based consensus.
@@ -213,7 +219,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     if (!nim) throw new Error('NVIDIA NIM not configured (.env: NVIDIA_API_KEY=nvapi-...)');
     log.info(tag(`provider             nvidia-nim · TIER 2 (external-signed)`));
     const r = await nim.chatRich({
-      model: input.model ?? process.env.NVIDIA_DEFAULT_MODEL ?? 'qwen/qwen3.5-397b-a17b',
+      model: resolvedModel,
       messages: [
         { role: 'system', content: enrichedContext },
         { role: 'user', content: activePrompt },
@@ -251,7 +257,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     consensus = await runConsensus({
       tier,
       keyring,
-      model: input.model ?? env.defaultModel,
+      model: resolvedModel,
       context: enrichedContext,
       userPrompt: activePrompt,
       rawBytes: Buffer.from(activeContext, 'utf8'),
@@ -302,6 +308,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       provider: providerKind,
       callerTrust,
       burnEnabled,
+      resolvedModel,
     });
     receiptPath = result.path;
     receiptId = result.id;
@@ -354,10 +361,11 @@ interface AnchorArgs {
   log: PipelineLogger;
   callerTrust: number;
   burnEnabled: boolean;
+  resolvedModel: string;
 }
 
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
-  const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled } = a;
+  const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled, resolvedModel } = a;
 
   if (!env.privateKey) throw new Error('No private key for receipt signing');
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
@@ -406,7 +414,7 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       mode: receiptType,
       burnMode: burnEnabled,
       consensusMode: tier !== 'quick',
-      modelSelection: { requested: env.defaultModel, final: env.defaultModel },
+      modelSelection: { requested: env.defaultModel, final: resolvedModel },
       providerRouting: {
         allowFallbacks: true,
         finalProvider: (primaryAtt?.providerAddress ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,
