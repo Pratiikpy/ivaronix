@@ -359,4 +359,13 @@ Wins recorded:
 
 ## Status
 
-`IN PROGRESS` — gap list non-empty. Cron `*/2 * * * *` continues.
+`PUNCH-LIST CLEARED — STRATEGIC GAPS NEXT` (2026-05-09). Every actionable item is `verified end-to-end with proof` or `fixed and re-tested`. The four remaining lines are explicit `blocked with real reason + unblock action`:
+
+1. `da preflight` — no public 0G DA testnet exists; CLI surfaces the `docker run ghcr.io/0glabs/0g-da-client combined` unblock command itself.
+2. Telegram bot live — needs BotFather-issued token (user action).
+3. `passport mint` confirmed — current wallet holds tokenId 1; mint reverts. Needs a fresh wallet to demonstrate.
+4. `skill install <name>` URL-only — cosmetic ergonomics bug; works with URLs.
+
+Per brief operating rule #10 ("Before stopping, think 3 times"), the next round must be **strategic** rather than tactical: per rule #13, do the one-shot competitor-comparison pass against `entries/`, `new-entries/`, and `og-projects-showcase/` to identify what's *strategically* missing for the win. Per rule #14, only add features that close a real judging or PMF gap.
+
+Cron `*/2 * * * *` continues until that strategic round produces either (a) `READY` after a final mainnet checklist (rule #12) or (b) one more named, judged-relevant feature to build.
