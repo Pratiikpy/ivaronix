@@ -102,6 +102,13 @@ export interface PipelineOutput {
   receiptTxHash: string | null;
   receiptOnchainId: bigint | null;
   scan: ScanResult | undefined;
+  /**
+   * 0G Storage Merkle root for the run's evidence blob, when the pipeline
+   * uploaded one. `null` when no upload happened (the runtime path today
+   * does not upload — see HALF_BAKED.md H-3). Surfaced so /api/run can
+   * forward it to the client honestly.
+   */
+  storageEvidenceRoot: string | null;
 }
 
 export function defaultSearchDirs(): string[] {
@@ -391,6 +398,11 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptTxHash,
     receiptOnchainId,
     scan,
+    // No 0G Storage upload happens in the Studio runtime path today (see
+    // HALF_BAKED.md H-3). When H-3 lands, the upload result's Merkle root
+    // populates this field; until then `null` is the honest answer and
+    // RunPanel keeps the Storage light pending accordingly.
+    storageEvidenceRoot: null,
   };
 }
 

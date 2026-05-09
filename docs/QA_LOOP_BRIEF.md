@@ -497,7 +497,13 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 `READY` was the testnet stop condition. The HALF_BAKED.md round-1 + round-2 audits surfaced ~210 net-new findings; Section N records the no-compromise plan for the 16-item committed fix batch (Tier 0 Critical, Tier S one-line lies, Tier A round-2 high-impact, K-15 polyglot canonical hash, L-7 Vercel deploy). Cron `99378b32` (every 2h at :17) drives the loop. Each fix lands with: code change + unit/integration test + CI lint guard + real-MM Playwright e2e (UI fixes) + chain artefact (chain fixes) + HALF_BAKED.md status inline + this punch-list line + commit body.
 
 ### N · S-1 · `compute_tee_required` no-op gate fixed → ✅ DONE (`d15703f`)
-### N · S-2 + I-5 · /r/[id] four-light row reads real evidence → ✅ DONE (`<sha-pending>`)
+### N · S-2 + I-5 · /r/[id] four-light row reads real evidence → ✅ DONE (`b9676f1`)
+### N · S-3 · RunPanel Storage gated on response evidenceRoot → ✅ DONE (`<sha-pending>`)
+- `apps/studio/src/components/RunPanel.tsx:115-148` — initial state pending; success branch reads `data.storage?.evidenceRoot`; error/catch keep pending.
+- `apps/studio/src/app/api/run/route.ts` — response includes `storage: { evidenceRoot: result.storageEvidenceRoot ?? null }`.
+- `packages/runtime/src/pipeline.ts` — `PipelineOutput.storageEvidenceRoot: string | null` declared; today's runtime returns `null` honestly (no Studio-side upload yet; H-3 follow-up).
+- Studio + runtime typecheck clean. Source-file regression covers all three files.
+- Verification script: `scripts/qa/metamask-e2e/verify-s3-runpanel-pending.ts`. Screenshots in `screenshots/s3-runpanel-pending/`.
 - `apps/studio/src/app/r/[id]/page.tsx:160-175` — Storage gates on `local?.storage?.evidenceRoot`; Chain gates on `local?.chainAnchor?.anchorTxHash`; Compute gates on `local?.execution?.consensus?.individualAttestations?.length` with local-body fallback. TEE unchanged.
 - Studio typecheck clean.
 - E2E `scripts/qa/metamask-e2e/verify-s2-i5-lights.ts`: source-file regression + HTML state extraction + body cross-check + desktop/mobile screenshots in `screenshots/s2-i5-lights/`.

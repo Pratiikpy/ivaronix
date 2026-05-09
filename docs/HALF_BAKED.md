@@ -919,15 +919,16 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `packages/skills/src/sandbox.test.ts` — 9 cases all green. NIM/OpenAI/Ollama + tee-required → blocks. 0G + tee-required → allows. Omitted providerKind (legacy CLI path) → allows. tee-required=false + nvidia → allows. Multi-violation stacking. Plus a source-file regression test that fails if `&& false /* placeholder */` re-appears anywhere in `sandbox.ts`.
 - **Typecheck:** `@ivaronix/skills`, `@ivaronix/runtime`, `@ivaronix/cli` all green.
 
-### N · S-2 · Storage light reads real evidenceRoot · I-5 · Chain light reads real txHash  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · S-2 · Storage light reads real evidenceRoot · I-5 · Chain light reads real txHash  ·  ✅ FIXED 2026-05-10 (`b9676f1`)
 - **Code:** `apps/studio/src/app/r/[id]/page.tsx:160-175` — Storage gates on `local?.storage?.evidenceRoot`; Chain gates on `local?.chainAnchor?.anchorTxHash`. Compute now also gates on `local?.execution?.consensus?.individualAttestations?.length` (with local-body fallback for legacy receipts that pre-date the consensus block). TEE unchanged.
 - **Test:** `scripts/qa/metamask-e2e/verify-s2-i5-lights.ts` — source-file regression guards (no `hasLocalBody ? 'verified'` for Storage; no `Chain: 'verified'` hardcode); HTML assertion via curl against the dev render; per-light state extracted from the dot-color CSS variable; cross-check against the local receipt body's evidence.
 - **Surfaced honesty:** receipt #1004 (the README's headline "FULLY VERIFIED" example) now correctly renders Storage=pending (no real `evidenceRoot` in body — confirms H-3 — Studio's `/api/run` never uploaded) and TEE=pending (`routerVerified: false`, testnet default). The previous chip code lit them green regardless. **The fix is doing exactly what it should.** Honest tier marking per CLAUDE.md §6.
 
-### N · S-3 · RunPanel Storage light starts pending
-- **Code:** `apps/studio/src/components/RunPanel.tsx:113` — initial state `pending`, transitions to `verified` only on `data.storage.evidenceRoot` populated in the `/api/run` response.
-- **Test:** Playwright — click Run, assert Storage light is `pending` for the duration of the request, transitions to `verified` only after response received with real root.
-- **Effort:** 30min.
+### N · S-3 · RunPanel Storage starts pending, gated on real response  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+- **Code:** `apps/studio/src/components/RunPanel.tsx:115-148` — initial layers `Storage: 'pending'`; success branch `Storage: data.storage?.evidenceRoot ? 'verified' : 'pending'`; error/catch branches keep Storage `'pending'`. Zero remaining `Storage: 'verified'` claims in the click handler.
+- **Plumbing:** `RunResponse.storage?.evidenceRoot` added to the typed shape; `/api/run/route.ts` returns `storage: { evidenceRoot: result.storageEvidenceRoot ?? null }`; `PipelineOutput.storageEvidenceRoot: string | null` declared with `null` returned by today's runtime path (Studio runtime does not upload to 0G Storage; H-3 will populate this and the light will go green automatically).
+- **Test:** `scripts/qa/metamask-e2e/verify-s3-runpanel-pending.ts` — source-file regression on RunPanel.tsx, `/api/run/route.ts`, and `pipeline.ts`; counts zero `Storage: 'verified'` literals remaining; Playwright snapshot of the home page at desktop + mobile.
+- **Honest behavior:** until H-3 ships, every Studio-Run receipt's Storage light stays pending. The receipt body itself reports no Storage evidence; the page is consistent with reality.
 
 ### N · S-4 · `delegate.ts` exitCode propagation
 - **Code:** `apps/cli/src/commands/delegate.ts:469-491` — drop `process.exitCode = 0` from the finally; let the inner `docCommand.parseAsync` failure propagate. Better: spawn `docCommand` in a child process via `execFileSync` with the delegate env on the subprocess, drop the in-process env mutation entirely.

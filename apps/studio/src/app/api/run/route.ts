@@ -98,6 +98,12 @@ export async function POST(req: Request) {
           }
         : null,
       skill: { id: result.skill.id, version: result.skill.manifest.version },
+      // Storage evidence root (S-3 + future H-3): populated when /api/run
+      // uploads the encrypted blob to 0G Storage. Today the Studio path does
+      // not upload — RunPanel correctly leaves the Storage light pending when
+      // this is null. H-3 will wire real upload and populate this with the
+      // 0G Storage Merkle root.
+      storage: { evidenceRoot: result.storageEvidenceRoot ?? null },
       logs: entries,
     });
   } catch (err) {

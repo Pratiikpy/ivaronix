@@ -50,6 +50,10 @@ interface RunResponse {
   receiptOnchainId?: string | null;
   scan?: { matches: boolean; registered: boolean; revoked: boolean; creator: string | null; onchainManifestHash: string | null } | null;
   skill?: { id: string; version: string };
+  // Storage evidence — populated when /api/run uploads to 0G Storage. Until
+  // HALF_BAKED H-3 ships real Studio-side upload, evidenceRoot is null and
+  // the Storage light stays pending honestly.
+  storage?: { evidenceRoot?: string | null } | null;
   logs?: { level: 'info' | 'pass' | 'fail'; label: string; detail: string | null }[];
 }
 
@@ -110,7 +114,10 @@ export function RunPanel() {
     if (!contentText.trim()) return;
     setRunning(true);
     setResult(null);
-    setLayers({ Storage: 'verified', Compute: 'active', TEE: 'pending', Chain: 'pending' });
+    // S-3: every light starts pending. The previous code lit Storage green
+    // BEFORE any upload happened, then stayed green even on error. Honest
+    // tier marking per CLAUDE.md §6: each light reflects real evidence.
+    setLayers({ Storage: 'pending', Compute: 'active', TEE: 'pending', Chain: 'pending' });
     try {
       const res = await fetch('/api/run', {
         method: 'POST',
@@ -131,17 +138,23 @@ export function RunPanel() {
       setResult(data);
       if (data.ok) {
         setLayers({
-          Storage: 'verified',
+          // Storage gates on real evidenceRoot from the response. Until
+          // HALF_BAKED H-3 ships real Studio-side 0G Storage upload, the
+          // response carries `storage.evidenceRoot: null` and this stays
+          // pending — honest about what actually happened.
+          Storage: data.storage?.evidenceRoot ? 'verified' : 'pending',
           Compute: 'verified',
           TEE: data.scan?.matches ? 'verified' : 'pending',
           Chain: data.receiptTxHash ? 'verified' : 'pending',
         });
       } else {
-        setLayers({ Storage: 'verified', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
+        // On error nothing was anchored — every light stays pending or
+        // reports mismatch on Compute. No false-claim of Storage verified.
+        setLayers({ Storage: 'pending', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
       }
     } catch (err) {
       setResult({ ok: false, error: (err as Error).message });
-      setLayers({ Storage: 'verified', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
+      setLayers({ Storage: 'pending', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
     } finally {
       setRunning(false);
     }
