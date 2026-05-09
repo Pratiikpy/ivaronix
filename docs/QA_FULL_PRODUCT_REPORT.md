@@ -21,6 +21,8 @@
 | Onboard step 2 ✓ Balance 69.6430 OG | Green check (real on-chain RPC read for chainId 16602) | `008`, `009` |
 | Onboard step 4 mint Transaction-request popup | Network: 0G Galileo · Interacting with AgentPassport `0x08d25…4563E` · Cancel/Confirm | (run-full.ts: `013-mm-mint-tx-step-1.png`) |
 | Real Run from home → fresh anchored receipt | Receipt **#945** in 42s (this session); receipt **#933** earlier | `031`, `032` |
+| Real `issueGrant` MM tx popup | Real popup, Network fee **0.0008 OG**, Interacting with `0x3783f…46a8D` (CapabilityRegistry); Confirm clicked; chain rejected w/ nonce error (see §3.5) | `screenshots/deeper/006-mm-grant-tx-open.png` |
+| Disconnect → reconnect cycle | Header chip removed → "Connect wallet" → MM popup → Connect → chip restored | `screenshots/deeper/009`-`011` |
 | `/r/<id>` public proof page | VERIFIED · TIER 1 · TEE · RISK: LOW chips + four-light row + receiptRoot/agent/anchor tx/tokens/fee split | `024` (#933), `032` (#945) |
 | Skill detail drill-down | REGISTRY MATCH chip, permissions chips, on-chain anchor card, sample input | `012` |
 | Memory grant UI | Issue Grant card (grantee/scope-kind/namespace/TTL slider/Issue button) + Profile + Your Grants list | `018` |
@@ -76,7 +78,21 @@ Receipt #945 (`032-fresh-r-945.png`) shows the model's answer text containing `R
 
 **Fix:** label the chip explicitly (e.g. `RISK CLASSIFIER · LOW` and prepend `MODEL OUTPUT:` over the body) OR strip "Risk Level: …" from the headline render. Minor but noticeable in pitch demos.
 
-### 3.5 Home headline drift from brand HTMLs
+### 3.5 Wagmi nonce cache goes stale after consecutive writes
+
+`run-deeper.ts` issued a real `CapabilityRegistry.issueGrant()` write through MetaMask. The MM popup showed the correct details (Network: 0G Galileo, Interacting with `0x3783f…46a8D`, Network fee: **0.0008 OG**), the harness clicked Confirm, viem submitted, and the chain rejected with:
+
+> The contract function "issueGrant" reverted with the following reason: nonce too low; next nonce 1976, tx nonce 1975
+
+This is wagmi/viem caching the wrong nonce after the wallet's prior writes (mint attempt, multiple `/api/run` server-anchored receipts that share the same wallet). User-visible: a clean red error card with full reason + viem docs link — error UX is **good** but the underlying retry logic isn't there. See `008-memory-grant-in-list.png` (in `screenshots/deeper/`).
+
+**Fix:** wagmi config should set `nonceManager` from viem (`createNonceManager({ source: jsonRpc() })`) so consecutive writes from the same wallet auto-increment correctly. One-line addition to `apps/studio/src/lib/wagmi.ts`.
+
+### 3.6 Footer "BUILT ON THE *full* OG STACK" links are decorative, not clickable
+
+`0G Compute · 0G Storage · 0G Chain · 0G DA · 0G Router · Sealed Inference` render as plain text, not anchors. Pitch-mode judges might try to click these to drill into the stack. Either link them to the real 0G docs (`https://0g.ai/docs/...`) or visually de-emphasize so they read as labels rather than links.
+
+### 3.7 Home headline drift from brand HTMLs
 
 Both brand HTML files use grand-statement headlines:
 - Standalone: "A quiet operating system for *noisy* agents."
@@ -134,8 +150,10 @@ Requires: Studio dev server on `localhost:3300`, MM profile already onboarded wi
 ## 8. Recommended next steps (ranked by impact)
 
 1. **Fix §3.1 dashboard cache** — biggest UX win, one-day implementation, unblocks pitch-demo dashboard scrolling.
-2. **Fix §3.2 mobile nav** — required for any mobile pitch demo or judge testing on phone.
-3. **Pick canonical brand tokens** (§2 Option A) — converge CLAUDE.md, both brand HTMLs, and Studio. One CSS edit per file.
-4. **§3.3 backdrop-filter** — trivial, group with §2 brand-token sweep.
-5. **§3.4 receipt labelling** — five-minute polish, big readability win for non-technical judges.
-6. **§3.5 headline alignment** — strategic decision; defer until brand voice is locked.
+2. **Fix §3.5 wagmi nonce manager** — one-line viem `createNonceManager` addition; without it, consecutive on-chain writes from the same wallet randomly fail.
+3. **Fix §3.2 mobile nav** — required for any mobile pitch demo or judge testing on phone.
+4. **Pick canonical brand tokens** (§2 Option A) — converge CLAUDE.md, both brand HTMLs, and Studio. One CSS edit per file.
+5. **§3.3 backdrop-filter** — trivial, group with §2 brand-token sweep.
+6. **§3.4 receipt labelling** — five-minute polish, big readability win for non-technical judges.
+7. **§3.6 footer link semantics** — either link to 0G docs or de-emphasize visually.
+8. **§3.7 headline alignment** — strategic decision; defer until brand voice is locked.
