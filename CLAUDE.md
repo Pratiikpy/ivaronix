@@ -145,3 +145,35 @@ What "match" means:
 - **Same** four-light-row chip set wherever verification is shown.
 
 The HTML file is updated when the brand evolves; treat it as the brand spec, not as legacy demo HTML. Any divergence is a Studio bug, not a brand drift.
+
+
+## 11. End-to-end testing rule (the "real human" test)
+
+The canonical user intent for what counts as a passing E2E test lives in `docs/QA_LOOP_BRIEF.md` (verbatim user instruction, do not paraphrase). Every shipped feature must satisfy all of the following before it counts as "done."
+
+### 11.1 · Use the real product, not synthetic shortcuts
+- **Real MetaMask extension** loaded into Playwright via `--load-extension`, not a mocked wallet, not a window.ethereum injection. Drive the actual MM popups for connect, sign, switch chain, add network, confirm tx.
+- **Real wallet, real chain.** Galileo testnet for now, mainnet once funded. No localhost-only flows count.
+- **Real on-chain side effects.** A test that produces a real anchor tx + receipt URL + chainscan link is the bar. A test that asserts "button clicked" is not.
+
+### 11.2 · Drive it like a user, not like a test runner
+- Click buttons. Wait for visible state. Watch transitions. Read the proof page the user would land on.
+- For any feature that touches more than one wallet (data room, multi-party grants, hand-offs, escrow), drive **every** wallet through its own MetaMask popup. Do not collapse a multi-party flow into a single-wallet shortcut.
+- For any feature that touches more than one device viewport, run the same flow at desktop (1440×900) and mobile (375×812). Mobile is not optional.
+
+### 11.3 · Capture proof a judge could replay
+- Screenshots at every meaningful state transition: pre-action, MM popup open, post-confirm, final proof page. Not only the final result.
+- Video recording of the full flow whenever the smoothness of transitions, loading states, or interaction feel matters. The judge cares how it feels, not only that it worked.
+- Side-by-side check against `brand/Ivaronix.html` at both viewports per §10. If Studio looks less designed, fix Studio first.
+
+### 11.4 · Cover every shipped feature, not only the headline
+- "If even one thing is missed, you are not done" (verbatim from QA_LOOP_BRIEF.md). Sweep every page, every CLI command, every receipt type, every contract write path. The brief's punch list pattern is the right shape.
+- Edge cases count: tampered receiptRoot must fail closed, empty input must be gated before Router spend, bogus on-chain id must produce an honest error. Silent failures are a test bug.
+
+### 11.5 · Every CLI feature passes the UI-promotion gate before shipping a UI surface
+- Per §4, ask: should this be on UI? Would a real user use it from the UI? Does it have honest UI PMF?
+- If yes, ship the UI surface AND test it end-to-end per §11.1–4.
+- If no, document why in the CLI command's own help text and the QA brief. Do not promote a feature to UI just because it exists in CLI.
+
+### 11.6 · Reference, do not paraphrase
+- When testing intent is the question, re-read `docs/QA_LOOP_BRIEF.md` directly. The verbatim user voice is the source of truth for what "no compromise" means in test scope. CLAUDE.md §11 is the operational summary; the brief is the contract.
