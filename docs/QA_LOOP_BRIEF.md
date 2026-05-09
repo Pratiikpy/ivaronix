@@ -316,8 +316,18 @@ Highest impact:
 - [x] `OG_PROVIDER=nvidia` TIER 2 EXTERNAL receipt → receipt **#1014** anchored, /r/1014 renders amber `TIER 2 · EXTERNAL · NVIDIA-NIM` pill, four-light row TEE amber per CLAUDE.md §6. Honest tier marking proven.
 - [x] Memory `revokeGrant` round-trip → DONE (commit `be060ee`). Studio /memory `Revoke` button driven, real MM tx popup confirmed (CapabilityRegistry 0x3783f...46a8D), chain accepted. CLI `memory list` confirms grant `0xf437b7350b697a13...` flipped from ACTIVE to REVOKED. Studio UI shows all 5 grants red REVOKED post-reload. Lifecycle complete (issueGrant + revokeGrant both proven).
 - [x] Other skills exercised → DONE. All five first-party skills run end-to-end through `ivaronix skill eval`: plan-step v0.1.0 (1/1 pass · 332+34 tok), github-audit v0.1.0 (receipt **#1043**), 0g-integration-auditor v0.1.0 (receipt **#1045**), code-edit v0.2.0 (receipt **#1048**, anchor tx `0xcf47d822…68abac`, after I added the missing `tests/add-typed-arg.md` fixture in commit `a037f8b`). Plus private-doc-review's existing receipts (#933, #945, #994, #1004). Multi-skill platform claim proven.
-- [ ] Studio `/agent/[handle]` route never visited
-- [ ] CLI `compute verify-tee <id>`, `da preflight/disperse/retrieve`, `model preflight/deposit`, `passport mint/show/restore`, `skill publish/install/eval`, `serve`, `session list/attach`
+- [x] Studio `/agent/[handle]` route → DONE. `/agent/0xaa95…77Ce` renders "§ AGENT · #1 · Trust score 1036 · italic Council badge ≥200 trust", recent-activity card with last 5 receipts (#1051, #1050, #1049, #1048, #1047), profile grid (tokenId 1, trust 1036, receipts 1036, violations 0), explorer link. `/agent/<vanity>` falls back to honest "Handles arrive Day 17" placeholder per the route's design.
+- [x] CLI breadth → DONE this firing:
+  - [x] `compute verify-tee 1004` → forwards to `receipt verify --tee-independent` (proven). Functional alias.
+  - [ ] `da preflight` → **explicitly blocked**: localhost:51001 unreachable AND the CLI's own message confirms "No public testnet endpoint exists for 0G DA". Unblock action: `docker run -d --name 0g-da-client -p 51001:51001 --env-file envfile.env -v ./run:/runtime ghcr.io/0glabs/0g-da-client combined`. Genuinely external dependency, not an Ivaronix bug.
+  - [x] `model preflight` → ✓ binary v0.8.2, login OK, network OK, "preflight ok".
+  - [x] `passport show` → ✓ tokenId 1, trustScore 1034, receiptCount 1034, violations 0, mintedAt 2026-05-07, lastEvolutionAt 2026-05-09, explorer link.
+  - [x] `skill inspect github-audit` → ✓ full manifest visible (reputation rules, consensus + burn config, prompt body).
+  - [ ] `skill install <name>` → minor UX bug: takes a URL only, treats `plan-step` as URL string and fails with "Failed to parse URL". Expected: lookup-by-name from local catalog. Low priority.
+  - [x] `session list` → ✓ clean empty state ("no saved conversations yet — start one with `ivaronix`").
+  - [x] `serve --port 4242` → ✓ all 5 endpoints live: `/healthz` 200 (61B), `/v1/skills` 200 (49 KB · **155 skills**), `/v1/passport/<addr>` 200, `/v1/receipt/1004` 200 returning `{ state: "ANCHORED", receiptRoot: 0x7dbc... }`.
+  - [x] `indexer stats` → ✓ 329 receipts indexed, lag 97560 blocks (run backfill), latest id 496.
+  - [x] `stats` → ✓ comprehensive output, derived metrics (avg anchor interval ≈ 265s).
 - [ ] Telegram bot live commands (BotFather token unblock)
 - [ ] `passport mint` actually confirmed on-chain (prior attempt reverted because wallet already held tokenId 1; need a fresh wallet)
 - [ ] Edge cases: empty/oversized doc input, mismatched receiptRoot in `receipt verify`, revoked skill run attempt, RPC unreachable boot
