@@ -247,9 +247,12 @@ skillCommand
 
 // ─── install ─────────────────────────────────────────────────────────────────
 /**
- * `ivaronix skill install <url>` — install a skill from a remote source.
+ * `ivaronix skill install <ref>` — install a skill from a name OR a URL.
  *
- * Supported URL forms:
+ * Supported `<ref>` forms:
+ *   - bare skill id (e.g. `plan-step`) — resolves to `seed-skills/<id>/SKILL.md`
+ *     in the repo. Catches the QA bug where `ivaronix skill install plan-step`
+ *     died with "Failed to parse URL".
  *   - https://raw.githubusercontent.com/<owner>/<repo>/<branch>/path/to/SKILL.md
  *   - https://github.com/<owner>/<repo>/blob/<branch>/path/to/SKILL.md  (rewritten to raw)
  *   - file:///abs/path/to/SKILL.md  (local file)
@@ -259,14 +262,48 @@ skillCommand
  * (project-local) so it overrides any same-id seed skill.
  */
 skillCommand
-  .command('install <url>')
-  .description('Install a skill from a URL (GitHub raw, github.com blob URL, or file://)')
+  .command('install <ref>')
+  .description('Install a skill from a name (e.g. plan-step) OR a URL (GitHub raw / github.com blob / file://)')
   .option('--id <id>', 'override the skill id (defaults to the manifest name)')
   .option('--force', 'overwrite an existing same-id skill')
-  .action(async (url: string, opts: { id?: string; force?: boolean }) => {
+  .action(async (ref: string, opts: { id?: string; force?: boolean }) => {
+    // Step 1: resolve `<ref>` to a fetchable URL.
+    // If `<ref>` looks like a bare skill id (no scheme, no slash), try to
+    // resolve against the local seed-skills directories first.
+    let fetchUrl = ref;
+    if (!/^(https?|file):\/\//.test(ref) && !ref.includes('/')) {
+      const { existsSync } = await import('node:fs');
+      const dirs = skillSearchDirs();
+      let found: string | null = null;
+      for (const d of dirs) {
+        const candidate = resolve(d, ref, 'SKILL.md');
+        if (existsSync(candidate)) { found = candidate; break; }
+      }
+      if (found) {
+        // Convert local path → file:// URL with proper Windows escaping
+        const urlPath = found.replace(/\\/g, '/');
+        fetchUrl = process.platform === 'win32'
+          ? `file:///${urlPath}`
+          : `file://${urlPath}`;
+      } else {
+        ui.fail(`skill "${ref}" not found in local catalog`);
+        ui.hint('Available bare names:');
+        for (const d of dirs) {
+          try {
+            const { readdirSync } = await import('node:fs');
+            for (const e of readdirSync(d)) {
+              const sub = resolve(d, e, 'SKILL.md');
+              if (existsSync(sub)) ui.info(`  ${e}`);
+            }
+          } catch { /* skip */ }
+        }
+        ui.hint('Or pass a URL: `ivaronix skill install https://raw.githubusercontent.com/<owner>/<repo>/main/SKILL.md`');
+        process.exitCode = 1;
+        return;
+      }
+    }
     // Rewrite github.com/<owner>/<repo>/blob/... → raw.githubusercontent.com/<owner>/<repo>/...
-    let fetchUrl = url;
-    const githubBlob = url.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
+    const githubBlob = fetchUrl.match(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/(.+)$/);
     if (githubBlob) {
       fetchUrl = `https://raw.githubusercontent.com/${githubBlob[1]}/${githubBlob[2]}/${githubBlob[3]}`;
     }
@@ -278,8 +315,8 @@ skillCommand
       if (gitBash) fetchUrl = `file:///${gitBash[1]!.toUpperCase()}:/${gitBash[2]!}`;
     }
 
-    ui.title(`skill install ${url}`);
-    if (fetchUrl !== url) ui.info(`rewritten URL        ${fetchUrl}`);
+    ui.title(`skill install ${ref}`);
+    if (fetchUrl !== ref) ui.info(`resolved             ${fetchUrl}`);
 
     let body: string;
     try {
