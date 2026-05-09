@@ -903,14 +903,14 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **Tests:** Foundry — cannot anchor with someone else's signature, cannot replay an anchor, nonce increments correctly, EIP-712 domain separator binds to chainId + verifyingContract. Plus the existing receipt-anchor smoke test extended to V2.
 - **Effort:** 5h including redeploy + V2 in `deployments/testnet.json` + TS client + Rust/Go verifier branch (lands with K-15 polyglot work).
 
-### N · K-8 · `/api/run` rate-limit + SIWE  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · K-8 · `/api/run` rate-limit + SIWE  ·  ✅ FIXED 2026-05-10 (`245e017`)
 - **Code:** new `apps/studio/src/lib/rate-limit.ts` (in-memory token bucket; honest about single-instance scope; production multi-instance should swap for Upstash), new `apps/studio/src/lib/siwe-session.ts` (HMAC-protected session cookie with 1h TTL, single-use SIWE nonces with 5min TTL), new `apps/studio/src/app/api/auth/siwe/{nonce,verify}/route.ts` SIWE handshake routes. `apps/studio/src/app/api/run/route.ts:48-104` now applies a per-IP rate limit (10/min anonymous) BEFORE parsing the body, requires an active SIWE session matching any `userWallet` claim, and adds a per-wallet rate limit (50/hr authenticated) when authenticated.
 - **Anonymous receipts:** still allowed for judges that don't authenticate, but bounded to 10/min per IP — operator wallet drain prevented.
 - **Cookie posture:** `httpOnly`, `sameSite: 'strict'`, `secure: process.env.NODE_ENV === 'production'`. Cookie value is `<id>.<hmac(id)>`; tampering invalidates the HMAC.
 - **Tests:** `scripts/qa/metamask-e2e/verify-k8-k9-auth.ts` — live tests confirm: nonce endpoint returns 200 + httpOnly + SameSite=strict cookie; `userWallet` claim without session → 401; malformed userWallet → 400; per-IP rate limit triggers 429 within ~10 hits.
 - **Studio typecheck:** clean.
 
-### N · K-9 · `/api/skill/save` SIWE + per-wallet sandbox + manifest validation  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · K-9 · `/api/skill/save` SIWE + per-wallet sandbox + manifest validation  ·  ✅ FIXED 2026-05-10 (`245e017`)
 - **Code:** `apps/studio/src/app/api/skill/save/route.ts:24-180` — anonymous POST is now 401 across the board. After SIWE-session lookup the route applies a per-wallet rate limit (5 saves/hr) and writes to `.ivaronix/skills/<sessionWallet>/<skillId>/SKILL.md`. The session wallet, not the body, controls the path namespace — cross-wallet writes are impossible by construction. A second `startsWith(sandboxRoot)` defence-in-depth check rejects any resolved path that escaped the per-wallet sandbox.
 - **Manifest validation:** the route parses YAML frontmatter and walks `og.hooks.*` for shell-injection or path-escape patterns (`../`, leading `/` or `~`, `;`, `&&`, `|`, backtick, `$(`). Bad hooks return 400 with the offending stage + value named.
 - **Studio dep:** added `yaml` (used by `packages/skills`) so the route can parse the frontmatter directly.
