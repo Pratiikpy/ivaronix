@@ -186,6 +186,15 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               Burn Mode 🔒
             </span>
           )}
+          <a
+            href={`/r/${onChain.id}/print`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-ghost"
+            style={{ marginLeft: 'auto', fontSize: 12, padding: '4px 10px', textDecoration: 'underline' }}
+          >
+            Print / save as PDF →
+          </a>
         </div>
 
         <FourLightRow layers={layers} />
