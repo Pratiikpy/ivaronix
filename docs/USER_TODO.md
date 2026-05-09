@@ -49,6 +49,17 @@
 - **Verify:** `npm view @ivaronix/widget` returns the package metadata.
 - **Effect:** any third-party React app can `import { ReceiptVerifier }` and surface our brand on their pages.
 
+### B-3a · Spin up the 0G Persistent Memory sidecar (one-time per machine)
+- **What it is:** the `0g-memory` sidecar service runs locally as a Docker-composed stack of MongoDB + Elasticsearch + Milvus + Redis + the `zgs_kv` 0G chain-sync binary. Adds the 6th 0G primitive to Ivaronix's claim — matches AIsphere's "all 6 primitives."
+- **Source:** `oglabs resources/0g-memory/README.md` + `oglabs resources/0g-memory/docs/api_docs/memory_api.md`.
+- **Action:**
+  - `cd oglabs\ resources/0g-memory && bash install.sh` (one-time setup)
+  - `bash start_service.sh` — sidecar listens on `http://localhost:1995`
+  - Add to `.env`: `ZG_MEMORY_URL=http://localhost:1995`
+  - That's it — the runtime auto-detects via `MemoryClient.fromEnv()` and starts populating `request.memoryQuery` on every receipt.
+- **Verify:** run `ivaronix doc ask sample.txt "..." --skill private-doc-review` twice; the second receipt's `request.memoryQuery.retrievedCount` should be > 0 (the second run reads the first run's anchored memory back as context).
+- **No mainnet equivalent yet.** The sidecar is wallet-keyed (encrypted with a key derived from `EVM_PRIVATE_KEY`) so it works against either testnet or mainnet receipts depending on which network the receipts were anchored on.
+
 ### B-4 · Anchor data-room manifests on 0G Storage (not just local)
 - **Why it matters:** today `apps/studio/src/app/data-room/[id]/page.tsx` reads only the local FS. A judge browsing the deployed Studio on a different host sees "Room not found" because the manifest was created on the operator's machine.
 - **Action:** at room-creation time, also upload the manifest JSON to 0G Storage and store the storage root in the on-chain receipt's `storage.evidenceRoot`. Then make the page fetch by storage root, with local FS as fallback.

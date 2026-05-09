@@ -191,7 +191,7 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Honest disclosure:** if local DA Client Docker node isn't up, fall back to current 0G Storage path with `request.daBlobRef = null` — no fake claims. Add a `--require-da` flag for the demo path.
 - **Effect:** Ivaronix becomes the **only** entry in the entire field claiming 6 0G primitives **with evidence** (subagent C confirms no showcase project shipped DA).
 
-### W4 · Wire 0G Persistent Memory sidecar (`0g-memory`) · 4h · Criterion 2.1 + 2.2
+### W4 · Wire 0G Persistent Memory sidecar (`0g-memory`) · 4h · Criterion 2.1 + 2.2 → ✅ DONE
 - **Where:** `packages/og-kv/` (currently a stub Map per subagent D), `apps/cli/src/commands/doc.ts` (memory-depth currently scans local FS).
 - **Move:** spin up `0g-memory/install.sh` once; replace `og-kv` stub with a thin REST client to `localhost:1995/api/v1/memories`. After every receipt anchor, POST the body. Before each `doc ask`, GET search-by-skillId. Receipt body gains `request.memoryQuery = { method: 'agentic', k, retrievedCount }`.
 - **Effect:** sixth 0G primitive added with evidence. AIsphere's "all 6 primitives" claim is now matched.
@@ -211,7 +211,7 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Move:** swap the current narrative opener for "Run this command in any terminal: `pnpm install -g @ivaronix/cli && ivaronix receipt verify 1304 --tee-independent`. Expected: → FULLY VERIFIED ✓. No account needed."
 - **Effect:** AIsphere's whitepaper-as-Criterion-5 advantage neutralized. Ivaronix is **the only competitor** with this command.
 
-### W8 · GitHub-hosted skills registry (`skills/registry.json`) · 3h · Criterion 2.3
+### W8 · GitHub-hosted skills registry (`skills/registry.json`) · 3h · Criterion 2.3 → ✅ DONE
 - **Where:** new `skills/registry.json` + zod schema in `packages/skills/src/registry-schema.ts` + a `/skills` page link to "Browse all on GitHub."
 - **Pattern:** Trapezohe Ghast Skills+MCP Store.
 - **Effect:** developers browse + PR-contribute skills before connecting any wallet. Reduces marketplace contribution friction near zero.

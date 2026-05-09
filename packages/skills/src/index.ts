@@ -5,6 +5,7 @@ export * from './scanner.js';
 export * from './sandbox.js';
 export * from './hooks/types.js';
 export * from './hooks/registry.js';
+export * from './registry-schema.js';
 
 // Re-export selected helpers for CLI ergonomics
 export {

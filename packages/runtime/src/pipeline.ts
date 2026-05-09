@@ -36,6 +36,7 @@ import {
 } from '@ivaronix/skills';
 import { loadEnv, type Env } from './env.js';
 import { noopLogger, type PipelineLogger } from './logger.js';
+import { MemoryClient, buildMemoryContextBlock, type MemorySearchMethod } from './memory-client.js';
 
 /**
  * Shared run-skill pipeline. Used by:
@@ -176,8 +177,40 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     if (!r.allow) throw new Error(`session.start hook "${r.blockingHook}" refused: ${r.reason}`);
   }
 
+  // 4b. 0G Persistent Memory retrieval (planning-002 W4) — opt-in via
+  // ZG_MEMORY_URL. When set and reachable, search prior episodic memories
+  // keyed by skillId + walletAddress, prepend the retrieved block to the
+  // input context. When unset or unreachable, the run proceeds with no
+  // memory context and the receipt body records `memoryQuery: undefined`.
+  // Honest disclosure either way — the receipt shows whether memory was
+  // queried and how many entries surfaced.
+  const memoryClient = MemoryClient.fromEnv();
+  let memoryQueryRecord: { method: MemorySearchMethod; k: number; retrievedCount: number; ok: boolean } | undefined;
+  let memoryContextPrefix = '';
+  if (memoryClient && env.walletAddress) {
+    const result = await memoryClient.search({
+      group_id: skill.id,
+      user_id: env.walletAddress,
+      query: input.userPrompt,
+      method: 'agentic',
+      k: 5,
+    });
+    memoryContextPrefix = buildMemoryContextBlock(result, skill.id);
+    memoryQueryRecord = {
+      method: result.method,
+      k: 5,
+      retrievedCount: result.retrievedCount,
+      ok: result.ok,
+    };
+    if (result.ok && result.retrievedCount > 0) {
+      log.info(tag(`memory               retrieved ${result.retrievedCount} prior memories from 0G Persistent Memory`));
+    } else if (!result.ok) {
+      log.info(tag(`memory               sidecar unreachable; proceeding without prior context (honest)`));
+    }
+  }
+
   // 5. consensus.pre hooks
-  let activeContext = input.context;
+  let activeContext = memoryContextPrefix + input.context;
   let activePrompt = input.userPrompt;
   const preHooks = resolveHooks(skill.manifest.og.hooks?.pre_consensus, 'consensus.pre');
   if (preHooks.length > 0) {
@@ -309,6 +342,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       callerTrust,
       burnEnabled,
       resolvedModel,
+      ...(memoryQueryRecord ? { memoryQuery: memoryQueryRecord } : {}),
     });
     receiptPath = result.path;
     receiptId = result.id;
@@ -362,6 +396,9 @@ interface AnchorArgs {
   callerTrust: number;
   burnEnabled: boolean;
   resolvedModel: string;
+  /** 0G Persistent Memory query record (planning-002 W4). undefined when
+   * memory was not configured or not queried. */
+  memoryQuery?: { method: MemorySearchMethod; k: number; retrievedCount: number; ok: boolean };
 }
 
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
@@ -409,6 +446,7 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       inputArtifacts: [{ kind: 'doc', encrypted: burnEnabled }],
       policyDecision: 'approved',
       approvalChain: [{ gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:default-strict' }],
+      ...(a.memoryQuery ? { memoryQuery: a.memoryQuery } : {}),
     },
     execution: {
       mode: receiptType,

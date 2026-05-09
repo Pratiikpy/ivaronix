@@ -81,6 +81,22 @@ export const ReceiptV1Schema = z.object({
      * agent read as input.
      */
     priorReceiptIds: z.array(z.string()).optional(),
+    /**
+     * 0G Persistent Memory query record (planning-002 W4). Populated only
+     * when the run was configured with `ZG_MEMORY_URL` AND the sidecar at
+     * that URL returned results. Records the search method, k, and how
+     * many memories actually surfaced — so a verifier can confirm the
+     * model's context was conditioned on real prior memories vs starting
+     * from blank.
+     */
+    memoryQuery: z
+      .object({
+        method: z.enum(['keyword', 'vector', 'hybrid', 'rrf', 'agentic']),
+        k: z.number().int().min(0).max(50),
+        retrievedCount: z.number().int().min(0).max(50),
+        ok: z.boolean(),
+      })
+      .optional(),
   }),
 
   execution: z.object({

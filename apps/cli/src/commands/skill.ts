@@ -17,6 +17,7 @@ import { getDeployedAddress } from '@ivaronix/og-chain';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { addScheduleCommand } from './skill-schedule.js';
+import { addRegistryExportCommand } from './skill-registry-export.js';
 
 /** Search dirs in priority order: project local skills → seed-skills (root) */
 function skillSearchDirs(): string[] {
@@ -628,3 +629,9 @@ skillCommand
 
 // ─── schedule (planning-01 §2C) ──────────────────────────────────────────
 addScheduleCommand(skillCommand);
+
+// ─── registry export (planning-002 W8) ───────────────────────────────────
+const registryGroup = skillCommand
+  .command('registry')
+  .description('Public skills-registry tools (planning-002 W8)');
+addRegistryExportCommand(registryGroup);
