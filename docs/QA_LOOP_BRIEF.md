@@ -503,6 +503,11 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
 ### N · H-2 · processResponse third argument (content) → ✅ DONE (`77eb746`)
 ### N · H-1 + H-4 · attestationHash bound to chat ID + memory store after anchor → ✅ DONE (`1f43a27`)
+### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`<sha-pending>`)
+- `apps/studio/src/app/r/[id]/page.tsx:147-185` — server-side `verifyClaimed(local)` from `@ivaronix/receipts`; chip state branches on result; INVALID branch renders the failed-check reason next to the chip.
+- `apps/studio/package.json` adds `@ivaronix/receipts` as direct dep (was transitive-only).
+- Studio typecheck clean.
+- Verification: `scripts/qa/metamask-e2e/verify-i1-verifyclaimed.ts` — source regression + live `/r/1004` check.
 - H-1: `pipeline.ts` + `doc.ts` compute `attestationHash = keccak256(toUtf8Bytes(zgResKey))` when chat ID present (was always `0x000…0`). New receipts anchor a real attestation commitment.
 - H-4: `pipeline.ts` calls `memoryClient.store({ group_id, user_id, type: 'episodic_memory', content, metadata })` after every successful anchor. Gated on `memoryClient && walletAddress && receiptId`. Honest opt-in: when `ZG_MEMORY_URL` unset, store hop skipped.
 - Previously-broken promise (memory-client.ts:24-26 said "every anchor stores the receipt body" but no callers existed) is now true.

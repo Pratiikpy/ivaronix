@@ -12,6 +12,7 @@ import {
 } from '@/lib/chain';
 import { findLocalReceiptByRoot, type ReceiptBody } from '@/lib/local-receipt';
 import type { OnChainReceipt } from '@ivaronix/og-chain';
+import { verifyClaimed, type CheckResult } from '@ivaronix/receipts';
 
 export const dynamic = 'force-dynamic';
 
@@ -144,8 +145,42 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const tier: 'tier-1-tee' | 'tier-2-external-signed' = teeBlock?.tier
     ?? (teeBlock?.verificationMethod === 'external-signed' ? 'tier-2-external-signed' : 'tier-1-tee');
   const providerKind: string = teeBlock?.providerKind ?? '0g-router';
-  const overallState: 'verified' | 'pending' | 'mismatch' =
-    hasLocalBody ? 'verified' : 'pending';
+
+  // I-1: gate the chip header on real verifyClaimed (schema + canonical hash
+  // + signature recovery + signer == agent.ownerWallet). The previous code
+  // gated on `hasLocalBody` alone, so a tampered receipt JSON whose
+  // receiptRoot no longer matched its content still rendered "VERIFIED"
+  // green just because the file existed.
+  let claimResult: { state: 'CLAIMED' | 'ANCHORED' | 'FULLY VERIFIED' | 'INVALID'; checks: CheckResult[] } | null = null;
+  if (local) {
+    try {
+      claimResult = verifyClaimed(local);
+    } catch {
+      claimResult = { state: 'INVALID', checks: [] };
+    }
+  }
+
+  // Map verifyClaimed result + on-chain row presence to the chip state.
+  // - INVALID  (mismatch): schema/hash/signature failed — receipt is forged
+  //                        or corrupted regardless of chain anchor.
+  // - VERIFIED (verified): schema/hash/signature passed AND on-chain row
+  //                        exists (we're already in this branch since the
+  //                        page 404s without `onChain`).
+  // - PENDING  (pending):  no local body OR on-chain row missing.
+  let overallState: 'verified' | 'pending' | 'mismatch';
+  let invalidReason: string | null = null;
+  if (claimResult && claimResult.state === 'INVALID') {
+    overallState = 'mismatch';
+    const failedCheck = claimResult.checks.find((c) => !c.pass);
+    invalidReason = failedCheck ? `${failedCheck.name} failed${failedCheck.detail ? `: ${failedCheck.detail}` : ''}` : 'verification failed';
+  } else if (claimResult && claimResult.state === 'CLAIMED') {
+    overallState = 'verified';
+  } else if (hasLocalBody) {
+    // local body present, claimResult unexpectedly null — treat as pending
+    overallState = 'pending';
+  } else {
+    overallState = 'pending';
+  }
 
   // S-2 / I-5 fix · each light reads from real evidence in the receipt body.
   // Storage: green only when a real 0G Storage Merkle root is present (not
@@ -182,6 +217,24 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           <ReceiptStateChip state={overallState} />
           <TierBadge tier={tier} providerKind={providerKind} />
           {risk(local?.outputs?.riskLevel)}
+          {/* I-1: when verifyClaimed reports INVALID, render the failed
+              check + detail next to the chip so the operator + judge
+              see exactly which step broke. No silent failure. */}
+          {invalidReason && (
+            <span
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                letterSpacing: '0.5px',
+                color: 'var(--color-mismatch)',
+                border: '1px dashed var(--color-mismatch)',
+                borderRadius: 999,
+              }}
+              title="Receipt failed offline verification — see audit trail"
+            >
+              {invalidReason}
+            </span>
+          )}
           {local?.execution?.burnMode && (
             <span
               style={{

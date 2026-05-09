@@ -956,11 +956,15 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `scripts/qa/metamask-e2e/verify-h1-h4-attest-memory.ts` — ethers imports include keccak256 + toUtf8Bytes; pipeline + doc.ts bind attestationHash to chat ID via keccak; pipeline calls memoryClient.store after anchor; store call is gated correctly; metadata carries the right fields.
 - **Typecheck:** `@ivaronix/runtime`, `@ivaronix/cli` clean.
 
-### N · I-1 · `/r/[id]` VERIFIED chip gated on real verify
-- **Code:** `apps/studio/src/app/r/[id]/page.tsx:147-148` — call `verifyClaimed(local)` server-side. Gate `verified` on `result.state !== 'INVALID'`. Add three states: `VERIFIED` (green), `INVALID` (red, with reason: schema / hash / signature / chain), `PENDING` (cream, with "anchor confirmation in flight").
-- **Tests:** Playwright fixtures — tampered receipt → `INVALID` rendered with reason; valid receipt → `VERIFIED`; receipt with no chainAnchor row yet → `PENDING`.
-- **Studio surface:** the chip becomes a clickable disclosure that expands to show which check failed.
-- **Effort:** 1h.
+### N · I-1 · `/r/[id]` VERIFIED chip gated on real verifyClaimed  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+- **Code:** `apps/studio/src/app/r/[id]/page.tsx:147-185` — server-side `verifyClaimed(local)` (the same canonical `@ivaronix/receipts` verifier the CLI uses). Three branches:
+  - `claimResult.state === 'INVALID'` → chip shows MISMATCH plus an inline failed-check reason (e.g. `hash failed: expected 0xab…, computed 0xcd…`)
+  - `claimResult.state === 'CLAIMED'` → chip shows VERIFIED (we're past the 404 so the on-chain row already exists)
+  - `local` body absent → chip shows PENDING
+- **Studio dependency:** added `@ivaronix/receipts` to `apps/studio/package.json` (was a transitive-only dep that failed import resolution).
+- **Failure-mode disclosure:** when the chip is mismatch, an adjacent dashed-border pill names the failed check (`schema`, `hash`, `signature`) so the operator and judge see exactly which step broke. Replaces the old "verified at first paint, broken on inspection" UX with a transparent failure path.
+- **Test:** `scripts/qa/metamask-e2e/verify-i1-verifyclaimed.ts` — source-file regression on the import + the verifyClaimed call + the state branches; live curl against `/r/1004` confirms the chip still renders VERIFIED for a valid signature.
+- **Studio typecheck:** clean.
 
 ### N · I-2 / K-16 · Studio Burn Mode real encryption
 - **Code:** in `packages/runtime/src/pipeline.ts:444-447`, when `burnEnabled`, call `storageClient.uploadEncryptedBurn(plaintextBytes)` from `packages/og-storage/src/burn.ts`. Set `storage.evidenceRoot` to the encrypted blob's root, `storage.encryption.keyFingerprint` from the real AES key (sha256 of the random 32-byte key), `storage.encryption.type: 'aes-256-gcm'`, `storage.encryption.iv: hex(randomBytes(12))`. Destroy the key reference after upload (overwrite with zeros).
