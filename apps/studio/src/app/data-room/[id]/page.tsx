@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Section } from '@/components/Section';
-import { explorerAddrUrl } from '@/lib/chain';
+import { explorerAddrUrl, getNetwork } from '@/lib/chain';
+import { createStorageClient } from '@ivaronix/og-storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +23,36 @@ interface RoomManifest {
   createdAt: number;
   network: string;
   manifestHash: string;
+  manifestStorageRoot?: string;
+}
+
+/** W6 · Fetch a manifest from 0G Storage by its rootHash. The manifest
+ * carries no secrets (Burn Mode already destroyed the session key); only
+ * public on-chain references — so any URL holder can resolve it.
+ *
+ * The og-storage SDK's `download(rootHash, outputPath)` writes to a file,
+ * so we use a deterministic tmp path scoped to the rootHash, read it
+ * back, then leave it (cheap cache for subsequent loads). */
+async function fetchManifestFromStorage(rootHash: string): Promise<RoomManifest | null> {
+  if (!/^0x[0-9a-f]{64}$/i.test(rootHash)) return null;
+  // The og-storage SDK requires a signer for indexer auth even on read;
+  // server-side we have the operator key in env. The download itself is
+  // a public chain operation — the signer is just for SDK plumbing.
+  const operatorKey = process.env.EVM_PRIVATE_KEY ?? process.env.OG_PRIVATE_KEY;
+  if (!operatorKey) return null;
+  const { tmpdir } = await import('node:os');
+  const { unlinkSync } = await import('node:fs');
+  const tmp = resolve(tmpdir(), `ivaronix-room-${rootHash.slice(2, 18)}.json`);
+  try {
+    const sc = createStorageClient({ network: getNetwork(), privateKey: operatorKey });
+    await sc.download(rootHash as `0x${string}`, tmp, true);
+    const text = readFileSync(tmp, 'utf8');
+    try { unlinkSync(tmp); } catch { /* ignore cleanup errors */ }
+    return JSON.parse(text) as RoomManifest;
+  } catch {
+    try { unlinkSync(tmp); } catch { /* nothing to clean */ }
+    return null;
+  }
 }
 
 /** Walk ancestors of cwd looking for `.ivaronix/rooms/<id>.json`. */
@@ -59,16 +90,34 @@ function shortHash(h: string, prefixLen = 10): string {
   return `${h.slice(0, prefixLen)}…${h.slice(-6)}`;
 }
 
-export default async function DataRoomPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function DataRoomPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ storage?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
 
-  const manifest = findRoomManifest(id);
+  // W6 · two-tier resolution: try local FS first, fall back to 0G Storage
+  // when the URL carries a `?storage=<root>` param. Either path produces
+  // the same RoomManifest shape, so the rest of this page is unchanged.
+  let manifest = findRoomManifest(id);
+  let resolvedFrom: 'local' | 'storage' = 'local';
+  if (!manifest && sp.storage) {
+    const fromStorage = await fetchManifestFromStorage(sp.storage);
+    if (fromStorage) {
+      manifest = fromStorage;
+      resolvedFrom = 'storage';
+    }
+  }
   if (!manifest) {
     return (
       <Section
         label={`§ DATA ROOM · ${id.slice(0, 12)}…`}
         title="Room not found."
-        description="The manifest for this room is not on the local filesystem of the Studio process. Either it was never created, or its operator has not synced it to this machine. Confirm the room id, or rerun the operator's manifest sync."
+        description="The manifest for this room is not on the local filesystem AND no ?storage=<rootHash> fallback was provided in the URL. Either the room was never created, or its operator's share URL was missing the storage parameter. The CLI prints the correct URL after `ivaronix room create`."
       />
     );
   }

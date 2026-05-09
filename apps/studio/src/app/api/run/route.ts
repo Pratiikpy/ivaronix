@@ -14,15 +14,35 @@ interface RunBody {
   tier?: ConsensusTier;
   receipt?: boolean;
   burn?: boolean;
+  /**
+   * W9 · Connected user wallet (lowercase 0x…40-hex). When the client
+   * is connected via wagmi, the browser sends the wallet address along
+   * with the run request. The receipt body's `agent.ownerWallet` is set
+   * to this address (instead of the operator's), AND a new
+   * `signedBy: 'operator-on-behalf-of-user'` field records the trust
+   * model honestly: the user authorised but did not sign, the operator
+   * anchored on their behalf. Phase B replaces this with full SIWE
+   * (browser signs the receipt body before anchoring).
+   */
+  userWallet?: string;
 }
 
 /**
  * Run a skill against an uploaded text payload. Returns the consensus output,
  * captured logs, and (when requested) anchored receipt metadata.
  *
- * The wallet that signs receipts is the server's EVM_PRIVATE_KEY — the
- * connected browser wallet is informational at this layer (Day 17 wires
- * SIWE so the browser-attested user becomes the receipt issuer).
+ * Receipt-signing model (W9):
+ *  - When `body.userWallet` is provided AND it's a valid 0x…40-hex address,
+ *    the receipt's `agent.ownerWallet` is set to the user's wallet and
+ *    `agent.signedBy = 'operator-on-behalf-of-user'`. The operator still
+ *    signs the receipt body (the browser cannot sign server-side bytes),
+ *    but the chain anchor records the user as the owning agent.
+ *  - When unset OR malformed, the receipt's `agent.ownerWallet` is the
+ *    operator's wallet (legacy path) with `agent.signedBy = 'operator'`.
+ *
+ * Either way, `/r/[id]` renders a clear chip indicating the trust tier.
+ * Phase B = SIWE: the browser signs the receipt body before anchor and
+ * `signedBy = 'user-direct'` for fully self-sovereign provenance.
  */
 export async function POST(req: Request) {
   await ensureEnv();
@@ -39,6 +59,10 @@ export async function POST(req: Request) {
     );
   }
 
+  const userWallet = body.userWallet && /^0x[0-9a-fA-F]{40}$/.test(body.userWallet)
+    ? (body.userWallet.toLowerCase() as `0x${string}`)
+    : undefined;
+
   const { logger, entries } = createCaptureLogger();
   try {
     const result = await runPipeline({
@@ -50,6 +74,7 @@ export async function POST(req: Request) {
       burn: !!body.burn,
       receiptType: 'doc_ask',
       logger,
+      ...(userWallet ? { delegatedOwnerWallet: userWallet } : {}),
     });
 
     return NextResponse.json({

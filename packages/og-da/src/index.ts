@@ -114,6 +114,18 @@ export class DaClient {
     this.client = new Disperser(this.endpoint, grpc.credentials.createInsecure());
   }
 
+  /**
+   * Construct from env: returns null when ZG_DA_URL is unset.
+   * Honest opt-in pattern (planning-002 W3) — when set, the runtime
+   * batch-anchors burn-mode blobs to DA. When unset, every code path
+   * records `daBlobRef: undefined` rather than fabricating a claim.
+   */
+  static fromEnv(): DaClient | null {
+    const url = (process.env.ZG_DA_URL ?? process.env.ZG_DA_ENDPOINT ?? '').trim();
+    if (!url) return null;
+    return new DaClient({ endpoint: url });
+  }
+
   close(): void {
     this.client.close();
   }

@@ -40,6 +40,11 @@ interface RoomManifest {
   createdAt: number;
   network: string;
   manifestHash: string;
+  /** W6 — 0G Storage rootHash of the manifest JSON itself, populated
+   * after creation. Used by `/data-room/[id]?storage=<root>` so a judge
+   * on a different machine can fetch the manifest without relying on
+   * the operator's local FS. */
+  manifestStorageRoot?: string;
 }
 
 function roomsDir(): string {
@@ -222,6 +227,29 @@ roomCommand
     ui.divider();
     ui.pass(`manifest saved       ${manifestPath}`);
 
+    // 5b. W6 · Upload manifest JSON to 0G Storage so any operator (or
+    // judge on a different machine) can fetch it from the storageRoot
+    // alone — fixes the "Room not found" cross-machine break documented
+    // in PHASE_B_DISCLOSURES.md §4. The plaintext manifest contains only
+    // public on-chain references (storageRoot of the encrypted blob,
+    // grant ids, party addresses). No secrets — Burn Mode already
+    // destroyed the session key.
+    let manifestStorageRoot: string | null = null;
+    try {
+      const sc = createStorageClient({ network: env.network, privateKey: env.privateKey });
+      ui.pending('uploading manifest to 0G Storage (public, no secrets)...');
+      const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest, null, 2));
+      const sr = await sc.upload(Buffer.from(manifestBytes));
+      manifestStorageRoot = sr.rootHash;
+      // Re-persist the local manifest with the storageRoot inside it so
+      // anyone who has the manifest can prove it round-trips.
+      const augmentedManifest = { ...manifest, manifestStorageRoot };
+      writeFileSync(manifestPath, JSON.stringify(augmentedManifest, null, 2));
+      ui.pass(`manifest on 0G Storage: ${sr.rootHash}`);
+    } catch (err) {
+      ui.fail('manifest 0G Storage upload failed (manifest still saved locally)', ((err as Error).message.split('\n')[0] ?? '').slice(0, 120));
+    }
+
     // 6. Anchor a doc_room_create receipt
     try {
       const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
@@ -333,7 +361,15 @@ roomCommand
 
     ui.divider();
     ui.section(`Room URL`);
-    ui.info(`Studio: http://localhost:3300/data-room/${roomId}`);
+    if (manifestStorageRoot) {
+      // W6 — append ?storage=<root> so a judge on a different machine can
+      // fetch the manifest from 0G Storage without our local FS.
+      ui.info(`Studio: http://localhost:3300/data-room/${roomId}?storage=${manifestStorageRoot}`);
+      ui.info(`(Studio falls back to 0G Storage when local manifest is missing.)`);
+    } else {
+      ui.info(`Studio: http://localhost:3300/data-room/${roomId}`);
+      ui.info(`(Storage upload failed; only the operator's machine can resolve this URL.)`);
+    }
     ui.info(`Manifest hash: ${manifestHash}`);
     ui.hint(`Each party can call:  ivaronix room read ${roomId}`);
   });

@@ -206,6 +206,43 @@ docCommand
       }
     }
 
+    // ─── 2c. W3 · 0G DA dispersal (opt-in via ZG_DA_URL) ─────────────────
+    // When the operator has a DA Client Docker node running, also disperse
+    // the encrypted blob to 0G DA. The receipt body's storage.daBlobRef
+    // records the request_id so anyone with a DA node can later
+    // RetrieveBlob and reconstruct.  When ZG_DA_URL is unset OR the node
+    // is unreachable, the receipt body omits daBlobRef — no fake claim.
+    let daBlobRef: { endpoint: string; requestIdHex: string; status: 'UNKNOWN' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'INSUFFICIENT_SIGNATURES'; blobBytes: number; dispersedAt: number } | undefined;
+    const daClient = (await import('@ivaronix/og-da')).DaClient.fromEnv();
+    if (daClient && evidenceBytes.length > 0) {
+      try {
+        ui.pending(`dispersing to 0G DA at ${daClient.endpoint}...`);
+        const reachable = await daClient.ping();
+        if (!reachable.ok) {
+          ui.fail(`0G DA ping failed; receipt will omit daBlobRef`, reachable.reason.slice(0, 80));
+        } else {
+          const result = await daClient.disperseBlob(evidenceBytes);
+          const requestIdHex = '0x' + Buffer.from(result.requestId).toString('hex');
+          // Schema enum is the disperser.proto's canonical states. The
+          // SDK's BlobStatus also includes 'FINALIZED' (a post-CONFIRMED
+          // state); we collapse it to 'CONFIRMED' for schema-faithful
+          // recording — the request_id is still retrievable.
+          const status = result.status === 'FINALIZED' ? 'CONFIRMED' : result.status;
+          daBlobRef = {
+            endpoint: daClient.endpoint,
+            requestIdHex,
+            status,
+            blobBytes: evidenceBytes.length,
+            dispersedAt: Date.now(),
+          };
+          ui.pass(`0G DA dispersed: status=${result.status} request_id=${requestIdHex.slice(0, 18)}…`);
+        }
+        daClient.close();
+      } catch (err) {
+        ui.fail(`0G DA disperse failed; receipt will omit daBlobRef`, ((err as Error).message.split('\n')[0] ?? '').slice(0, 120));
+      }
+    }
+
     // ─── 3. Inference ─────────────────────────────────────────────────────
     const keyring = keyringFromEnv();
     if (!keyring) {
@@ -507,6 +544,7 @@ docCommand
       storage: {
         proofDownloadVerified: false,
         evidenceRoot: evidenceRoot ?? undefined,
+        ...(daBlobRef ? { daBlobRef } : {}),
         encryption: burnMode
           ? {
               enabled: true,

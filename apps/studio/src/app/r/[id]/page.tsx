@@ -216,6 +216,27 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
             <a href={explorerAddrUrl(onChain.agentAddress)} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
               {onChain.agentAddress}
             </a>
+            {/* W9 · signedBy disclosure chip — honest about whether the
+                user signed directly, the operator anchored on their
+                behalf, or the operator owns the receipt outright. */}
+            {local?.agent?.signedBy && local.agent.signedBy !== 'operator' && (
+              <span
+                style={{
+                  marginLeft: 12,
+                  padding: '2px 8px',
+                  fontSize: 10,
+                  borderRadius: 4,
+                  border: `1px solid ${local.agent.signedBy === 'user-direct' ? 'var(--color-verified)' : 'var(--color-pending)'}`,
+                  background: local.agent.signedBy === 'user-direct' ? 'var(--color-verified-bg)' : 'var(--color-pending-bg)',
+                  color: local.agent.signedBy === 'user-direct' ? '#0e6428' : '#7a5d00',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  fontWeight: 600,
+                }}
+              >
+                {local.agent.signedBy === 'user-direct' ? 'USER-SIGNED' : 'OPERATOR-ON-BEHALF-OF-USER'}
+              </span>
+            )}
           </dd>
           {txHash && (
             <>

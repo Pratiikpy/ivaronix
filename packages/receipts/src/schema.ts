@@ -63,6 +63,16 @@ export const ReceiptV1Schema = z.object({
     passportId: z.string(),
     ownerWallet: HexAddress,
     trustScoreAtTime: z.number().int(),
+    /**
+     * W9 · trust-tier marker: who actually held the signing key.
+     *  - 'operator'                       → server-side operator key (legacy default)
+     *  - 'operator-on-behalf-of-user'     → ownerWallet is user's; operator anchored on behalf (current SIWE-precursor path)
+     *  - 'user-direct'                    → user's wallet signed the receipt body itself (Phase B SIWE)
+     *
+     * Optional in the input — older code paths and tests don't set it.
+     * When absent, render it as 'operator' (consumer side default).
+     */
+    signedBy: z.enum(['operator', 'operator-on-behalf-of-user', 'user-direct']).optional(),
   }),
 
   request: z.object({
@@ -199,6 +209,22 @@ export const ReceiptV1Schema = z.object({
     receiptTxHash: HexHash.optional(),
     evidenceRoot: HexHash.optional(),
     proofDownloadVerified: z.boolean().default(false),
+    /**
+     * planning-002 W3 · 0G DA dispersal record. Populated only when the
+     * runtime was configured with `ZG_DA_URL` AND the DA Client node at
+     * that URL accepted the blob. When unset, the receipt body omits the
+     * field — no fabricated claim. The request_id is the load-bearing
+     * handle for retrieve via `da.RetrieveBlob(storage_root, epoch, quorum_id)`.
+     */
+    daBlobRef: z
+      .object({
+        endpoint: z.string(),
+        requestIdHex: z.string().regex(/^0x[0-9a-f]+$/i),
+        status: z.enum(['UNKNOWN', 'PROCESSING', 'CONFIRMED', 'FAILED', 'INSUFFICIENT_SIGNATURES']),
+        blobBytes: z.number().int().nonnegative(),
+        dispersedAt: z.number().int(),
+      })
+      .optional(),
     encryption: z.object({
       enabled: z.boolean(),
       type: z.enum(['aes-256-gcm', 'wallet', 'none']),

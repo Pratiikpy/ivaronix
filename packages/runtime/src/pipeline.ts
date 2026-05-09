@@ -80,6 +80,16 @@ export interface PipelineInput {
    * `og.burn.auto_enable: true` (e.g. `private-doc-review`).
    */
   burn?: boolean;
+  /**
+   * W9 · When set to a 0x…40-hex address, the receipt's
+   * `agent.ownerWallet` records this user wallet (instead of the
+   * operator's), AND `agent.signedBy = 'operator-on-behalf-of-user'`.
+   * The operator still signs the receipt body (browser cannot sign
+   * server-side bytes); the chain anchor records the user as the
+   * owning agent so trust is correctly attributed. Phase B replaces
+   * this with full SIWE — the browser signs the receipt body itself.
+   */
+  delegatedOwnerWallet?: `0x${string}`;
 }
 
 export interface PipelineOutput {
@@ -343,6 +353,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       burnEnabled,
       resolvedModel,
       ...(memoryQueryRecord ? { memoryQuery: memoryQueryRecord } : {}),
+      ...(input.delegatedOwnerWallet ? { delegatedOwnerWallet: input.delegatedOwnerWallet } : {}),
     });
     receiptPath = result.path;
     receiptId = result.id;
@@ -399,6 +410,10 @@ interface AnchorArgs {
   /** 0G Persistent Memory query record (planning-002 W4). undefined when
    * memory was not configured or not queried. */
   memoryQuery?: { method: MemorySearchMethod; k: number; retrievedCount: number; ok: boolean };
+  /** W9 · SIWE-style delegated owner. When set, receipt's
+   * `agent.ownerWallet` records the user wallet and
+   * `agent.signedBy = 'operator-on-behalf-of-user'`. */
+  delegatedOwnerWallet?: `0x${string}`;
 }
 
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
@@ -431,12 +446,19 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     ? (await sha256HexAsync(`burn:${skill.id}:${userPromptHash}:${sessionKeyDestroyedAt}`)) as Hash
     : undefined;
 
+  // W9 — when an SIWE-style delegated wallet is provided, the receipt
+  // owner becomes the user's wallet (operator merely anchors).
+  const ownerWallet = a.delegatedOwnerWallet ?? (wallet.address as `0x${string}`);
+  const signedBy: 'operator' | 'operator-on-behalf-of-user' | 'user-direct' =
+    a.delegatedOwnerWallet ? 'operator-on-behalf-of-user' : 'operator';
+
   const draft = buildReceipt({
     type: receiptType,
     agent: {
-      passportId: `did:0g:passport:${wallet.address}:1`,
-      ownerWallet: wallet.address as `0x${string}`,
+      passportId: `did:0g:passport:${ownerWallet}:1`,
+      ownerWallet,
       trustScoreAtTime: 0,
+      signedBy,
     },
     request: {
       skillId: skill.id,

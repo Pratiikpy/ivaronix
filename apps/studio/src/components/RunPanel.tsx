@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
+import { useAccount } from 'wagmi';
 import { FourLightRow } from './FourLightRow';
 
 type Tier = 'quick' | 'standard' | 'high-stakes';
@@ -55,6 +56,9 @@ interface RunResponse {
 const EXPLORER_TX = (h: string) => `https://chainscan-galileo.0g.ai/tx/${h}`;
 
 export function RunPanel() {
+  // W9 — capture connected wallet to send with /api/run so the receipt's
+  // agent.ownerWallet records the user, not the operator.
+  const { address: connectedAddress } = useAccount();
   const [skillId, setSkillId] = useState<string>('private-doc-review');
 
   // If the page arrived with ?skill=<id>, pre-select it.
@@ -111,7 +115,17 @@ export function RunPanel() {
       const res = await fetch('/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skillId, tier, receipt, burn, contentText, question }),
+        body: JSON.stringify({
+          skillId,
+          tier,
+          receipt,
+          burn,
+          contentText,
+          question,
+          // W9 — pass connected wallet (if any) so the receipt is
+          // attributed to the user, not the operator.
+          ...(connectedAddress ? { userWallet: connectedAddress } : {}),
+        }),
       });
       const data = (await res.json()) as RunResponse;
       setResult(data);
@@ -308,7 +322,11 @@ export function RunPanel() {
           {running ? 'Running…' : 'Run'}
         </button>
         <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
-          {running ? 'Querying 0G Router…' : 'Server signs the receipt with the testnet wallet.'}
+          {running
+            ? 'Querying 0G Router…'
+            : connectedAddress
+              ? `Receipt agent: ${connectedAddress.slice(0, 6)}…${connectedAddress.slice(-4)} · operator anchors on your behalf.`
+              : 'Server anchors the receipt; receipt owner = operator wallet (connect a wallet to attribute receipts to you).'}
         </span>
       </div>
 

@@ -27,7 +27,7 @@ export interface ReceiptBody {
     wording?: { headline?: string; doNotSay?: string[] };
   };
   request?: { skillId?: string; skillVersion?: string; skillManifestHash?: string; priorReceiptIds?: string[] };
-  agent?: { ownerWallet?: string; passportId?: string };
+  agent?: { ownerWallet?: string; passportId?: string; signedBy?: 'operator' | 'operator-on-behalf-of-user' | 'user-direct' };
   chainAnchor?: { anchorTxHash?: string; anchorBlockNumber?: number; anchorTimestamp?: number };
   teeVerification?: {
     requested?: boolean;
@@ -60,6 +60,13 @@ export interface ReceiptBody {
       type?: 'aes-256-gcm' | 'wallet' | 'none';
       headerDetected?: boolean;
       keyFingerprint?: string;
+    };
+    daBlobRef?: {
+      endpoint?: string;
+      requestIdHex?: string;
+      status?: string;
+      blobBytes?: number;
+      dispersedAt?: number;
     };
   };
   burn?: {
