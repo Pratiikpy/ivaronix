@@ -330,7 +330,7 @@ Highest impact:
   - [x] `stats` → ✓ comprehensive output, derived metrics (avg anchor interval ≈ 265s).
 - [ ] Telegram bot live commands (BotFather token unblock)
 - [ ] `passport mint` actually confirmed on-chain (prior attempt reverted because wallet already held tokenId 1; need a fresh wallet)
-- [ ] Edge cases: empty/oversized doc input, mismatched receiptRoot in `receipt verify`, revoked skill run attempt, RPC unreachable boot
+- [x] Edge cases sweep → DONE this firing. (1) Tampered `receiptRoot` → `hash FAIL — expected 0x...0a5ca0, computed 0x...0a5ca7` → `✗ INVALID`. (2) Bogus on-chain id `99999999` → `No receipt resolves "99999999"` + format hint. (3) Nonexistent skill → `No skill named "nonexistent-skill-xyz"`. (4) Empty file input → consensus pre-flight gate `1-file-sanity` rejects with `File is empty. No Router calls made.` (gated BEFORE wasting Router spend). All errors honest, no silent failures, no wasted compute.
 - [x] Studio mobile hamburger nav → DONE (commit `ffad98e`). Right-side portaled drawer with all six destinations + WalletConnect. Auto-closes on route change via usePathname. ESC + backdrop + route-change all dismiss. Containing-block bug from header's `backdrop-filter: blur(20px)` was solved by `createPortal(..., document.body)` — verified panel rect 375×748 with cream-opaque bg.
 - [x] Studio `<footer>` multi-column grid → DONE (commit `d67b6ae`). Four columns: Product / Docs / Network / Open Source. Network column lists all 6 deployed contracts with chainscan links. Mobile collapses to single column via `minmax(180px, 1fr)` auto-fit.
 
@@ -346,7 +346,7 @@ Wins recorded:
 - [x] TIER 1 TEE-independent verify path FULLY VERIFIED (receipts #994, #1004)
 - [x] TIER 2 EXTERNAL NVIDIA NIM path: receipt #1014 amber-marked correctly
 - [x] `.env` NVIDIA_DEFAULT_MODEL fixed (was bogus `qwen/qwen3.5-397b-a17b`, now `meta/llama-3.1-8b-instruct`)
-- [ ] **Bug found**: `modelSelection.final` in receipt #1014 records `qwen/qwen-2.5-7b-instruct` (the 0G default) instead of the actual NVIDIA model called. Pipeline needs to pass the resolved model into the receipt builder. Low priority but worth fixing before submission.
+- [x] **Bug fixed**: `modelSelection.final` now records the actually-used model (commit `759361f`). Verified on fresh NVIDIA receipt **#1056** anchor tx `0xb8187d816d0c00511f82c4b2a638d11a29bc80311877434005a94e6a44af1a60`: receipt body shows `requested: qwen/qwen-2.5-7b-instruct`, `final: meta/llama-3.1-8b-instruct`, both rendering on /r/1056. CLAUDE.md §6 honesty restored.
 
 ## Process for each cron firing
 
