@@ -475,3 +475,115 @@ skillCommand
     ui.divider();
     ui.hint('Each skill_exec receipt anchors `billing.feeSplit` with the same shape — verifiable on chain.');
   });
+
+// ─── earn-history ─────────────────────────────────────────────────────────────
+// Aggregates billing.feeSplit across every anchored receipt for this skill,
+// proving the Track 3 (Agentic Economy) wedge: creator settlement is
+// *receipt-gated* — earnings only accrue when a TIER 1 TEE receipt is signed
+// and anchored, not just when a task completes. AgentPay/zer0Gig demo
+// payment rails; this demos receipt-gated payment rails.
+skillCommand
+  .command('earn-history [id]')
+  .description('Aggregate fee-split earnings across all anchored receipts for a skill (or all skills)')
+  .action(async (id: string | undefined) => {
+    const { readdirSync, readFileSync, statSync } = await import('node:fs');
+    const { resolve, dirname } = await import('node:path');
+    // Find every .ivaronix/receipts/anchored directory under cwd ancestors
+    // (same walk as Studio's local-receipt resolver).
+    const dirs: string[] = [];
+    let dir = process.cwd();
+    let workspaceRoot: string | null = null;
+    for (let i = 0; i < 12; i++) {
+      const candidate = resolve(dir, '.ivaronix', 'receipts', 'anchored');
+      if (existsSync(candidate)) dirs.push(candidate);
+      if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) workspaceRoot = dir;
+      const parent = dirname(dir);
+      if (parent === dir) break;
+      dir = parent;
+    }
+    if (workspaceRoot) {
+      for (const sib of ['apps/cli', 'apps/mcp-server', 'apps/studio']) {
+        const c = resolve(workspaceRoot, sib, '.ivaronix', 'receipts', 'anchored');
+        if (existsSync(c) && !dirs.includes(c)) dirs.push(c);
+      }
+    }
+
+    interface Row {
+      skillId: string;
+      skillVersion: string;
+      runs: number;
+      totalCostNeuron: bigint;
+      creatorNeuron: bigint;
+      treasuryNeuron: bigint;
+      creatorPassport?: string;
+    }
+    const byKey = new Map<string, Row>();
+    let scanned = 0;
+    for (const d of dirs) {
+      let entries: string[];
+      try { entries = readdirSync(d); } catch { continue; }
+      for (const e of entries) {
+        if (!e.endsWith('.json')) continue;
+        try {
+          if (!statSync(resolve(d, e)).isFile()) continue;
+          const r = JSON.parse(readFileSync(resolve(d, e), 'utf8')) as {
+            request?: { skillId?: string; skillVersion?: string };
+            billing?: { feeSplit?: { creatorNeuron?: string; treasuryNeuron?: string; totalCostNeuron?: string; creatorPassport?: string } };
+          };
+          scanned++;
+          const sId = r.request?.skillId;
+          const sVer = r.request?.skillVersion ?? '?';
+          const fs = r.billing?.feeSplit;
+          if (!sId || !fs) continue;
+          if (id && sId !== id) continue;
+          const key = `${sId}@${sVer}`;
+          let row = byKey.get(key);
+          if (!row) {
+            row = {
+              skillId: sId,
+              skillVersion: sVer,
+              runs: 0,
+              totalCostNeuron: 0n,
+              creatorNeuron: 0n,
+              treasuryNeuron: 0n,
+              creatorPassport: fs.creatorPassport,
+            };
+            byKey.set(key, row);
+          }
+          row.runs += 1;
+          row.totalCostNeuron += BigInt(fs.totalCostNeuron ?? 0n);
+          row.creatorNeuron += BigInt(fs.creatorNeuron ?? 0n);
+          row.treasuryNeuron += BigInt(fs.treasuryNeuron ?? 0n);
+        } catch { /* skip malformed */ }
+      }
+    }
+
+    ui.title(`skill earn-history${id ? ` · ${id}` : ' · all skills'}`);
+    ui.info(`scanned              ${scanned} local receipts in ${dirs.length} dir(s)`);
+    ui.divider();
+    if (byKey.size === 0) {
+      ui.info('(no receipts with billing.feeSplit found)');
+      ui.hint('Anchor a receipt: `ivaronix demo` or any `skill eval <id>` with --receipt.');
+      return;
+    }
+    const rows = [...byKey.values()].sort((a, b) =>
+      Number(b.creatorNeuron - a.creatorNeuron),
+    );
+    for (const r of rows) {
+      const creatorOg = (Number(r.creatorNeuron) / 1e18).toFixed(10);
+      const treasuryOg = (Number(r.treasuryNeuron) / 1e18).toFixed(10);
+      const totalOg = (Number(r.totalCostNeuron) / 1e18).toFixed(10);
+      ui.section(`${r.skillId}@${r.skillVersion}`);
+      ui.info(`runs                 ${r.runs}`);
+      ui.info(`total cost           ${totalOg} OG`);
+      ui.pass(`creator earned       ${creatorOg} OG  (${r.creatorNeuron.toString()} neuron)`);
+      ui.info(`treasury earned      ${treasuryOg} OG  (${r.treasuryNeuron.toString()} neuron)`);
+      if (r.creatorPassport) ui.info(`creator passport     ${r.creatorPassport}`);
+    }
+    ui.divider();
+    const totalCreator = rows.reduce((acc, r) => acc + r.creatorNeuron, 0n);
+    const totalTreasury = rows.reduce((acc, r) => acc + r.treasuryNeuron, 0n);
+    const totalRuns = rows.reduce((acc, r) => acc + r.runs, 0);
+    ui.pass(`TOTAL  · ${totalRuns} runs · creator ${(Number(totalCreator) / 1e18).toFixed(10)} OG · treasury ${(Number(totalTreasury) / 1e18).toFixed(10)} OG`);
+    ui.hint('Receipt-gated settlement: creator only accrues when a TIER 1 TEE receipt anchors on chain.');
+  });
