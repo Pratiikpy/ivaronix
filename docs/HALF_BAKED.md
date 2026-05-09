@@ -904,7 +904,17 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **CI:** add to the existing `forge test` suite; block merge on regression.
 - **Effort:** 4h including redeploy + Foundry suite update + Studio chip.
 
-### N · K-2 · `ReceiptRegistry.anchor` recovers `agentAddress` from EIP-712 sig
+### N · K-2 · ReceiptRegistryV2 with EIP-712 anchor signature  ·  ✅ CODE-COMPLETE 2026-05-10 (`<sha-pending>`) · chain deploy = operator-action A-V2-K2
+- **Contract:** `contracts/src/ReceiptRegistryV2.sol`. Inherits OZ `EIP712` (domain `"Ivaronix.ReceiptRegistry"`, version `"2"`) + uses `ECDSA.recover`. The signed payload binds receiptRoot + storageRoot + receiptType + attestationHash + agentAddress + per-agent nonce + deadline. `anchor((params), signature)` recovers the signer; the recovered address MUST equal the claimed `agentAddress` or the call reverts.
+- **Replay protection:** per-agent monotonic `nonces` mapping; consumed + advanced on every successful anchor. Deadline enforced.
+- **Relayer pattern:** anyone can submit; the recorded `agentAddress` is the recovered signer, NOT `msg.sender`. The event includes `relayer = msg.sender` separately for accounting.
+- **Foundry suite:** `contracts/test/ReceiptRegistryV2.t.sol` ships 15 tests covering: happy path (signer recorded as agent, relayer separate), rejects forged agent claim, rejects replay of the same sig, rejects when relayer signs but claims someone else's agent, monotonic nonces across multiple anchors, deadline enforced, zero-field rejections, tampered field fails recovery, two-agent independent nonces, pause stops new anchors, owner-only pause control, view-helper determinism. Full repo Foundry suite: **121/121 passing** (was 106/106; +15 V2-registry tests).
+- **Deploy script:** `contracts/script/DeployReceiptRegistryV2.s.sol` reads `OG_PRIVATE_KEY`. Cost ~0.05 OG on Galileo (already funded).
+- **Operator-action runbook:** `docs/USER_TODO.md` §A-V2-K2 has the exact `forge script` command + post-deploy `deployments/testnet.json` update + TS-client + Studio follow-up notes.
+- **Migration:** V1 `ReceiptRegistry` stays live for the 1,330+ existing receipts (chain history immutable). V2 is a fresh anchor target. TS clients + Studio receipt-loader need a follow-up to sign EIP-712 + branch on `chainAnchor.registryAddress`.
+- **Verification:** `scripts/qa/metamask-e2e/verify-k2-registry-v2.ts` — source-file regression on V2 contract + deploy script + test file presence.
+
+(legacy plan text below preserved for context):
 - **Code:** `contracts/src/ReceiptRegistry.sol:67-90` — replace `agentAddress: msg.sender` with EIP-712 typed-data recovery over `Receipt(bytes32 receiptRoot, bytes32 storageRoot, uint8 receiptType, bytes32 attestationHash, address agentAddress, uint256 chainId, address verifyingContract, uint256 nonce)`. Add `nonces[agent]` mapping for replay protection. Domain separator on deployment.
 - **Migration:** redeploy `ReceiptRegistryV2`. The 1,330 existing v1 receipts stay anchored on V1 — chain history is immutable, no rewrites. New receipts go to V2. Verifier (TS + Rust + Go) branches on the receipt's `chainAnchor.registryAddress`. Studio `/r/<id>` reads V2 first, falls back to V1; V1 receipts get a `LEGACY-REGISTRY` chip next to the version chip.
 - **TS callers updated:** `packages/og-chain/src/contracts/ReceiptRegistry.ts:40-47` adds the EIP-712 sign step before anchor; `packages/runtime/src/pipeline.ts` produces the typed-data signature alongside the receipt-body signature.

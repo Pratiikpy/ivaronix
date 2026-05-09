@@ -52,9 +52,24 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
      `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $OG_PRIVATE_KEY --legacy`
   3. Studio `/agents` will need a follow-up to read V2 first and fall back to V1 with a `LEGACY-PASSPORT` chip — already documented in HALF_BAKED.md K-1; agent picks it up post-deploy.
 
-### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo (after K-2 lands)
-- **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so anyone can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature with replay-protected nonces.
-- **Status:** code work in flight (next item the cron picks up). Same shape as A-V2-K1 once shipped.
+### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo
+- **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so any wallet can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature; replay protection via per-agent monotonic nonces.
+- **Status:** code-complete · `contracts/src/ReceiptRegistryV2.sol` ships; 15/15 V2 Foundry tests pass; deploy script `contracts/script/DeployReceiptRegistryV2.s.sol` ready.
+- **Cost:** ~0.05 OG on Galileo (already funded, see A-1).
+- **Run:**
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<your-deployer-key>           # already in your .env
+  forge script script/DeployReceiptRegistryV2.s.sol:DeployReceiptRegistryV2 \
+    --rpc-url https://evmrpc-testnet.0g.ai \
+    --broadcast --legacy
+  ```
+
+- **Post-deploy:**
+  1. Add the new `ReceiptRegistryV2` address to `contracts/deployments/testnet.json` under a new `ReceiptRegistryV2` key. Leave the V1 `ReceiptRegistry` entry untouched — the existing 1,330+ anchored receipts stay readable on V1.
+  2. The TS clients (`packages/og-chain/src/contracts/ReceiptRegistry.ts`, `packages/runtime/src/pipeline.ts`) need a follow-up to sign the V2 EIP-712 typed data + call the new `anchor((root, storageRoot, type, attestationHash, agent, deadline), signature)` shape. Agent picks this up after the deploy lands.
+  3. Studio receipt-loader follow-up: branch on `chainAnchor.registryAddress` so `/r/<id>` queries V2 first and falls back to V1; existing receipts get a `LEGACY-REGISTRY` chip.
 
 
 
