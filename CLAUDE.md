@@ -11,11 +11,14 @@
 - **No lazy blocked.** Before marking anything blocked, prove you tried the strongest available method: Playwright, real browser extension, backend harness, CLI script, mocked external client, protocol-level test, code-level verification, multi-wallet flow, multi-session flow, or any other route that can prove the feature works end-to-end.
 - **Blocked means truly external.** Only mark a test blocked when it needs something unavailable in this environment: a real phone, BotFather-issued Telegram token, Claude Desktop/Cursor UI, macOS/Linux machine, paid quota, or another genuinely external dependency. "Hard", "takes time", or "needs careful automation" is not blocked.
 - **Brutal honesty.** If a path is wrong, say so. Reject items that don't move the needle.
+- **Surface the half-baked, always.** When a feature exists in code but the UX, surface, or end-to-end story is incomplete, say it explicitly *first* — before recommending it as a strength or proposing to extend it. Do not bury "we have the mechanics, the surface is missing" inside a feature pitch. The user must hear "this is half-finished, here is exactly what part" before any extend / promote / lock-in conversation. Half-baked surfaced late = wasted strategy time.
 - **The only blocker is money.** Anything not requiring real OG funding is a "yes, build it" item. Mainnet deployment + ChainGPT audit waits on the user funding the deployer wallet (B-2).
 
 ## 2. Judging criteria (lock this in your head)
 
 The five 0G APAC Hackathon judging criteria — **the only thing that matters for the win**. For each, where Ivaronix is **strong** and where we **lack vs the field** as of 2026-05-09.
+
+When asked "where are we lacking" or "how do we win", do **not** answer with obvious operational chores like funding a wallet, switching to mainnet, adding an explorer link, or submitting a README. Those are table stakes. Answer from the judge's product lens: 0G depth, implementation completeness, market value, UX/demo quality, and documentation clarity compared with `new-entries`, `entries`, and `og-projects-showcase`.
 
 ### 2.1 · 0G Technical Integration Depth & Innovation
 - **Strong:** independent TEE re-verify via `broker.processResponse` is the universal field weakness; we solved it (receipts #994, #1004, #1056, #1069 all FULLY VERIFIED). Receipt-gated fee splits combine 0G Chain + Compute + economic layer in one verifiable flow no competitor pairs. ERC-7857 AgentPassportINFT live.
@@ -46,6 +49,7 @@ Runnable in one command with a visible verifiable result. The CLI is the gold st
 - **`oglabs resources/`** — official 0G SDKs (TS/Rust/Go), starter kits, agent skills, compute starter kit, fine-tuning example, agenticID, 0G DA Rust SDK, 0G memory KV server. **Always check here first** when implementing any 0G feature.
 - **`og-projects-showcase/`** — 8 projects featured by OG Labs team (Aishi, dont-get-drained, derek2403-0g, verifyhuman, whale-fun, etc.). Use to understand what patterns OG actually highlights.
 - **`entries/`** — 16 grant-track competitor entries (0G_OpenClaw_Hackathon, BuildProof, MindVault, AIsphere, AgentHub, AgentPay, ChainShield, POD, SealedMind, ShadowFlow). Use to understand the bar + find one-up opportunities.
+- **`C:\Users\prate\Downloads\new-entries\`** (sibling of oglabs/, NOT inside) — 9 newer competitor entries split into `individuals/` (Agentra, AIsphere, AgentPay, agentra-0G, nexus-gateway/Opi, og-market-bot, 0G_OpenClaw_Hackathon) and `orgs/` (Trapezohe/Ghast, moonnfun, zer0Gig). Several stake skill/agent marketplace ground (Agentra, Trapezohe Ghast Skills+MCP Store, zer0Gig). When asked for a strategic compare against the field, ALWAYS read this directory too — agents that miss it produce stale recommendations.
 - **`CLI Open Source Project/`** — OpenCode, HermesAgent, Octogent, claude-mem, awesome-claude-skills. Synthesis source for our CLI.
 
 ## 4. PMF filter — how to decide what to build next
