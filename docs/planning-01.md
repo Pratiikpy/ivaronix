@@ -202,13 +202,27 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
   - Any external dapp can require an Ivaronix TIER 1 receipt before executing a tx. We become a *gate*, not just a *log*.
   - Demo: a Safe wallet that requires a `private-doc-review` receipt before approving a vendor contract payment.
 
-### 3D. Embeddable receipt-verifier widget
-- **Why:** distribution moat. The `broker.processResponse` re-verify is currently CLI-only. If any external website can render "verify this Ivaronix receipt" inline, our brand surfaces beyond our own domain.
-- **What to ship:**
-  - `<ReceiptVerifier id="1004" />` React component, npm-published as `@ivaronix/widget`.
-  - `<iframe src="https://ivaronix.studio/embed/r/1004">` fallback for non-React sites.
-  - Renders the four-light row, TIER badge, and a "verify" button that calls our public `/v1/receipt/<id>` endpoint.
-- **Effect:** judges see Ivaronix everywhere on the open web, not just on our own site.
+### 3D. Embeddable receipt-verifier widget → ✅ DONE (npm package + iframe page + vanilla JS loader)
+
+- **`@ivaronix/widget` npm package (`packages/widget/src/index.tsx`):**
+  - `<ReceiptVerifier id="1004" />` — React component that renders an iframe pointing at the public Studio's `/embed/r/<id>` route.
+  - Props: `id`, `origin` (default `https://ivaronix.studio`), `width`, `height`, `title`, `style`. Sensible defaults: 100% × 420 with `maxWidth: 600`, `referrerPolicy: 'no-referrer'`, `loading: 'lazy'`.
+  - Pure peer-deps on React 18+. No client-side RPC, no analytics, no cookies.
+  - README documents both usage paths (React + vanilla HTML).
+- **Studio iframe-friendly route (`apps/studio/src/app/embed/r/[id]/page.tsx`):**
+  - Stripped-down receipt summary: status chip (`FULLY VERIFIED ✓` / `ANCHORED` / `CLAIMED`), tier badge (`TIER 1 · TEE` green / `TIER 2 · EXTERNAL` amber — honest marking per CLAUDE.md §6), receipt id + skill, headline, network, clickable anchor tx, "view full receipt" + "on chainscan" CTAs, "Verified by Ivaronix · the receipt is the spine" footer signature.
+  - `apps/studio/src/app/embed/layout.tsx` injects a five-selector style override that hides the studio header + footer for any `/embed/*` route — App Router root layouts always wrap every route, so a scoped CSS override is the smallest portable way to drop chrome.
+- **Vanilla JS loader (`apps/studio/public/embed.js`):**
+  - `<script src="https://ivaronix.studio/embed.js" data-receipt-id="1004"></script>` auto-creates the iframe at insertion point.
+  - `data-width` / `data-height` overrides supported. No dependency, no analytics, no globals.
+- **End-to-end visual proof (`screenshots/3d-widget/`):**
+  - `01-embed-600x420.png` — typical sidebar embed
+  - `02-embed-320x420.png` — narrow column embed (mobile / sidebar)
+  - `03-embed-1200x800.png` — large viewport, maxWidth caps the card at 600
+  - `04-partner-page-with-iframe.png` — actual third-party host page (`sample-partner-page.html`) loading the embed via `file://`. Iframe is iframe-clean: no Studio header, no Studio footer, no Studio padding.
+- **Voice + content checks (4/4 pass):** status chip, tier badge, view full receipt CTA, footer signature all rendered.
+- **Verification script:** `scripts/qa/metamask-e2e/verify-3d.ts` — re-runnable, no MetaMask required.
+- **Effect:** any third-party site can drop one line of HTML or one React import and surface a verifiable Ivaronix receipt to its visitors. Brand expands beyond the Studio domain. The "verify" action remains a click away to the canonical `/r/<id>` page or the on-chain explorer — every external embed loops back to verifiable evidence.
 
 ---
 

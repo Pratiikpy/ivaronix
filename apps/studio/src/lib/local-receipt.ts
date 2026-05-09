@@ -34,6 +34,7 @@ export interface ReceiptBody {
     routerVerified?: boolean;
     independentVerified?: boolean | null;
     providerAddress?: string;
+    verificationMethod?: 'router_flag' | 'compute_sdk_process_response' | 'external-signed';
   };
   billing?: {
     totalCostOg?: string;
