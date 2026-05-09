@@ -868,4 +868,130 @@ Contract surface is small and well-tested. `Ownable2Step` across `ReceiptRegistr
 4. **Three empty quadrants Ivaronix can own:** embeddable verifier widget (L-20), receipt-diff view (L-21), public verifier daemon (L-22). All under 8h each. None of the field has any of them.
 5. **Three ROI-1 polish actions:** Vercel-deploy Studio (L-7, 4h, $0), 60s demo video (L-9, 30min), 3-page pitch finished (L-8, 4-6h). Closes Criterion 3 + 4 + 5 leak.
 
+---
+
+# Section N · No-compromise execution plan (locked 2026-05-10)
+
+The plan shape that K-15 received, applied to every item in the committed fix batch. Each entry: code paths, test plan, migration if any, CI proof, effort. No item ships without the matched pair (code + test + chain proof + Studio reflection where applicable). CLAUDE.md §1 brutal honesty + §11 e2e + §12 stop-condition apply throughout.
+
+## Tier 0 · Critical security (mainnet-blocking)
+
+### N · K-20 · AES-GCM nonce → randomBytes(12)
+- **Code:** `packages/memory/src/encryption.ts:28-34` — replace `sha256(plaintext || Date.now()).slice(0,12)` with `crypto.randomBytes(12)`. Audit every call site of `encryptForStorage` / `decryptFromStorage` in `packages/memory/src/`.
+- **Compatibility:** the IV is stored alongside the ciphertext per RFC 5116 §3.2, so existing encrypted blobs remain decryptable. No re-encryption, no migration call.
+- **Tests:** unit test asserts (a) two same-plaintext-same-key calls produce different ciphertexts, (b) IV uniqueness fuzz over 1M iterations, (c) decryption round-trip on existing fixtures. CI fails if `Math.random` / `Date.now` / `sha256(plaintext` patterns reappear in encryption code.
+- **Documentation:** `docs/CRYPTO_NOTES.md` records the threat model (AES-GCM nonce reuse → keystream + GHASH break) and the RFC reference.
+- **Effort:** 1h.
+
+### N · K-1 · `recordReceipt` authorized-recorders only + ReceiptRegistry cross-check + delta cap
+- **Code:** `contracts/src/AgentPassportINFT.sol:107-125` — drop the `msg.sender == _ownerOf(tokenId)` branch. Require `authorizedRecorders[msg.sender]`. Inside the function, call `IReceiptRegistry(receiptRegistry).receipts(receiptId)` and require `row.agentAddress == agentInPassportRow`. Cap `trustScoreDelta` per call to `[-100, +100]`.
+- **Migration:** redeploy `AgentPassportINFTV2`. Existing 4 minted passports stay readable on V1; new mints land on V2. `passportOf` mapping lives on V2; V1 stays as legacy. Operator's existing trustScore (1330+) cannot be migrated honestly because it's self-claimed under the old code — V2 mints reset to 0 with the operator address as the bootstrap `authorizedRecorder` so future receipts re-build the score legitimately. Studio `/agents` reads V2 first, falls back to V1 with a `LEGACY-PASSPORT` chip on V1 rows.
+- **Tests:** Foundry tests — only `authorizedRecorder` can write, owner cannot self-write, delta cap enforced (revert on `+101`), `ReceiptRegistry.receipts(id).agentAddress` mismatch reverts, valid path bumps trustScore + receiptCount correctly.
+- **CI:** add to the existing `forge test` suite; block merge on regression.
+- **Effort:** 4h including redeploy + Foundry suite update + Studio chip.
+
+### N · K-2 · `ReceiptRegistry.anchor` recovers `agentAddress` from EIP-712 sig
+- **Code:** `contracts/src/ReceiptRegistry.sol:67-90` — replace `agentAddress: msg.sender` with EIP-712 typed-data recovery over `Receipt(bytes32 receiptRoot, bytes32 storageRoot, uint8 receiptType, bytes32 attestationHash, address agentAddress, uint256 chainId, address verifyingContract, uint256 nonce)`. Add `nonces[agent]` mapping for replay protection. Domain separator on deployment.
+- **Migration:** redeploy `ReceiptRegistryV2`. The 1,330 existing v1 receipts stay anchored on V1 — chain history is immutable, no rewrites. New receipts go to V2. Verifier (TS + Rust + Go) branches on the receipt's `chainAnchor.registryAddress`. Studio `/r/<id>` reads V2 first, falls back to V1; V1 receipts get a `LEGACY-REGISTRY` chip next to the version chip.
+- **TS callers updated:** `packages/og-chain/src/contracts/ReceiptRegistry.ts:40-47` adds the EIP-712 sign step before anchor; `packages/runtime/src/pipeline.ts` produces the typed-data signature alongside the receipt-body signature.
+- **Tests:** Foundry — cannot anchor with someone else's signature, cannot replay an anchor, nonce increments correctly, EIP-712 domain separator binds to chainId + verifyingContract. Plus the existing receipt-anchor smoke test extended to V2.
+- **Effort:** 5h including redeploy + V2 in `deployments/testnet.json` + TS client + Rust/Go verifier branch (lands with K-15 polyglot work).
+
+### N · K-8 · `/api/run` rate-limit + SIWE
+- **Code:** new `apps/studio/src/lib/rate-limit.ts` using `@upstash/ratelimit` + `@upstash/redis` (per-IP token bucket: 10/min anonymous; per-walletAddress: 50/hr authed). New `apps/studio/src/app/api/auth/siwe/{nonce,verify}/route.ts` for the SIWE handshake (httpOnly + SameSite=Strict + secure + 1h TTL session cookie). `apps/studio/src/app/api/run/route.ts:47-113` reads the session, verifies `userWallet` claim matches, applies the rate-limit bucket, gates the anchor.
+- **Operator-mode demo path:** anonymous receipts still allowed for the judge demo, gated by per-day OG budget cap (env: `OPERATOR_DAILY_OG_CAP=0.5`, default deny when exceeded).
+- **Tests:** integration test — 11 anonymous requests in a minute → 11th gets 429; SIWE + 51 requests/hr → 51st gets 429; SIWE with mismatched `userWallet` → 401; expired session → 401.
+- **Studio surface:** "Connect wallet to anchor in your name" banner above the Run panel when no SIWE session present. Empty-state shows the operator-demo budget remaining.
+- **Effort:** 4h.
+
+### N · K-9 · `/api/skill/save` SIWE + per-wallet sandbox + manifest validation
+- **Code:** `apps/studio/src/app/api/skill/save/route.ts:18-71` — require SIWE session. Scope writes to `<workspace>/.ivaronix/skills/<sessionWallet>/<skillId>/SKILL.md`. Validate manifest with the same Zod schema CLI uses (`packages/skills/src/schema.ts`). Refuse manifests whose `og.hooks.*` paths point outside the per-wallet sandbox. Refuse manifests with shell commands in hooks (the lint pass that `loader.ts` already does on disk-read, applied on write). Rate-limit: 5 saves/hr per wallet via the Upstash bucket from K-8.
+- **Tests:** integration — directory-traversal attempts blocked (`skillId: "../../../etc/passwd"` rejected by regex), hook-shell-injection blocked (manifest with `og.hooks.preRun: "rm -rf /"` rejected), cross-wallet writes blocked (sessionWallet: A, manifest claims wallet B → 403), manifest schema-mismatch rejected with the exact Zod error path.
+- **Studio surface:** `/skill/new` page reads SIWE session before enabling the Save button; disabled state explains "Connect wallet to save."
+- **Effort:** 3h.
+
+## Tier S · One-line lies (with regression discipline)
+
+Each item: the one-line code fix + a regression test that fails if the lie comes back + HALF_BAKED.md status update inline.
+
+### N · S-1 · Delete `&& false` from `sandbox.ts:67`
+- **Code:** `packages/skills/src/sandbox.ts:67` — `if (p.compute_tee_required && false /* placeholder */)` → `if (p.compute_tee_required && providerKind !== '0g')`.
+- **Test:** `packages/skills/src/sandbox.test.ts` — manifest with `compute_tee_required: true` + `provider: 'nvidia'` → throws `SandboxError('TEE-required skill cannot run on non-0G provider')`.
+- **CI:** lint rule `no-restricted-syntax` blocks `&& false` patterns repo-wide.
+- **Effort:** 30min.
+
+### N · S-2 · Storage light reads `local?.storage?.evidenceRoot`
+- **Code:** `apps/studio/src/app/r/[id]/page.tsx:151` — `Storage: hasLocalBody ? 'verified' : 'pending'` → `Storage: local?.storage?.evidenceRoot ? 'verified' : 'pending'`.
+- **Test:** Playwright — render `/r/<v1-id>` against fixture with no `storage` block → light is `pending` not `verified`. Render against fixture with real evidenceRoot → light is `verified`.
+- **Effort:** 30min.
+
+### N · S-3 · RunPanel Storage light starts pending
+- **Code:** `apps/studio/src/components/RunPanel.tsx:113` — initial state `pending`, transitions to `verified` only on `data.storage.evidenceRoot` populated in the `/api/run` response.
+- **Test:** Playwright — click Run, assert Storage light is `pending` for the duration of the request, transitions to `verified` only after response received with real root.
+- **Effort:** 30min.
+
+### N · S-4 · `delegate.ts` exitCode propagation
+- **Code:** `apps/cli/src/commands/delegate.ts:469-491` — drop `process.exitCode = 0` from the finally; let the inner `docCommand.parseAsync` failure propagate. Better: spawn `docCommand` in a child process via `execFileSync` with the delegate env on the subprocess, drop the in-process env mutation entirely.
+- **Test:** `apps/cli/test/delegate.test.ts` — `delegate run <id> --doc <bad-file>` exits with non-zero code (currently exits 0).
+- **Effort:** 30min.
+
+### N · S-5 · `chat-v2.ts` import audit
+- **Code:** `apps/cli/src/bin/ivaronix.ts:41` — verify `chat-v2.ts` exists; if not, delete the import. (HALF_BAKED A-7.)
+- **Test:** existing `pnpm --filter @ivaronix/cli build` already catches missing-import errors; promote to CI gate so this can never regress.
+- **Effort:** 15min.
+
+## Tier A · Round-2 high-impact under-1h
+
+### N · H-2 · `processResponse` third argument
+- **Code:** `apps/cli/src/commands/receipt.ts:253` — fetch content from receipt body (`receipt.consensus.individualAttestations[*]` content slot via `contentMap` already populated at `packages/consensus/src/index.ts:208-211`) and pass as third arg.
+- **Test:** unit test mocks `broker.inference.processResponse(provider, chatId, content)` and asserts third arg is non-empty; integration test runs `--tee-independent` against receipt #1004 and asserts the broker call signature includes content.
+- **CI:** lint rule blocks `processResponse(*, *)` (two-arg form) repo-wide.
+- **Effort:** 30min.
+
+### N · H-1 + H-4 · attestationHash + memoryClient.store after every anchor
+- **Code:** `packages/consensus/src/index.ts:174` — `attestationHash: keccak256(toUtf8Bytes(zgResKey))` for TIER 1 (omit for TIER 2 per honest-by-absence). Thread through `anchorReceipt` in `packages/runtime/src/pipeline.ts`. After successful anchor, call `memoryClient.store({ group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory', content: JSON.stringify({ receiptId, finalText, convergence }), metadata: { receiptOnchainId: receiptOnchainId?.toString(), tier } })` — best-effort, never throws, logs to `silentSkip` (J-12) on failure.
+- **Tests:** unit — `attestationHash != bytes32(0)` on TIER 1 receipts; `memoryClient.store` called once per anchor with correct shape. Integration — second `doc ask` invocation retrieves prior memory entries via `memoryQuery.retrievedCount > 0`.
+- **Effort:** 1h.
+
+### N · I-1 · `/r/[id]` VERIFIED chip gated on real verify
+- **Code:** `apps/studio/src/app/r/[id]/page.tsx:147-148` — call `verifyClaimed(local)` server-side. Gate `verified` on `result.state !== 'INVALID'`. Add three states: `VERIFIED` (green), `INVALID` (red, with reason: schema / hash / signature / chain), `PENDING` (cream, with "anchor confirmation in flight").
+- **Tests:** Playwright fixtures — tampered receipt → `INVALID` rendered with reason; valid receipt → `VERIFIED`; receipt with no chainAnchor row yet → `PENDING`.
+- **Studio surface:** the chip becomes a clickable disclosure that expands to show which check failed.
+- **Effort:** 1h.
+
+### N · I-2 / K-16 · Studio Burn Mode real encryption
+- **Code:** in `packages/runtime/src/pipeline.ts:444-447`, when `burnEnabled`, call `storageClient.uploadEncryptedBurn(plaintextBytes)` from `packages/og-storage/src/burn.ts`. Set `storage.evidenceRoot` to the encrypted blob's root, `storage.encryption.keyFingerprint` from the real AES key (sha256 of the random 32-byte key), `storage.encryption.type: 'aes-256-gcm'`, `storage.encryption.iv: hex(randomBytes(12))`. Destroy the key reference after upload (overwrite with zeros).
+- **Compatibility:** the CLI burn path (`apps/cli/src/commands/doc.ts:170-186`) already does this; the Studio path now matches. CLI and Studio receipts become byte-shape-compatible.
+- **Tests:** integration — Studio /api/run with burn enabled produces a receipt whose evidenceRoot is fetchable from 0G Storage; downloading it returns ciphertext (not plaintext); ciphertext fails AES-GCM auth without the key. Foundry/CLI parity test asserts CLI and Studio burn-mode receipts have identical `storage.encryption` shape.
+- **Effort:** 2h.
+
+### N · L-7 · Vercel-deploy Studio
+- **Steps:** (1) operator runs `! vercel login` once; (2) we generate the env list (`apps/studio/.env.production.template`) covering `EVM_PRIVATE_KEY`, `IVARONIX_NETWORK=galileo`, `ZG_API_SECRET`, `NVIDIA_API_KEY`, `IVARONIX_OPERATOR_BOOTSTRAP=true`, plus the new `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` for K-8/K-9; (3) `vercel --prod` deploys; (4) custom domain `ivaronix.app` (operator-purchased separately, $12/yr) pointed via DNS; (5) per-route OG image set (`/r/<id>` shows the receipt headline, `/agents` shows live count); (6) Sentry wired (operator: free tier signup) for live error visibility; (7) status page at `/status` reachable.
+- **Tests:** post-deploy smoke — fetch the live `/r/1004`, verify it renders the same shape as local; fetch `/api/run` rate limit endpoint and confirm 429 after 11 anonymous requests; SIWE handshake works via real wallet.
+- **Effort:** 4h after operator funds domain + signs into Vercel + Upstash + Sentry.
+
+## Acceptance gates (no item ships without these)
+
+Per CLAUDE.md §11 e2e + §12.1 stop condition, every fix above must pass:
+
+1. **Code change** committed with conventional-commit subject + body explaining the fix.
+2. **Unit test or Foundry test** asserting the fix.
+3. **CI lint rule or assertion** that prevents regression.
+4. **Real-MM Playwright e2e** for any UI-touching fix, both viewports, screenshot bundle in `screenshots/<item-id>/`.
+5. **Live receipt or chain artefact** for any chain-touching fix (anchor tx hash + chainscan link in the commit body).
+6. **HALF_BAKED.md status update** in the same commit (item-id moved from "to fix" to "fixed in commit X").
+7. **`docs/QA_LOOP_BRIEF.md` punch-list line** added in the same commit per §12.6.
+
+If any gate fails, the fix is not shipped — it stays in this section as `[blocked: gate-N]` with the specific failure mode named.
+
+## Effort ladder
+
+- Tier 0 total: 17h (1 + 4 + 5 + 4 + 3).
+- Tier S total: 2h 15min.
+- Tier A total: 8.5h (0.5 + 1 + 1 + 2 + 4).
+- K-15 polyglot canonical hash: 15h.
+- **Grand total: ~43h**, sequenced as Tier 0 day 1-2 → Tier S day 2 evening → Tier A day 3 → K-15 day 4-7 → Vercel-deploy + smoke days 8-9.
+
+This is the no-compromise execution shape for the entire fix batch. Every item now has the same plan resolution as K-15.
+
 This appendix is inventory. No code changed. Smoke testing remains deferred until the next polish pass per the user's instruction.
