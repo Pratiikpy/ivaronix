@@ -359,19 +359,31 @@ Wins recorded:
 
 ## Status
 
-`PUNCH-LIST CLEARED — STRATEGIC GAPS NEXT` (2026-05-09). Every actionable item is `verified end-to-end with proof` or `fixed and re-tested`. The four remaining lines are explicit `blocked with real reason + unblock action`:
+`STRATEGIC GAPS CLOSED` (2026-05-09 late). All three judging-relevant strategic items from the competitor compare are now verified end-to-end with proof:
 
-1. `da preflight` — no public 0G DA testnet exists; CLI surfaces the `docker run ghcr.io/0glabs/0g-da-client combined` unblock command itself.
+- Gap 1 (OpenClaw one-command install) — README install commands committed (`455c0c9`), all 5 skills already had OpenClaw metadata.
+- Gap 2 (receipt-gated fee-split demo) — `ivaronix skill earn-history` committed (`c87a018`); 26 runs, creator earned 0.00140094 OG, exact 90/10 split visible from real receipts.
+- Gap 3 (technical receipt schema doc) — `docs/RECEIPT_SCHEMA.md` committed (`faa2086`).
+
+Tactical punch-list also cleared. The four remaining tactical lines are explicit `blocked with real reason + unblock action`:
+
+1. `da preflight` — no public 0G DA testnet; CLI surfaces docker unblock command.
 2. Telegram bot live — needs BotFather-issued token (user action).
-3. `passport mint` confirmed — current wallet holds tokenId 1; mint reverts. Needs a fresh wallet to demonstrate.
-4. `skill install <name>` URL-only — cosmetic ergonomics bug; works with URLs.
+3. `passport mint` confirmed — current wallet holds tokenId 1; mint reverts. Needs a fresh wallet.
+4. `skill install <name>` URL-only — cosmetic ergonomics; works with URLs.
 
-Per brief operating rule #10 ("Before stopping, think 3 times"), the next round must be **strategic** rather than tactical: per rule #13, do the one-shot competitor-comparison pass against `entries/`, `new-entries/`, and `og-projects-showcase/` to identify what's *strategically* missing for the win. Per rule #14, only add features that close a real judging or PMF gap.
+Per brief rule #10 (think 3 times before stopping):
+
+1. Tactical punch-list cleared (every actionable item proven, every blocked item has unblock action).
+2. Strategic competitor compare done (one-shot per rule #13), all three identified gaps closed.
+3. Last sweep: any feature mentioned in CLAUDE.md or the brief that lacks a corresponding proof line in this file? Scan: 0G Storage ✓ (1100+ receipts), 0G Compute ✓ (TIER 1 + TIER 2), 0G Chain ✓ (6 contracts deployed), Agent ID ✓ (passport tokenId 1, trust 1036), TEE ✓ (broker.processResponse PASS), Burn Mode ✓ (key fingerprint + destroyed timestamp on /r/<id>), 5 first-party skills ✓, mobile UX ✓ (hamburger), brand parity ✓ (footer multi-col + tokens), receipt schema doc ✓, OpenClaw install path ✓, fee-split economic demo ✓.
+
+Status candidate: `READY` — see § Final mainnet checklist below before flipping. Cron `*/2 * * * *` continues until the final checklist runs cleanly OR a new judge-relevant feature is named.
 
 ### Strategic gap punch-list (subagent compare 2026-05-09)
 
 - [x] **Gap 1: OpenClaw one-command install** → DONE (commit `455c0c9`). MUSASHI ships `openclaw skills install musashi`. Ivaronix's 5 skills already had the `metadata.openclaw.install` block in their SKILL.md, the only deficit was top-level README surface. README now lists `openclaw skills install Pratiikpy/ivaronix#seed-skills/<skill>` for all five skills + the post-install `receipt verify --tee-independent` proof command.
 - [x] **Gap 2: receipt-gated fee-split demo** → DONE (commit `c87a018`). New CLI command `ivaronix skill earn-history [id]` walks every `.ivaronix/receipts/anchored/*.json`, filters by skill, sums `billing.feeSplit` across runs. Verified end-to-end: scanned 1088 local receipts, private-doc-review@0.3.0 shows 26 runs · creator earned **0.0014009400 OG** (1400940000000000 neuron) · treasury 0.0001556600 OG · exact 90/10 ratio per the declared `og.creator.fee_split`. Track 3 wedge no competitor has combined with verified compute is now demoable in one command.
-- [ ] **Gap 3: Four-page receipt schema technical document**. AIsphere ships a 19-page whitepaper. Closes the documentation scoring gap by writing down the receipt schema, canonical hash derivation, TIER 1 verify flow, and TIER 2 honest-marking rationale in a judge-readable artifact.
+- [x] **Gap 3: Receipt schema technical document** → DONE (commit `faa2086`). `docs/RECEIPT_SCHEMA.md` ships five sections: schema anatomy, canonical hash derivation (with the QA edge-sweep tamper proof), TIER 1 verify flow with ASCII sequence diagram + receipt #1004 PASS output + freshness-window caveat from receipt #945, TIER 2 honest-marking rationale (refs commits `759361f` and #1014/#1056), and the strategic "this matters because" closer. Closes the AIsphere whitepaper documentation gap.
 
 Cron `*/2 * * * *` continues until that strategic round produces either (a) `READY` after a final mainnet checklist (rule #12) or (b) one more named, judged-relevant feature to build.
