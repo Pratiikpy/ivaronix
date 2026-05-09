@@ -26,12 +26,16 @@
 
 ## B · Phase-B production hardening (post-grant lift, do whenever)
 
-### B-1 · Deploy IvaronixReceiptGuard.sol to chain
+> **Network targeting note:** B-1 through B-7 are **application-layer** items — they all apply to both testnet AND mainnet equally. B-1 can ship on testnet today (A-1 wallet is already funded); the mainnet deploy waits on A-2. B-2 → B-7 are network-agnostic code/UX changes — a single PR ships them everywhere at once.
+
+### B-1 · Deploy IvaronixReceiptGuard.sol to chain (testnet first, then mainnet)
 - **Source:** `contracts/src/IvaronixReceiptGuard.sol` — 5/5 Foundry tests green (full suite 90/90).
 - **Why it matters:** turns Ivaronix from a *log* into a *gate*. Any external Safe / x402 contract / vendor approval flow can require a verifiable Ivaronix receipt before executing a tx.
+- **Network targeting:** ship on **testnet first** (A-1 wallet is funded today, no funding wait), then **mainnet after A-2** funding. Two-step rollout = lower risk; same script, different `--rpc-url`.
 - **Action:**
-  - Once A-1 / A-2 funding is in: `cd contracts && forge script script/DeployReceiptGuard.s.sol --rpc-url <galileo-or-mainnet> --broadcast --private-key <deployer>` (script needs writing — straightforward template from existing deploy scripts).
-  - Add the deployed address to `deployments/<network>.json` under `IvaronixReceiptGuard`.
+  - Step 1 (testnet, do whenever): `cd contracts && forge script script/DeployReceiptGuard.s.sol --rpc-url https://evmrpc-testnet.0g.ai --broadcast --private-key <deployer>` (script needs writing — straightforward template from existing deploy scripts).
+  - Step 2 (mainnet, after A-2): same command with `--rpc-url https://evmrpc.0g.ai`.
+  - After each: add the deployed address to `deployments/<testnet|mainnet>.json` under `IvaronixReceiptGuard`.
   - Update `apps/studio/src/app/docs/page.tsx` to link the new contract address from the 0G Chain card.
 
 ### B-2 · Wire SIWE (sign-in-with-ethereum) for Studio user-side anchoring
@@ -65,17 +69,19 @@
 
 ## C · Distribution + outreach (operator-only by nature)
 
-### C-1 · Telegram bot live
-- Documented as Phase B in earlier QA passes. Needs a BotFather token. Strictly external to the codebase.
+> **Network targeting note:** C-1, C-3, C-4 are **network-agnostic** (they apply whether the user is on testnet or mainnet). C-2 (ChainGPT audit) is **mainnet-only** — you audit *before* mainnet, not before testnet.
 
-### C-2 · ChainGPT audit booking
-- The mainnet-readiness checklist mentions a ChainGPT audit. Requires booking + payment.
+### C-1 · Telegram bot live · network-agnostic
+- Documented as Phase B in earlier QA passes. Needs a BotFather token. Strictly external to the codebase. The bot would expose receipt verification + skill discovery commands; same surface on testnet and mainnet.
 
-### C-3 · Domain config (ivaronix.studio)
-- The widget defaults to `https://ivaronix.studio`. The actual production domain needs DNS + HTTPS provisioning.
+### C-2 · ChainGPT audit booking · mainnet-only
+- The mainnet-readiness checklist mentions a ChainGPT audit. Requires booking + payment. **Schedule before mainnet promotion (A-2)**, not before testnet — testnet contracts have already been live and exercised by 1300+ receipts without incident, which is its own kind of soak-testing.
 
-### C-4 · Demo Day prep
-- The Hong Kong Web3 Festival Mini Demo Day is referenced in the judging criteria. Live performance is "a key reference."
+### C-3 · Domain config (ivaronix.studio) · network-agnostic
+- The widget defaults to `https://ivaronix.studio`. The actual production domain needs DNS + HTTPS provisioning. One config covers both networks (the network is a runtime variable, not a deploy-time one).
+
+### C-4 · Demo Day prep · network-agnostic
+- The Hong Kong Web3 Festival Mini Demo Day is referenced in the judging criteria. Live performance is "a key reference." Demo on whichever network is current at the time (testnet today, mainnet if A-2 lands first).
 
 ---
 
