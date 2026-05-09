@@ -510,7 +510,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
 ### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ CODE-COMPLETE (`c73ee7d`) · chain deploy = operator-action A-V2-K2
 ### N · L-7 · Vercel-deploy Studio → ✅ CODE-COMPLETE (`e1e69b4`) · deploy = operator-action A-V2-L7
-### N · K-15 · RFC-8785 polyglot canonical hash → ⚙️ TS foundation shipped (`<sha-pending>`) · Rust + Go + Python + cross-impl CI queued
+### N · K-15 · RFC-8785 polyglot canonical hash → ⚙️ TS foundation shipped (`39d7f29`) · Rust + Go + Python + cross-impl CI queued
 - `packages/core/src/jcs.ts` strict RFC-8785 impl + `jcs.test.ts` 17/17 green.
 - `packages/core/src/canonical.ts` exports `canonicalHashV2 = keccak256(jcs(strip(value)))`.
 - `docs/HASH_FUNCTION.md` ships the full spec + test-vector table + polyglot roadmap.

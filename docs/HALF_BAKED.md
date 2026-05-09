@@ -593,7 +593,7 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - See I-3. The W9 path produces receipts that our `verify.ts:85-92` rejects.
 - **Fix:** branch verify on `agent.signedBy`; for `'operator-on-behalf-of-user'` require operator signer in an allow-list AND `agent.ownerWallet` matches the SIWE-authenticated user. Until SIWE handshake exists, do not advertise this tier.
 
-### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ TS FOUNDATION SHIPPED 2026-05-10 (`<sha-pending>`) · Rust + Go + Python + cross-impl CI queued for next cron firings
+### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ TS FOUNDATION SHIPPED 2026-05-10 (`39d7f29`) · Rust + Go + Python + cross-impl CI queued for next cron firings
 - **TS reference impl:** `packages/core/src/jcs.ts` — strict RFC-8785 (NFC strings, ECMAScript number formatting with explicit `±0` / NaN / Infinity carve-outs, key sort by UTF-16 code-unit value, undefined-skip).
 - **TS test suite:** `packages/core/src/jcs.test.ts` — 17 test vectors all green, covering primitives, numbers, strings (incl. NFC of decomposed Unicode), objects (key sort), arrays, nested receipt-shaped values, rejects (NaN / Infinity / symbol / function / bigint / undefined-at-top).
 - **V2 hash export:** `packages/core/src/canonical.ts` now exports `canonicalHashV2(value, excludeKeys)` = `keccak256(jcs(strip(value)))`. Same exclude-set as v1; the difference is the JSON serialiser.
