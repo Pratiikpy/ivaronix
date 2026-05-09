@@ -930,15 +930,15 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `scripts/qa/metamask-e2e/verify-s3-runpanel-pending.ts` — source-file regression on RunPanel.tsx, `/api/run/route.ts`, and `pipeline.ts`; counts zero `Storage: 'verified'` literals remaining; Playwright snapshot of the home page at desktop + mobile.
 - **Honest behavior:** until H-3 ships, every Studio-Run receipt's Storage light stays pending. The receipt body itself reports no Storage evidence; the page is consistent with reality.
 
-### N · S-4 · `delegate.ts` exitCode propagation  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · S-4 · `delegate.ts` exitCode propagation  ·  ✅ FIXED 2026-05-10 (`38452bc`)
 - **Code:** `apps/cli/src/commands/delegate.ts:482-510` — finally block restores env vars only; the unconditional exit-code zero-reset is removed. After the finally, the post-runOk branches set `process.exitCode = 0` (success) or `process.exitCode = 1` (failure) explicitly. Scripted callers checking `$?` now see honest results.
 - **Test:** `scripts/qa/metamask-e2e/verify-s4-delegate-exit.ts` — source-file regression: finally body must not contain a zero-reset; runOk-true and runOk-false branches must each set the exit code explicitly.
 - **Live exit-code path:** the bug only triggered when a real delegate's inner `doc ask` failed; reproducing requires a fully-set-up delegate + grant + skill + bad doc. The mechanical regression on the source patterns is high-signal for this kind of fix; cron-loop firings of `delegate run` against real delegates will exercise the live path.
 
-### N · S-5 · `chat-v2.ts` import audit
-- **Code:** `apps/cli/src/bin/ivaronix.ts:41` — verify `chat-v2.ts` exists; if not, delete the import. (HALF_BAKED A-7.)
-- **Test:** existing `pnpm --filter @ivaronix/cli build` already catches missing-import errors; promote to CI gate so this can never regress.
-- **Effort:** 15min.
+### N · S-5 · `chat-v2.ts` import audit  ·  ✅ VERIFIED 2026-05-10 (file exists; build passes)
+- **Finding:** the round-1 audit (HALF_BAKED A-7) flagged `apps/cli/src/bin/ivaronix.ts:41` as importing `'../commands/chat-v2.js'` and noted the file might not exist. **Confirmed via Glob:** `apps/cli/src/commands/chat-v2.tsx` does exist. TypeScript's `.js` import resolution maps to `.tsx` per `moduleResolution: "node"`. The CLI build (`pnpm --filter @ivaronix/cli build` → `tsc -b`) succeeds clean.
+- **No code change required.** A-7 was a false positive in the round-1 audit.
+- **CI gate:** the existing `tsc -b` step already catches missing-import errors. No regression possible without a build failure surfacing first.
 
 ## Tier A · Round-2 high-impact under-1h
 

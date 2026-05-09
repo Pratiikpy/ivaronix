@@ -499,7 +499,11 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-1 · `compute_tee_required` no-op gate fixed → ✅ DONE (`d15703f`)
 ### N · S-2 + I-5 · /r/[id] four-light row reads real evidence → ✅ DONE (`b9676f1`)
 ### N · S-3 · RunPanel Storage gated on response evidenceRoot → ✅ DONE (`98f102b`)
-### N · S-4 · delegate.ts exit-code propagation → ✅ DONE (`<sha-pending>`)
+### N · S-4 · delegate.ts exit-code propagation → ✅ DONE (`38452bc`)
+### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
+- `apps/cli/src/commands/chat-v2.tsx` exists; TypeScript `.js` import resolution maps to `.tsx` cleanly.
+- `pnpm --filter @ivaronix/cli build` (= `tsc -b`) succeeds; existing build step is the regression gate.
+- Round-1 audit A-7 was a false positive.
 - `apps/cli/src/commands/delegate.ts:482-510` — finally block restores env only; unconditional zero-reset removed; runOk-true and runOk-false branches set the exit code explicitly.
 - CLI typecheck clean.
 - Verification script: `scripts/qa/metamask-e2e/verify-s4-delegate-exit.ts` — source-file regression on the finally body and the two post-finally branches.
