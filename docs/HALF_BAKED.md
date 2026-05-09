@@ -593,7 +593,20 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - See I-3. The W9 path produces receipts that our `verify.ts:85-92` rejects.
 - **Fix:** branch verify on `agent.signedBy`; for `'operator-on-behalf-of-user'` require operator signer in an allow-list AND `agent.ownerWallet` matches the SIWE-authenticated user. Until SIWE handshake exists, do not advertise this tier.
 
-### K-15 · Canonical hash is keccak256 of a JS-specific JSON serialization, not RFC-8785  *(High)*
+### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ TS FOUNDATION SHIPPED 2026-05-10 (`<sha-pending>`) · Rust + Go + Python + cross-impl CI queued for next cron firings
+- **TS reference impl:** `packages/core/src/jcs.ts` — strict RFC-8785 (NFC strings, ECMAScript number formatting with explicit `±0` / NaN / Infinity carve-outs, key sort by UTF-16 code-unit value, undefined-skip).
+- **TS test suite:** `packages/core/src/jcs.test.ts` — 17 test vectors all green, covering primitives, numbers, strings (incl. NFC of decomposed Unicode), objects (key sort), arrays, nested receipt-shaped values, rejects (NaN / Infinity / symbol / function / bigint / undefined-at-top).
+- **V2 hash export:** `packages/core/src/canonical.ts` now exports `canonicalHashV2(value, excludeKeys)` = `keccak256(jcs(strip(value)))`. Same exclude-set as v1; the difference is the JSON serialiser.
+- **Spec doc:** `docs/HASH_FUNCTION.md` ships the full algorithm spec, the 17-vector reference table, the `schemaVersion` migration plan (forward-only; v1 + v2 coexist forever), and the polyglot follow-up roadmap.
+- **What's NOT yet activated:** the receipt schema's `schemaVersion` field is NOT yet bumped. New receipts continue to use v1 canonical hash. Activating v2 too early would mean only JS clients can verify those receipts (worse than the status quo, where any port at least has the JS-specific canonical to copy). Activation gate: when the polyglot reference verifiers (Rust + Go + Python) all pass cross-impl CI on the same vectors.
+- **Polyglot follow-ups (queued, multi-day):**
+  - `ivaronix-verifier-rs/` — Rust crate, crates.io publish (operator-action `cargo login`)
+  - `verifier-go/` — Go module
+  - `scripts/verifier-py/jcs.py` — Python reference script
+  - `.github/workflows/jcs-roundtrip.yml` — CI cross-impl byte-equality test (block merge on divergence)
+  - `JUDGE_GUIDE.md` Step 5 — "verify a receipt from a non-JS environment" demo
+
+(legacy plan text below preserved for context):
 - `packages/core/src/canonical.ts:10-30`. Sorts keys alphabetically; excludes a hard-coded set; `JSON.stringify` direct on values. RFC-8785 (JCS) demands UTF-8 NFC, ECMAScript number formatting rules, explicit array order. A future Node version that changes formatting breaks every existing receipt's hash. **Independent verifiers in Rust/Go must replicate JS-specific behavior.**
 
 **No-compromise fix plan (locked 2026-05-10).** "Anyone re-verifies on any machine" is a foundation claim. The fix is not "swap the hash function." The fix is the full polyglot proof.

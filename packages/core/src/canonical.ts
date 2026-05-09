@@ -29,6 +29,35 @@ export function canonicalHash(value: unknown, excludeKeys?: ReadonlySet<string>)
   return keccak256(bytes) as `0x${string}`;
 }
 
+/**
+ * V2 canonical hash · `keccak256(jcs(value))` per RFC-8785 + Ivaronix
+ * receipts schemaVersion 2.0+. Use this once the polyglot reference
+ * verifiers (Rust + Go + Python) have shipped — until then, new receipts
+ * MUST keep using `canonicalHash` for compatibility with the existing
+ * 1,330+ anchored receipts. K-15 in HALF_BAKED.md tracks the full
+ * migration; the verifier branches on `schemaVersion` so v1 + v2
+ * receipts coexist forever.
+ */
+export function canonicalHashV2(value: unknown, excludeKeys?: ReadonlySet<string>): `0x${string}` {
+  // The exclude set still applies — we strip the same fields (signature,
+  // chainAnchor mutables, etc.) before hashing. Apply the strip first,
+  // then run JCS over the result.
+  const strip = (v: unknown): unknown => {
+    if (v === null || typeof v !== 'object') return v;
+    if (Array.isArray(v)) return v.map(strip);
+    const out: Record<string, unknown> = {};
+    for (const [k, value] of Object.entries(v as Record<string, unknown>)) {
+      if (excludeKeys?.has(k)) continue;
+      out[k] = strip(value);
+    }
+    return out;
+  };
+  // Lazy import to avoid a circular dep — canonical.ts is depended on
+  // by jcs consumers indirectly. The barrel exports both side by side.
+  const { jcs } = require('./jcs.js') as typeof import('./jcs.js');
+  return keccak256(toUtf8Bytes(jcs(strip(value)))) as `0x${string}`;
+}
+
 /** Hash of arbitrary string content (for input/output hashes per RECEIPTS_SPEC). */
 export function sha256Hex(content: string): `sha256:${string}` {
   // Synchronous sha256 fallback using ethers' keccak isn't sha256. Use Web Crypto in async paths.
