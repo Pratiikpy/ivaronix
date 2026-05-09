@@ -18,12 +18,13 @@
     "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
+    "@ivaronix/consensus": "workspace:*",
     "@ivaronix/core": "workspace:*",
     "@ivaronix/og-chain": "workspace:*",
     "@ivaronix/og-router": "workspace:*",
-    "@ivaronix/consensus": "workspace:*",
-    "@ivaronix/skills": "workspace:*",
+    "@ivaronix/og-storage": "workspace:^",
     "@ivaronix/receipts": "workspace:*",
+    "@ivaronix/skills": "workspace:*",
     "ethers": "^6.13.0"
   },
   "devDependencies": {

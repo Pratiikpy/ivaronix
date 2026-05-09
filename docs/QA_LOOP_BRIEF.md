@@ -506,6 +506,11 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`d57b635`)
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
+### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`<sha-pending>`)
+- `packages/runtime/src/pipeline.ts:489-510` calls `burnEncrypt(Buffer.from(activeContext, 'utf8'))` from `@ivaronix/og-storage`. Real 32-byte session key via `randomBytes`; real `keyFingerprint = sha256(realKey)`; key zeroed after fingerprinting.
+- Old fake-fingerprint pattern (`sha256("burn:" + skillId + ...)`) absent.
+- CLI + Studio burn-mode receipts now identical in shape (CLI was always real; Studio now matches).
+- Verification: `scripts/qa/metamask-e2e/verify-i2-k16-burn.ts` — distinct fingerprints + distinct ciphertexts on repeat calls confirm key-randomness invariant.
 - New libs: `apps/studio/src/lib/rate-limit.ts` (in-memory token bucket, per-IP / per-wallet / per-skill-save) + `apps/studio/src/lib/siwe-session.ts` (HMAC-cookie sessions, 1h TTL; single-use SIWE nonces, 5min TTL).
 - New routes: `apps/studio/src/app/api/auth/siwe/nonce/route.ts` (issues nonce + httpOnly cookie), `apps/studio/src/app/api/auth/siwe/verify/route.ts` (verifies SIWE, issues session).
 - `/api/run`: per-IP rate limit always applies; userWallet claim requires active session matching the wallet; authenticated path adds per-wallet rate limit. Wallet drain by anonymous attacker now bounded to 10 hits/minute.

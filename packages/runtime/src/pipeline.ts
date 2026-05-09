@@ -10,6 +10,7 @@ import {
   type ReceiptType,
 } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
+import { burnEncrypt } from '@ivaronix/og-storage';
 import {
   ReceiptRegistryClient,
   AgentPassportClient,
@@ -487,18 +488,31 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   const primaryRole = consensus.judgement ? consensus.judgement.role : consensus.reviewerOutputs[0]?.role;
   const primaryAtt = consensus.attestations.find((x) => x.role === primaryRole);
 
-  // Burn Mode key fingerprint: a 32-byte AES-256-GCM session key would be
-  // generated and immediately destroyed in a real encrypted-evidence flow.
-  // Studio's /api/run does not yet upload the encrypted blob to 0G Storage,
-  // so we record only the fingerprint + destroyed timestamp — schema-faithful
-  // burn proof without the full evidence-encryption pipeline (CLI's
-  // `ivaronix doc ask --burn` carries the full path). The fingerprint is
-  // SHA-256 of the input context + timestamp salt, deterministic and audit
-  // friendly without leaking content.
-  const sessionKeyDestroyedAt = Date.now();
-  const keyFingerprint = burnEnabled
-    ? (await sha256HexAsync(`burn:${skill.id}:${userPromptHash}:${sessionKeyDestroyedAt}`)) as Hash
-    : undefined;
+  // I-2 / K-16 fix: Burn Mode runs REAL AES-256-GCM encryption on the input
+  // context. Previous implementation wrote a fake `keyFingerprint =
+  // sha256("burn:" + skillId + userPromptHash + sessionKeyDestroyedAt)` —
+  // no real key, no real encryption. The schema's security claim was
+  // unenforced. Now: `burnEncrypt(...)` from @ivaronix/og-storage generates
+  // a fresh 32-byte session key via randomBytes, encrypts the context with
+  // AES-256-GCM, captures the SHA-256 of the key BEFORE destruction, and
+  // zeroes the key buffer. The CLI doc-ask path already uses this; the
+  // Studio runtime now matches.
+  let sessionKeyDestroyedAt = Date.now();
+  let keyFingerprint: Hash | undefined;
+  let burnCiphertext: Uint8Array | undefined;
+  if (burnEnabled) {
+    const burned = burnEncrypt(Buffer.from(activeContext, 'utf8'));
+    keyFingerprint = burned.keyFingerprint as Hash;
+    sessionKeyDestroyedAt = burned.destroyedAt;
+    burnCiphertext = burned.ciphertext;
+    log.info(tag(`burn-mode            encrypted ${burnCiphertext.length} bytes · keyFingerprint=${burned.keyFingerprint.slice(0, 23)}…  destroyed`));
+  }
+  // burnCiphertext is in-memory only at this point. When 0G Storage upload
+  // is wired (HALF_BAKED H-3), this blob becomes the on-storage evidence;
+  // until then the schema honestly omits the storage root and the receipt's
+  // burn block records the destroyed-at + fingerprint as the key-existence
+  // proof. Mark as intentionally unused so tsc with strict checks accepts.
+  void burnCiphertext?.length;
 
   // W9 — when an SIWE-style delegated wallet is provided, the receipt
   // owner becomes the user's wallet (operator merely anchors).
