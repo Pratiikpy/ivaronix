@@ -314,8 +314,8 @@ everyign which i said nothgn left
 Highest impact:
 - [x] `ivaronix receipt verify --tee-independent` end-to-end → **FULLY VERIFIED** on receipts #994 (burn-mode) AND #1004 (regular). `tee:primary PASS (provider 0xa48f0128…)` via real `broker.processResponse` call. The TIER 1 claim is proven.
 - [x] `OG_PROVIDER=nvidia` TIER 2 EXTERNAL receipt → receipt **#1014** anchored, /r/1014 renders amber `TIER 2 · EXTERNAL · NVIDIA-NIM` pill, four-light row TEE amber per CLAUDE.md §6. Honest tier marking proven.
-- [ ] Memory `revokeGrant` round-trip (only `issueGrant` was popped previously)
-- [ ] Other skills exercised (`github-audit`, `0g-integration-auditor`, `plan-step`, `code-edit`)
+- [x] Memory `revokeGrant` round-trip → DONE (commit `be060ee`). Studio /memory `Revoke` button driven, real MM tx popup confirmed (CapabilityRegistry 0x3783f...46a8D), chain accepted. CLI `memory list` confirms grant `0xf437b7350b697a13...` flipped from ACTIVE to REVOKED. Studio UI shows all 5 grants red REVOKED post-reload. Lifecycle complete (issueGrant + revokeGrant both proven).
+- [x] Other skills exercised → DONE. All five first-party skills run end-to-end through `ivaronix skill eval`: plan-step v0.1.0 (1/1 pass · 332+34 tok), github-audit v0.1.0 (receipt **#1043**), 0g-integration-auditor v0.1.0 (receipt **#1045**), code-edit v0.2.0 (receipt **#1048**, anchor tx `0xcf47d822…68abac`, after I added the missing `tests/add-typed-arg.md` fixture in commit `a037f8b`). Plus private-doc-review's existing receipts (#933, #945, #994, #1004). Multi-skill platform claim proven.
 - [ ] Studio `/agent/[handle]` route never visited
 - [ ] CLI `compute verify-tee <id>`, `da preflight/disperse/retrieve`, `model preflight/deposit`, `passport mint/show/restore`, `skill publish/install/eval`, `serve`, `session list/attach`
 - [ ] Telegram bot live commands (BotFather token unblock)
