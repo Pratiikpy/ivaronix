@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { Wallet, JsonRpcProvider } from 'ethers';
+import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import {
   sha256HexAsync,
   RECEIPT_TYPES,
@@ -369,6 +369,45 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptId = result.id;
     receiptTxHash = result.txHash;
     receiptOnchainId = result.onchainId;
+
+    // H-4: after a successful anchor, persist the receipt as an episodic
+    // memory keyed by skillId + walletAddress. The pipeline already
+    // searches Persistent Memory pre-consensus (line 211); without a write
+    // call the store remained empty forever and `request.memoryQuery
+    // .retrievedCount` was 0 on every run. Best-effort, never throws —
+    // when the sidecar is unreachable the receipt is still anchored, the
+    // memory hop is just unfilled. Honest by absence: when ZG_MEMORY_URL
+    // is unset, memoryClient is null and the store call is skipped.
+    if (memoryClient && env.walletAddress && receiptId) {
+      const memContent = JSON.stringify({
+        receiptId,
+        receiptOnchainId: receiptOnchainId !== null ? receiptOnchainId.toString() : null,
+        skillId: skill.id,
+        skillVersion: skill.manifest.version,
+        tier,
+        finalText,
+        convergenceScore: consensus.convergence.score,
+      });
+      const stored = await memoryClient.store({
+        group_id: skill.id,
+        user_id: env.walletAddress,
+        type: 'episodic_memory',
+        content: memContent,
+        metadata: {
+          receiptId,
+          receiptOnchainId: receiptOnchainId !== null ? receiptOnchainId.toString() : null,
+          tier,
+          providerKind,
+          anchorTxHash: receiptTxHash,
+          anchoredAt: Date.now(),
+        },
+      });
+      if (stored.ok) {
+        log.info(tag(`memory               stored receipt ${receiptId} → 0G Persistent Memory (group=${skill.id})`));
+      } else {
+        log.info(tag(`memory               sidecar store failed (${stored.reason ?? 'unknown'}); receipt anchored regardless`));
+      }
+    }
   }
 
   // 8. session.end hooks (always last, even if anchor was skipped)
@@ -512,7 +551,14 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
                   .filter((x) => x.providerAddress)
                   .map((x) => ({
                     role: x.role,
-                    attestationHash: ('0x' + '0'.repeat(64)) as Hash,
+                    // H-1: bind attestationHash to the chat ID via keccak256.
+                    // Receipts pre-dating this fix anchored 0x0…0; receipts
+                    // produced from now on commit to the chat ID on chain so
+                    // a chain-only verifier can cross-check it. zero-fallback
+                    // retained when the inference path produced no chat ID.
+                    attestationHash: (x.zgResKey
+                      ? keccak256(toUtf8Bytes(x.zgResKey))
+                      : ('0x' + '0'.repeat(64))) as Hash,
                     providerAddress: x.providerAddress!,
                     chatId: x.zgResKey ?? undefined,
                     content: roleContent.get(x.role),

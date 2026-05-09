@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
-import { Wallet, JsonRpcProvider } from 'ethers';
+import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
@@ -503,7 +503,11 @@ docCommand
                   .filter((a) => a.providerAddress)
                   .map((a) => ({
                     role: a.role,
-                    attestationHash: ('0x' + '0'.repeat(64)) as Hash, // populated by --tee-independent verify; unknown at build time
+                    // H-1: keccak256 of the chat ID — anchors a real
+                    // attestation commitment on chain instead of zero.
+                    attestationHash: (a.zgResKey
+                      ? keccak256(toUtf8Bytes(a.zgResKey))
+                      : ('0x' + '0'.repeat(64))) as Hash,
                     providerAddress: a.providerAddress!,
                     chatId: a.zgResKey ?? undefined,
                     content: roleContent.get(a.role),

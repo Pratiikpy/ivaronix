@@ -502,6 +502,11 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-4 · delegate.ts exit-code propagation → ✅ DONE (`38452bc`)
 ### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
 ### N · H-2 · processResponse third argument (content) → ✅ DONE (`77eb746`)
+### N · H-1 + H-4 · attestationHash bound to chat ID + memory store after anchor → ✅ DONE (`<sha-pending>`)
+- H-1: `pipeline.ts` + `doc.ts` compute `attestationHash = keccak256(toUtf8Bytes(zgResKey))` when chat ID present (was always `0x000…0`). New receipts anchor a real attestation commitment.
+- H-4: `pipeline.ts` calls `memoryClient.store({ group_id, user_id, type: 'episodic_memory', content, metadata })` after every successful anchor. Gated on `memoryClient && walletAddress && receiptId`. Honest opt-in: when `ZG_MEMORY_URL` unset, store hop skipped.
+- Previously-broken promise (memory-client.ts:24-26 said "every anchor stores the receipt body" but no callers existed) is now true.
+- Verification: `scripts/qa/metamask-e2e/verify-h1-h4-attest-memory.ts`.
 - Schema `ConsensusRoleAttestation.content?: string` (optional, backward-compat).
 - Pipeline + doc.ts build role→content map from `consensus.reviewerOutputs + judgement`, persist on each attestation.
 - CLI `receipt verify --tee-independent` calls 3-arg `broker.inference.processResponse(provider, chatId, content)` when content present; 2-arg fallback for legacy receipts with explicit `chatId-only` label.
