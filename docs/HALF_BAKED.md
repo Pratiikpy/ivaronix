@@ -973,11 +973,14 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `scripts/qa/metamask-e2e/verify-i1-verifyclaimed.ts` — source-file regression on the import + the verifyClaimed call + the state branches; live curl against `/r/1004` confirms the chip still renders VERIFIED for a valid signature.
 - **Studio typecheck:** clean.
 
-### N · I-2 / K-16 · Studio Burn Mode real encryption
-- **Code:** in `packages/runtime/src/pipeline.ts:444-447`, when `burnEnabled`, call `storageClient.uploadEncryptedBurn(plaintextBytes)` from `packages/og-storage/src/burn.ts`. Set `storage.evidenceRoot` to the encrypted blob's root, `storage.encryption.keyFingerprint` from the real AES key (sha256 of the random 32-byte key), `storage.encryption.type: 'aes-256-gcm'`, `storage.encryption.iv: hex(randomBytes(12))`. Destroy the key reference after upload (overwrite with zeros).
-- **Compatibility:** the CLI burn path (`apps/cli/src/commands/doc.ts:170-186`) already does this; the Studio path now matches. CLI and Studio receipts become byte-shape-compatible.
-- **Tests:** integration — Studio /api/run with burn enabled produces a receipt whose evidenceRoot is fetchable from 0G Storage; downloading it returns ciphertext (not plaintext); ciphertext fails AES-GCM auth without the key. Foundry/CLI parity test asserts CLI and Studio burn-mode receipts have identical `storage.encryption` shape.
-- **Effort:** 2h.
+### N · I-2 / K-16 · Studio Burn Mode real AES-256-GCM encryption  ·  ✅ FIXED 2026-05-10 (`25b2266`)
+- **Code:** `packages/runtime/src/pipeline.ts:489-510` calls `burnEncrypt(Buffer.from(activeContext, 'utf8'))` from `@ivaronix/og-storage` when `burnEnabled`. Real 32-byte AES-256-GCM session key via `randomBytes(32)`; real `keyFingerprint = sha256(realKey)`; key buffer zeroed after fingerprinting.
+- **What was a lie:** previous Studio path computed `keyFingerprint = sha256("burn:" + skillId + userPromptHash + sessionKeyDestroyedAt)` — a deterministic label hash. No real key, no real encryption.
+- **Surface parity:** CLI burn path always called `burnEncrypt`; Studio runtime now matches byte-for-byte.
+- **Storage upload honesty:** ciphertext is in-memory at receipt-build time. When H-3 ships real Studio-side 0G Storage upload, the same ciphertext becomes on-chain evidence. Until then, `storage.evidenceRoot` stays `null` per honest opt-in.
+- **Test:** `scripts/qa/metamask-e2e/verify-i2-k16-burn.ts` — source-file regression on the import + the burnEncrypt call + absence of the old fake-fingerprint pattern; functional check that two `burnEncrypt` calls on identical plaintext produce DIFFERENT keyFingerprints + DIFFERENT ciphertexts (key-randomness invariant).
+- **Studio dep:** added `@ivaronix/og-storage` to `packages/runtime/package.json`.
+- **Runtime typecheck:** clean.
 
 ### N · L-7 · Vercel-deploy Studio
 - **Steps:** (1) operator runs `! vercel login` once; (2) we generate the env list (`apps/studio/.env.production.template`) covering `EVM_PRIVATE_KEY`, `IVARONIX_NETWORK=galileo`, `ZG_API_SECRET`, `NVIDIA_API_KEY`, `IVARONIX_OPERATOR_BOOTSTRAP=true`, plus the new `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` for K-8/K-9; (3) `vercel --prod` deploys; (4) custom domain `ivaronix.app` (operator-purchased separately, $12/yr) pointed via DNS; (5) per-route OG image set (`/r/<id>` shows the receipt headline, `/agents` shows live count); (6) Sentry wired (operator: free tier signup) for live error visibility; (7) status page at `/status` reachable.

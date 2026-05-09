@@ -506,7 +506,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`d57b635`)
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
-### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`<sha-pending>`)
+### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
 - `packages/runtime/src/pipeline.ts:489-510` calls `burnEncrypt(Buffer.from(activeContext, 'utf8'))` from `@ivaronix/og-storage`. Real 32-byte session key via `randomBytes`; real `keyFingerprint = sha256(realKey)`; key zeroed after fingerprinting.
 - Old fake-fingerprint pattern (`sha256("burn:" + skillId + ...)`) absent.
 - CLI + Studio burn-mode receipts now identical in shape (CLI was always real; Studio now matches).
