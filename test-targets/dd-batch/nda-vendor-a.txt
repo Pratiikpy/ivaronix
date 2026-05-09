@@ -1,0 +1,17 @@
+MUTUAL NON-DISCLOSURE AGREEMENT — VENDOR A
+
+This NDA is executed between Vendor A and the Buyer ("the Parties").
+
+1. Confidential Information includes any technical, business, or financial information disclosed by either party.
+
+2. Each Party agrees not to disclose the Confidential Information to any third party without prior written consent of the disclosing party, except where required by law.
+
+3. The receiving party shall protect the Confidential Information with the same degree of care it uses to protect its own confidential information, but in no event less than reasonable care.
+
+4. Term: this Agreement remains in effect for ten (10) years from the date of execution. The receiving party's obligation to maintain confidentiality survives termination indefinitely for trade secrets.
+
+5. Vendor A retains exclusive ownership of all intellectual property disclosed under this Agreement. The Buyer acquires no license, express or implied, to use Vendor A's IP except for the purpose of evaluating the proposed transaction.
+
+6. The Buyer waives any right to seek injunctive relief in any forum outside the State of Delaware. Any disputes shall be resolved by binding arbitration administered by the American Arbitration Association.
+
+7. The Buyer agrees to indemnify Vendor A against all claims arising from the Buyer's use of the Confidential Information, including claims caused by Vendor A's own negligence.

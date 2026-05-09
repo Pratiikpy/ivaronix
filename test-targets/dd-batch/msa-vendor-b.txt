@@ -1,0 +1,17 @@
+MASTER SERVICES AGREEMENT — VENDOR B
+
+This Master Services Agreement ("MSA") is between Vendor B and the Customer.
+
+1. Scope: Vendor B will provide consulting services as described in one or more Statements of Work ("SOW") executed under this MSA.
+
+2. Fees: Customer shall pay Vendor B's standard rates as in effect on the date of each SOW, provided that Vendor B may unilaterally raise rates by up to 25% per year upon thirty (30) days' written notice.
+
+3. Payment terms: net 30 from date of invoice. Late payments accrue interest at 1.5% per month. Customer waives any right to dispute invoices not contested within fifteen (15) days of receipt.
+
+4. Term: initial term of three (3) years, automatically renewing for successive one-year terms unless either party provides ninety (90) days' written notice of non-renewal before the renewal date.
+
+5. Termination for convenience requires payment of an early-termination fee equal to fifty percent (50%) of all unpaid fees that would have been earned through the end of the then-current term.
+
+6. Limitation of liability: Vendor B's total liability under this MSA is capped at the lesser of (a) fees paid in the prior six months or (b) USD 50,000. The Customer waives all consequential, indirect, and punitive damages.
+
+7. Vendor B retains all right, title, and interest in any deliverables created under this MSA, granting Customer only a non-exclusive, non-transferable license to use them internally during the term.

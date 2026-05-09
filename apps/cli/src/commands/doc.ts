@@ -13,6 +13,7 @@ import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, resolveHook
 import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { addBulkCommand } from './doc-bulk.js';
 
 /** Walk up directories to find seed-skills + .ivaronix/skills */
 function skillSearchDirs(): string[] {
@@ -607,3 +608,6 @@ docCommand
     ui.hint(`Verify:    ivaronix receipt verify ${outPath} --tee-independent`);
     ui.hint(`Explorer:  ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
   });
+
+// ─── doc bulk (planning-01 §4B) ──────────────────────────────────────────
+addBulkCommand(docCommand);

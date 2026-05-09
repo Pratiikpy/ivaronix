@@ -1,0 +1,19 @@
+SAAS SUBSCRIPTION AGREEMENT — VENDOR C
+
+This Subscription Agreement is between Vendor C ("Provider") and the Customer.
+
+1. Subscription: Customer subscribes to the Provider's hosted software service for the term specified in the Order Form. Initial term: 24 months.
+
+2. Fees: as specified in the Order Form. Provider may adjust pricing at the next renewal upon sixty (60) days' notice. Customer must continue paying at the new rate or terminate before the renewal date.
+
+3. Auto-renewal: this Agreement renews for successive 24-month terms unless Customer provides written notice of non-renewal at least 120 days prior to the end of the then-current term.
+
+4. Data ownership: Customer's data uploaded to the Provider's service remains the property of the Customer. However, Provider has a perpetual, royalty-free license to use anonymized usage data for any purpose including improving the Service.
+
+5. SLA: Provider commits to 99.0% monthly uptime, measured exclusive of scheduled maintenance windows. Service credits for missed SLA are capped at 10% of one month's fees and may only be claimed within thirty (30) days of the incident.
+
+6. Provider may suspend service for any reason with 24 hours' notice, including for "operational reasons in Provider's sole discretion." Suspension does not waive Customer's payment obligations.
+
+7. Customer indemnifies Provider against all claims arising from Customer's use of the Service, including claims based on the content uploaded by the Customer.
+
+8. The Provider may modify this Agreement at any time by posting the new version on its website. Continued use of the Service constitutes acceptance.

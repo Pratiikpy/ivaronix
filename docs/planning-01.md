@@ -256,6 +256,25 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
 
 ## Tier 4 · post-grant lift (started 2026-05-09)
 
+### 4B. Bulk multi-doc audit (`ivaronix doc bulk <dir>`) → ✅ DONE
+
+- **Why:** the locked-persona pair is **deal lawyer + DD analyst**. The deal lawyer's day-one surface is shipped (1A hero, 1B data room, 4A print). The DD analyst's day-one workflow is *batch* — twelve vendor agreements, thirty data-room files, every page under NDA, audit trail required. Bulk audit closes the second persona without a new skill, just a new orchestrator.
+- **CLI shipped (`apps/cli/src/commands/doc-bulk.ts`):**
+  - `ivaronix doc bulk <dir> [--pattern <regex>] [--question "..."] [--skill <id>] [--tier quick|standard|high-stakes] [--max-files N]`
+  - Walks the dir, filters by pattern (default `*.txt|md|pdf`), runs `doc ask` on each match in-process (same `docCommand.parseAsync` pattern that 2A and 4B reuse), captures each child's receipt id + risk + headline by diffing the `.ivaronix/receipts/anchored/` dir before/after.
+  - After all children: builds + signs + anchors ONE aggregate `memory_consolidation`-typed receipt with `request.priorReceiptIds = [child1, child2, …]`, `outputs.headline` summarising the dominant risk + per-child counts, `request.skillId = 'doc.bulk'`. Aggregate uses the same `storageRoot = sha256(childIds)` trick as 2B so the chain anchor is valid (non-zero root) AND the lineage is recomputable from the receipt body.
+  - Each child = a normal anchored receipt with full TEE attestation, fee-split, and `--tee-independent` re-verify path. The aggregate is the audit-committee summary.
+- **End-to-end live proof:**
+  - Test fixture: `test-targets/dd-batch/` with 3 vendor agreements (NDA, MSA, SaaS subscription).
+  - Children:
+    - `nda-vendor-a.txt` → receipt `rcpt_01KR6HS7XX03W…` (tokens + cost + risk recorded)
+    - `msa-vendor-b.txt` → receipt `rcpt_01KR6HQY07P2V…`
+    - `saas-vendor-c.txt` → receipt `rcpt_01KR6HTK5H58M…` (on-chain id #1329, anchor `0x223d086d…50d8`)
+  - Aggregate: `rcpt_01KR6HVB7GRQ1E7EWVY3M9AMN2` → on-chain id **#1330**, anchor tx `0xe9e56dae66a0e37dff848ed0e6001af447c5217674ac4dfe87e92f46efa907f8` block 32405263.
+  - Passport: receiptCount = 1310, trustScore = 1310.
+  - The aggregate's body lists all 3 child receipt ids in `request.priorReceiptIds`; Studio `/r/1330` renders them automatically via the 3A "built on prior runs" card already on the receipt page.
+- **Closes:** Criterion 2.3 (Product Value & Market Potential — biggest gap per CLAUDE.md §2.3) by adding the second persona's day-one surface. The investment-memo binder use case is now demoable in one command.
+
 ### 4A. Printable / shareable receipt page (`/r/[id]/print`) → ✅ DONE
 
 - **Why:** persona-locked use case — the deal lawyer ran the audit and needs a one-page paper-grade artefact she can email her partner or paper-file with the deal binder. The interactive `/r/[id]` page is for verification clicking; the print page is for printing.
