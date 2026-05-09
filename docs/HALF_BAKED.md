@@ -889,7 +889,15 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **Documentation:** `docs/CRYPTO_NOTES.md` ships with the threat model + RFC reference + fix history. Eight other primitives also documented (canonical hash, burn mode, receipt signing, anchor sigs, reputation, capability grants, ERC-7857 attestors).
 - **Suite-wide regression:** all 14 memory-package tests pass (7 new + 7 existing engine tests).
 
-### N · K-1 · `recordReceipt` authorized-recorders only + ReceiptRegistry cross-check + delta cap
+### N · K-1 · AgentPassportINFTV2 hardened (K-1 + K-4 + K-6)  ·  ✅ CODE-COMPLETE 2026-05-10 (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
+- **Contract:** `contracts/src/AgentPassportINFTV2.sol`. Three audit findings closed in one redeploy: K-1 (recordReceipt is authorizedRecorders-only with ReceiptRegistry cross-check + ±100 trustScoreDelta cap), K-4 (per-token executorVersion bumps on transfer; old grants stop matching), K-6 (mint sets passportOf before _safeMint + nonReentrant).
+- **Foundry suite:** `contracts/test/AgentPassportINFTV2.t.sol` ships 16 tests; full repo suite **106/106 passing** (was 90/90; +16 V2). Zero V1 regressions.
+- **Deploy script:** `contracts/script/DeployPassportV2.s.sol` reads OG_PRIVATE_KEY + PASSPORT_VERIFIER_ADDR + RECEIPT_REGISTRY_ADDR. Reuses existing Erc7857Verifier + ReceiptRegistry. Cost ~0.05 OG (Galileo, already funded per A-1).
+- **Operator-action runbook:** `docs/USER_TODO.md` §A-V2-K1 — exact `forge script` command + post-deploy `addAuthorizedRecorder(operator)` + `deployments/testnet.json` update.
+- **Migration:** V1 `AgentPassportINFT` stays live for the 4 existing minted passports (chain history immutable). V2 takes over for new mints; trustScore resets to 0 since V1 self-claimed scores cannot be honestly migrated. Studio `/agents` follow-up (read V2 first + `LEGACY-PASSPORT` chip on V1 rows) lands after deploy.
+- **Verification:** `scripts/qa/metamask-e2e/verify-k1-passport-v2.ts` — source-file regression on V2 contract + deploy script + test file.
+
+(legacy plan text below preserved for context):
 - **Code:** `contracts/src/AgentPassportINFT.sol:107-125` — drop the `msg.sender == _ownerOf(tokenId)` branch. Require `authorizedRecorders[msg.sender]`. Inside the function, call `IReceiptRegistry(receiptRegistry).receipts(receiptId)` and require `row.agentAddress == agentInPassportRow`. Cap `trustScoreDelta` per call to `[-100, +100]`.
 - **Migration:** redeploy `AgentPassportINFTV2`. Existing 4 minted passports stay readable on V1; new mints land on V2. `passportOf` mapping lives on V2; V1 stays as legacy. Operator's existing trustScore (1330+) cannot be migrated honestly because it's self-claimed under the old code — V2 mints reset to 0 with the operator address as the bootstrap `authorizedRecorder` so future receipts re-build the score legitimately. Studio `/agents` reads V2 first, falls back to V1 with a `LEGACY-PASSPORT` chip on V1 rows.
 - **Tests:** Foundry tests — only `authorizedRecorder` can write, owner cannot self-write, delta cap enforced (revert on `+101`), `ReceiptRegistry.receipts(id).agentAddress` mismatch reverts, valid path bumps trustScore + receiptCount correctly.

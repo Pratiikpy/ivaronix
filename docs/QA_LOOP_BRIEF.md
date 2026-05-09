@@ -507,7 +507,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
 ### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
-### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`<sha-pending>`) · chain deploy = operator-action A-V2-K1
+### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
 - `contracts/src/AgentPassportINFTV2.sol` — `recordReceipt` is authorizedRecorders-only, cross-checks receiptId on `ReceiptRegistry` (root + type + agentAddress), caps trustScoreDelta to ±100. K-4: per-token `executorVersion` bumps on transfer; old grants stop matching. K-6: mint writes `passportOf` before `_safeMint` + `nonReentrant`.
 - `contracts/test/AgentPassportINFTV2.t.sol` — 16 tests; full Foundry suite 106/106 (was 90/90).
 - `contracts/script/DeployPassportV2.s.sol` shipped; ~0.05 OG on Galileo (funded, A-1).
