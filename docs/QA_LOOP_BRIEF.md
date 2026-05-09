@@ -321,7 +321,7 @@ Highest impact:
 - [ ] Telegram bot live commands (BotFather token unblock)
 - [ ] `passport mint` actually confirmed on-chain (prior attempt reverted because wallet already held tokenId 1; need a fresh wallet)
 - [ ] Edge cases: empty/oversized doc input, mismatched receiptRoot in `receipt verify`, revoked skill run attempt, RPC unreachable boot
-- [ ] Studio mobile hamburger nav (header collapses with no fallback at <768px)
+- [x] Studio mobile hamburger nav → DONE (commit `ffad98e`). Right-side portaled drawer with all six destinations + WalletConnect. Auto-closes on route change via usePathname. ESC + backdrop + route-change all dismiss. Containing-block bug from header's `backdrop-filter: blur(20px)` was solved by `createPortal(..., document.body)` — verified panel rect 375×748 with cream-opaque bg.
 - [x] Studio `<footer>` multi-column grid → DONE (commit `d67b6ae`). Four columns: Product / Docs / Network / Open Source. Network column lists all 6 deployed contracts with chainscan links. Mobile collapses to single column via `minmax(180px, 1fr)` auto-fit.
 
 Wins recorded:
