@@ -2,6 +2,12 @@ import { http, createConfig } from 'wagmi';
 import { defineChain } from 'viem';
 import { injected } from 'wagmi/connectors';
 
+// Note on `nonce too low` errors observed in QA when issuing a memory grant
+// right after the server has anchored a server-side receipt for the same
+// wallet: with an injected connector, MetaMask manages the nonce, not viem.
+// The mismatch is a wagmi-cache + chain-mempool race. Mitigation lives in
+// the call site (refetch + retry on `nonce too low`) rather than here.
+
 /**
  * 0G Galileo Testnet (chainId 16602) — canonical reference.
  * Aristotle Mainnet (chainId 16661) — Phase B Day 23 promotion target.

@@ -82,7 +82,7 @@ If you catch yourself writing AI slop: stop, delete the paragraph, write one sen
 `brand/Ivaronix.html` is the **canonical visual reference** for every Studio surface. The Next.js app at `apps/studio/` must look indistinguishable from that file when rendered side-by-side.
 
 Non-negotiables:
-- **Cream background** `#faf9f6`, **near-black ink** `#0a0a0a` (not the warmer `#1a1a1a`).
+- **Cream background** `#FAFAF7` (the brand kit's `paper` token; previous mention of `#faf9f6` was a typo), **body ink** `#0A0A0A` (the brand kit's `ink` token), **headline ink** `#111111` (the brand kit's `ink-soft`, used only on display headings — not on body).
 - **Typography:** Outfit (geometric sans, weights 500/600/700) for body + headings, Instrument Serif italic for accents, JetBrains Mono for hashes/code. Load via `next/font/google`. **System fonts are a regression — never ship them as a default.**
 - **Border radii:** `10px` / `14px` / `16px` / `20px`. Sharper radii (`4–8px`) read as draft-quality.
 - **Hero density:** every landing surface (`/`, `/onboard`, `/skills`) has a hero band with concrete numbers (live receipt count, agent count) — not just a headline + button.
