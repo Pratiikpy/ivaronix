@@ -256,6 +256,21 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
 
 ## Tier 4 · post-grant lift (started 2026-05-09)
 
+### 4C. Studio `/agents` leaderboard → ✅ DONE
+
+- **Why:** Criterion 2.1 (0G Tech Depth) wants visible Agent ID surface. The existing /agent/<addr> page renders ONE agent's profile; a judge browsing without context has no way to see all minted passports at once. The leaderboard makes the ERC-7857 system tangible.
+- **Studio route shipped (`apps/studio/src/app/agents/page.tsx`):**
+  - Walks `AgentPassportINFT.nextTokenId()`, fetches each passport's data in parallel (cap 100), sorts by trust score descending.
+  - Renders a six-column table: rank, agent (tokenId + short owner address), tier chip (Council / Veteran / Trusted / Verified / Newcomer with proper colour palette per CLAUDE.md §10), trust score, receipt count, minted date.
+  - Each row links to `/agent/<owner>` for the full profile.
+  - Footer note explains: trust = +1 per anchored receipt, contract address visible, every row is a live chain read.
+  - Honest: data is sourced from chain, not a snapshot. `revalidate: 60` gives a 60s cache to keep RPC traffic sane.
+- **Header nav:** new "Agents" link between "Skills" and "Dashboard".
+- **End-to-end live proof** (`screenshots/4c-agents/`):
+  - Desktop snap shows 4 real passports: tokenId 1 (operator, Council, trust 1326, 1326 receipts, minted 2026-05-07), tokenId 4 (delegate, Newcomer, trust 1, minted 2026-05-09), tokenId 2 + 3 (zero-receipt mints from earlier sessions).
+  - Mobile snap captured.
+- **Server-component constraint solved:** initial draft tried `<a onClick={stopPropagation}>` inside the row `<Link>` — Next.js App Router rejects event handlers on server-component anchors. Restructured: row Link goes to `/agent/<owner>`, the chainscan link lives on the agent profile page (already there), no nested anchor needed. Trust scores remain clickable through the row.
+
 ### 4B. Bulk multi-doc audit (`ivaronix doc bulk <dir>`) → ✅ DONE
 
 - **Why:** the locked-persona pair is **deal lawyer + DD analyst**. The deal lawyer's day-one surface is shipped (1A hero, 1B data room, 4A print). The DD analyst's day-one workflow is *batch* — twelve vendor agreements, thirty data-room files, every page under NDA, audit trail required. Bulk audit closes the second persona without a new skill, just a new orchestrator.
