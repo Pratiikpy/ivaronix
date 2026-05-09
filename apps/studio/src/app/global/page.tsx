@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { getReceiptRegistry, getPassportClient, getProvider, getNetwork } from '@/lib/chain';
 import { loadAllLocalReceipts, totalOgSpent, topSkillsByUsage } from '@/lib/local-receipts';
+import { loadAllSkills } from '@/lib/skills';
 import { getDeployedAddress, MemoryAccessLogClient } from '@ivaronix/og-chain';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ interface GlobalSnapshot {
   totalReceipts: number | null;
   totalPassports: number | null;
   totalOg: number;
+  firstPartySkillCount: number;
   topSkills: { skillId: string; count: number; totalCostOg: number }[];
   recentMemoryEvents: {
     agent: string;
@@ -63,6 +65,7 @@ async function loadSnapshot(): Promise<GlobalSnapshot> {
     totalReceipts: nextReceipt !== null ? Number(nextReceipt) : null,
     totalPassports: nextPassport !== null ? Math.max(0, Number(nextPassport) - 1) : null,
     totalOg: totalOgSpent(localReceipts),
+    firstPartySkillCount: loadAllSkills().length,
     topSkills: topSkillsByUsage(localReceipts, 5),
     recentMemoryEvents,
   };
@@ -88,7 +91,7 @@ export default async function GlobalPage() {
         <Stat label="receipts anchored" value={snap.totalReceipts?.toLocaleString() ?? '—'} />
         <Stat label="passports minted" value={snap.totalPassports?.toLocaleString() ?? '—'} />
         <Stat label="og spent (locally tracked)" value={snap.totalOg.toFixed(6)} suffix=" OG" />
-        <Stat label="first-party skills" value="5" />
+        <Stat label="first-party skills" value={String(snap.firstPartySkillCount ?? '—')} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, alignItems: 'start' }}>

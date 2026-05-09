@@ -37,14 +37,14 @@ export function Header() {
           <Logo />
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14 }} aria-label="Primary">
+          <Link href="/thesis" className="btn-ghost">
+            Why
+          </Link>
           <Link href="/skills" className="btn-ghost">
             Skills
           </Link>
           <Link href="/global" className="btn-ghost">
             Global
-          </Link>
-          <Link href="/brand" className="btn-ghost">
-            Brand
           </Link>
           <Link href="/dashboard" className="btn-ghost">
             Dashboard

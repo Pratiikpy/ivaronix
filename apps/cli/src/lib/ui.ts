@@ -29,9 +29,18 @@ export const ui = {
   info(label: string, detail?: string) {
     console.log(`  ${pc.gray('●')} ${label}${detail ? pc.dim('  ' + detail) : ''}`);
   },
-  /** Final status banner. */
-  banner(ok: boolean, text: string) {
-    const c = ok ? pc.green : pc.red;
+  /**
+   * Final status banner. `severity` colours the line:
+   *   'ok'      → green (anchored, fully verified)
+   *   'fail'    → red (signature mismatch, not anchored when expected, etc.)
+   *   'pending' → yellow (claimed but not yet anchored — neutral, not success)
+   * Boolean fallback: `true` → ok, `false` → fail (existing call sites).
+   */
+  banner(severity: boolean | 'ok' | 'fail' | 'pending', text: string) {
+    let c: (s: string) => string;
+    if (severity === 'pending') c = pc.yellow;
+    else if (severity === 'ok' || severity === true) c = pc.green;
+    else c = pc.red;
     console.log('\n' + c(`Status: ${text}`));
   },
   divider() {

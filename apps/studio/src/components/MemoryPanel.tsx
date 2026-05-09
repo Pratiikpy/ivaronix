@@ -1,17 +1,17 @@
 'use client';
 
-import { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { keccak256, toBytes, type Hex } from 'viem';
+import { useEffect, useState } from 'react';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
+import { keccak256, toBytes, parseAbiItem, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI } from '@/lib/client-abis';
 
 /**
- * Memory Permission Center — wallet-aware grants admin per UI_UX_GUIDE §10.
+ * Memory Permission Center — wallet-aware grants admin.
  * Reads grants where the connected wallet is owner, lets the user revoke
- * existing grants, and issues new grants via wagmi useWriteContract.
- *
- * Day-17 scope: list + revoke + issue. Day 18 polish adds TTL slider and
- * the on-chain MemoryAccessLog audit feed for THIS owner.
+ * existing grants, issue new grants, and (since 2A polish) renders an
+ * on-chain MemoryAccessLog audit feed scoped to the *connected* owner's
+ * grants — every read another agent has performed against this owner's
+ * scope, in chronological order, sourced from chain events directly.
  */
 
 const ZERO = '0x0000000000000000000000000000000000000000' as const;
@@ -255,6 +255,9 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
             </ul>
           )}
         </div>
+
+        {/* On-chain audit feed: every access another agent made under THIS owner's grants. */}
+        <AuditFeed memoryLogAddr={memoryLogAddr} grantIds={grantIds ?? []} />
       </div>
 
       <aside className="card">
@@ -274,6 +277,150 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
           Each issue + revoke is a real on-chain tx. The connected wallet pays gas.
         </p>
       </aside>
+    </div>
+  );
+}
+
+/**
+ * AuditFeed — on-chain MemoryAccessLog events filtered by the user's grant ids.
+ *
+ * Reads `MemoryAccessed(address agent, bytes32 grantId, bytes32 memoryRoot,
+ * uint8 accessType, uint64 timestamp, bytes32 scopeHash)` events directly
+ * from chain via viem's `getLogs`. Filter is the indexed `grantId` topic
+ * intersected with the owner's listGrantsByOwner result, so no event from
+ * another owner's grants leaks in.
+ *
+ * Empty state is meaningful: "no access events" means either no agent has
+ * exercised any grant under this wallet yet, or all reads are still in
+ * recently-issued grants that haven't been used. Either way the truth is
+ * shown without speculation.
+ */
+function AuditFeed({ memoryLogAddr, grantIds }: { memoryLogAddr: string; grantIds: readonly Hex[] }) {
+  const client = usePublicClient();
+  const [events, setEvents] = useState<Array<{
+    grantId: Hex;
+    agent: Address;
+    accessType: string;
+    timestamp: number;
+    txHash: Hex;
+    blockNumber: bigint;
+  }>>([]);
+  const [loadState, setLoadState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+
+  useEffect(() => {
+    if (!client || !memoryLogAddr || grantIds.length === 0) {
+      setEvents([]);
+      setLoadState('done');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoadState('loading');
+        const latest = await client.getBlockNumber();
+        const fromBlock = latest > 200_000n ? latest - 200_000n : 0n;
+        const event = parseAbiItem(
+          'event MemoryAccessed(address indexed agent, bytes32 indexed grantId, bytes32 indexed memoryRoot, uint8 accessType, uint64 timestamp, bytes32 scopeHash)'
+        );
+        // viem allows passing an indexed-arg array; a list of grantIds becomes an OR filter.
+        const grantIdSet = new Set(grantIds.map((g) => g.toLowerCase()));
+        const logs = await client.getLogs({
+          address: memoryLogAddr as Address,
+          event,
+          args: { grantId: grantIds as readonly Hex[] },
+          fromBlock,
+          toBlock: latest,
+        });
+        if (cancelled) return;
+        const mapped = logs
+          .filter((l) => l.args.grantId && grantIdSet.has((l.args.grantId as string).toLowerCase()))
+          .map((l) => ({
+            grantId: l.args.grantId as Hex,
+            agent: l.args.agent as Address,
+            accessType: ACCESS_LABELS[Number(l.args.accessType ?? 0)] ?? `code ${l.args.accessType}`,
+            timestamp: Number(l.args.timestamp ?? 0n),
+            txHash: l.transactionHash as Hex,
+            blockNumber: l.blockNumber as bigint,
+          }))
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 12);
+        setEvents(mapped);
+        setLoadState('done');
+      } catch {
+        if (!cancelled) setLoadState('error');
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [client, memoryLogAddr, grantIds]);
+
+  return (
+    <div className="card">
+      <div className="section-label">audit feed · accesses against your grants ({events.length})</div>
+      {loadState === 'loading' && (
+        <p style={{ marginTop: 12, fontSize: 13, color: 'var(--color-muted)' }}>
+          <span className="italic-display">Reading MemoryAccessed events from chain…</span>
+        </p>
+      )}
+      {loadState === 'error' && (
+        <p style={{ marginTop: 12, fontSize: 13, color: 'var(--color-mismatch)' }}>
+          Could not read on-chain events. Network or RPC may be unreachable.
+        </p>
+      )}
+      {loadState === 'done' && events.length === 0 && (
+        <p style={{ marginTop: 12, fontSize: 13, color: 'var(--color-muted)' }}>
+          <span className="italic-display">No agent has exercised one of your grants yet.</span> When one does, every read shows up here with its tx hash.
+        </p>
+      )}
+      {loadState === 'done' && events.length > 0 && (
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none', marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {events.map((ev, i) => {
+            const iso = new Date(ev.timestamp * 1000).toISOString().slice(0, 16).replace('T', ' ');
+            return (
+              <li
+                key={`${ev.txHash}-${i}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'auto 1fr auto auto',
+                  gap: 12,
+                  alignItems: 'center',
+                  padding: '8px 0',
+                  borderBottom: '1px solid var(--color-hairline)',
+                  fontSize: 12,
+                }}
+              >
+                <span
+                  className="mono"
+                  style={{
+                    padding: '2px 6px',
+                    background: 'var(--color-tonal)',
+                    border: '1px solid var(--color-hairline)',
+                    borderRadius: 4,
+                    fontSize: 10,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  {ev.accessType}
+                </span>
+                <span className="mono" style={{ fontSize: 11 }}>
+                  {shortAddr(ev.agent)}{' '}
+                  <span style={{ color: 'var(--color-muted)' }}>under grant {ev.grantId.slice(0, 10)}…</span>
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{iso}Z</span>
+                <a
+                  href={`https://chainscan-galileo.0g.ai/tx/${ev.txHash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ghost"
+                  style={{ fontSize: 11, padding: '2px 6px' }}
+                >
+                  tx ↗
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

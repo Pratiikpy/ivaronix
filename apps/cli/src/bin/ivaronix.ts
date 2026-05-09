@@ -28,6 +28,7 @@ import { computeCommand } from '../commands/compute.js';
 import { docCommand } from '../commands/doc.js';
 import { memoryCommand } from '../commands/memory.js';
 import { roomCommand } from '../commands/room.js';
+import { delegateCommand } from '../commands/delegate.js';
 import { skillCommand } from '../commands/skill.js';
 import { planCommand } from '../commands/plan.js';
 import { codeCommand } from '../commands/code.js';
@@ -80,6 +81,9 @@ program.addCommand(memoryCommand);
 
 // Confidential Data Room — Track 5 headline (Burn-Mode-encrypted blob + per-party capability grants)
 program.addCommand(roomCommand);
+
+// TEE-Bound Delegated AI Agent — Phase A (delegate has its own AgentPassport + wallet, user grants/revokes via CapabilityRegistry)
+program.addCommand(delegateCommand);
 
 // Skills (browse/inspect installed skills)
 program.addCommand(skillCommand);

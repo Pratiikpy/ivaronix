@@ -403,7 +403,7 @@ daemonCommand
 // end-to-end pairing without needing the extension.
 daemonCommand
   .command('native-host-stdio', { hidden: true })
-  .description('Internal: stdio bridge for browser native-messaging hosts')
+  .description('Internal: stdio bridge for browser native-messaging hosts (Phase B — no extension shipped yet; verb echoes for harness pairing only)')
   .action(() => {
     process.stdin.on('data', (chunk: Buffer) => {
       // Parse Chrome's framed protocol: 4-byte little-endian length + JSON body.

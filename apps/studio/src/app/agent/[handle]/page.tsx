@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
-import { getPassportClient, getReceiptRegistry, explorerAddrUrl } from '@/lib/chain';
+import { getPassportClient, getReceiptRegistry, explorerAddrUrl, receiptTypeLabel } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,8 +34,8 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
     return (
       <Section
         label={`§ AGENT · ${decoded}`}
-        title="Handles arrive Day 17."
-        description="For Day 13–16, pass a wallet address (0x…). Vanity handles are anchored on the AgentPassport contract in the next sprint."
+        title="Pass a wallet address to view this agent."
+        description="Agent profiles are addressed by the agent's wallet (0x…). Vanity handles are not yet anchored on the AgentPassport contract — when they are, they will resolve here automatically."
       />
     );
   }
@@ -43,7 +43,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
   const passport = getPassportClient();
   const reg = getReceiptRegistry();
   const profile = passport ? await passport.getPassportByWallet(decoded) : null;
-  const recent = reg ? await reg.findByAgent(decoded, 5).catch(() => []) : [];
+  const recent = reg ? await reg.findByAgent(decoded, 25).catch(() => []) : [];
 
   if (!profile) {
     return (
@@ -81,7 +81,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
                     </span>
                   </Link>
                   <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>
-                    type code {r.receiptType} ·{' '}
+                    <span className="mono">{receiptTypeLabel(r.receiptType)}</span> ·{' '}
                     <span className="mono">{r.receiptRoot.slice(0, 12)}…{r.receiptRoot.slice(-8)}</span>
                   </div>
                 </li>

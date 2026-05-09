@@ -1,0 +1,502 @@
+import { Command } from 'commander';
+import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import {
+  CapabilityRegistryClient,
+  getDeployedAddress,
+} from '@ivaronix/og-chain';
+import { ulid, type Address, type Hash } from '@ivaronix/core';
+import { loadEnv } from '../lib/env.js';
+import { ui } from '../lib/ui.js';
+import { docCommand } from './doc.js';
+
+/**
+ * Delegated AI Agent — Phase A.
+ *
+ * "I want an AI specialist to handle my contract reviews. The AI has its own
+ * identity (AgentPassportINFT). Every action it takes is signed by the
+ * delegate's own wallet, not mine. I grant capabilities via on-chain
+ * CapabilityRegistry; I can revoke at any time."
+ *
+ * Phase A scope (this firing):
+ * - Generate a fresh delegate keypair (operator-side, isolated under
+ *   `.ivaronix/delegates/<id>/`).
+ * - Fund the delegate from the user's wallet (small gas budget).
+ * - Mint AgentPassportINFT for the delegate (real on-chain tx).
+ * - Issue CapabilityRegistry grant from user → delegate (real on-chain tx).
+ * - Run a skill with the delegate's wallet — receipts signed by the
+ *   delegate, not the user. The user is provably absent from the signing
+ *   path.
+ * - Revoke capability cleanly.
+ *
+ * Phase B upgrade path (NOT shipped here, documented honestly):
+ * Replace step-1 keypair generation with 0G Compute TEE-derived key. The
+ * delegate's private key is generated *inside* the TEE on first mint and
+ * never leaves; the on-chain identity model is unchanged. Today the key is
+ * held server-side; the trust boundary is "the operator does not export
+ * the key from `.ivaronix/delegates/`." See planning-01.md §3 for details.
+ */
+
+const PASSPORT_ABI = [
+  'function mint(bytes32 metadataRoot) external returns (uint256)',
+  'function passportOf(address) external view returns (uint256)',
+];
+
+interface DelegateManifest {
+  delegateId: string;
+  name: string;
+  description: string;
+  ownerUserWallet: Address; // who created this delegate
+  delegateAddress: Address; // the delegate's own wallet
+  skillsAuthorized: string[];
+  passportTokenId: string | null;
+  passportMintTx: string | null;
+  fundingTx: string | null;
+  capabilityGrants: Array<{
+    skillId: string;
+    grantId: string;
+    grantTx: string;
+    scopeHash: string;
+    issuedAt: number;
+    revokedAt?: number;
+    revokeTx?: string;
+  }>;
+  createdAt: number;
+  network: string;
+}
+
+function delegatesDir(): string {
+  let dir = process.cwd();
+  for (let i = 0; i < 8; i++) {
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) {
+      return resolve(dir, '.ivaronix', 'delegates');
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return resolve(process.cwd(), '.ivaronix', 'delegates');
+}
+
+function delegatePath(delegateId: string): string {
+  return resolve(delegatesDir(), delegateId, 'manifest.json');
+}
+
+function delegateKeyPath(delegateId: string): string {
+  return resolve(delegatesDir(), delegateId, 'key.json');
+}
+
+function loadManifest(delegateId: string): DelegateManifest | null {
+  const path = delegatePath(delegateId);
+  if (!existsSync(path)) return null;
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as DelegateManifest;
+  } catch { return null; }
+}
+
+function saveManifest(m: DelegateManifest): void {
+  const path = delegatePath(m.delegateId);
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(m, null, 2));
+}
+
+function loadDelegateKey(delegateId: string): string | null {
+  const path = delegateKeyPath(delegateId);
+  if (!existsSync(path)) return null;
+  try {
+    const data = JSON.parse(readFileSync(path, 'utf8')) as { privateKey: string };
+    return data.privateKey;
+  } catch { return null; }
+}
+
+function parseTtl(input: string): number {
+  const m = input.match(/^(\d+)([smhd])?$/);
+  if (!m) throw new Error(`invalid TTL: ${input}`);
+  const n = Number(m[1]);
+  switch (m[2]) {
+    case 's': return n;
+    case 'm': return n * 60;
+    case 'h': return n * 3600;
+    case 'd': return n * 86400;
+    default: return n;
+  }
+}
+
+export const delegateCommand = new Command('delegate')
+  .description('Delegated AI agents — agent has its own AgentPassport + on-chain capabilities; user grants/revokes at will');
+
+// ─── delegate create ─────────────────────────────────────────────────────
+delegateCommand
+  .command('create')
+  .description('Create a fresh delegate: generate keypair, fund it, mint AgentPassport, save manifest')
+  .requiredOption('--name <name>', 'human-readable delegate name (e.g. "Adam · the term-sheet hawk")')
+  .option('--description <desc>', 'one-line description of the delegate persona', '')
+  .option('--skills <ids>', 'comma-separated skills the delegate is authorized to run', 'private-doc-review')
+  .option('--funding <amount>', 'OG amount to fund the delegate wallet for gas', '0.05')
+  .action(async (opts: { name: string; description: string; skills: string; funding: string }) => {
+    const env = loadEnv();
+    if (!env.privateKey || !env.walletAddress) {
+      ui.fail('delegate create requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      process.exitCode = 1;
+      return;
+    }
+    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (!passportAddr) {
+      ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const delegateId = ulid();
+    const skills = opts.skills.split(',').map((s) => s.trim()).filter(Boolean);
+
+    ui.title(`Creating delegate ${delegateId.slice(0, 12)}…`);
+    ui.info(`name                 ${opts.name}`);
+    ui.info(`description          ${opts.description || '(none)'}`);
+    ui.info(`skills authorized    ${skills.join(', ')}`);
+    ui.info(`network              ${env.network}`);
+    ui.info(`owner (user)         ${env.walletAddress}`);
+    ui.divider();
+
+    // 1. Generate fresh keypair for the delegate
+    const fresh = Wallet.createRandom();
+    const delegateAddress = fresh.address as Address;
+    ui.pass(`delegate wallet      ${delegateAddress}`);
+
+    // Persist key locally (Phase A: operator-side custody. Phase B: TEE-bound.)
+    mkdirSync(dirname(delegateKeyPath(delegateId)), { recursive: true });
+    writeFileSync(
+      delegateKeyPath(delegateId),
+      JSON.stringify({ privateKey: fresh.privateKey, address: delegateAddress, createdAt: Date.now() }, null, 2),
+      { mode: 0o600 },
+    );
+    ui.info(`key stored           ${delegateKeyPath(delegateId)} (mode 0600 — Phase A operator custody; Phase B is TEE-bound)`);
+
+    // 2. Fund the delegate from the user's wallet
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const userWallet = new Wallet(env.privateKey, provider);
+
+    ui.pending(`funding delegate with ${opts.funding} OG...`);
+    const fundTx = await userWallet.sendTransaction({
+      to: delegateAddress,
+      value: parseEther(opts.funding),
+    });
+    const fundReceipt = await fundTx.wait();
+    ui.pass(`fund tx              ${fundTx.hash}  block ${fundReceipt?.blockNumber ?? '?'}`);
+
+    // 3. Mint AgentPassportINFT for the delegate
+    const delegateSigner = new Wallet(fresh.privateKey, provider);
+    const passport = new Contract(passportAddr, PASSPORT_ABI, delegateSigner);
+
+    const metadata = {
+      type: 'ivaronix-delegate',
+      version: '0.1.0',
+      delegateId,
+      name: opts.name,
+      description: opts.description,
+      delegateAddress,
+      ownerUserWallet: env.walletAddress,
+      skillsAuthorized: skills,
+      personality: { style: 'concise', risk: 'balanced' },
+      permissionProfile: 'default-strict',
+      createdAt: Date.now(),
+    };
+    const metadataBytes = toUtf8Bytes(JSON.stringify(metadata));
+    const metadataRoot = sha256(metadataBytes) as Hash;
+
+    ui.pending('minting AgentPassportINFT for delegate...');
+    let tokenId = 0n;
+    let mintTxHash: string | null = null;
+    try {
+      const mintTx = await passport.mint!(metadataRoot);
+      mintTxHash = mintTx.hash;
+      const mintReceipt = await mintTx.wait();
+      tokenId = await passport.passportOf!(delegateAddress);
+      ui.pass(`mint tx              ${mintTxHash}  block ${mintReceipt?.blockNumber ?? '?'}`);
+      ui.pass(`tokenId              ${tokenId.toString()}`);
+    } catch (err) {
+      ui.fail(`mint failed`, ((err as Error).message.split('\n')[0] ?? '').slice(0, 120));
+      // Continue — manifest is still saved so the user can retry mint manually
+    }
+
+    // 4. Persist delegate manifest
+    const manifest: DelegateManifest = {
+      delegateId,
+      name: opts.name,
+      description: opts.description,
+      ownerUserWallet: env.walletAddress as Address,
+      delegateAddress,
+      skillsAuthorized: skills,
+      passportTokenId: tokenId > 0n ? tokenId.toString() : null,
+      passportMintTx: mintTxHash,
+      fundingTx: fundTx.hash,
+      capabilityGrants: [],
+      createdAt: Date.now(),
+      network: env.network,
+    };
+    saveManifest(manifest);
+    ui.divider();
+    ui.pass(`manifest saved       ${delegatePath(delegateId)}`);
+    ui.section('Next steps');
+    ui.info(`Grant a skill capability:    ivaronix delegate grant ${delegateId.slice(0, 12)} --skill <skillId>`);
+    ui.info(`Run a skill via delegate:    ivaronix delegate run ${delegateId.slice(0, 12)} <doc> "question"`);
+    ui.info(`Studio:                      http://localhost:3300/delegate/${delegateId}`);
+  });
+
+// ─── delegate list ───────────────────────────────────────────────────────
+delegateCommand
+  .command('list')
+  .description('List delegates created by this user (local manifests under .ivaronix/delegates/)')
+  .action(() => {
+    const dir = delegatesDir();
+    if (!existsSync(dir)) {
+      ui.info('(no delegates yet — create one with `ivaronix delegate create --name "..."`)');
+      return;
+    }
+    const entries = readdirSync(dir);
+    if (entries.length === 0) {
+      ui.info('(no delegates yet — create one with `ivaronix delegate create --name "..."`)');
+      return;
+    }
+    ui.title(`Delegates in ${dir}`);
+    for (const e of entries) {
+      const m = loadManifest(e);
+      if (!m) continue;
+      const activeGrants = m.capabilityGrants.filter((g) => !g.revokedAt).length;
+      const totalGrants = m.capabilityGrants.length;
+      ui.info(`${m.delegateId.slice(0, 12)}…  ${m.name.slice(0, 36).padEnd(36)}  passport ${m.passportTokenId ?? '—'}  grants ${activeGrants}/${totalGrants}  ${m.delegateAddress.slice(0, 10)}…`);
+    }
+  });
+
+// ─── delegate grant ──────────────────────────────────────────────────────
+delegateCommand
+  .command('grant <delegateId>')
+  .description('Issue a CapabilityRegistry grant from user → delegate for a specific skill scope')
+  .requiredOption('--skill <id>', 'skill id the delegate is authorized to run (e.g. private-doc-review)')
+  .option('--ttl <duration>', 'grant TTL', '30d')
+  .option('--reads <count>', 'reads cap', '100')
+  .action(async (rawId: string, opts: { skill: string; ttl: string; reads: string }) => {
+    const env = loadEnv();
+    if (!env.privateKey || !env.walletAddress) {
+      ui.fail('delegate grant requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      process.exitCode = 1;
+      return;
+    }
+    // Resolve full delegate id from prefix
+    const dir = delegatesDir();
+    let m: DelegateManifest | null = null;
+    if (existsSync(dir)) {
+      for (const e of readdirSync(dir)) {
+        if (e.startsWith(rawId)) { m = loadManifest(e); if (m) break; }
+      }
+    }
+    if (!m) {
+      ui.fail(`delegate "${rawId}" not found in ${dir}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (!m.skillsAuthorized.includes(opts.skill)) {
+      ui.fail(`skill "${opts.skill}" not in delegate's authorized list (${m.skillsAuthorized.join(', ')})`);
+      ui.hint(`Either pick an authorized skill, or recreate the delegate with --skills including this one.`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    if (!capAddr) {
+      ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const userWallet = new Wallet(env.privateKey, provider);
+    const cap = new CapabilityRegistryClient(capAddr, userWallet);
+
+    const scopeHash = keccak256(toUtf8Bytes(`skill:${opts.skill}`)) as Hash;
+    const ttlSec = parseTtl(opts.ttl);
+    const readsCap = Number(opts.reads);
+
+    ui.title(`Granting ${opts.skill} capability to delegate ${m.delegateId.slice(0, 12)}…`);
+    ui.info(`grantee              ${m.delegateAddress}`);
+    ui.info(`scope hash           ${scopeHash}`);
+    ui.info(`ttl                  ${opts.ttl} (${ttlSec}s)`);
+    ui.info(`reads cap            ${readsCap}`);
+
+    ui.pending('issuing grant on chain...');
+    const tx = await cap.issueGrant(m.delegateAddress, scopeHash, ttlSec, readsCap);
+    const receipt = await tx.wait();
+    const grantIssuedTopic = keccak256(toUtf8Bytes('GrantIssued(bytes32,address,address,bytes32,uint64,uint32)'));
+    const log = receipt?.logs.find((l) => l.topics[0] === grantIssuedTopic);
+    const grantId = log?.topics[1] ?? '0x' + '0'.repeat(64);
+
+    m.capabilityGrants.push({
+      skillId: opts.skill,
+      grantId,
+      grantTx: tx.hash,
+      scopeHash,
+      issuedAt: Date.now(),
+    });
+    saveManifest(m);
+
+    ui.divider();
+    ui.pass(`grant id             ${grantId}`);
+    ui.pass(`tx                   ${tx.hash}`);
+    ui.pass(`block                ${receipt?.blockNumber ?? '?'}`);
+    ui.hint(`Run: ivaronix delegate run ${m.delegateId.slice(0, 12)} <doc> "question"`);
+  });
+
+// ─── delegate revoke ─────────────────────────────────────────────────────
+delegateCommand
+  .command('revoke <delegateId>')
+  .description('Revoke the most recent active capability grant for this delegate (revokeGrant on chain)')
+  .option('--skill <id>', 'revoke a specific skill grant (default: most recent active)', '')
+  .action(async (rawId: string, opts: { skill: string }) => {
+    const env = loadEnv();
+    if (!env.privateKey) { ui.fail('need EVM_PRIVATE_KEY'); process.exitCode = 1; return; }
+
+    const dir = delegatesDir();
+    let m: DelegateManifest | null = null;
+    if (existsSync(dir)) {
+      for (const e of readdirSync(dir)) {
+        if (e.startsWith(rawId)) { m = loadManifest(e); if (m) break; }
+      }
+    }
+    if (!m) { ui.fail(`delegate "${rawId}" not found`); process.exitCode = 1; return; }
+
+    const target = opts.skill
+      ? m.capabilityGrants.find((g) => !g.revokedAt && g.skillId === opts.skill)
+      : [...m.capabilityGrants].reverse().find((g) => !g.revokedAt);
+    if (!target) {
+      ui.fail(`no active grant${opts.skill ? ` for skill "${opts.skill}"` : ''} on this delegate`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    if (!capAddr) { ui.fail('CapabilityRegistry not deployed'); process.exitCode = 1; return; }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const userWallet = new Wallet(env.privateKey, provider);
+    const cap = new CapabilityRegistryClient(capAddr, userWallet);
+
+    ui.title(`Revoking grant ${target.grantId.slice(0, 18)}… for skill ${target.skillId}`);
+    ui.pending('submitting revoke tx...');
+    const tx = await cap.revokeGrant(target.grantId as Hash);
+    const receipt = await tx.wait();
+
+    target.revokedAt = Date.now();
+    target.revokeTx = tx.hash;
+    saveManifest(m);
+
+    ui.pass(`revoke tx            ${tx.hash}`);
+    ui.pass(`block                ${receipt?.blockNumber ?? '?'}`);
+    ui.divider();
+    ui.info(`The delegate can no longer run ${target.skillId} on behalf of ${m.ownerUserWallet}.`);
+  });
+
+// ─── delegate run ────────────────────────────────────────────────────────
+delegateCommand
+  .command('run <delegateId> <doc>')
+  .description('Run a skill via the delegate (delegate signs the receipt, not the user)')
+  .option('--skill <id>', 'skill id (default: first authorized)', '')
+  .option('--question <q>', 'question to ask', 'What is the worst clause?')
+  .option('--tier <tier>', 'consensus tier', 'quick')
+  .action(async (rawId: string, doc: string, opts: { skill: string; question: string; tier: string }) => {
+    const env = loadEnv();
+    if (!env.privateKey) { ui.fail('need EVM_PRIVATE_KEY in .env'); process.exitCode = 1; return; }
+
+    const dir = delegatesDir();
+    let m: DelegateManifest | null = null;
+    if (existsSync(dir)) {
+      for (const e of readdirSync(dir)) {
+        if (e.startsWith(rawId)) { m = loadManifest(e); if (m) break; }
+      }
+    }
+    if (!m) { ui.fail(`delegate "${rawId}" not found`); process.exitCode = 1; return; }
+
+    const skillId = opts.skill || m.skillsAuthorized[0];
+    if (!skillId) { ui.fail('no authorized skill on this delegate'); process.exitCode = 1; return; }
+
+    // Find the active grant for this skill
+    const grant = m.capabilityGrants.find((g) => !g.revokedAt && g.skillId === skillId);
+    if (!grant) {
+      ui.fail(`no active capability grant for skill "${skillId}"`);
+      ui.hint(`Run: ivaronix delegate grant ${m.delegateId.slice(0, 12)} --skill ${skillId}`);
+      process.exitCode = 1;
+      return;
+    }
+
+    // Verify grant is still valid on chain
+    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    if (!capAddr) { ui.fail('CapabilityRegistry not deployed'); process.exitCode = 1; return; }
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const userWallet = new Wallet(env.privateKey, provider);
+    const cap = new CapabilityRegistryClient(capAddr, userWallet);
+    const valid = await cap.isValid(grant.grantId as Hash, m.delegateAddress, grant.scopeHash as Hash);
+    if (!valid) {
+      ui.fail(`grant ${grant.grantId.slice(0, 18)}… is no longer valid (revoked or expired)`);
+      process.exitCode = 1;
+      return;
+    }
+
+    const delegateKey = loadDelegateKey(m.delegateId);
+    if (!delegateKey) { ui.fail('delegate key file missing'); process.exitCode = 1; return; }
+
+    ui.title(`Running ${skillId} via delegate ${m.delegateId.slice(0, 12)}…`);
+    ui.info(`delegate wallet      ${m.delegateAddress}`);
+    ui.info(`grant id             ${grant.grantId.slice(0, 18)}…`);
+    ui.info(`receipt will be signed by the DELEGATE, not the user.`);
+    ui.divider();
+
+    const docPath = resolve(doc);
+    if (!existsSync(docPath)) { ui.fail(`doc not found: ${docPath}`); process.exitCode = 1; return; }
+
+    // In-process invocation: swap EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in
+    // process.env, then call docCommand.parseAsync directly. loadEnv reads
+    // process.env fresh on every call (see src/lib/env.ts), so every
+    // downstream signing path picks up the delegate's identity. We restore
+    // env vars in `finally` so we don't pollute later commands.
+    const tierFlag = opts.tier === 'quick' ? '--quick'
+      : opts.tier === 'standard' ? '--consensus'
+      : opts.tier === 'high-stakes' ? '--high-stakes'
+      : '--quick';
+    const args = ['node', 'doc', 'ask', docPath, opts.question, '--skill', skillId, tierFlag];
+
+    ui.info(`invoking:            ivaronix ${args.slice(2).join(' ')}`);
+    ui.info(`signing identity:    delegate (${m.delegateAddress})`);
+    ui.divider();
+
+    const savedKey = process.env.EVM_PRIVATE_KEY;
+    const savedAddr = process.env.EVM_WALLET_ADDRESS;
+    const savedOgKey = process.env.OG_PRIVATE_KEY;
+    process.env.EVM_PRIVATE_KEY = delegateKey;
+    process.env.EVM_WALLET_ADDRESS = m.delegateAddress;
+    delete process.env.OG_PRIVATE_KEY; // ensure EVM_PRIVATE_KEY wins in loadEnv
+
+    let runOk = false;
+    try {
+      await docCommand.parseAsync(args);
+      runOk = process.exitCode !== 1;
+    } catch (err) {
+      ui.fail('delegate run threw', ((err as Error).message.split('\n')[0] ?? '').slice(0, 160));
+    } finally {
+      // Restore original env (or undefined if not set before)
+      if (savedKey === undefined) delete process.env.EVM_PRIVATE_KEY;
+      else process.env.EVM_PRIVATE_KEY = savedKey;
+      if (savedAddr === undefined) delete process.env.EVM_WALLET_ADDRESS;
+      else process.env.EVM_WALLET_ADDRESS = savedAddr;
+      if (savedOgKey === undefined) delete process.env.OG_PRIVATE_KEY;
+      else process.env.OG_PRIVATE_KEY = savedOgKey;
+      // Reset commander's internal state for repeated subcommand parses
+      process.exitCode = 0;
+    }
+
+    ui.divider();
+    if (runOk) {
+      ui.pass(`delegate run complete`);
+      ui.hint(`Receipt agent.ownerWallet = ${m.delegateAddress}, NOT ${env.walletAddress}.`);
+      ui.hint(`Auditable proof: the user delegated, the agent acted, the user's signing key was never invoked.`);
+    } else {
+      ui.fail(`delegate run failed`);
+    }
+  });

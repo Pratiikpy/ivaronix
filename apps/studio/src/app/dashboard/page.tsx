@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
 import { useEffect, useState } from 'react';
+import { receiptTypeLabel } from '@/lib/receipt-labels';
 
 interface DashboardData {
   network: string;
@@ -149,7 +150,7 @@ export default function DashboardPage() {
                           </span>
                         </Link>
                         <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 2 }}>
-                          type code {r.receiptType} · <span className="mono">{r.receiptRoot.slice(0, 12)}…{r.receiptRoot.slice(-8)}</span>
+                          <span className="mono">{receiptTypeLabel(r.receiptType)}</span> · <span className="mono">{r.receiptRoot.slice(0, 12)}…{r.receiptRoot.slice(-8)}</span>
                         </div>
                       </li>
                     ))}

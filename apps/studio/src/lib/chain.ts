@@ -5,7 +5,17 @@ import {
   SkillRegistryClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
-import { NETWORKS, type Network } from '@ivaronix/core';
+import { NETWORKS, RECEIPT_TYPES, type Network } from '@ivaronix/core';
+
+/** Reverse-map a numeric receipt type code (as stored on chain) to its canonical name. */
+const RECEIPT_TYPE_LABELS: Record<number, string> = Object.fromEntries(
+  Object.entries(RECEIPT_TYPES).map(([k, v]) => [v as number, k])
+);
+
+export function receiptTypeLabel(code: number | bigint): string {
+  const n = typeof code === 'bigint' ? Number(code) : code;
+  return RECEIPT_TYPE_LABELS[n] ?? `type_${n}`;
+}
 
 /**
  * Server-side Ethers provider. The Studio reads on-chain data directly using

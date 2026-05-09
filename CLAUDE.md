@@ -225,3 +225,16 @@ If a phrase is ambiguous (e.g. "test the data room"), the right move is to drive
 ### 12.6 · Living punch-list discipline
 
 `docs/QA_LOOP_BRIEF.md` is the source of truth for "what's tested vs what isn't." Every shipped feature gets a line in the punch-list with its current status. The status updates in the same commit that ships the feature, not in a follow-up commit. If a feature has no line in the punch-list, it has no proof, so it does not exist.
+
+## 13. README / submission documentation (locked)
+
+The 0G APAC Hackathon submission must include a project README — in English or Chinese — that contains every one of the following. This is a hard submission requirement, not a stretch goal. Strong documentation is a judging input.
+
+1. **Project overview** — one paragraph that names the product, the persona, and the substitution problem it solves. No banned words from §9. Real numbers, not adjectives.
+2. **System architecture diagram or technical description** — a diagram (svg or ascii) plus a short narrative covering: where the document goes, where the receipt is signed, how the chain anchor happens, how independent re-verification works.
+3. **Explanation of which 0G modules are used** — list each integrated module (`0G Chain`, `0G Compute`, `0G Storage`, `0G DA`, `0G Router`, `Agent ID`) with the contract address or endpoint where applicable.
+4. **Description of how those modules support the product** — for each module, one sentence describing the user-visible value it carries (e.g. "0G Compute runs the specialist inside a TEE, so the plaintext is invisible outside the run").
+5. **Local deployment / reproduction steps for judges** — exactly the commands a reviewer types to clone, install, env-fill, run the studio, run the CLI, and produce a verifiable receipt. Tested on a clean machine before submission.
+6. **Test account details, faucet instructions, reviewer notes** — testnet faucet link, a pre-funded reviewer wallet address (or instructions to fund a fresh one), the chainscan URL pattern, and any rate-limit caveats.
+
+The README is owned by the submission lead, lives at `README.md` in repo root, and is reviewed against this checklist before submission. Anything missing is treated as a §1-rule failure ("ship it or push back"), not a polish item.

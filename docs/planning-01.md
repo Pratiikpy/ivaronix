@@ -69,8 +69,27 @@
 
 ## Tier 2 · High-impact, week-scale
 
-### 2A. TEE-Bound Delegated AI Agent — see §3 below
-- See full spec in §3 (was §1 before re-tier).
+### 2A. TEE-Bound Delegated AI Agent → ✅ DONE (Phase A — operator-side custody, on-chain identity, on-chain capability revocation)
+
+- **CLI shipped (`apps/cli/src/commands/delegate.ts`):**
+  - `ivaronix delegate create --name "<name>" [--description] [--skills ids,...] [--funding 0.04]` — generates fresh keypair (mode 0600 in `.ivaronix/delegates/<id>/key.json`), funds it from the user's wallet, mints AgentPassportINFT in the delegate's name, persists manifest.
+  - `ivaronix delegate grant <id> --skill <skillId> [--ttl 30d] [--reads 200]` — issues a CapabilityRegistry grant from user → delegate (real on-chain tx).
+  - `ivaronix delegate run <id> <doc> --question "..." [--tier quick]` — env-overrides EVM_PRIVATE_KEY in-process and dispatches to `docCommand.parseAsync`. Receipt's `agent.ownerWallet` = delegate, NOT user. User's signing key never invoked.
+  - `ivaronix delegate revoke <id> [--skill <id>]` — revokes the active grant on chain. Post-revoke runs fail at `cap.isValid` check.
+  - `ivaronix delegate list` — local manifest summary.
+- **Studio surface (`apps/studio/src/app/delegate/[id]/page.tsx`):** identity card (delegate id, name, wallet, passport tokenId, owner-user-wallet), custody disclosure card (Phase A vs Phase B explicit), active grants section with explorer links, revoked grants section (visually muted), verify-from-CLI block.
+- **End-to-end live proof:**
+  - Delegate id: `01KR67PT76V9AQTHN413PYWB1J`
+  - Delegate wallet: `0x4B2147665818b823bdbDd3f92Aa006A08e4224e0` (passport tokenId 4)
+  - Funding tx: `0xfd2dbe59729b707fe43b149fb31f93ba0209d70d69d41060575f5815e677e25f` block 32383562
+  - Mint tx: `0xda58377becda436e4afa5cbc2a057c27ca4ee9151fb217f2633211f48ad4b4ec` block 32383586
+  - Grant id: `0x803d2d634b00466b11f02fda81f6519dd8a3c3312f1fd6699258548cf8338e3d`, tx `0xc4dc2364fdc7c43b742dcb2a564184b39b7a9a0807e1c249cc122d3932c5f9ef` block 32383649
+  - Receipt: `rcpt_01KR67SDCD9TA08C46MMYSNG7A` on-chain id **#1204**, anchor tx `0xedcc02624dab6e0de32ac26ff196cf3371641f954a18411672ae8d6b3803f6e6` block 32383734. Storage evidence root `0x236bf7f723a8b94a655bd16349cf46822ef18e80c1cd3f4aab820d132d1973d7`. Delegate's passport receiveCount=1, trustScore=1.
+  - Revoke tx: `0x35ad2c0f2f8f420991628da06ec5ac2c92378b300f3c55a4d227dec5359a52bf` block 32383871
+  - Negative test: post-revoke run failed cleanly with "no active capability grant for skill private-doc-review".
+- **Phase B path (documented honestly, NOT shipped):** delegate's signing key generated *inside* a 0G Compute TEE on first mint, never extracted. On-chain identity model is unchanged. The Studio custody card explicitly states "Phase A · operator-side custody" with a yellow chip and a Phase-B target description.
+
+See `docs/PHASE_B_DISCLOSURES.md` for the full half-baked audit (14 items, 7 closed in this commit, 7 documented honestly).
 
 ### 2B. Memory consolidation lifecycle on AgentPassport
 - **Why:** Aishi (showcase #1) wins 2.1 partly on memory consolidation depth — daily → monthly → yearly memory rollups anchored on chain. We currently have receipts but no consolidation tier on `AgentPassportINFT`.
@@ -87,6 +106,15 @@
   - On every fire: run the skill, anchor a receipt, settle the fee split automatically to the creator's passport.
   - Studio surface: a "Scheduled Runs" tab on `/dashboard` showing next-fire timestamps and recent receipts per schedule.
 - **Strengthens Track 3:** creators earn passive income from scheduled skill execution, not just per-run.
+
+### 2D. Studio `/docs` page — 0G modules + how they support the product
+- **Why:** judges should see, at a glance, the breadth and depth of our 0G integration without grepping the codebase. The README has this list (per CLAUDE.md §13) but a judge who lands on the Studio first should find the same answer at `/docs` in two clicks.
+- **What to add:**
+  - One Studio route at `/docs` that mirrors README §3 + §4: each 0G module gets a card with (a) module name, (b) contract address or endpoint where applicable (clickable), (c) one sentence on the user-visible value, (d) a "see it live" link to a Studio surface that exercises it (e.g. 0G Storage → `/data-room/<id>`, 0G Compute → `/r/<id>` with TIER 1 chip, Agent ID → `/agent/<addr>`).
+  - Editorial voice — no AI slop, no "delve / unlock / leverage / robust." One claim per sentence. Real addresses, real receipts.
+  - Honest tier marking per CLAUDE.md §6: TIER 1 (TEE-attested) modules in green, TIER 2 (external-signed) in amber. Modules we do not integrate at all (e.g. 0G DA today) get an explicit "not yet integrated — Phase B" chip rather than being omitted.
+  - Linked from the header nav (replacing or supplementing `Why`).
+- **Closes:** Criterion 2.5 (Documentation) and partially 2.1 (Integration depth visibility) for any judge who does not read the README. Pairs 1:1 with the README so the on-page version cannot drift from the on-disk one.
 
 ---
 

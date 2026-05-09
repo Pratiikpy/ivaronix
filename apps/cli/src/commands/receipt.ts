@@ -159,14 +159,14 @@ receiptCommand
       onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
     } catch (err) {
       ui.fail('chain anchor lookup error', (err as Error).message);
-      ui.banner(true, '→ CLAIMED (anchor check failed)');
+      ui.banner('pending', '→ CLAIMED (anchor check failed — not verified)');
       return;
     }
 
     if (!onChain) {
       ui.fail('chain anchor          NOT FOUND  (receipt was never anchored, or different network)');
       ui.divider();
-      ui.banner(true, '→ CLAIMED (not yet anchored)');
+      ui.banner('pending', '→ CLAIMED (not yet anchored — not verified)');
       return;
     }
 
