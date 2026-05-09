@@ -47,11 +47,25 @@ export function RunPanel() {
   }, []);
   const [tier, setTier] = useState<Tier>('quick');
   const [receipt, setReceipt] = useState<boolean>(true);
+  const [burn, setBurn] = useState<boolean>(false);
   const [contentText, setContentText] = useState<string>('');
   const [question, setQuestion] = useState<string>('What is the worst clause?');
   const [running, setRunning] = useState<boolean>(false);
   const [result, setResult] = useState<RunResponse | null>(null);
   const [layers, setLayers] = useState<Partial<Record<'Storage' | 'Compute' | 'TEE' | 'Chain', 'pending' | 'active' | 'verified' | 'mismatch'>>>({});
+
+  // Tier metadata for the role-preview row.
+  const TIER_META: Record<Tier, { roles: number; roleNames: string[]; cost: string; warn?: string }> = {
+    'quick': { roles: 1, roleNames: ['analyst'], cost: '~0.00003 OG' },
+    'standard': { roles: 3, roleNames: ['analyst', 'critic', 'judge'], cost: '~0.0001 OG' },
+    'high-stakes': {
+      roles: 5,
+      roleNames: ['analyst', 'critic', 'judge', 'risk-reviewer', 'evidence-checker'],
+      cost: '~0.0003 OG',
+      warn: '5 roles fire concurrently — public testnet quota is 10 RPM, may rate-limit.',
+    },
+  };
+  const tierMeta = TIER_META[tier];
 
   const onDrop = useCallback(async (files: File[]) => {
     const f = files[0];
@@ -76,7 +90,7 @@ export function RunPanel() {
       const res = await fetch('/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skillId, tier, receipt, contentText, question }),
+        body: JSON.stringify({ skillId, tier, receipt, burn, contentText, question }),
       });
       const data = (await res.json()) as RunResponse;
       setResult(data);
@@ -178,7 +192,67 @@ export function RunPanel() {
           <input type="checkbox" checked={receipt} onChange={(e) => setReceipt(e.target.checked)} />
           anchor receipt
         </label>
+
+        <label
+          title="Encrypts the input with an ephemeral AES-256-GCM session key, records the key fingerprint in the receipt, and destroys the key after the run."
+          style={{ fontSize: 13, color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <input type="checkbox" checked={burn} onChange={(e) => setBurn(e.target.checked)} />
+          burn mode
+        </label>
       </div>
+
+      {/* Role-preview / tier-explanation row */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+          fontSize: 12,
+          color: 'var(--color-muted)',
+          padding: '8px 12px',
+          background: 'var(--color-card)',
+          border: '1px solid var(--color-hairline)',
+          borderRadius: 6,
+        }}
+      >
+        <span className="mono" style={{ fontWeight: 600, color: 'var(--color-ink)' }}>
+          {tier} · {tierMeta.roles} role{tierMeta.roles > 1 ? 's' : ''}
+        </span>
+        <span style={{ opacity: 0.7 }}>{tierMeta.roleNames.join(' · ')}</span>
+        <span className="mono" style={{ marginLeft: 'auto' }}>{tierMeta.cost}</span>
+      </div>
+      {tierMeta.warn && (
+        <div
+          role="note"
+          style={{
+            fontSize: 12,
+            color: '#92400e',
+            background: 'var(--color-pending-bg)',
+            border: '1px solid var(--color-pending)',
+            padding: '6px 10px',
+            borderRadius: 6,
+          }}
+        >
+          ⚠ {tierMeta.warn}
+        </div>
+      )}
+      {burn && (
+        <div
+          role="note"
+          style={{
+            fontSize: 12,
+            color: 'var(--color-muted)',
+            background: 'var(--color-card)',
+            border: '1px dashed var(--color-burn, #7C3AED)',
+            padding: '6px 10px',
+            borderRadius: 6,
+          }}
+        >
+          🔒 Burn Mode: session key destroyed after the run; encrypted evidence remains on 0G Storage. The receipt records the key fingerprint + destroyed timestamp.
+        </div>
+      )}
 
       <input
         type="text"

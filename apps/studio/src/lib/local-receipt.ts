@@ -19,7 +19,7 @@ export interface ReceiptBody {
   id: string;
   type: string;
   signature?: string;
-  storage?: { receiptRoot: string; evidenceRoot?: string };
+  // storage is fully declared below with all sub-fields.
   outputs?: {
     outputHash?: string;
     citations?: string[];
@@ -46,6 +46,22 @@ export interface ReceiptBody {
       treasuryNeuron: string;
       creatorPassport?: string;
     };
+  };
+  storage?: {
+    receiptRoot?: string;
+    evidenceRoot?: string;
+    encryption?: {
+      enabled?: boolean;
+      type?: 'aes-256-gcm' | 'wallet' | 'none';
+      headerDetected?: boolean;
+      keyFingerprint?: string;
+    };
+  };
+  burn?: {
+    sessionKeyDestroyedAt?: number;
+    localCleanupStatus?: 'completed' | 'partial' | 'failed';
+    tempPathsZeroed?: string[];
+    wording?: string;
   };
   execution?: {
     burnMode?: boolean;

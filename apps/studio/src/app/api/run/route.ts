@@ -13,6 +13,7 @@ interface RunBody {
   contentText: string;
   tier?: ConsensusTier;
   receipt?: boolean;
+  burn?: boolean;
 }
 
 /**
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
       userPrompt: body.question,
       tier: body.tier,
       receipt: !!body.receipt,
+      burn: !!body.burn,
       receiptType: 'doc_ask',
       logger,
     });

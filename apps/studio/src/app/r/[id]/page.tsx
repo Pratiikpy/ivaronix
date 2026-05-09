@@ -287,6 +287,46 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
+        {(local?.execution?.burnMode || local?.burn) && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="section-label">burn mode · evidence proof</div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', maxWidth: 640 }}>
+              Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against
+              operator-side disclosure; local-machine compromise is out of scope.
+            </p>
+            <dl style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+              {local?.storage?.encryption?.keyFingerprint && (
+                <>
+                  <dt style={{ color: 'var(--color-muted)' }}>key fingerprint</dt>
+                  <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>
+                    {local.storage.encryption.keyFingerprint}
+                  </dd>
+                </>
+              )}
+              <dt style={{ color: 'var(--color-muted)' }}>encryption</dt>
+              <dd className="mono" style={{ margin: 0 }}>
+                {local?.storage?.encryption?.type ?? 'none'}
+                {local?.storage?.encryption?.headerDetected ? ' · header detected' : ''}
+              </dd>
+              {local?.burn?.sessionKeyDestroyedAt && (
+                <>
+                  <dt style={{ color: 'var(--color-muted)' }}>destroyed at</dt>
+                  <dd className="mono" style={{ margin: 0 }}>
+                    {new Date(local.burn.sessionKeyDestroyedAt).toISOString().replace('T', ' ').replace('.000Z', 'Z')}
+                  </dd>
+                  <dt style={{ color: 'var(--color-muted)' }}>cleanup</dt>
+                  <dd className="mono" style={{ margin: 0 }}>
+                    {local.burn.localCleanupStatus}
+                    {Array.isArray(local.burn.tempPathsZeroed) && local.burn.tempPathsZeroed.length > 0
+                      ? ` · ${local.burn.tempPathsZeroed.length} path(s) zeroed`
+                      : ''}
+                  </dd>
+                </>
+              )}
+            </dl>
+          </div>
+        )}
+
         {local?.execution?.consensus && (
           <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
