@@ -287,6 +287,26 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           </div>
         )}
 
+        {/* Memory DAG · prior-receipt lineage (planning-01 §3A) */}
+        {local?.request?.priorReceiptIds && local.request.priorReceiptIds.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24 }}>
+            <div className="section-label" style={{ marginBottom: 12 }}>
+              built on prior runs ({local.request.priorReceiptIds.length})
+            </div>
+            <p style={{ margin: '0 0 12px', fontSize: 13, color: 'var(--color-muted)', maxWidth: 640 }}>
+              The agent read these receipts of its own past work as context before producing this run. The lineage
+              is verifiable — anyone can fetch each receipt and confirm the agent ran it.
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {local.request.priorReceiptIds.map((rid) => (
+                <li key={rid} className="mono" style={{ fontSize: 12, color: 'var(--color-muted)' }}>
+                  {rid}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {(local?.execution?.burnMode || local?.burn) && (
           <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="section-label">burn mode · evidence proof</div>

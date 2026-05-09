@@ -26,7 +26,7 @@ export interface ReceiptBody {
     riskLevel?: 'low' | 'medium' | 'high';
     wording?: { headline?: string; doNotSay?: string[] };
   };
-  request?: { skillId?: string; skillVersion?: string; skillManifestHash?: string };
+  request?: { skillId?: string; skillVersion?: string; skillManifestHash?: string; priorReceiptIds?: string[] };
   agent?: { ownerWallet?: string; passportId?: string };
   chainAnchor?: { anchorTxHash?: string; anchorBlockNumber?: number; anchorTimestamp?: number };
   teeVerification?: {

@@ -43,7 +43,8 @@ docCommand
   .option('--skill <id>', 'use this skill (defaults to private-doc-review)', 'private-doc-review')
   .option('--model <id>', 'override default model', 'qwen/qwen-2.5-7b-instruct')
   .option('--out-dir <dir>', 'where to write the signed receipt JSON', '.ivaronix/receipts/anchored')
-  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string }) => {
+  .option('--memory-depth <n>', 'load N most recent receipts for this agent + skill into context (planning-01 §3A)', '0')
+  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string; memoryDepth?: string }) => {
     const env = loadEnv();
 
     // ─── 0. Load skill ────────────────────────────────────────────────────
@@ -212,7 +213,91 @@ docCommand
       return;
     }
 
-    const contextText = docBytes.toString('utf8', 0, Math.min(docBytes.length, 8192));
+    const docContextText = docBytes.toString('utf8', 0, Math.min(docBytes.length, 8192));
+
+    // ─── 2c. memory-depth · prior receipts as context (planning-01 §3A) ──
+    // The agent reads its own last N receipts on this skill from local
+    // disk and prepends a short summary block to the consensus context.
+    // The receipt body records request.priorReceiptIds so the lineage is
+    // verifiable later — anyone can fetch each prior receipt's body and
+    // confirm the agent actually ran it.
+    const memoryDepth = Math.max(0, Math.min(20, Number(opts.memoryDepth ?? 0)));
+    let priorReceiptIds: string[] = [];
+    let priorContextBlock = '';
+    if (memoryDepth > 0 && env.walletAddress) {
+      const owner = (env.walletAddress as string).toLowerCase();
+      const receiptDirs = [resolve(process.cwd(), '.ivaronix', 'receipts', 'anchored')];
+      // Walk up to repo root and check apps/cli too
+      let upDir = process.cwd();
+      for (let i = 0; i < 8; i++) {
+        if (existsSync(resolve(upDir, 'pnpm-workspace.yaml'))) {
+          receiptDirs.push(resolve(upDir, 'apps', 'cli', '.ivaronix', 'receipts', 'anchored'));
+          break;
+        }
+        const p = resolve(upDir, '..');
+        if (p === upDir) break;
+        upDir = p;
+      }
+      const summaries: Array<{ id: string; createdAt: number; headline: string; riskLevel: string; onChainId: string | null }> = [];
+      const { readdirSync: rds, readFileSync: rfs } = await import('node:fs');
+      for (const dir of receiptDirs) {
+        if (!existsSync(dir)) continue;
+        try {
+          for (const fname of rds(dir)) {
+            if (!fname.endsWith('.json')) continue;
+            try {
+              const r = JSON.parse(rfs(resolve(dir, fname), 'utf8')) as Record<string, unknown>;
+              const a = (r.agent as Record<string, unknown> | undefined)?.ownerWallet as string | undefined;
+              const sk = (r.request as Record<string, unknown> | undefined)?.skillId as string | undefined;
+              if (!a || a.toLowerCase() !== owner) continue;
+              if (!sk || sk !== skill.id) continue;
+              const outputs = (r.outputs as Record<string, unknown> | undefined) ?? {};
+              const wording = (outputs.wording as Record<string, unknown> | undefined) ?? {};
+              const ca = (r.chainAnchor as Record<string, unknown> | undefined) ?? {};
+              summaries.push({
+                id: (r.id as string) ?? fname.replace(/\.json$/, ''),
+                createdAt: Number(r.createdAt ?? 0),
+                headline: (wording.headline as string) ?? '(no headline)',
+                riskLevel: (outputs.riskLevel as string) ?? 'unknown',
+                onChainId: (ca.onChainId as string | undefined) ?? null,
+              });
+            } catch { /* skip malformed */ }
+          }
+        } catch { /* skip unreadable */ }
+      }
+      // Dedupe — both candidate dirs may resolve to the same path when
+      // running from apps/cli/.
+      const seen = new Set<string>();
+      const deduped = summaries.filter((s) => {
+        if (seen.has(s.id)) return false;
+        seen.add(s.id);
+        return true;
+      });
+      deduped.sort((a, b) => b.createdAt - a.createdAt);
+      const picked = deduped.slice(0, memoryDepth);
+      if (picked.length > 0) {
+        priorReceiptIds = picked.map((s) => s.id);
+        ui.info(`memory-depth         loading ${picked.length} prior receipt${picked.length === 1 ? '' : 's'} for ${skill.id}`);
+        for (const s of picked) {
+          const onChain = s.onChainId ? `#${s.onChainId}` : '(local)';
+          ui.info(`prior                ${onChain}  risk=${s.riskLevel}  ${s.headline.slice(0, 80)}${s.headline.length > 80 ? '…' : ''}`);
+        }
+        const lines: string[] = [];
+        lines.push('--- PRIOR RUNS CONTEXT ---');
+        lines.push(`The agent has previously executed ${skill.id} ${picked.length} time${picked.length === 1 ? '' : 's'} (newest first):`);
+        for (const s of picked) {
+          const when = s.createdAt ? new Date(s.createdAt).toISOString().slice(0, 19) : 'unknown';
+          const onChain = s.onChainId ? `receipt #${s.onChainId}` : `receipt ${s.id.slice(0, 18)}…`;
+          lines.push(`- ${onChain} · ${when} · risk=${s.riskLevel} · ${s.headline.slice(0, 200)}`);
+        }
+        lines.push('--- END PRIOR RUNS CONTEXT ---');
+        priorContextBlock = lines.join('\n') + '\n\n';
+      } else {
+        ui.info(`memory-depth         requested ${memoryDepth} but no prior receipts found for ${skill.id}`);
+      }
+    }
+
+    const contextText = priorContextBlock + docContextText;
 
     // ─── 3a. consensus.pre hooks ──────────────────────────────────────────
     let activeContext = contextText;
@@ -351,6 +436,7 @@ docCommand
         inputArtifacts: [{ kind: 'doc', encrypted: !!burnMode }],
         policyDecision: 'approved',
         approvalChain: [{ gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:default-strict' }],
+        ...(priorReceiptIds.length > 0 ? { priorReceiptIds } : {}),
       },
       execution: {
         mode: tier === 'quick' ? 'doc_ask' : 'consensus',

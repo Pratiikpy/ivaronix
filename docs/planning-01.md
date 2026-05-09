@@ -166,13 +166,26 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
 
 ## Tier 3 · Interesting, sequence later
 
-### 3A. Memory DAG / prior-receipt context retrieval
-- **Why:** AlphaDawg's memory loop (every reasoning cycle loads prior `priorCids` from 0G Storage as context) is what turns their bot from stateless into a learning agent. We anchor receipts but don't feed past receipts into the next run as context.
-- **What to add:**
-  - Before each skill run: load the agent's last N receipts of the same type from local indexer, summarize, prepend to system prompt as `--- PRIOR RUNS CONTEXT ---`.
-  - Optional flag: `--memory-depth 5` (default 3, max 20).
-  - Receipt records `request.priorReceiptIds: [...]` so the lineage is verifiable.
-- **Effect:** "Adam the term-sheet hawk" gets sharper over time because he reads his own past receipts. Closes 2.1 deeper.
+### 3A. Memory DAG / prior-receipt context retrieval → ✅ DONE (--memory-depth flag + Studio lineage card)
+
+- **CLI extension (`apps/cli/src/commands/doc.ts`):**
+  - New flag `--memory-depth N` on `ivaronix doc ask` (default 0, max 20).
+  - Before the consensus call: scans `.ivaronix/receipts/anchored/*.json` for receipts owned by the caller's wallet on the same `request.skillId`, dedupes by id, sorts newest-first, picks N.
+  - Builds a `--- PRIOR RUNS CONTEXT ---` block listing each prior run's on-chain id (or local id), timestamp, risk level, and headline. Block is prepended to the consensus context string.
+  - Receipt body records `request.priorReceiptIds: string[]` only when the depth > 0 — clean output when not used.
+  - Schema extended in `packages/receipts/src/schema.ts`: `request.priorReceiptIds: z.array(z.string()).optional()`.
+- **Studio surface (`apps/studio/src/app/r/[id]/page.tsx`):**
+  - New "built on prior runs (N)" card on receipt pages that have `request.priorReceiptIds`.
+  - Renders the count + a one-sentence honest disclaimer + the list of prior receipt ids in mono font.
+  - Local receipt body type widened in `apps/studio/src/lib/local-receipt.ts` to surface the field.
+- **End-to-end live proof:**
+  - Run: `ivaronix doc ask sample-lease.txt "Given the prior reviews, what new issues should I look for?" --memory-depth 3`
+  - Loaded 3 prior `private-doc-review` receipts; LLM output explicitly synthesized across them ("Clauses that lock the asking party in", "Tenant is responsible for all repairs regardless of cause", "lacks cure periods" — all referenced from prior receipts).
+  - Receipt id: `rcpt_01KR6DK5900EDR43H8JCRMN78S` → on-chain id **#1274**
+  - Anchor tx: `0x94d24e2ac020d325d0897332eb02caa24765999fe0b7b528223b863a34bcc322` block 32396103
+  - Receipt body confirmed to contain `request.priorReceiptIds: ["rcpt_01KR6CMHW...", ...]`.
+  - Passport: receiptCount = 1254, trustScore = 1254.
+- **Closes Criterion 2.1 vs AlphaDawg:** the agent reads its own past receipts as context, just like AlphaDawg's `priorCids` loop, but every prior load is verifiable from the chain (the new receipt's body lists which past receipts it consumed; anyone can fetch each one and confirm).
 
 ### 3B. Visual skill creation flow
 - **Why:** Agent0G (showcase) ships a no-code workflow builder. Our skills require TypeScript module authoring — Track 3 onboarding bar is high.
