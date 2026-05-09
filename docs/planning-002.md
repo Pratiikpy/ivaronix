@@ -196,7 +196,7 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Move:** spin up `0g-memory/install.sh` once; replace `og-kv` stub with a thin REST client to `localhost:1995/api/v1/memories`. After every receipt anchor, POST the body. Before each `doc ask`, GET search-by-skillId. Receipt body gains `request.memoryQuery = { method: 'agentic', k, retrievedCount }`.
 - **Effect:** sixth 0G primitive added with evidence. AIsphere's "all 6 primitives" claim is now matched.
 
-### W5 · Receipt tier → economic consequence (Efficiency Game) · 2h · Criterion 2.1 + 3
+### W5 · Receipt tier → economic consequence (Efficiency Game) · 2h · Criterion 2.1 + 3 → ✅ DONE
 - **Where:** `packages/runtime/src/pipeline.ts:461-479` (`allocateFeeSplit`).
 - **Move:** TIER 1 receipts release 100% of `og.creator.fee_split.creator` bps; TIER 2 receipts release 85%, delta routed to treasury. Add `feeMultiplier` field to receipt body so the math is visible.
 - **Effect:** mirrors zer0Gig's Efficiency Game. Transforms TIER 1 / TIER 2 from honesty label into market signal — judges scoring Track 3 see economic teeth.
@@ -221,7 +221,7 @@ Per subagent C: **lead the judge-facing README with the `ivaronix receipt verify
 - **Move:** ship SIWE so the receipt's `agent.ownerWallet` matches the connected user wallet. If too risky, fix the copy: "signed by the Ivaronix operator wallet on your behalf — TIER 2 trust" with explicit upgrade path.
 - **Effect:** closes subagent D's #2 — judges following the demo path no longer find a receipt that doesn't carry their identity.
 
-### W10 · Marketing first-party skill (`content-pitch-review`) · 2h · Criterion 3
+### W10 · Marketing first-party skill (`content-pitch-review`) · 2h · Criterion 3 → ✅ DONE
 - **Where:** new `seed-skills/content-pitch-review/SKILL.md` + a real receipt fixture.
 - **Pattern:** address the user's "marketing guy" question directly. Promotes content-review from imports/ to first-party.
 - **Effect:** verified skill count goes 5 → 6, with a marketing persona surface (creator economy story).

@@ -166,6 +166,14 @@ export const ReceiptV1Schema = z.object({
         creatorNeuron: z.string(),
         treasuryNeuron: z.string(),
         creatorPassport: z.string().optional(),
+        // planning-002 W5 · Efficiency Game: TIER 1 receipts apply a 100%
+        // multiplier to the declared creator bps; TIER 2 apply 85%. The
+        // declared* fields preserve the manifest-stated split so the
+        // delta is auditable from the receipt body alone.
+        tier: z.enum(['TIER_1', 'TIER_2']).optional(),
+        tierMultiplierBps: z.number().int().min(0).max(10000).optional(),
+        declaredCreatorBps: z.number().int().min(0).max(10000).optional(),
+        declaredTreasuryBps: z.number().int().min(0).max(10000).optional(),
       })
       .optional(),
   }),

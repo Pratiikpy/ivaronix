@@ -460,12 +460,18 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       );
       const fs = skill.manifest.og.creator?.fee_split;
       const passport = skill.manifest.og.creator?.passport;
+      // W5 — tier multiplier: TIER 1 (TEE-attested via 0G Compute) earns
+      // 100% of declared creator bps; TIER 2 (external-signed) earns 85%.
+      // The provider determines the tier — same logic as
+      // teeVerification.verificationMethod a few lines above.
+      const tier: 'TIER_1' | 'TIER_2' = a.provider === 'nvidia' ? 'TIER_2' : 'TIER_1';
       const feeSplit = fs
         ? allocateFeeSplit({
             totalCostNeuron,
             creatorBps: fs.creator,
             treasuryBps: fs.treasury,
             creatorPassport: passport,
+            tier,
           })
         : undefined;
       return {

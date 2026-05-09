@@ -8,6 +8,7 @@ type Tier = 'quick' | 'standard' | 'high-stakes';
 
 const SKILLS: { id: string; label: string; defaultTier: Tier }[] = [
   { id: 'private-doc-review', label: 'private-doc-review', defaultTier: 'standard' },
+  { id: 'content-pitch-review', label: 'content-pitch-review', defaultTier: 'quick' },
   { id: 'github-audit', label: 'github-audit', defaultTier: 'standard' },
   { id: '0g-integration-auditor', label: '0g-integration-auditor', defaultTier: 'quick' },
   { id: 'plan-step', label: 'plan-step', defaultTier: 'quick' },

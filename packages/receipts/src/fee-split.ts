@@ -3,24 +3,58 @@
  * and the receipt's `totalCostNeuron`, compute the per-actor allocation as
  * BigInt-precise neuron strings.
  *
+ * **Tier multiplier (planning-002 W5 — Efficiency Game).** Receipts that
+ * passed independent TEE verification (TIER 1) earn 100% of the declared
+ * creator share. Receipts signed by an external (non-TEE-attested) provider
+ * (TIER 2) earn 85% — the 15% delta routes to the treasury as a soak buffer.
+ * This turns the TIER 1 / TIER 2 receipt label from a honesty marker into
+ * a market signal: skills run with TEE attestation pay creators more.
+ *
  * Why BigInt: token costs can run to 1e15 neuron (≈0.001 OG); JS Number
  * loses precision at 2^53. We do the math in BigInt and serialise as
  * decimal strings, the same shape the rest of `billing.*Neuron` uses.
  *
- * The split is exact and deterministic: `floor(total * creatorBps / 10000)`
- * for creator, and `total - creatorAllocation` for treasury (so rounding
- * dust always lands in the treasury, never created or destroyed).
+ * The split is exact and deterministic. Rounding dust always lands in the
+ * treasury, never created or destroyed.
  */
+
+export type ReceiptTier = 'TIER_1' | 'TIER_2';
+
+/** Multiplier in basis points applied to the declared creator share before
+ * the actual neuron allocation is computed. The complement routes to
+ * treasury. */
+export const TIER_MULTIPLIER_BPS: Record<ReceiptTier, number> = {
+  TIER_1: 10000, // 100% — TEE-attested via 0G Compute (router_flag / compute_sdk_process_response)
+  TIER_2: 8500,  // 85% — external-signed (NVIDIA NIM, OpenAI, etc.); 15% delta to treasury
+};
 
 export interface FeeSplitInput {
   totalCostNeuron: string;
+  /** Declared creator basis points from the skill manifest. */
   creatorBps: number;
+  /** Declared treasury basis points from the skill manifest. */
   treasuryBps: number;
   creatorPassport?: string;
+  /**
+   * Receipt tier — controls the multiplier applied to the creator share.
+   * Defaults to TIER_2 (conservative) so callers that don't specify get
+   * the lower payout.
+   */
+  tier?: ReceiptTier;
 }
 
 export interface FeeSplitAllocation {
+  /** Declared creator bps from the manifest (unchanged from input). */
+  declaredCreatorBps: number;
+  /** Declared treasury bps from the manifest (unchanged from input). */
+  declaredTreasuryBps: number;
+  /** Receipt tier the multiplier was applied for. */
+  tier: ReceiptTier;
+  /** Multiplier in bps (10000 = 100%, 8500 = 85%). */
+  tierMultiplierBps: number;
+  /** Effective creator bps after multiplier (= declaredCreatorBps * tierMultiplierBps / 10000). */
   creatorBps: number;
+  /** Effective treasury bps (= 10000 - creatorBps). */
   treasuryBps: number;
   creatorNeuron: string;
   treasuryNeuron: string;
@@ -38,11 +72,25 @@ export function allocateFeeSplit(input: FeeSplitInput): FeeSplitAllocation {
   }
   const total = BigInt(input.totalCostNeuron);
   if (total < 0n) throw new Error('totalCostNeuron cannot be negative');
-  const creatorAlloc = (total * BigInt(input.creatorBps)) / 10000n;
+
+  const tier: ReceiptTier = input.tier ?? 'TIER_2';
+  const multiplierBps = TIER_MULTIPLIER_BPS[tier];
+
+  // Effective creator bps after tier multiplier — round down to the nearest
+  // bps to keep the bps-denominator clean (no fractional bps).
+  const effectiveCreatorBps = Math.floor((input.creatorBps * multiplierBps) / 10000);
+  const effectiveTreasuryBps = 10000 - effectiveCreatorBps;
+
+  const creatorAlloc = (total * BigInt(effectiveCreatorBps)) / 10000n;
   const treasuryAlloc = total - creatorAlloc;
+
   return {
-    creatorBps: input.creatorBps,
-    treasuryBps: input.treasuryBps,
+    declaredCreatorBps: input.creatorBps,
+    declaredTreasuryBps: input.treasuryBps,
+    tier,
+    tierMultiplierBps: multiplierBps,
+    creatorBps: effectiveCreatorBps,
+    treasuryBps: effectiveTreasuryBps,
     creatorNeuron: creatorAlloc.toString(),
     treasuryNeuron: treasuryAlloc.toString(),
     creatorPassport: input.creatorPassport,

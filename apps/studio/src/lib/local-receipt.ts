@@ -46,6 +46,10 @@ export interface ReceiptBody {
       creatorNeuron: string;
       treasuryNeuron: string;
       creatorPassport?: string;
+      tier?: 'TIER_1' | 'TIER_2';
+      tierMultiplierBps?: number;
+      declaredCreatorBps?: number;
+      declaredTreasuryBps?: number;
     };
   };
   storage?: {

@@ -281,6 +281,37 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
                   ({local.billing.feeSplit.creatorNeuron} + {local.billing.feeSplit.treasuryNeuron} neuron)
                 </span>
               </dd>
+              {/* W5 · Efficiency Game: render the tier multiplier when
+                  present. Older receipts (pre-W5) won't have these fields
+                  and the row stays compact. */}
+              {local.billing.feeSplit.tier && local.billing.feeSplit.tierMultiplierBps !== undefined && (
+                <>
+                  <dt style={{ color: 'var(--color-muted)' }}>tier multiplier</dt>
+                  <dd style={{ margin: 0, fontSize: 13 }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        border: `1px solid ${local.billing.feeSplit.tier === 'TIER_1' ? 'var(--color-verified)' : 'var(--color-pending)'}`,
+                        background: local.billing.feeSplit.tier === 'TIER_1' ? 'var(--color-verified-bg)' : 'var(--color-pending-bg)',
+                        color: local.billing.feeSplit.tier === 'TIER_1' ? '#0e6428' : '#7a5d00',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                      }}
+                    >
+                      {local.billing.feeSplit.tier} · {(local.billing.feeSplit.tierMultiplierBps / 100).toFixed(0)}% to creator
+                    </span>
+                    {local.billing.feeSplit.declaredCreatorBps !== undefined &&
+                      local.billing.feeSplit.declaredCreatorBps !== local.billing.feeSplit.creatorBps && (
+                        <span style={{ color: 'var(--color-muted)', marginLeft: 10, fontSize: 11 }}>
+                          declared {(local.billing.feeSplit.declaredCreatorBps / 100).toFixed(0)}% / actual {(local.billing.feeSplit.creatorBps / 100).toFixed(0)}% — TIER 2 routes 15% delta to treasury
+                        </span>
+                      )}
+                  </dd>
+                </>
+              )}
             </>
           )}
         </dl>
