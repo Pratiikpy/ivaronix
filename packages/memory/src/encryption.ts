@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, createHash, scryptSync } from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:crypto';
 
 /**
  * Memory-at-rest encryption using AES-256-GCM with a key derived from the owner's
@@ -25,11 +25,16 @@ export function deriveMemoryKey(privateKey: string): Buffer {
 }
 
 export function encryptObservation(plaintext: string, key: Buffer): Uint8Array {
-  const nonce = createHash('sha256')
-    .update(Buffer.from(plaintext, 'utf8'))
-    .update(Date.now().toString())
-    .digest()
-    .subarray(0, NONCE_LEN);
+  // K-20 fix: nonce = `randomBytes(12)` per RFC 5116 §3.2 + NIST SP 800-38D
+  // §8.2.1. The previous implementation derived the nonce deterministically
+  // from `sha256(plaintext || Date.now())` truncated to 12 bytes — two calls
+  // in the same millisecond with the same plaintext under the same key
+  // produced the same nonce. AES-GCM nonce reuse with the same key
+  // recovers the keystream (XOR of two ciphertexts leaks both plaintexts)
+  // and forges the GHASH authentication tag. The fix is a 3-line swap;
+  // existing encrypted blobs remain decryptable since the IV is stored
+  // alongside the ciphertext (NONCE || CT || TAG).
+  const nonce = randomBytes(NONCE_LEN);
   const cipher = createCipheriv('aes-256-gcm', key, nonce);
   const ct = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const tag = cipher.getAuthTag();

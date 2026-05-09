@@ -876,12 +876,18 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 
 ## Tier 0 · Critical security (mainnet-blocking)
 
-### N · K-20 · AES-GCM nonce → randomBytes(12)
-- **Code:** `packages/memory/src/encryption.ts:28-34` — replace `sha256(plaintext || Date.now()).slice(0,12)` with `crypto.randomBytes(12)`. Audit every call site of `encryptForStorage` / `decryptFromStorage` in `packages/memory/src/`.
-- **Compatibility:** the IV is stored alongside the ciphertext per RFC 5116 §3.2, so existing encrypted blobs remain decryptable. No re-encryption, no migration call.
-- **Tests:** unit test asserts (a) two same-plaintext-same-key calls produce different ciphertexts, (b) IV uniqueness fuzz over 1M iterations, (c) decryption round-trip on existing fixtures. CI fails if `Math.random` / `Date.now` / `sha256(plaintext` patterns reappear in encryption code.
-- **Documentation:** `docs/CRYPTO_NOTES.md` records the threat model (AES-GCM nonce reuse → keystream + GHASH break) and the RFC reference.
-- **Effort:** 1h.
+### N · K-20 · AES-GCM nonce → randomBytes(12)  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+- **Code:** `packages/memory/src/encryption.ts:27-39` — `nonce = randomBytes(NONCE_LEN)` (was `createHash('sha256').update(plaintext).update(Date.now())` truncated). Drop `createHash` import; add `randomBytes`.
+- **Compatibility:** existing encrypted blobs remain decryptable since the IV is stored alongside the ciphertext (`nonce || ct || tag` layout). No re-encryption, no migration call.
+- **Tests:** `packages/memory/src/encryption.test.ts` — 7 cases all green:
+  - same plaintext + same key produces DIFFERENT ciphertexts (nonce uniqueness invariant);
+  - 10,000-iteration nonce-uniqueness fuzz;
+  - round-trip over ASCII, Unicode, 10K-char string, empty;
+  - decryption fails with wrong key;
+  - tampered ciphertext fails authenticated decryption;
+  - source-file regression: `createHash('sha256').update(plaintext)` and `Date.now().toString())` patterns are forbidden.
+- **Documentation:** `docs/CRYPTO_NOTES.md` ships with the threat model + RFC reference + fix history. Eight other primitives also documented (canonical hash, burn mode, receipt signing, anchor sigs, reputation, capability grants, ERC-7857 attestors).
+- **Suite-wide regression:** all 14 memory-package tests pass (7 new + 7 existing engine tests).
 
 ### N · K-1 · `recordReceipt` authorized-recorders only + ReceiptRegistry cross-check + delta cap
 - **Code:** `contracts/src/AgentPassportINFT.sol:107-125` — drop the `msg.sender == _ownerOf(tokenId)` branch. Require `authorizedRecorders[msg.sender]`. Inside the function, call `IReceiptRegistry(receiptRegistry).receipts(receiptId)` and require `row.agentAddress == agentInPassportRow`. Cap `trustScoreDelta` per call to `[-100, +100]`.
