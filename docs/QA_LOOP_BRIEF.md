@@ -368,4 +368,10 @@ Wins recorded:
 
 Per brief operating rule #10 ("Before stopping, think 3 times"), the next round must be **strategic** rather than tactical: per rule #13, do the one-shot competitor-comparison pass against `entries/`, `new-entries/`, and `og-projects-showcase/` to identify what's *strategically* missing for the win. Per rule #14, only add features that close a real judging or PMF gap.
 
+### Strategic gap punch-list (subagent compare 2026-05-09)
+
+- [x] **Gap 1: OpenClaw one-command install** → DONE (commit `455c0c9`). MUSASHI ships `openclaw skills install musashi`. Ivaronix's 5 skills already had the `metadata.openclaw.install` block in their SKILL.md, the only deficit was top-level README surface. README now lists `openclaw skills install Pratiikpy/ivaronix#seed-skills/<skill>` for all five skills + the post-install `receipt verify --tee-independent` proof command.
+- [x] **Gap 2: receipt-gated fee-split demo** → DONE (commit `c87a018`). New CLI command `ivaronix skill earn-history [id]` walks every `.ivaronix/receipts/anchored/*.json`, filters by skill, sums `billing.feeSplit` across runs. Verified end-to-end: scanned 1088 local receipts, private-doc-review@0.3.0 shows 26 runs · creator earned **0.0014009400 OG** (1400940000000000 neuron) · treasury 0.0001556600 OG · exact 90/10 ratio per the declared `og.creator.fee_split`. Track 3 wedge no competitor has combined with verified compute is now demoable in one command.
+- [ ] **Gap 3: Four-page receipt schema technical document**. AIsphere ships a 19-page whitepaper. Closes the documentation scoring gap by writing down the receipt schema, canonical hash derivation, TIER 1 verify flow, and TIER 2 honest-marking rationale in a judge-readable artifact.
+
 Cron `*/2 * * * *` continues until that strategic round produces either (a) `READY` after a final mainnet checklist (rule #12) or (b) one more named, judged-relevant feature to build.
