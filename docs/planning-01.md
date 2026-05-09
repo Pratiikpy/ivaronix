@@ -1,11 +1,101 @@
 # Ivaronix · Planning 01 — Parked Decisions
 
 > Status: **PARKED**, not built.
-> Both items below are decisions we agreed on the strategy for. Full implementation plan, scope, and sequencing TBD next session. Captured here so we don't lose them.
+> All items below are decisions we agreed on the strategy for. Full implementation plan, scope, and sequencing TBD next session. Captured here so we don't lose them.
+>
+> Each item has been ranked into one of three tiers based on win-probability lift vs the 8 OG showcase projects:
+> - **Tier 1**: locked, ship first (hours, not days). Non-negotiable for the grant.
+> - **Tier 2**: high-impact, week-scale. What gets us from finalist to top 3.
+> - **Tier 3**: interesting, sequence later. What gets us to showcase placement post-grant.
 
 ---
 
-## 1. TEE-Bound Delegated AI Agent
+## Tier 1 · Locked, ship first
+
+### 1A. Privileged-document hero copy on home page
+- **Why:** closes Criterion 2.3 (Product Value) instantly. Without it the front door is still abstract.
+- **Persona:** deal lawyer / founder / DD analyst holding paper covered by NDA, attorney-client privilege, regulation, or counterparty confidentiality.
+- **Five candidate headlines** (pick one, all editorial-voice compatible):
+  1. *"AI review for the documents you can't paste into ChatGPT."*
+  2. *"The audit that disappears. The receipt that doesn't."*
+  3. *"Burn the evidence. Keep the proof."*
+  4. *"Consensus on confidential. Receipts that prove it."*
+  5. *"AI for the documents that can't leave your hands."*
+- **Estimated:** ~15 min once headline is locked. Wire on home page, screenshot at 1440×900 + 375×812, lay side-by-side against `brand/Ivaronix.html`.
+
+### 1B. Confidential Data Room — see §2 below
+- See full spec in §2.
+
+### 1C. 3-page narrative pitch document
+- **Why:** closes Criterion 2.5 (Documentation) head-on vs AIsphere's 19-page whitepaper. Judges who don't read code score this.
+- **Structure (one page each):**
+  - **What is Ivaronix · who is it for · why now.** Privileged-document persona up top, the receipt model in the middle.
+  - **The receipt model:** schema → canonical hash → TIER 1 vs TIER 2 → independent re-verify path. Cite `RECEIPT_SCHEMA.md` for depth.
+  - **Growth roadmap:** Year 1 (testnet → mainnet → first 10 firms) → Year 2 (skill marketplace → embeddable verifier) → Year 3 (cross-chain receipts → SOC2-style trust framework).
+- **Effort:** half a day of writing, no code.
+- **Saves score across all 5 criteria simultaneously**, not just 2.5 — the doc is what a non-technical judge reads to understand the rest.
+
+---
+
+## Tier 2 · High-impact, week-scale
+
+### 2A. TEE-Bound Delegated AI Agent — see §3 below
+- See full spec in §3 (was §1 before re-tier).
+
+### 2B. Memory consolidation lifecycle on AgentPassport
+- **Why:** Aishi (showcase #1) wins 2.1 partly on memory consolidation depth — daily → monthly → yearly memory rollups anchored on chain. We currently have receipts but no consolidation tier on `AgentPassportINFT`.
+- **What to add:**
+  - New passport fields or sidecar contract: `dailyMemoryRoot`, `monthlyMemoryRoot`, `yearlyReflection` per agent.
+  - CLI commands: `ivaronix passport consolidate --day | --month | --year` — runs a TEE-attested consolidation pass over the agent's recent receipts and anchors the rollup.
+  - Each consolidation event itself ships a receipt (so you can verify the consolidation itself wasn't fabricated).
+- **Closes:** Criterion 2.1 specifically vs Aishi. Applied to our reviewer personas, this becomes "Adam the term-sheet hawk has reviewed 142 contracts; here is his monthly summary of the patterns he keeps flagging."
+
+### 2C. Cron-scheduled skill execution
+- **Why:** 0GClaw (showcase) wins on "active INFT" — cron-scheduled autonomous execution + x402 micropayments. We currently fire on user trigger only.
+- **What to add:**
+  - `ivaronix skill schedule <id> --cron "0 9 * * MON" --input <file-or-prompt>` — registers a schedule on chain (or in a daemon).
+  - On every fire: run the skill, anchor a receipt, settle the fee split automatically to the creator's passport.
+  - Studio surface: a "Scheduled Runs" tab on `/dashboard` showing next-fire timestamps and recent receipts per schedule.
+- **Strengthens Track 3:** creators earn passive income from scheduled skill execution, not just per-run.
+
+---
+
+## Tier 3 · Interesting, sequence later
+
+### 3A. Memory DAG / prior-receipt context retrieval
+- **Why:** AlphaDawg's memory loop (every reasoning cycle loads prior `priorCids` from 0G Storage as context) is what turns their bot from stateless into a learning agent. We anchor receipts but don't feed past receipts into the next run as context.
+- **What to add:**
+  - Before each skill run: load the agent's last N receipts of the same type from local indexer, summarize, prepend to system prompt as `--- PRIOR RUNS CONTEXT ---`.
+  - Optional flag: `--memory-depth 5` (default 3, max 20).
+  - Receipt records `request.priorReceiptIds: [...]` so the lineage is verifiable.
+- **Effect:** "Adam the term-sheet hawk" gets sharper over time because he reads his own past receipts. Closes 2.1 deeper.
+
+### 3B. Visual skill creation flow
+- **Why:** Agent0G (showcase) ships a no-code workflow builder. Our skills require TypeScript module authoring — Track 3 onboarding bar is high.
+- **What to add:**
+  - Studio page `/skill/new` where a creator composes a skill from primitives without editing code: system prompt textarea + role config dropdown + fee split sliders + permission checkboxes + tier default selector.
+  - Live preview of the resulting `SKILL.md` frontmatter as the creator edits.
+  - One-click "Publish to SkillRegistry" that mints the skill on chain.
+- **Lowers** the bar for non-dev creators dramatically.
+
+### 3C. Receipt-as-firewall wiring
+- **Why:** Don't Get Drained (showcase) is wired into Safe Guard execution path — receipts gate transactions, they don't just log them. We produce receipts but don't gate any external action.
+- **What to add:**
+  - Solidity helper: `IvaronixReceiptGuard.requireValidReceipt(receiptId, expectedAgent, expectedSkillId)` — reverts if the receipt isn't FULLY VERIFIED on `ReceiptRegistry`.
+  - Any external dapp can require an Ivaronix TIER 1 receipt before executing a tx. We become a *gate*, not just a *log*.
+  - Demo: a Safe wallet that requires a `private-doc-review` receipt before approving a vendor contract payment.
+
+### 3D. Embeddable receipt-verifier widget
+- **Why:** distribution moat. The `broker.processResponse` re-verify is currently CLI-only. If any external website can render "verify this Ivaronix receipt" inline, our brand surfaces beyond our own domain.
+- **What to ship:**
+  - `<ReceiptVerifier id="1004" />` React component, npm-published as `@ivaronix/widget`.
+  - `<iframe src="https://ivaronix.studio/embed/r/1004">` fallback for non-React sites.
+  - Renders the four-light row, TIER badge, and a "verify" button that calls our public `/v1/receipt/<id>` endpoint.
+- **Effect:** judges see Ivaronix everywhere on the open web, not just on our own site.
+
+---
+
+## §3 · TEE-Bound Delegated AI Agent (full spec)
 
 **On TEE_HEE specifically:** it is performance art. "AI that owns its own Twitter" wins press, not OG showcase. OG showcase rewards depth on 0G primitives + a real user pull — that's why Aishi ranks #1 (full-stack 0G companion architecture), not "first autonomous AI." Don't fork it.
 
@@ -19,7 +109,7 @@
 
 ---
 
-## 2. Confidential Data Room — The Marketplace We're Building
+## §2 · Confidential Data Room — The Marketplace We're Building (full spec)
 
 **The pick:** F (Confidential Data Room with Burn-Mode-receipt-gated multi-party access). Beat all other marketplace shapes (skill marketplace, skill-bounty board, audited-doc one-shot, compute-attested data, receipt-as-proof) after factoring in `entries/` + `og-projects-showcase/` + `new-entries/`. Three new-entries (Agentra, Trapezohe Ghast Skills Store, zer0Gig) already crowd skill marketplace — that lane is saturated.
 
