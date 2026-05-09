@@ -195,12 +195,22 @@ Pairs 1:1 with `README.md` §"Built on 0G" so the on-page version cannot drift f
   - One-click "Publish to SkillRegistry" that mints the skill on chain.
 - **Lowers** the bar for non-dev creators dramatically.
 
-### 3C. Receipt-as-firewall wiring
-- **Why:** Don't Get Drained (showcase) is wired into Safe Guard execution path — receipts gate transactions, they don't just log them. We produce receipts but don't gate any external action.
-- **What to add:**
-  - Solidity helper: `IvaronixReceiptGuard.requireValidReceipt(receiptId, expectedAgent, expectedSkillId)` — reverts if the receipt isn't FULLY VERIFIED on `ReceiptRegistry`.
-  - Any external dapp can require an Ivaronix TIER 1 receipt before executing a tx. We become a *gate*, not just a *log*.
-  - Demo: a Safe wallet that requires a `private-doc-review` receipt before approving a vendor contract payment.
+### 3C. Receipt-as-firewall wiring → ✅ DONE (library code-complete + Foundry-tested · 5/5; deployment Phase B)
+
+- **Solidity library shipped (`contracts/src/IvaronixReceiptGuard.sol`):**
+  - `IvaronixReceiptGuard.requireValidReceipt(registry, receiptId, expectedAgent, expectedReceiptType)` — `internal view` that reverts with `"IvaronixReceiptGuard: receipt not anchored"` / `"agent mismatch"` / `"type mismatch"` on any failure mode. Caller's contract can branch on the revert message.
+  - `IvaronixReceiptGuard.isValidReceipt(...)` — non-reverting variant returning `bool`. Use when the caller wants to emit a soft-warning event instead of aborting.
+  - **Library, not a contract:** zero deployment cost, zero state. Any consuming contract embeds the guard at compile time.
+  - Honest scope-out documented in the file: the chain stores numeric type codes, not canonical skill ids (`private-doc-review`, etc.), so per-skill granularity stays in the off-chain receipt body. Consumers that want skill-level matching follow the on-chain guard with an oracle-fed body check.
+- **Foundry test (`contracts/test/IvaronixReceiptGuard.t.sol`):** 5/5 tests pass.
+  - `test_validReceipt_passes` — anchored receipt + correct expectations passes.
+  - `test_unanchoredReceipt_reverts` — id outside `nextId()` reverts.
+  - `test_agentMismatch_reverts` — wrong agent reverts.
+  - `test_typeMismatch_reverts` — wrong type code reverts.
+  - `test_secondAnchor_independentValidity` — guards correctly distinguish multiple receipts.
+- **Suite-wide regression:** the full Foundry test suite is **90/90 passing** with the new file (was 85/85 before).
+- **Phase B deployment** explicitly blocked on funding the deployer wallet (per CLAUDE.md §1 "the only blocker is money"). Concrete unblock action: fund the deployer with ~0.05 OG on Galileo (or mainnet), run `forge script` to deploy a wrapper contract that exposes the library to external dapps, and add the deployed address to `deployments/testnet.json`.
+- **Demo Safe-wallet wiring** is the natural follow-up integration (a Safe module that calls `requireValidReceipt` before approving payment). Tracked as a separate stretch item — the library is ready for any solidity dev to drop into a Safe module today.
 
 ### 3D. Embeddable receipt-verifier widget → ✅ DONE (npm package + iframe page + vanilla JS loader)
 
