@@ -1000,7 +1000,7 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Studio dep:** added `@ivaronix/og-storage` to `packages/runtime/package.json`.
 - **Runtime typecheck:** clean.
 
-### N · L-7 · Vercel-deploy Studio  ·  ✅ CODE-COMPLETE 2026-05-10 (`<sha-pending>`) · deploy = operator-action A-V2-L7
+### N · L-7 · Vercel-deploy Studio  ·  ✅ CODE-COMPLETE 2026-05-10 (`e1e69b4`) · deploy = operator-action A-V2-L7
 - **Env template:** `apps/studio/.env.production.template` shipped with the full env list grouped by purpose (chain + receipts, 0G Compute, NIM fallback, K-8/K-9 SIWE secret + Upstash rate-limit, Persistent Memory + DA + Storage opt-ins, Sentry, Studio base URL). Every line either REQUIRED or has a documented default.
 - **Operator-action runbook:** `docs/USER_TODO.md` §A-V2-L7 — exact `! vercel login` + `vercel --prod` invocation, custom-domain DNS pointing for `ivaronix.app`, Sentry + Upstash signup notes, post-deploy smoke commands.
 - **Smoke tests on the live URL** (the operator runs after first deploy): `/r/1004` chip renders VERIFIED; `/api/auth/siwe/nonce` returns httpOnly cookie; anonymous `/api/skill/save` returns 401; 11 anonymous `/api/run` hits in a minute trigger 429.
