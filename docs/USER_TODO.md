@@ -6,11 +6,10 @@
 
 ## A · Submission-blocking (do these before submitting)
 
-### A-1 · Fund the Galileo testnet deployer wallet (~0.5 OG)
-- **Why it matters:** every demo path the judges run anchors a receipt costing ≈0.0001 OG. Half an OG is enough for one full afternoon of judge traffic + a margin.
-- **Wallet:** `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` (current operator wallet, see `deployments/testnet.json`).
-- **Action:** request from `https://faucet.0g.ai` (free), or move OG from a personal wallet on the Galileo network.
-- **Verify:** `pnpm --filter @ivaronix/cli exec ivaronix doctor balance` — should show `> 0.5 OG`.
+### A-1 · Galileo testnet wallet · already funded (no action right now)
+- **Status as of 2026-05-09:** balance ≈ **69 OG** on `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`. Each demo run costs ~0.0001 OG, so the current balance covers thousands of judge runs.
+- **Top up only if needed:** the public faucet at `https://faucet.0g.ai` issues free testnet OG to any address. You do not pay anything; the faucet hands out tokens. Hit it again only if `ivaronix doctor balance` ever shows < 1 OG.
+- **Verify any time:** `pnpm --filter @ivaronix/cli exec ivaronix doctor balance` — checks the live chain.
 
 ### A-2 · Fund the mainnet deployer wallet on Aristotle (chainId 16661)
 - **Why it matters:** mainnet promotion is the only real difference between "demo on testnet" and a production-grade artefact. CLAUDE.md §1: "the only blocker is money." All six contracts compile + deploy + mainnet-readiness checklist is already 13/13 green.

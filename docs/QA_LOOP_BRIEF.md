@@ -448,3 +448,44 @@ Eleven commits across two firings closed every item in `docs/planning-01.md`. Ea
 - §12.4 · every artefact above is named in this brief ✅
 
 Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
+
+---
+
+## 2026-05-09 · final verification round · `READY` re-confirmed
+
+### Tier 4 · 4A printable receipt page → ✅ DONE
+- **Commit:** `aac1023`. `apps/studio/src/app/r/[id]/print/` (page + layout + print-controls). Letterhead-style, A4 portrait, scoped CSS strips studio chrome under `@media print`.
+- **Entry point:** `Print / save as PDF →` link on `/r/[id]` chip row.
+- **§11 e2e visual proof** (`screenshots/4a-print/`): desktop screen view + Playwright `emulateMedia: 'print'` snap (chrome stripped). Sanity check on consolidation receipt #1252. **9/9 voice + content checks pass.**
+- **Verification script:** `scripts/qa/metamask-e2e/verify-4a.ts`.
+
+### `docs/USER_TODO.md` shipped
+- Single page of every operator-action item across A (submission-blocking), B (Phase-B production hardening), C (distribution + outreach), D (reference), E (auto-handled).
+- A-1 (Galileo wallet) updated 2026-05-09 14:something local: **balance ≈ 69 OG, no action needed**. Faucet only if `doctor balance` < 1 OG.
+
+### Live proof of life (this firing, real on-chain)
+- `ivaronix demo` ran successfully → fresh receipt **#1304** anchored.
+  - Receipt id: `rcpt_01KR6G0HWKS8S7XAPH1R071HRD`
+  - Anchor tx: `0x740f910599666b6c9c121d1f967517e45e6a5c62eb394b11bb250e91d4a2b178` block 32401277
+  - Skill: `private-doc-review` v0.3.0 · Quick tier · 469+106 tokens · 0.00003405 OG
+  - Total receipts on testnet now: **1,305**
+- `ivaronix receipt verify 1304 --tee-independent` →
+  - schema PASS · hash PASS · signature PASS → **CLAIMED**
+  - chain anchor PASS (block≈1778334585) → **ANCHORED**
+  - tee:primary PASS (provider `0xa48f0128…`) via `broker.processResponse` → **FULLY VERIFIED ✓**
+
+### Cross-cutting health (this firing)
+- CLI typecheck: ✅ clean
+- Studio typecheck: ✅ clean
+- Widget typecheck: ✅ clean
+- Foundry suite: ✅ **90/90 passing** (5 IvaronixReceiptGuard + 85 existing)
+
+### Stop-condition gates (CLAUDE.md §12) — final pass
+- §12.1 every shipped feature is verified-with-proof OR explicitly blocked: ✅
+- §12.2 no partial credits: ✅
+- §12.3 think-three-times: ✅ no orphans, no lazy-blocked, all judging-criterion gaps from showcase/entries/new-entries are addressed
+- §12.4 every artefact named in this brief: ✅
+- §12.5 genie intent: the user's "win the grant" intent is met by a production-grade testnet system + funding-blocked-only mainnet path
+- §12.6 living punch-list: this entry IS the punch-list update for the final round
+
+**Final status: `READY` (testnet) · the only unblock action is operator-side funding (tracked in `docs/USER_TODO.md`). Cron `b0970f32` cancelled per §12 stop condition.**
