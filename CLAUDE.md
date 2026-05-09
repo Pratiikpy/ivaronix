@@ -177,3 +177,51 @@ The canonical user intent for what counts as a passing E2E test lives in `docs/Q
 
 ### 11.6 · Reference, do not paraphrase
 - When testing intent is the question, re-read `docs/QA_LOOP_BRIEF.md` directly. The verbatim user voice is the source of truth for what "no compromise" means in test scope. CLAUDE.md §11 is the operational summary; the brief is the contract.
+
+## 12. Completion discipline (the "do not stop" rule)
+
+This is the stop-condition contract. Future agents reading CLAUDE.md get this as a hard gate, not a suggestion.
+
+### 12.1 · Stop condition (verbatim from `docs/QA_LOOP_BRIEF.md`)
+
+You may stop only when **every shipped feature** is one of:
+- **verified end-to-end with proof** (screenshot or video, receipt URL, tx hash, command output, or chainscan link),
+- **fixed and re-tested** after a regression was found, OR
+- **explicitly blocked with a real reason AND a concrete unblock action** (BotFather token, mainnet OG funding, no public testnet endpoint, etc.).
+
+Anything else is not done. "Looks like it works" is not done. "I asserted on a selector" is not done. "I built it but did not test it" is not done.
+
+### 12.2 · No partial credits
+
+These do **not** count as end-to-end proof on their own:
+- Connect-only: wallet connects but no chain write was tested.
+- Screenshots-only: pixels captured but no functional flow was driven.
+- CLI-only: terminal works but the UI surface was not verified.
+- Web-only: UI renders but the CLI counterpart was not exercised.
+- Type-check-only: code compiles but no runtime path was proven.
+- Mock-only: synthetic wallet, injected `window.ethereum`, or stubbed RPC.
+
+Every shipped feature needs the matched pair: **the user-facing surface AND the underlying code path AND the on-chain side effect**. If any leg is missing, the feature is not shipped.
+
+### 12.3 · Think three times before stopping
+
+Before declaring `READY` (or any equivalent), run this checklist out loud, in order:
+1. Is there any feature in the codebase, manifest, contract ABI, or CLI command list that does **not** have a corresponding proof line in `QA_LOOP_BRIEF.md` or `QA_FULL_PRODUCT_REPORT.md`? If yes, do not stop.
+2. Is there any item I marked "blocked" that I could actually unblock with the tools available (Playwright, real MM, fresh wallet generation, Docker, multi-session flow)? If yes, do not stop.
+3. Is there any feature in `og-projects-showcase/` or `entries/` or `new-entries/` that closes a judging-criterion gap on Ivaronix and that I have not built? If yes, decide build-or-skip with the PMF filter (§4) and the criterion gap analysis (§2). Do not stop until the decision is recorded.
+
+Only after all three return "no" can the loop terminate.
+
+### 12.4 · Evidence-folder rule
+
+Every artifact used as proof — screenshot, video, transaction hash, receipt URL, public proof URL, command output, chainscan link — **must be linked or named** in either `docs/QA_LOOP_BRIEF.md` (the punch-list section) or `docs/QA_FULL_PRODUCT_REPORT.md`. If the artifact lives only in `screenshots/` or `screenshots/metamask/` and the brief points nowhere to it, the test is not fully recorded. Future agents reading the brief should be able to locate every proof without scavenging the filesystem.
+
+### 12.5 · Genie rule (intent, not letter)
+
+When the user says "test it," "ship it," or "make it ready," interpret the **intent**, not only the words. The intent is: a real human, using the product the way a real human would, sees a polished result, and a judge running the same flow on a different machine arrives at the same conclusion. Do not look for loopholes that technically satisfy the letter while violating the intent.
+
+If a phrase is ambiguous (e.g. "test the data room"), the right move is to drive the longest reasonable user journey with the strongest available method (real MM, real wallet, real chain, video + screenshots, multi-wallet if applicable, both viewports), not the shortest one that compiles. Unclear instructions resolve toward the harder, more thorough interpretation, not the easier one.
+
+### 12.6 · Living punch-list discipline
+
+`docs/QA_LOOP_BRIEF.md` is the source of truth for "what's tested vs what isn't." Every shipped feature gets a line in the punch-list with its current status. The status updates in the same commit that ships the feature, not in a follow-up commit. If a feature has no line in the punch-list, it has no proof, so it does not exist.
