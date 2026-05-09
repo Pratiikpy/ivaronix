@@ -110,6 +110,82 @@ Or in Studio: drop file → click "Run" → see verifiable audit report → clic
 
 ---
 
+## How it works
+
+```
+         ┌─────────────┐
+         │  Studio UI  │  user drops a doc, watches the receipt anchor
+         └──────┬──────┘
+                │
+         ┌──────▼──────┐
+         │   Runtime   │  skill manifest selected (private-doc-review,
+         └──────┬──────┘  github-audit, 0g-integration-auditor, …)
+                │
+   ┌────────────┼────────────────┐
+   │            │                │
+   ▼            ▼                ▼
+0G Storage   0G Compute        0G Router
+encrypted    TEE-attested      provider routing
+blob         inference         + telemetry
+   │            │                │
+   └────────────┼────────────────┘
+                │
+         ┌──────▼──────┐  receipt JSON, canonical-hashed,
+         │  Receipts   │  signed by AgentPassport-resolvable wallet
+         └──────┬──────┘
+                ▼
+       ┌──────────────────┐
+       │ ReceiptRegistry  │  anchor on 0G Chain
+       │ AgentPassportINFT│  ERC-7857 — trustScore, receiptCount
+       │ CapabilityReg.   │  user grants/revokes capabilities
+       │ MemoryAccessLog  │  every memory access on chain
+       │ SkillRegistry    │  manifests, fee splits, version history
+       └──────────────────┘
+                │
+                ▼
+   `ivaronix receipt verify <id> --tee-independent`
+   → broker.processResponse → FULLY VERIFIED ✓
+```
+
+The receipt is the spine. Every other surface is plumbing that makes the receipt real.
+
+## Built on 0G
+
+Each 0G primitive carries a specific user-visible value. We adopted the modules where the product needed them, and we say so honestly when one is on the roadmap rather than wired today.
+
+- **0G Chain** — every receipt anchors here. The chain is what makes a verification two years from now produce the same answer as the verification ten seconds after the run.
+- **0G Compute** — the specialist runs inside a TEE so the plaintext is invisible outside the run. The TEE attestation is what makes `verificationMethod: 'router_flag'` and `'compute_sdk_process_response'` honest claims; reach `--tee-independent` and the broker check re-runs on a separate machine.
+- **0G Storage** — the encrypted blob and the signed receipt JSON live here. The blob's storage root is recorded inside the receipt; anyone can fetch the ciphertext later and confirm it matches.
+- **0G Router** — carries the inference traffic and supplies the per-provider rate-limit and cost telemetry the receipt records. A reviewer can read the receipt and see how the work was billed.
+- **Agent ID (ERC-7857)** — every receipt is bound to a passport tokenId. A delegated agent (planning-01 §2A) gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an `AgentPassport`-resolvable wallet — the chain confirms the signer matches.
+- **0G DA** — on the roadmap. We don't claim integration we haven't shipped; the path is documented in `docs/PHASE_B_DISCLOSURES.md`.
+
+The toolkit at `@ivaronix/og-toolkit` wraps `@0gfoundation/0g-storage-ts-sdk`, `@0gfoundation/0g-compute-ts-sdk`, and `@0glabs/0g-serving-broker` with receipt-defaulting helpers — easier than the raw SDKs, and every helper produces a receipt by default rather than as an opt-in.
+
+## Network reference
+
+| What         | Galileo testnet                       | Aristotle mainnet                          |
+| ------------ | ------------------------------------- | ------------------------------------------ |
+| Chain id     | `16602`                               | `16661`                                    |
+| RPC          | `https://evmrpc-testnet.0g.ai`        | `https://evmrpc.0g.ai`                     |
+| Explorer     | `https://chainscan-galileo.0g.ai`     | `https://chainscan.0g.ai`                  |
+| Faucet       | `https://faucet.0g.ai`                | n/a                                        |
+| Status       | All six contracts live (table above)  | Promotion blocked on deployer funding      |
+
+Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (one anchored receipt costs ~0.0001 OG). Receipts are idempotent on the storage and anchor layers, so a stalled inference call can be re-run without duplicating chain state.
+
+A few addresses worth landing on directly:
+
+- `/thesis` — non-technical product page
+- `/r/1004` — TIER 1 (TEE-attested) FULLY VERIFIED receipt
+- `/r/1204` — receipt signed by a delegated AI agent
+- `/data-room/01KR66C1GJVR57MHQPJCW1HQQY` — Confidential Data Room (planning-01 §1B)
+- `/delegate/01KR67PT76V9AQTHN413PYWB1J` — delegated agent profile
+
+Every known limit is enumerated in `docs/PHASE_B_DISCLOSURES.md` with the file path, current behaviour, and the intended fix. No surface in the Studio claims something the chain cannot verify.
+
+---
+
 ## Doc Map
 
 This folder is the **single source of truth** for Ivaronix planning. Read in order:
