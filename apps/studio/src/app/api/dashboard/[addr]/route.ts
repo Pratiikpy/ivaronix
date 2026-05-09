@@ -1,7 +1,74 @@
 import { NextResponse } from 'next/server';
 import { JsonRpcProvider, formatEther } from 'ethers';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
 import { getPassportClient, getReceiptRegistry, getNetwork } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
+
+interface ScheduleSummary {
+  scheduleId: string;
+  skillId: string;
+  cron: string;
+  inputKind: 'doc' | 'prompt';
+  inputLabel: string;
+  question: string;
+  tier: string;
+  runCount: number;
+  maxRuns: number | null;
+  lastRunAt: number | null;
+  lastReceiptId: string | null;
+  createdAt: number;
+}
+
+function loadSchedulesForOwner(owner: string): ScheduleSummary[] {
+  const norm = owner.toLowerCase();
+  const out: ScheduleSummary[] = [];
+  let dir = process.cwd();
+  for (let i = 0; i < 12; i++) {
+    if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) {
+      const candidates = [
+        resolve(dir, '.ivaronix', 'schedules'),
+        resolve(dir, 'apps', 'cli', '.ivaronix', 'schedules'),
+      ];
+      for (const ds of candidates) {
+        if (!existsSync(ds)) continue;
+        for (const fname of readdirSync(ds)) {
+          if (!fname.endsWith('.json')) continue;
+          try {
+            const raw = readFileSync(resolve(ds, fname), 'utf8');
+            const s = JSON.parse(raw) as Record<string, unknown>;
+            const sw = (s.ownerWallet as string | undefined)?.toLowerCase();
+            if (!sw || sw !== norm) continue;
+            const inputValue = s.inputValue as string;
+            const inputKind = (s.inputKind as 'doc' | 'prompt') ?? 'doc';
+            const inputLabel = inputKind === 'doc'
+              ? inputValue.split(/[\\/]/).pop() ?? inputValue
+              : inputValue.length > 60 ? inputValue.slice(0, 60) + '…' : inputValue;
+            out.push({
+              scheduleId: s.scheduleId as string,
+              skillId: s.skillId as string,
+              cron: s.cron as string,
+              inputKind,
+              inputLabel,
+              question: s.question as string,
+              tier: s.tier as string,
+              runCount: Number(s.runCount ?? 0),
+              maxRuns: (s.maxRuns as number | null) ?? null,
+              lastRunAt: (s.lastRunAt as number | null) ?? null,
+              lastReceiptId: (s.lastReceiptId as string | null) ?? null,
+              createdAt: Number(s.createdAt ?? 0),
+            });
+          } catch { /* skip */ }
+        }
+      }
+      break;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return out.sort((a, b) => b.createdAt - a.createdAt);
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +154,7 @@ export async function GET(
       receiptType: r.receiptType,
       timestamp: Number(r.timestamp),
     })),
+    schedules: loadSchedulesForOwner(addr),
   };
 
   cacheSet(addr.toLowerCase(), payload);

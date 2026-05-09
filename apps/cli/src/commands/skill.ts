@@ -16,6 +16,7 @@ import { NETWORKS } from '@ivaronix/core';
 import { getDeployedAddress } from '@ivaronix/og-chain';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { addScheduleCommand } from './skill-schedule.js';
 
 /** Search dirs in priority order: project local skills → seed-skills (root) */
 function skillSearchDirs(): string[] {
@@ -624,3 +625,6 @@ skillCommand
     ui.pass(`TOTAL  · ${totalRuns} runs · creator ${(Number(totalCreator) / 1e18).toFixed(10)} OG · treasury ${(Number(totalTreasury) / 1e18).toFixed(10)} OG`);
     ui.hint('Receipt-gated settlement: creator only accrues when a TIER 1 TEE receipt anchors on chain.');
   });
+
+// ─── schedule (planning-01 §2C) ──────────────────────────────────────────
+addScheduleCommand(skillCommand);
