@@ -329,7 +329,7 @@ Highest impact:
   - [x] `indexer stats` → ✓ 329 receipts indexed, lag 97560 blocks (run backfill), latest id 496.
   - [x] `stats` → ✓ comprehensive output, derived metrics (avg anchor interval ≈ 265s).
 - [ ] Telegram bot live commands (BotFather token unblock)
-- [ ] `passport mint` actually confirmed on-chain (prior attempt reverted because wallet already held tokenId 1; need a fresh wallet)
+- [x] `passport mint` actually confirmed on-chain → DONE. Script `scripts/qa/fresh-wallet-mint.ts` generates a fresh PK, sends 0.05 OG from the main wallet, and mints from the fresh wallet. Fresh wallet `0x021C1e990CCfD44a2F1734eA6399E0D6Dd294325` now holds tokenId **3** via mint tx `0xd4d28f590bf3043b4332dd0ced873c82acb74c82d94d8407768d60ea0a30891c` at block 32362334. Gas 151,941. The mint code path is now proven end-to-end on a fresh wallet (not just on the pre-existing tokenId-1 holder).
 - [x] Edge cases sweep → DONE this firing. (1) Tampered `receiptRoot` → `hash FAIL — expected 0x...0a5ca0, computed 0x...0a5ca7` → `✗ INVALID`. (2) Bogus on-chain id `99999999` → `No receipt resolves "99999999"` + format hint. (3) Nonexistent skill → `No skill named "nonexistent-skill-xyz"`. (4) Empty file input → consensus pre-flight gate `1-file-sanity` rejects with `File is empty. No Router calls made.` (gated BEFORE wasting Router spend). All errors honest, no silent failures, no wasted compute.
 - [x] Studio mobile hamburger nav → DONE (commit `ffad98e`). Right-side portaled drawer with all six destinations + WalletConnect. Auto-closes on route change via usePathname. ESC + backdrop + route-change all dismiss. Containing-block bug from header's `backdrop-filter: blur(20px)` was solved by `createPortal(..., document.body)` — verified panel rect 375×748 with cream-opaque bg.
 - [x] Studio `<footer>` multi-column grid → DONE (commit `d67b6ae`). Four columns: Product / Docs / Network / Open Source. Network column lists all 6 deployed contracts with chainscan links. Mobile collapses to single column via `minmax(180px, 1fr)` auto-fit.
@@ -371,7 +371,7 @@ Tactical punch-list also cleared. The four remaining tactical lines are explicit
 
 1. `da preflight` — no public 0G DA testnet; CLI surfaces docker unblock command.
 2. Telegram bot live — needs BotFather-issued token (user action).
-3. `passport mint` confirmed — current wallet holds tokenId 1; mint reverts. Needs a fresh wallet.
+3. ~~`passport mint` confirmed — needs fresh wallet~~ → SOLVED. Script funds a fresh PK from the main wallet and mints; tokenId 3 now exists.
 4. ~~`skill install <name>` URL-only~~ → FIXED (commit `5e08ca8`). Bare names now resolve to `seed-skills/<id>/SKILL.md`. Verified: `ivaronix skill install plan-step` → `Status: → INSTALLED ✓`. Unknown name lists the 5 available bare names + URL fallback hint. URL forms unchanged.
 
 Per brief rule #10 (think 3 times before stopping):
