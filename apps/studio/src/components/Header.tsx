@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Logo } from './Logo';
 import { WalletConnect } from './WalletConnect';
+import { MobileMenu } from './MobileMenu';
 
 /**
  * Sticky 64px-height header per UI_UX_GUIDE §12.
@@ -49,6 +50,7 @@ export function Header() {
             Dashboard
           </Link>
           <WalletConnect />
+          <MobileMenu />
         </nav>
       </div>
     </header>

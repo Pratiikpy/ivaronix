@@ -322,7 +322,7 @@ Highest impact:
 - [ ] `passport mint` actually confirmed on-chain (prior attempt reverted because wallet already held tokenId 1; need a fresh wallet)
 - [ ] Edge cases: empty/oversized doc input, mismatched receiptRoot in `receipt verify`, revoked skill run attempt, RPC unreachable boot
 - [ ] Studio mobile hamburger nav (header collapses with no fallback at <768px)
-- [ ] Studio `<footer>` multi-column grid (currently single-line flex; CLAUDE.md §10 mandates Product/Docs/Network/Social columns)
+- [x] Studio `<footer>` multi-column grid → DONE (commit `d67b6ae`). Four columns: Product / Docs / Network / Open Source. Network column lists all 6 deployed contracts with chainscan links. Mobile collapses to single column via `minmax(180px, 1fr)` auto-fit.
 
 Wins recorded:
 - [x] Real MM connect end-to-end across all routes (commits `55f7a2b`, `77a74a4`)

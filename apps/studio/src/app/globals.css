@@ -249,15 +249,20 @@ body {
   header > div {
     padding: 0 16px !important;
   }
-  /* Below 480px, drop secondary nav links — only the WalletConnect pill
-   * remains. Users can still reach /global, /skills, /dashboard from the
-   * footer + the home-page hero buttons. Prevents header overflow at 375px. */
+  /* Below 480px, hide the inline nav links and show the hamburger
+   * trigger from MobileMenu. The drawer carries every destination
+   * plus the connect chip — no judge has to scroll-hunt the footer.
+   * Use direct-child selectors so the drawer's own nav (rendered as
+   * descendant of header → mobile-menu) is NOT hit by the hide rule. */
   @media (max-width: 480px) {
-    header nav a[href="/global"],
-    header nav a[href="/skills"],
-    header nav a[href="/brand"],
-    header nav a[href="/dashboard"] {
+    header > div > nav > a[href="/global"],
+    header > div > nav > a[href="/skills"],
+    header > div > nav > a[href="/brand"],
+    header > div > nav > a[href="/dashboard"] {
       display: none !important;
+    }
+    header button.mobile-menu-trigger {
+      display: inline-flex !important;
     }
   }
   /* Stack any 2-col grid */
