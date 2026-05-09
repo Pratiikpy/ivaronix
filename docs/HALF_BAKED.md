@@ -956,7 +956,7 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `scripts/qa/metamask-e2e/verify-h1-h4-attest-memory.ts` — ethers imports include keccak256 + toUtf8Bytes; pipeline + doc.ts bind attestationHash to chat ID via keccak; pipeline calls memoryClient.store after anchor; store call is gated correctly; metadata carries the right fields.
 - **Typecheck:** `@ivaronix/runtime`, `@ivaronix/cli` clean.
 
-### N · I-1 · `/r/[id]` VERIFIED chip gated on real verifyClaimed  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · I-1 · `/r/[id]` VERIFIED chip gated on real verifyClaimed  ·  ✅ FIXED 2026-05-10 (`d57b635`)
 - **Code:** `apps/studio/src/app/r/[id]/page.tsx:147-185` — server-side `verifyClaimed(local)` (the same canonical `@ivaronix/receipts` verifier the CLI uses). Three branches:
   - `claimResult.state === 'INVALID'` → chip shows MISMATCH plus an inline failed-check reason (e.g. `hash failed: expected 0xab…, computed 0xcd…`)
   - `claimResult.state === 'CLAIMED'` → chip shows VERIFIED (we're past the 404 so the on-chain row already exists)

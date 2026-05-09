@@ -503,7 +503,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
 ### N · H-2 · processResponse third argument (content) → ✅ DONE (`77eb746`)
 ### N · H-1 + H-4 · attestationHash bound to chat ID + memory store after anchor → ✅ DONE (`1f43a27`)
-### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`<sha-pending>`)
+### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`d57b635`)
 - `apps/studio/src/app/r/[id]/page.tsx:147-185` — server-side `verifyClaimed(local)` from `@ivaronix/receipts`; chip state branches on result; INVALID branch renders the failed-check reason next to the chip.
 - `apps/studio/package.json` adds `@ivaronix/receipts` as direct dep (was transitive-only).
 - Studio typecheck clean.
