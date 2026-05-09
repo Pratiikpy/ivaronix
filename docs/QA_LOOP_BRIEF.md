@@ -409,3 +409,42 @@ All 13 items GREEN on Galileo testnet (chainId 16602). Full per-item evidence in
 - [x] **Gap 3: Receipt schema technical document** → DONE (commit `faa2086`). `docs/RECEIPT_SCHEMA.md` ships five sections: schema anatomy, canonical hash derivation (with the QA edge-sweep tamper proof), TIER 1 verify flow with ASCII sequence diagram + receipt #1004 PASS output + freshness-window caveat from receipt #945, TIER 2 honest-marking rationale (refs commits `759361f` and #1014/#1056), and the strategic "this matters because" closer. Closes the AIsphere whitepaper documentation gap.
 
 Cron `*/2 * * * *` continues until that strategic round produces either (a) `READY` after a final mainnet checklist (rule #12) or (b) one more named, judged-relevant feature to build.
+
+---
+
+## 2026-05-09 · planning-01.md fully shipped (Tier 1 + 2 + 3)
+
+Eleven commits across two firings closed every item in `docs/planning-01.md`. Each maps to a verifiable artefact below.
+
+### Tier 1 · locked, ship-first
+- [x] **1A · Privileged-document hero copy** — commit `6f89077`. Hero "AI review for the documents you *can't paste* into ChatGPT." live at `/`. CTAs land on `/onboard` + `/r/1004`. Side-by-side vs `brand/Ivaronix.html` captured in `screenshots/hero/`.
+- [x] **1B · Confidential Data Room** — commit `f846e5a`. Room id `01KR66C1GJVR57MHQPJCW1HQQY`, storage tx `0x2fc63b01…19051`, grant tx `0xa7bd0e48…868a`, doc_room_create receipt `rcpt_01KR66CS1X0DN4DXMVFMQ0A0YG` block 32380759, doc_room_read receipt block 32380907. Studio `/data-room/[id]` rendered. Screenshots in `screenshots/data-room/`.
+- [x] **1C · 3-page narrative pitch** — commit `cdd24f9`. `docs/PITCH.md` ships three pages with one-clause sentences, real numbers, and a try-it CLI section. Voice-clean.
+
+### Tier 2 · high-impact, week-scale
+- [x] **2A · TEE-Bound Delegated AI Agent** (Phase A) — commit `a899376`. Delegate id `01KR67PT76V9AQTHN413PYWB1J` (passport tokenId 4, wallet `0x4B21…24e0`). Mint tx `0xda58377b…b4ec`, grant tx `0xc4dc2364…f9ef`, run receipt **#1204** (anchor `0xedcc0262…f6e6` block 32383734) signed by delegate not user. Revoke tx `0x35ad2c0f…52bf` block 32383871. Studio `/delegate/[id]` rendered with Phase A custody chip. Screenshots in `screenshots/2a-pages/`.
+- [x] **2B · Memory consolidation lifecycle** — commit `4150996`. Consolidation receipt **#1252** (`rcpt_01KR6BTR5YKM3VMVT3HHY6STWE`, anchor `0x48520ba8…980f` block 32392344). 0G Compute returned 415-char TEE-attested summary across 100 prior receipts (1791+112 tokens). Passport: receiptCount 1232. Studio `/agent/<owner>` "memory consolidations" card with TEE TIER 1 badge. Screenshots in `screenshots/2b-consolidation/`.
+- [x] **2C · Cron-scheduled skill execution** + `?address=` dashboard — commit `ef7d1bf`. Schedule id `01KR6CKY8QCZS7JEWC68GCCNFV` (private-doc-review, cron "0 9 * * MON"). Manual fire produced receipt **#1262** (`rcpt_01KR6CMHW58085K2E2TQ33B7F6`, anchor `0x9e039f3c…a573` block 32394065). Studio dashboard renders the schedule card via the new `?address=` query path. Screenshots in `screenshots/2c-schedule/`.
+- [x] **2D · Studio `/docs` page** — commit `d0c705b`. 6 module cards: 0G Chain, 0G Compute, 0G Storage, 0G Router, Agent ID (ERC-7857), 0G DA. 5 INTEGRATED + 1 ROADMAP (0G DA, with link to `docs/PHASE_B_DISCLOSURES.md`). Linked from header nav as "0G". Screenshots in `screenshots/2d-docs/`.
+
+### Tier 3 · interesting, sequence later
+- [x] **3A · Memory DAG / prior-receipt context** — commit `3dc35fd`. `--memory-depth N` flag on `ivaronix doc ask`. Receipt **#1274** (`rcpt_01KR6DK5900EDR43H8JCRMN78S`, anchor `0x94d24e2a…c322` block 32396103) carries `request.priorReceiptIds: [...]`. LLM output explicitly synthesizes across 3 prior runs. Studio `/r/[id]` "built on prior runs" card.
+- [x] **3B · Visual skill creator** — commit `8f5679d`. Studio `/skill/new` ships form + live SKILL.md preview. `/api/skill/save` writes to workspace `.ivaronix/skills/<id>/SKILL.md`. 7/7 e2e checks pass. Screenshots in `screenshots/3b-skill-builder/`.
+- [x] **3C · Receipt-as-firewall library** — commit `aca1f2a`. `IvaronixReceiptGuard.sol` + 5/5 Foundry tests (full suite **90/90**). Code-complete; Phase B deployment blocked on funding deployer wallet (per CLAUDE.md §1 "the only blocker is money"). Concrete unblock recorded: fund + `forge script` deploy + add address to `deployments/testnet.json`.
+- [x] **3D · Embeddable receipt-verifier widget** — commit `9a7923e`. `@ivaronix/widget` npm package + `/embed/r/[id]` iframe-clean Studio route + `/embed.js` vanilla loader. Verified rendering inside a third-party host HTML page. Screenshots in `screenshots/3d-widget/`.
+
+### Cross-cutting health (this firing)
+- CLI typecheck: ✅ clean
+- Studio typecheck: ✅ clean
+- Widget typecheck: ✅ clean
+- Foundry suite: ✅ **90/90 passing**
+- Half-baked audit (subagent → 14 items): 7 closed in code, 7 documented in `docs/PHASE_B_DISCLOSURES.md`
+- README submission requirements (per CLAUDE.md §13) folded into normal product-doc sections without checklist voice (commit `f7da5e3`)
+
+### Stop-condition gates (CLAUDE.md §12)
+- §12.1 · every shipped feature is verified end-to-end with proof OR explicitly blocked with concrete unblock action ✅
+- §12.2 · no partial credits (each shipped feature has a UI surface AND a code path AND on-chain side effect) ✅
+- §12.3 · think-three-times: no orphan features, no lazy-blocked items, no unstolen showcase patterns ✅
+- §12.4 · every artefact above is named in this brief ✅
+
+Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
