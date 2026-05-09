@@ -480,15 +480,19 @@ delegateCommand
     } catch (err) {
       ui.fail('delegate run threw', ((err as Error).message.split('\n')[0] ?? '').slice(0, 160));
     } finally {
-      // Restore original env (or undefined if not set before)
+      // Restore original env (or undefined if not set before).
+      // We do NOT reset the exit code here. The previous version zeroed it
+      // unconditionally at the end of finally to reset commander's internal
+      // state for repeated subcommand parses; that mutation defeated
+      // scripted callers checking $?, so a failed delegate run always
+      // reported success. S-4 fix per HALF_BAKED.md: propagate runOk to
+      // the exit code below the finally block instead.
       if (savedKey === undefined) delete process.env.EVM_PRIVATE_KEY;
       else process.env.EVM_PRIVATE_KEY = savedKey;
       if (savedAddr === undefined) delete process.env.EVM_WALLET_ADDRESS;
       else process.env.EVM_WALLET_ADDRESS = savedAddr;
       if (savedOgKey === undefined) delete process.env.OG_PRIVATE_KEY;
       else process.env.OG_PRIVATE_KEY = savedOgKey;
-      // Reset commander's internal state for repeated subcommand parses
-      process.exitCode = 0;
     }
 
     ui.divider();
@@ -496,7 +500,12 @@ delegateCommand
       ui.pass(`delegate run complete`);
       ui.hint(`Receipt agent.ownerWallet = ${m.delegateAddress}, NOT ${env.walletAddress}.`);
       ui.hint(`Auditable proof: the user delegated, the agent acted, the user's signing key was never invoked.`);
+      // Honest exit-code propagation: `delegate run` only succeeds when the
+      // inner doc-ask command succeeded. A scripted caller now sees `$? == 0`
+      // for a real success and `$? == 1` for any inner failure.
+      process.exitCode = 0;
     } else {
       ui.fail(`delegate run failed`);
+      process.exitCode = 1;
     }
   });

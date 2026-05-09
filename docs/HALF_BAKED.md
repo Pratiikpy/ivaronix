@@ -924,16 +924,16 @@ Each item: the one-line code fix + a regression test that fails if the lie comes
 - **Test:** `scripts/qa/metamask-e2e/verify-s2-i5-lights.ts` — source-file regression guards (no `hasLocalBody ? 'verified'` for Storage; no `Chain: 'verified'` hardcode); HTML assertion via curl against the dev render; per-light state extracted from the dot-color CSS variable; cross-check against the local receipt body's evidence.
 - **Surfaced honesty:** receipt #1004 (the README's headline "FULLY VERIFIED" example) now correctly renders Storage=pending (no real `evidenceRoot` in body — confirms H-3 — Studio's `/api/run` never uploaded) and TEE=pending (`routerVerified: false`, testnet default). The previous chip code lit them green regardless. **The fix is doing exactly what it should.** Honest tier marking per CLAUDE.md §6.
 
-### N · S-3 · RunPanel Storage starts pending, gated on real response  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · S-3 · RunPanel Storage starts pending, gated on real response  ·  ✅ FIXED 2026-05-10 (`98f102b`)
 - **Code:** `apps/studio/src/components/RunPanel.tsx:115-148` — initial layers `Storage: 'pending'`; success branch `Storage: data.storage?.evidenceRoot ? 'verified' : 'pending'`; error/catch branches keep Storage `'pending'`. Zero remaining `Storage: 'verified'` claims in the click handler.
 - **Plumbing:** `RunResponse.storage?.evidenceRoot` added to the typed shape; `/api/run/route.ts` returns `storage: { evidenceRoot: result.storageEvidenceRoot ?? null }`; `PipelineOutput.storageEvidenceRoot: string | null` declared with `null` returned by today's runtime path (Studio runtime does not upload to 0G Storage; H-3 will populate this and the light will go green automatically).
 - **Test:** `scripts/qa/metamask-e2e/verify-s3-runpanel-pending.ts` — source-file regression on RunPanel.tsx, `/api/run/route.ts`, and `pipeline.ts`; counts zero `Storage: 'verified'` literals remaining; Playwright snapshot of the home page at desktop + mobile.
 - **Honest behavior:** until H-3 ships, every Studio-Run receipt's Storage light stays pending. The receipt body itself reports no Storage evidence; the page is consistent with reality.
 
-### N · S-4 · `delegate.ts` exitCode propagation
-- **Code:** `apps/cli/src/commands/delegate.ts:469-491` — drop `process.exitCode = 0` from the finally; let the inner `docCommand.parseAsync` failure propagate. Better: spawn `docCommand` in a child process via `execFileSync` with the delegate env on the subprocess, drop the in-process env mutation entirely.
-- **Test:** `apps/cli/test/delegate.test.ts` — `delegate run <id> --doc <bad-file>` exits with non-zero code (currently exits 0).
-- **Effort:** 30min.
+### N · S-4 · `delegate.ts` exitCode propagation  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+- **Code:** `apps/cli/src/commands/delegate.ts:482-510` — finally block restores env vars only; the unconditional exit-code zero-reset is removed. After the finally, the post-runOk branches set `process.exitCode = 0` (success) or `process.exitCode = 1` (failure) explicitly. Scripted callers checking `$?` now see honest results.
+- **Test:** `scripts/qa/metamask-e2e/verify-s4-delegate-exit.ts` — source-file regression: finally body must not contain a zero-reset; runOk-true and runOk-false branches must each set the exit code explicitly.
+- **Live exit-code path:** the bug only triggered when a real delegate's inner `doc ask` failed; reproducing requires a fully-set-up delegate + grant + skill + bad doc. The mechanical regression on the source patterns is high-signal for this kind of fix; cron-loop firings of `delegate run` against real delegates will exercise the live path.
 
 ### N · S-5 · `chat-v2.ts` import audit
 - **Code:** `apps/cli/src/bin/ivaronix.ts:41` — verify `chat-v2.ts` exists; if not, delete the import. (HALF_BAKED A-7.)
