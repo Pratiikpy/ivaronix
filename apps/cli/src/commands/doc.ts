@@ -128,6 +128,8 @@ docCommand
       receiptRequested: !!opts.receipt,
       burnEnabled: burnMode,
       scan,
+      // CLI doc-ask runs on 0G only; no --provider flag exposed here.
+      providerKind: '0g',
     });
 
     if (decision.violations.length > 0) {

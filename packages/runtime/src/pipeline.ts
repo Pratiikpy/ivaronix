@@ -157,12 +157,15 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     }
   } catch { /* best-effort */ }
 
-  // 3. Sandbox
+  // 3. Sandbox — pass providerKind so compute_tee_required is enforced for
+  //    non-0G inference paths. Without this, a NIM-routed run against a
+  //    TEE-required skill would silently downgrade to TIER 2 attestation.
   const decision = evaluateSandbox(skill, {
     callerTrustScore: callerTrust,
     receiptRequested: !!input.receipt,
     burnEnabled,
     scan,
+    providerKind: input.provider ?? '0g',
   });
   for (const v of decision.violations) {
     if (v.severity === 'block') log.fail(tag(`sandbox.${v.code}`), v.message);

@@ -489,3 +489,17 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 - §12.6 living punch-list: this entry IS the punch-list update for the final round
 
 **Final status: `READY` (testnet) · the only unblock action is operator-side funding (tracked in `docs/USER_TODO.md`). Cron `b0970f32` cancelled per §12 stop condition.**
+
+---
+
+## 2026-05-10 · HALF_BAKED.md Section N execution loop
+
+`READY` was the testnet stop condition. The HALF_BAKED.md round-1 + round-2 audits surfaced ~210 net-new findings; Section N records the no-compromise plan for the 16-item committed fix batch (Tier 0 Critical, Tier S one-line lies, Tier A round-2 high-impact, K-15 polyglot canonical hash, L-7 Vercel deploy). Cron `99378b32` (every 2h at :17) drives the loop. Each fix lands with: code change + unit/integration test + CI lint guard + real-MM Playwright e2e (UI fixes) + chain artefact (chain fixes) + HALF_BAKED.md status inline + this punch-list line + commit body.
+
+### N · S-1 · `compute_tee_required` no-op gate fixed → ✅ DONE (`<sha-pending>`)
+- `packages/skills/src/sandbox.ts:67` dead-branch removed; replaced with real `ctx.providerKind !== '0g'` check.
+- `SandboxContext` extended with `providerKind?: '0g' | 'nvidia' | 'openai' | 'ollama'`.
+- Both call sites threaded: `packages/runtime/src/pipeline.ts:165` (`input.provider ?? '0g'`) and `apps/cli/src/commands/doc.ts:131` (literal `'0g'`).
+- Regression suite `packages/skills/src/sandbox.test.ts`: 9/9 cases green. Includes a source-file guard that re-fails if `&& false /* placeholder */` returns to the file.
+- Typecheck clean across `@ivaronix/skills`, `@ivaronix/runtime`, `@ivaronix/cli`.
+- Effect: a NIM-routed run against a TEE-required skill (e.g. `private-doc-review`) now blocks at the sandbox layer with a structured violation. Previous behavior silently downgraded to TIER 2 attestation while the skill manifest declared TEE required.

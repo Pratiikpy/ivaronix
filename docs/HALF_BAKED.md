@@ -914,11 +914,10 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 
 Each item: the one-line code fix + a regression test that fails if the lie comes back + HALF_BAKED.md status update inline.
 
-### N · S-1 · Delete `&& false` from `sandbox.ts:67`
-- **Code:** `packages/skills/src/sandbox.ts:67` — `if (p.compute_tee_required && false /* placeholder */)` → `if (p.compute_tee_required && providerKind !== '0g')`.
-- **Test:** `packages/skills/src/sandbox.test.ts` — manifest with `compute_tee_required: true` + `provider: 'nvidia'` → throws `SandboxError('TEE-required skill cannot run on non-0G provider')`.
-- **CI:** lint rule `no-restricted-syntax` blocks `&& false` patterns repo-wide.
-- **Effort:** 30min.
+### N · S-1 · Delete `&& false` from `sandbox.ts:67`  ·  ✅ FIXED 2026-05-10
+- **Code:** `packages/skills/src/sandbox.ts:67` — replaced `&& false` placeholder with real check `ctx.providerKind !== undefined && ctx.providerKind !== '0g'`. Added `providerKind?: '0g' | 'nvidia' | 'openai' | 'ollama'` to `SandboxContext`. Both call sites threaded: `packages/runtime/src/pipeline.ts:165` passes `input.provider ?? '0g'`; `apps/cli/src/commands/doc.ts:131` passes literal `'0g'` (CLI doc-ask exposes no `--provider` flag).
+- **Test:** `packages/skills/src/sandbox.test.ts` — 9 cases all green. NIM/OpenAI/Ollama + tee-required → blocks. 0G + tee-required → allows. Omitted providerKind (legacy CLI path) → allows. tee-required=false + nvidia → allows. Multi-violation stacking. Plus a source-file regression test that fails if `&& false /* placeholder */` re-appears anywhere in `sandbox.ts`.
+- **Typecheck:** `@ivaronix/skills`, `@ivaronix/runtime`, `@ivaronix/cli` all green.
 
 ### N · S-2 · Storage light reads `local?.storage?.evidenceRoot`
 - **Code:** `apps/studio/src/app/r/[id]/page.tsx:151` — `Storage: hasLocalBody ? 'verified' : 'pending'` → `Storage: local?.storage?.evidenceRoot ? 'verified' : 'pending'`.

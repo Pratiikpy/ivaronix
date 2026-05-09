@@ -20,6 +20,13 @@ export interface SandboxContext {
   scan?: ScanResult;
   /** Strict mode treats every "warn" as a "block". Used for compute_tee_required + audit profiles. */
   strict?: boolean;
+  /**
+   * Inference provider this run will use. When the manifest declares
+   * `compute_tee_required: true` and the provider is anything other than `0g`,
+   * the sandbox blocks. When omitted, the check is skipped (legacy callers).
+   * Callers that route to non-0G providers MUST populate this field.
+   */
+  providerKind?: '0g' | 'nvidia' | 'openai' | 'ollama';
 }
 
 export interface SandboxDecision {
@@ -61,14 +68,15 @@ export function evaluateSandbox(skill: LoadedSkill, ctx: SandboxContext): Sandbo
     });
   }
 
-  // 3. compute_tee_required — must be honored. Today the consensus path always
-  //    uses the TEE-attested router, so this is satisfied. The check exists so
-  //    a future router fallback to non-TEE inference is caught.
-  if (p.compute_tee_required && false /* placeholder; consensus already enforces */) {
+  // 3. compute_tee_required — must be honored. The check fires when the caller
+  //    has declared a non-0G provider and the manifest requires TEE attestation.
+  //    When providerKind is omitted (legacy CLI path that always uses 0G),
+  //    the check is skipped — the consensus path enforces TEE downstream.
+  if (p.compute_tee_required && ctx.providerKind !== undefined && ctx.providerKind !== '0g') {
     v.push({
       severity: 'block',
       code: 'compute.tee-required',
-      message: `skill requires TEE-attested compute but the configured router does not provide it`,
+      message: `skill requires TEE-attested compute but the configured provider is "${ctx.providerKind}" — only "0g" attests via TEE`,
     });
   }
 
