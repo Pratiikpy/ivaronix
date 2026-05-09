@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Outfit, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/lib/providers';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import './globals.css';
 
 // Brand typography per CLAUDE.md §10. The HTML reference at
@@ -45,28 +46,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           <Header />
           <main>{children}</main>
-          <footer
-            style={{
-              borderTop: '1px solid var(--color-hairline)',
-              padding: '48px 32px',
-              marginTop: 96,
-              maxWidth: 1200,
-              marginLeft: 'auto',
-              marginRight: 'auto',
-              fontSize: 13,
-              color: 'var(--color-muted)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: 16,
-              flexWrap: 'wrap',
-            }}
-          >
-            <span>
-              <span className="italic-display">Catch the risks.</span> Keep the receipts.
-            </span>
-            <span className="mono">network: {process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet'}</span>
-          </footer>
+          <Footer />
         </Providers>
       </body>
     </html>
