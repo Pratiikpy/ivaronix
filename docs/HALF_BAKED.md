@@ -904,7 +904,7 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **CI:** add to the existing `forge test` suite; block merge on regression.
 - **Effort:** 4h including redeploy + Foundry suite update + Studio chip.
 
-### N · K-2 · ReceiptRegistryV2 with EIP-712 anchor signature  ·  ✅ CODE-COMPLETE 2026-05-10 (`<sha-pending>`) · chain deploy = operator-action A-V2-K2
+### N · K-2 · ReceiptRegistryV2 with EIP-712 anchor signature  ·  ✅ CODE-COMPLETE 2026-05-10 (`c73ee7d`) · chain deploy = operator-action A-V2-K2
 - **Contract:** `contracts/src/ReceiptRegistryV2.sol`. Inherits OZ `EIP712` (domain `"Ivaronix.ReceiptRegistry"`, version `"2"`) + uses `ECDSA.recover`. The signed payload binds receiptRoot + storageRoot + receiptType + attestationHash + agentAddress + per-agent nonce + deadline. `anchor((params), signature)` recovers the signer; the recovered address MUST equal the claimed `agentAddress` or the call reverts.
 - **Replay protection:** per-agent monotonic `nonces` mapping; consumed + advanced on every successful anchor. Deadline enforced.
 - **Relayer pattern:** anyone can submit; the recorded `agentAddress` is the recovered signer, NOT `msg.sender`. The event includes `relayer = msg.sender` separately for accounting.

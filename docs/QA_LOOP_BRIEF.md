@@ -508,7 +508,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
 ### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
 ### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
-### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ CODE-COMPLETE (`<sha-pending>`) · chain deploy = operator-action A-V2-K2
+### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ CODE-COMPLETE (`c73ee7d`) · chain deploy = operator-action A-V2-K2
 - `contracts/src/ReceiptRegistryV2.sol` — OZ EIP-712 + ECDSA.recover. Anchor's `agentAddress` field is the RECOVERED signer, not `msg.sender`. Replay protection via per-agent monotonic nonces; per-call deadline enforced. Relayer pattern: anyone can submit (msg.sender is just the relayer, recorded separately on the event).
 - `contracts/test/ReceiptRegistryV2.t.sol` — 15 tests covering happy path, forged-agent rejection, replay rejection, deadline enforcement, zero-field rejections, tampered-field recovery failure, monotonic nonces, pause control. Full repo Foundry suite 121/121 (was 106/106).
 - `contracts/script/DeployReceiptRegistryV2.s.sol` shipped; ~0.05 OG on Galileo (funded).
