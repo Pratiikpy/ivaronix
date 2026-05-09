@@ -5,16 +5,40 @@
 ## 1. Hard rules
 
 - **No compromise.** If a feature is on the build list and is testable, ship it. If a feature is "cool but unverifiable" (you can't prove it works by using it), **push back and propose something verifiable instead.**
+- **Production-ready option rule.** Always choose the strongest practical implementation, test, and UX path available. Do not choose the easiest path if it leaves the feature weaker, less polished, or less verifiable. If there are multiple options, pick the one that makes the product more useful, trustworthy, smooth, and production-ready.
 - **No `Co-Authored-By` / `Author:` trailers in git commits.** Conventional-commits style; subject + body only.
 - **Test = easy to verify by USING it.** If shipping a feature requires "so many things to even see if it works," redesign it or replace it with something simpler that earns the same value. The CLI is the gold standard — you run a command, you see the result, you know it works.
+- **No lazy blocked.** Before marking anything blocked, prove you tried the strongest available method: Playwright, real browser extension, backend harness, CLI script, mocked external client, protocol-level test, code-level verification, multi-wallet flow, multi-session flow, or any other route that can prove the feature works end-to-end.
+- **Blocked means truly external.** Only mark a test blocked when it needs something unavailable in this environment: a real phone, BotFather-issued Telegram token, Claude Desktop/Cursor UI, macOS/Linux machine, paid quota, or another genuinely external dependency. "Hard", "takes time", or "needs careful automation" is not blocked.
 - **Brutal honesty.** If a path is wrong, say so. Reject items that don't move the needle.
 - **The only blocker is money.** Anything not requiring real OG funding is a "yes, build it" item. Mainnet deployment + ChainGPT audit waits on the user funding the deployer wallet (B-2).
 
 ## 2. Judging criteria (lock this in your head)
 
-1. **Extent of adoption of 0G components** — every primitive you can credibly use, use it: `0G Chain` (deployed contracts), `0G Compute` (TEE inference + fine-tuning), `0G Storage` (state persistence + Merkle proofs), `0G DA` (data availability for receipts), agent skills SDK, agentic ID.
-2. **Innovative solutions to AI / Functional integrity, code quality, mandatory on-chain deployment** — receipts are the spine; on-chain deployment is non-negotiable; code quality is enforced via typechecks + 61/61 Foundry tests + CI matrix.
-3. **Market fit, problem-solving capability, user value, growth roadmap** — Track 1 (cognitive backbone for OpenClaw and any 0G agent). PMF: every user-facing feature should be runnable in one command with a visible verifiable result.
+The five 0G APAC Hackathon judging criteria — **the only thing that matters for the win**. For each, where Ivaronix is **strong** and where we **lack vs the field** as of 2026-05-09.
+
+### 2.1 · 0G Technical Integration Depth & Innovation
+- **Strong:** independent TEE re-verify via `broker.processResponse` is the universal field weakness; we solved it (receipts #994, #1004, #1056, #1069 all FULLY VERIFIED). Receipt-gated fee splits combine 0G Chain + Compute + economic layer in one verifiable flow no competitor pairs. ERC-7857 AgentPassportINFT live.
+- **Lacking:** **0G DA is not integrated**, not even as a documented stub for receipt batching or evidence sharding. AIsphere claims all 6 0G primitives; we use 4-5 (Chain, Compute, Storage, Agent ID, Router). Document the DA integration path even if no public testnet endpoint exists yet.
+
+### 2.2 · Technical Implementation & Completeness
+- **Strong:** 61/61 Foundry tests, 14 packages typecheck-clean, edge-case discipline proven (tampered receiptRoot → INVALID, empty input → gated, bogus id → honest error). 6 contracts deployed on Galileo. 13/13 mainnet-readiness checklist green.
+- **Lacking:** the README does not lead with these numbers. Provus's headline is "10,000+ attestations · 99.7% uptime" — a sentence judges remember. 1071 receipts is competitive but only useful if it is the first thing a reader sees.
+
+### 2.3 · Product Value & Market Potential — biggest gap
+- **Strong:** Track 1 + Track 3 fit (cognitive backbone + Agent-as-a-Service marketplace via creator/treasury fee split), proven across 5 first-party skills + 150+ skill catalog.
+- **Lacking:** "0G Agent Operating System" is a developer-infra positioning. Aishi (companion), AlphaDawg (memory + sealed inference), Don't Get Drained (anti-scam), Provus (trading agent) each give a judge an instant "I'd use this" because each owns one consumer persona with one job-to-be-done. Ivaronix does not yet have ONE crisp persona-driven hero story on the home page. private-doc-review is the killer demo but the "founder / lawyer reviewing a contract before signing" persona is implicit, not headline. The growth roadmap (year 1 → year 2 → scale path) is not articulated as a single page. This is the criterion a non-technical judge scores Ivaronix lowest on.
+
+### 2.4 · User Experience & Demo Quality
+- **Strong:** editorial cream-on-black brand, multi-column footer with all 6 contract chainscan links, mobile hamburger nav, sticky header `backdrop-filter: blur(20px)`, `/r/<id>` proof pages render TIER 1 + TIER 2 + Burn Mode evidence honestly.
+- **Lacking:** Studio `/onboard` is 5 gated steps before first receipt — friction for a judge who wants to see one thing work in 60 seconds. The home Run panel is dense (file-drop + 2 dropdowns + question + checkboxes + four-light row + Run). There is no zero-friction "drop a contract → see proof" path that completes in one click. Pitch sentence is not crystallized at first paint.
+
+### 2.5 · Team Capability & Documentation
+- **Strong:** technical docs are deep — `docs/RECEIPT_SCHEMA.md`, `docs/MAINNET_READINESS.md`, `docs/QA_FULL_PRODUCT_REPORT.md`, `docs/QA_LOOP_BRIEF.md`, comprehensive CLAUDE.md.
+- **Lacking:** no narrative document for a judge who does not read code. AIsphere ships a 19-page whitepaper. Ivaronix needs a **3-page pitch document** ("what is Ivaronix · who is it for · why now") with one persona story up top, the receipt model in the middle, and the growth roadmap at the bottom. Without this, Criterion 5 leaks score to teams who wrote one.
+
+### 2.6 · PMF rule (every user-facing feature)
+Runnable in one command with a visible verifiable result. The CLI is the gold standard.
 4. **User Experience** — editorial cream-on-black design language, sub-30-second time-to-first-receipt, public Proof URL works on a different machine without auth.
 
 ## 3. Resource directories — read these before claiming gaps
@@ -32,6 +56,13 @@ Three checks for every feature:
 3. **What 0G primitive does it stretch?** Track 1 rewards depth on 0G Storage, 0G Compute, 0G Chain. Surface-level integrations don't score.
 
 If a feature passes 1+2+3, ship it. If it fails any one, push back.
+
+UI promotion rule:
+- When a feature exists in CLI, backend, contracts, or SDK but not in Studio, ask whether users would honestly use it from the UI.
+- Add it to Studio only if it has real UI PMF: it helps users understand, control, verify, or complete an important workflow.
+- If it belongs in Studio, design the proper UX first: placement, copy, state model, permissions, loading, errors, empty state, mobile, proof output, and how it connects to receipts.
+- Any new UI feature must be tested like a human with the strongest available path: real wallet, real MetaMask extension, real Playwright flow, screenshots, video, visible state changes, proof page, and chain/receipt evidence. Selector-only checks do not count as user-flow proof.
+- If a feature has no honest UI PMF, do not add a button for it. Keep it in CLI/API/docs and say why.
 
 ## 5. Track positioning (locked)
 
@@ -95,6 +126,12 @@ Verification before shipping any UI change:
 1. Open `brand/Ivaronix.html` in a headless browser, screenshot at 1440×900 + 375×812.
 2. Open the changed Studio route at the same viewports.
 3. Lay them side-by-side. If the Studio screenshot reads as "less designed" — colours weaker, type blander, radii sharper, hero emptier — fix the Studio render first; do not commit.
+
+MetaMask and user-flow verification:
+- For any Studio feature that touches wallet state, chain writes, receipts, passport, memory grants, or user onboarding, use a real MetaMask extension flow where possible. Do not count a mocked wallet, injected DOM flag, or connect-only check as end-to-end proof.
+- Drive the UI like a user would: click buttons, handle MetaMask popups, wait for visible state changes, open the resulting proof page, and confirm the chain/receipt evidence shown to the user.
+- Capture screenshots or video for the full flow, not only the final page. The proof must show what a judge would see and feel: transitions, loading states, connected state, error handling, and final result.
+- Check every affected page at desktop and mobile sizes. If a page is user-facing, it must be visually inspected, not only asserted through selectors.
 
 What "match" means:
 - **Same** colour palette tokens, identical hex values.
