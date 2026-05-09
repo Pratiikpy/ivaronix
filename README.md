@@ -21,6 +21,30 @@ pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
 
 Want a richer view? `demo --tier standard` runs 3-role consensus (analyst/critic/judge); `--tier high-stakes` runs 5 roles. Real disagreement surfaces; the judge synthesis is the receipt body. Drop a sensitive document into `ivaronix doc ask <file> "..." --burn --quick` for AES-256-GCM encrypted evidence + session-key destruction (TIER 1 burn-mode). The bare `ivaronix` invocation drops you into the Ink TUI chat with streaming, tool panels, slash palette, and 19 slash commands; `ivaronix chat-classic` is the readline fallback for SSH / piped workflows.
 
+## Install one of the Ivaronix skills via OpenClaw
+
+Every first-party skill ships with the OpenClaw `metadata.openclaw.install` block already populated. An OpenClaw user can install any of them in one command:
+
+```bash
+openclaw skills install Pratiikpy/ivaronix#seed-skills/private-doc-review
+openclaw skills install Pratiikpy/ivaronix#seed-skills/0g-integration-auditor
+openclaw skills install Pratiikpy/ivaronix#seed-skills/github-audit
+openclaw skills install Pratiikpy/ivaronix#seed-skills/plan-step
+openclaw skills install Pratiikpy/ivaronix#seed-skills/code-edit
+```
+
+The skill's `SKILL.md` declares the exact runtime requirement — `kind: node`, `package: @ivaronix/cli`, `bins: [ivaronix]` — and the env vars it needs (`EVM_PRIVATE_KEY`, `EVM_WALLET_ADDRESS`, `ZG_API_SECRET`). After install, every run produces an Action Receipt anchored on `ReceiptRegistry` (chainId 16602) with creator/treasury fee split per `og.creator.fee_split` (90/10 for `private-doc-review`).
+
+To verify a receipt independently after a skill run:
+
+```bash
+ivaronix receipt verify <id> --tee-independent
+```
+
+This calls `broker.processResponse` against 0G Compute. If TEE verification passes, the receipt status flips to `→ FULLY VERIFIED ✓` (proven on receipts #994 and #1004). External-provider runs (NVIDIA NIM via `OG_PROVIDER=nvidia`) anchor as TIER 2 with `verificationMethod: external-signed` and render amber on `/r/<id>` per the brand contract — never green-washed.
+
+---
+
 ## Phase A · Live testnet (Galileo, chainId 16602)
 
 All five contracts deployed and feeding live data into Studio + CLI + MCP:
