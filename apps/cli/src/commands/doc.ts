@@ -488,21 +488,29 @@ docCommand
           finalProvider: (primaryAtt?.providerAddress ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,
         },
         consensus: tier !== 'quick'
-          ? {
-              roles: consensusResult.attestations.map((a) => a.role),
-              convergenceScore: consensusResult.convergence.score,
-              agreementSummary: consensusResult.convergence.agreementSummary,
-              disagreementSummary: consensusResult.convergence.disagreementSummary,
-              individualAttestations: consensusResult.attestations
-                .filter((a) => a.providerAddress)
-                .map((a) => ({
-                  role: a.role,
-                  attestationHash: ('0x' + '0'.repeat(64)) as Hash, // populated by --tee-independent verify; unknown at build time
-                  providerAddress: a.providerAddress!,
-                  chatId: a.zgResKey ?? undefined,
-                  independentVerified: null,
-                })),
-            }
+          ? (() => {
+              // Build role → content map for the 3-arg processResponse path
+              // per HALF_BAKED.md H-2.
+              const roleContent = new Map<string, string>();
+              for (const r of consensusResult.reviewerOutputs) roleContent.set(r.role, r.content);
+              if (consensusResult.judgement) roleContent.set(consensusResult.judgement.role, consensusResult.judgement.content);
+              return {
+                roles: consensusResult.attestations.map((a) => a.role),
+                convergenceScore: consensusResult.convergence.score,
+                agreementSummary: consensusResult.convergence.agreementSummary,
+                disagreementSummary: consensusResult.convergence.disagreementSummary,
+                individualAttestations: consensusResult.attestations
+                  .filter((a) => a.providerAddress)
+                  .map((a) => ({
+                    role: a.role,
+                    attestationHash: ('0x' + '0'.repeat(64)) as Hash, // populated by --tee-independent verify; unknown at build time
+                    providerAddress: a.providerAddress!,
+                    chatId: a.zgResKey ?? undefined,
+                    content: roleContent.get(a.role),
+                    independentVerified: null,
+                  })),
+              };
+            })()
           : undefined,
       },
       routerTrace: {

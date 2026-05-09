@@ -496,21 +496,30 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       },
       consensus:
         tier !== 'quick'
-          ? {
-              roles: consensus.attestations.map((x) => x.role),
-              convergenceScore: consensus.convergence.score,
-              agreementSummary: consensus.convergence.agreementSummary,
-              disagreementSummary: consensus.convergence.disagreementSummary,
-              individualAttestations: consensus.attestations
-                .filter((x) => x.providerAddress)
-                .map((x) => ({
-                  role: x.role,
-                  attestationHash: ('0x' + '0'.repeat(64)) as Hash,
-                  providerAddress: x.providerAddress!,
-                  chatId: x.zgResKey ?? undefined,
-                  independentVerified: null,
-                })),
-            }
+          ? (() => {
+              // Build role → content map from reviewer outputs + judgement so
+              // each individualAttestation carries the content the SDK's
+              // 3-arg processResponse expects. H-2 fix per HALF_BAKED.md.
+              const roleContent = new Map<string, string>();
+              for (const r of consensus.reviewerOutputs) roleContent.set(r.role, r.content);
+              if (consensus.judgement) roleContent.set(consensus.judgement.role, consensus.judgement.content);
+              return {
+                roles: consensus.attestations.map((x) => x.role),
+                convergenceScore: consensus.convergence.score,
+                agreementSummary: consensus.convergence.agreementSummary,
+                disagreementSummary: consensus.convergence.disagreementSummary,
+                individualAttestations: consensus.attestations
+                  .filter((x) => x.providerAddress)
+                  .map((x) => ({
+                    role: x.role,
+                    attestationHash: ('0x' + '0'.repeat(64)) as Hash,
+                    providerAddress: x.providerAddress!,
+                    chatId: x.zgResKey ?? undefined,
+                    content: roleContent.get(x.role),
+                    independentVerified: null,
+                  })),
+              };
+            })()
           : undefined,
     },
     routerTrace: {

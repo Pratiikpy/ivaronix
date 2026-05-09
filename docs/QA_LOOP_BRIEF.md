@@ -501,6 +501,12 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · S-3 · RunPanel Storage gated on response evidenceRoot → ✅ DONE (`98f102b`)
 ### N · S-4 · delegate.ts exit-code propagation → ✅ DONE (`38452bc`)
 ### N · S-5 · chat-v2 import audit → ✅ VERIFIED (no fix required)
+### N · H-2 · processResponse third argument (content) → ✅ DONE (`<sha-pending>`)
+- Schema `ConsensusRoleAttestation.content?: string` (optional, backward-compat).
+- Pipeline + doc.ts build role→content map from `consensus.reviewerOutputs + judgement`, persist on each attestation.
+- CLI `receipt verify --tee-independent` calls 3-arg `broker.inference.processResponse(provider, chatId, content)` when content present; 2-arg fallback for legacy receipts with explicit `chatId-only` label.
+- Matches Provus + AIsphere depth on the offline-verify path.
+- Verification: `scripts/qa/metamask-e2e/verify-h2-process-response.ts`.
 - `apps/cli/src/commands/chat-v2.tsx` exists; TypeScript `.js` import resolution maps to `.tsx` cleanly.
 - `pnpm --filter @ivaronix/cli build` (= `tsc -b`) succeeds; existing build step is the regression gate.
 - Round-1 audit A-7 was a false positive.

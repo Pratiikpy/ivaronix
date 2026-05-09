@@ -49,6 +49,18 @@ const ConsensusRoleAttestation = z.object({
   providerAddress: HexAddress,
   /** chat ID returned by Router (ZG-Res-Key header) — required for independent verify via broker.processResponse */
   chatId: z.string().optional(),
+  /**
+   * The role's response content. Required as the third argument to
+   * `broker.inference.processResponse(providerAddress, chatId, content)` —
+   * without it, independent verify can only confirm the chat ID was billed,
+   * not that the content corresponds to it. Persisted on the receipt so
+   * offline verify (e.g. `ivaronix receipt verify --tee-independent` on a
+   * saved receipt) reaches the same depth as the live-inference path.
+   * Optional for backwards compatibility — older receipts produced before
+   * this field shipped will omit it; their independent verify falls back
+   * to the 2-arg form with a warning.
+   */
+  content: z.string().optional(),
   /** Independent verify result, populated by `ivaronix receipt verify --tee-independent` */
   independentVerified: z.boolean().nullable().optional(),
 });

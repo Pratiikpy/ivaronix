@@ -219,18 +219,29 @@ receiptCommand
     }
 
     // Collect (role, providerAddress, chatId, content) tuples to verify.
-    type Att = { role: string; providerAddress: string; chatId?: string };
+    // Content is the third argument the broker SDK accepts — when present,
+    // processResponse verifies the response content matches what was billed.
+    // When absent (legacy receipts pre-dating H-2), fall back to 2-arg form
+    // (chatId-only check) with an honest warning.
+    type Att = { role: string; providerAddress: string; chatId?: string; content?: string };
     const attestations: Att[] = [];
     if (receipt.execution.consensus?.individualAttestations) {
       for (const a of receipt.execution.consensus.individualAttestations) {
-        attestations.push({ role: a.role, providerAddress: a.providerAddress, chatId: a.chatId });
+        attestations.push({
+          role: a.role,
+          providerAddress: a.providerAddress,
+          chatId: a.chatId,
+          content: a.content,
+        });
       }
     } else if (receipt.routerTrace.zgResKey && receipt.teeVerification.providerAddress) {
-      // Single-role (Quick tier)
+      // Single-role (Quick tier). The receipt's outputs.wording.headline is
+      // the closest stand-in for the response content; better than nothing.
       attestations.push({
         role: 'primary',
         providerAddress: receipt.teeVerification.providerAddress,
         chatId: receipt.routerTrace.zgResKey,
+        content: receipt.outputs?.wording?.headline,
       });
     }
 
@@ -250,9 +261,19 @@ receiptCommand
         continue;
       }
       try {
-        const ok = await broker.inference.processResponse(att.providerAddress, att.chatId);
+        // H-2: pass content as the third argument when the receipt carries
+        // it. Provus and AIsphere both pass content during live inference;
+        // we match that depth on offline verify by persisting per-role
+        // content in `consensus.individualAttestations[*].content`. When the
+        // receipt is older than H-2 and content is missing, the SDK's 2-arg
+        // form still verifies the chat ID was billed — degrading honestly.
+        const hasContent = typeof att.content === 'string' && att.content.length > 0;
+        const ok = hasContent
+          ? await broker.inference.processResponse(att.providerAddress, att.chatId, att.content)
+          : await broker.inference.processResponse(att.providerAddress, att.chatId);
         if (ok === true) {
-          ui.pass(`tee:${att.role.padEnd(15)}  PASS  (provider ${att.providerAddress.slice(0, 10)}…)`);
+          const depth = hasContent ? 'PASS' : 'PASS (chatId-only; legacy receipt)';
+          ui.pass(`tee:${att.role.padEnd(15)}  ${depth}  (provider ${att.providerAddress.slice(0, 10)}…)`);
         } else if (ok === false) {
           ui.fail(`tee:${att.role.padEnd(15)}  FAIL  (signature mismatch)`);
           allPass = false;
