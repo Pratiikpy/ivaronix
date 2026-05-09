@@ -6,6 +6,7 @@ import { sha256HexAsync, NETWORKS, type Hash, type Address } from '@ivaronix/cor
 import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { addConsolidateCommand } from './passport-consolidate.js';
 
 interface LocalPassportFile {
   network: string;
@@ -386,3 +387,6 @@ passportCommand
       ui.info(`status               NEVER AUTHORIZED`);
     }
   });
+
+// ─── consolidate (planning-01 §2B) ───────────────────────────────────────
+addConsolidateCommand(passportCommand);

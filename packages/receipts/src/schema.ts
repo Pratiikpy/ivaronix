@@ -19,6 +19,9 @@ export const ReceiptTypeSchema = z.enum([
   // Slots 10-11: Confidential Data Room (Track 5 headline).
   'doc_room_create',
   'doc_room_read',
+  // Slot 12: Memory consolidation rollup (planning-01 §2B). The agent
+  // reads its own past receipts and signs a window summary.
+  'memory_consolidation',
 ]);
 
 export const NetworkSchema = z.enum(['testnet', 'mainnet']);
@@ -70,6 +73,14 @@ export const ReceiptV1Schema = z.object({
     inputArtifacts: z.array(InputArtifact),
     policyDecision: z.enum(['approved', 'approved-with-flags', 'denied']),
     approvalChain: z.array(ApprovalChainItem),
+    /**
+     * Prior receipt ids this run consumed as context — the lineage trail.
+     * Populated by `memory_consolidation` (planning-01 §2B) and any future
+     * receipt that derives its output from earlier receipts. The chain
+     * itself stores ids 0..N-1; this field records *which* of those the
+     * agent read as input.
+     */
+    priorReceiptIds: z.array(z.string()).optional(),
   }),
 
   execution: z.object({

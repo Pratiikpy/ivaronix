@@ -65,6 +65,13 @@ export const RECEIPT_TYPES = {
   // is auto-enabled on every read.
   doc_room_create: 10,
   doc_room_read: 11,
+  // Slot 12 (planning-01 §2B): memory consolidation rollup. The agent
+  // reads its own recent receipts in a window (day / month / year),
+  // produces a TEE-attested summary, and anchors it as a new receipt
+  // pointing at the source ids it consolidated. The consolidation IS
+  // the rollup; no sidecar contract needed. Lineage is verifiable
+  // via request.priorReceiptIds.
+  memory_consolidation: 12,
 } as const;
 
 export type ReceiptType = keyof typeof RECEIPT_TYPES;

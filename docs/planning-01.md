@@ -91,13 +91,30 @@
 
 See `docs/PHASE_B_DISCLOSURES.md` for the full half-baked audit (14 items, 7 closed in this commit, 7 documented honestly).
 
-### 2B. Memory consolidation lifecycle on AgentPassport
-- **Why:** Aishi (showcase #1) wins 2.1 partly on memory consolidation depth — daily → monthly → yearly memory rollups anchored on chain. We currently have receipts but no consolidation tier on `AgentPassportINFT`.
-- **What to add:**
-  - New passport fields or sidecar contract: `dailyMemoryRoot`, `monthlyMemoryRoot`, `yearlyReflection` per agent.
-  - CLI commands: `ivaronix passport consolidate --day | --month | --year` — runs a TEE-attested consolidation pass over the agent's recent receipts and anchors the rollup.
-  - Each consolidation event itself ships a receipt (so you can verify the consolidation itself wasn't fabricated).
-- **Closes:** Criterion 2.1 specifically vs Aishi. Applied to our reviewer personas, this becomes "Adam the term-sheet hawk has reviewed 142 contracts; here is his monthly summary of the patterns he keeps flagging."
+### 2B. Memory consolidation lifecycle on AgentPassport → ✅ DONE (the consolidation IS a receipt — no sidecar contract needed)
+
+Strongest practical implementation per CLAUDE.md §1: instead of redeploying `AgentPassportINFT` with new fields or shipping a sidecar contract, we model the rollup as a new receipt type. The consolidation IS a receipt, signed by the agent's wallet, with the source ids it consumed in `request.priorReceiptIds`. Lineage is verifiable from the receipt body alone — no contract changes, full reuse of the existing chain anchor + passport infrastructure.
+
+- **Schema:** new `RECEIPT_TYPES.memory_consolidation = 12` in `packages/core/src/types.ts`; matching `'memory_consolidation'` in `ReceiptTypeSchema` (`packages/receipts/src/schema.ts`); new optional `request.priorReceiptIds: string[]` to record the lineage. Studio mirror in `apps/studio/src/lib/receipt-labels.ts`. On-chain anchor uses semantically-equivalent slot 4 (memory_access) until ReceiptRegistry slot expansion — same Phase A constraint we used for doc_room_*.
+- **CLI shipped (`apps/cli/src/commands/passport-consolidate.ts`, attached to `passport` parent):**
+  - `ivaronix passport consolidate --day | --month | --year [--no-compute]`
+  - Reads recent on-chain receipts via `ReceiptRegistryClient.findByAgent(agent, 100, lookbackBlocks)`, filters to the window's cutoff timestamp.
+  - When `ZG_API_SECRET` is present (and `--no-compute` is not set), runs `runConsensus({ tier: 'quick' })` on 0G Compute for a real TEE-attested prose summary — `verificationMethod: 'router_flag'`, `--tee-independent` re-verifies via `broker.processResponse`.
+  - Otherwise falls back to a deterministic local synthesis (counts + types + time range). The receipt body records `verificationMethod: 'external-signed'` honestly — no fake TEE claim.
+  - Builds + signs + anchors a consolidation receipt; updates the agent's passport (the consolidation itself bumps `receiptCount` + `trustScore`).
+- **Studio surface (`apps/studio/src/app/agent/[handle]/page.tsx`):** new "memory consolidations" card scans local `.ivaronix/receipts/anchored/*.json` for `type === 'memory_consolidation'` files owned by the displayed wallet. Renders newest-first (max 5) with: window label (Daily / Monthly / Yearly rollup), source receipt count, prose summary headline, ISO timestamp, honest tier badge (`TEE · TIER 1` green for `router_flag` / `LOCAL · TIER 2` muted for `external-signed`), and a `receipt #<id> ↗` link to the on-chain consolidation. Empty state honestly tells the operator the CLI command to run.
+- **End-to-end live proof:**
+  - Source window: 100 receipts in last day (operator wallet `0xaa95…77Ce`)
+  - 0G Compute returned a real 415-char summary (1791 input + 112 output tokens) referencing actual receipt ids like #1223, #1224 — proof the LLM read the live log, not a synthesized stub.
+  - Consolidation receipt id: `rcpt_01KR6BTR5YKM3VMVT3HHY6STWE` → on-chain id **#1252**
+  - Anchor tx: `0x48520ba8bfa181505765d5346aebce3ab18a9b518dd50c69707c4347fcac980f` block 32392344
+  - Passport updated: receiptCount = 1232, trustScore = 1232 (the consolidation itself counts).
+- **§11 e2e visual proof captured** (`screenshots/2b-consolidation/`):
+  - Desktop /agent/<operator>: top, recent activity (with new human receipt-type labels), consolidations card
+  - Desktop /r/1252: top, mid, bottom of the consolidation receipt
+  - Mobile: agent + consolidations + receipt
+  - Brand HTML side-by-side
+- **Verification script:** `scripts/qa/metamask-e2e/verify-2b.ts` — re-runnable, no MetaMask required.
 
 ### 2C. Cron-scheduled skill execution
 - **Why:** 0GClaw (showcase) wins on "active INFT" — cron-scheduled autonomous execution + x402 micropayments. We currently fire on user trigger only.

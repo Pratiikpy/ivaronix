@@ -22,6 +22,7 @@ const RECEIPT_TYPE_LABELS: Record<number, string> = {
   9: 'subscription_skill_exec',
   10: 'doc_room_create',
   11: 'doc_room_read',
+  12: 'memory_consolidation',
 };
 
 export function receiptTypeLabel(code: number | bigint | string): string {
