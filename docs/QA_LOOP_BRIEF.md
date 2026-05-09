@@ -504,7 +504,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · H-2 · processResponse third argument (content) → ✅ DONE (`77eb746`)
 ### N · H-1 + H-4 · attestationHash bound to chat ID + memory store after anchor → ✅ DONE (`1f43a27`)
 ### N · I-1 · /r/[id] VERIFIED chip gated on real verifyClaimed → ✅ DONE (`d57b635`)
-### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`<sha-pending>`)
+### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 - `packages/memory/src/encryption.ts:27-39` — nonce now `randomBytes(NONCE_LEN)`. Closes catastrophic AES-GCM nonce-reuse vulnerability where `sha256(plaintext || Date.now())` collisions in the same millisecond with same plaintext + same key recovered the keystream and forged GHASH tags.
 - 14/14 memory package tests green (7 new K-20 + 7 existing engine).
 - `docs/CRYPTO_NOTES.md` shipped — threat model + RFC 5116 / NIST SP 800-38D reference + fix history. Plus 8 other primitives' threat models documented.

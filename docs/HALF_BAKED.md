@@ -876,7 +876,7 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 
 ## Tier 0 · Critical security (mainnet-blocking)
 
-### N · K-20 · AES-GCM nonce → randomBytes(12)  ·  ✅ FIXED 2026-05-10 (`<sha-pending>`)
+### N · K-20 · AES-GCM nonce → randomBytes(12)  ·  ✅ FIXED 2026-05-10 (`406b86f`)
 - **Code:** `packages/memory/src/encryption.ts:27-39` — `nonce = randomBytes(NONCE_LEN)` (was `createHash('sha256').update(plaintext).update(Date.now())` truncated). Drop `createHash` import; add `randomBytes`.
 - **Compatibility:** existing encrypted blobs remain decryptable since the IV is stored alongside the ciphertext (`nonce || ct || tag` layout). No re-encryption, no migration call.
 - **Tests:** `packages/memory/src/encryption.test.ts` — 7 cases all green:
