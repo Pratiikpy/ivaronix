@@ -63,8 +63,16 @@ let stepNum = 0;
 async function snap(page: Page, label: string) {
   stepNum++;
   const name = `${String(stepNum).padStart(2, '0')}-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`;
-  await page.screenshot({ path: resolve(SHOTS_DIR, name), fullPage: false });
-  console.log(`   📸 ${name}`);
+  if (page.isClosed()) {
+    console.log(`   (skip) ${name} — page already closed`);
+    return;
+  }
+  try {
+    await page.screenshot({ path: resolve(SHOTS_DIR, name), fullPage: false });
+    console.log(`   📸 ${name}`);
+  } catch (e) {
+    console.log(`   (skip) ${name} — ${(e as Error).message.split('\n')[0]}`);
+  }
 }
 
 async function findExtensionId(context: BrowserContext): Promise<string> {
@@ -114,11 +122,28 @@ async function main() {
   }
   await mmPage.bringToFront();
 
-  // Wait for onboarding UI to actually render — extension finishes booting
-  console.log('   waiting for MetaMask onboarding UI to render...');
-  await mmPage.waitForFunction(() => document.body && document.body.innerText && document.body.innerText.length > 50, { timeout: 60_000 }).catch(() => {});
+  // Wait for MetaMask UI to render — extension finishes booting
+  console.log('   waiting for MetaMask UI to render...');
+  // Use Playwright locator (not evaluate — LavaMoat scuttles globalThis).
+  // Wait for any button OR password input to appear (covers both fresh + unlocked).
+  await mmPage.waitForSelector('button, input[type="password"]', { timeout: 60_000 }).catch(() => {});
   await mmPage.waitForTimeout(3_000);
   await snap(mmPage, 'mm-welcome');
+
+  // Detect state: onboarded (Unlock/wallet) vs fresh (welcome).
+  // page.evaluate is blocked by MetaMask's LavaMoat scuttling — use locator API.
+  const isFresh = await mmPage.locator('button:has-text("I have an existing wallet")').first().isVisible({ timeout: 3_000 }).catch(() => false);
+  const isUnlockScreen = !isFresh && await mmPage.locator('button:has-text("Unlock")').first().isVisible({ timeout: 3_000 }).catch(() => false);
+
+  if (!isFresh && isUnlockScreen) {
+    console.log('   MM already onboarded — unlocking with password');
+    await mmPage.locator('input[type="password"]').first().fill(PASSWORD);
+    await mmPage.locator('button:has-text("Unlock"), button:has-text("Sign in")').first().click({ timeout: 8_000 }).catch(() => {});
+    await mmPage.waitForTimeout(3_000);
+    await snap(mmPage, 'mm-unlocked');
+  } else if (!isFresh) {
+    console.log('   MM appears already on wallet UI');
+  } else {
 
   console.log('\n=== driving MetaMask onboarding ===');
   // Welcome screen — accept terms checkbox
@@ -143,14 +168,9 @@ async function main() {
   await mmPage.waitForTimeout(2_000);
   await snap(mmPage, 'mm-after-srp-choice');
 
-  // Wait for the SRP entry page to render (its inputs may take a moment)
+  // Wait for the SRP entry page to render (textarea visible)
   console.log('   waiting for SRP entry page...');
-  await mmPage.waitForFunction(() => {
-    const inputs = document.querySelectorAll('input');
-    if (inputs.length >= 12) return true;
-    const txt = document.body && document.body.innerText ? document.body.innerText : '';
-    return /secret recovery phrase|import.*recovery/i.test(txt);
-  }, { timeout: 30_000 }).catch(() => {});
+  await mmPage.locator('textarea').first().waitFor({ state: 'visible', timeout: 30_000 });
   await mmPage.waitForTimeout(2_000);
   await snap(mmPage, 'mm-srp-page-loaded');
 
@@ -172,10 +192,7 @@ async function main() {
   // Set password — MM v13.30 password page uses bare <input> elements (no test-id).
   console.log('   setting password...');
   // Wait for the password page to fully render
-  await mmPage.waitForFunction(() => {
-    const t = document.body && document.body.innerText ? document.body.innerText : '';
-    return /Create new password|MetaMask password/i.test(t);
-  }, { timeout: 30_000 }).catch(() => {});
+  await mmPage.locator('input[type="password"]').first().waitFor({ state: 'visible', timeout: 30_000 });
   await mmPage.waitForTimeout(1_000);
 
   // Use the two visible password fields (first = new, second = confirm)
@@ -220,8 +237,8 @@ async function main() {
     await mmPage.waitForTimeout(4_000);
   }
   await snap(mmPage, 'mm-wallet-home');
-  console.log('   skipping per-account import + network add (selectors changed in v13.30)');
-  console.log('   connecting Studio with the onboarded MM wallet directly');
+  console.log('   onboarded — proceeding to Studio connect');
+  } // end fresh-onboarding else branch
 
   console.log('\n=== Studio: connect wallet on /onboard ===');
   const studio = await context.newPage();
@@ -229,27 +246,90 @@ async function main() {
   await studio.waitForTimeout(2_000);
   await snap(studio, 'studio-onboard-pre');
 
+  // Helper: walk a MM popup through any number of "Next" / "Connect" / "Confirm" /
+  // "Approve" / "Switch network" / "Got it" steps until it closes or stalls.
+  async function drivePopup(popup: Page, label: string, maxSteps = 12): Promise<void> {
+    await popup.bringToFront();
+    await popup.waitForLoadState('domcontentloaded').catch(() => {});
+    await popup.waitForTimeout(1_500);
+    await snap(popup, `${label}-open`);
+    const ctaTexts = ['Connect', 'Confirm', 'Approve', 'Switch network', 'Switch', 'Got it', 'Continue', 'Next', 'Sign'];
+    for (let step = 0; step < maxSteps; step++) {
+      if (popup.isClosed()) {
+        console.log(`   ${label}: popup closed after ${step} steps`);
+        return;
+      }
+      let clicked = false;
+      for (const txt of ctaTexts) {
+        const btn = popup.locator(`button:has-text("${txt}"):not([disabled])`).first();
+        const visible = await btn.isVisible({ timeout: 1_000 }).catch(() => false);
+        if (visible) {
+          console.log(`   ${label}: step ${step} clicking "${txt}"`);
+          await btn.click({ timeout: 5_000 }).catch(() => {});
+          clicked = true;
+          break;
+        }
+      }
+      if (!clicked) {
+        console.log(`   ${label}: no actionable CTA at step ${step}, breaking`);
+        break;
+      }
+      await popup.waitForTimeout(2_000).catch(() => {});
+      if (!popup.isClosed()) await snap(popup, `${label}-step-${step}`);
+    }
+  }
+
+  // Listen for any popup that opens during the connect click.
+  const popupPromise = context.waitForEvent('page', { timeout: 15_000 }).catch(() => null);
+
   // Click "Connect wallet" / "Connect injected wallet"
   const connectBtn = studio.getByRole('button', { name: /Connect.*wallet|Connect injected/i }).first();
   await connectBtn.click({ timeout: 10_000 });
 
-  // MetaMask connect popup will open — find and accept
-  await studio.waitForTimeout(2_000);
-  const mmPopup = context.pages().find((p) => p.url().includes('notification.html') || p.url().includes('connect-hardware'));
-  if (mmPopup) {
-    await mmPopup.bringToFront();
-    await snap(mmPopup, 'mm-connect-popup');
-    await mmPopup.getByRole('button', { name: /Next|Connect/i }).first().click({ timeout: 8_000 }).catch(() => {});
-    await mmPopup.getByRole('button', { name: /Connect/i }).first().click({ timeout: 8_000 }).catch(() => {});
+  let popup = await popupPromise;
+  // Fallback: scan existing pages for an MM notification page that may already be open.
+  if (!popup) {
+    popup = context.pages().find((p) => p.url().includes(extId) && p !== mmPage && p !== studio) ?? null;
+  }
+  if (popup) {
+    await drivePopup(popup, 'mm-connect-popup');
+  } else {
+    console.log('   WARN: no MM popup detected after Connect click');
   }
 
   await studio.bringToFront();
-  await studio.waitForTimeout(3_000);
+  await studio.waitForTimeout(2_000);
+  await snap(studio, 'studio-onboard-after-connect');
+
+  // The site likely also asks to switch to 0G Galileo (chainId 16602) — that
+  // triggers a second popup. Listen for it on the next interaction.
+  const switchPromise = context.waitForEvent('page', { timeout: 8_000 }).catch(() => null);
+  // Trigger anything that might prompt a chain switch — re-clicking Connect is harmless if already connected.
+  await studio.waitForTimeout(2_000);
+  const switchPopup = await switchPromise;
+  if (switchPopup) {
+    await drivePopup(switchPopup, 'mm-switch-popup');
+    await studio.bringToFront();
+  }
+
+  await studio.waitForTimeout(2_000);
   await snap(studio, 'studio-onboard-connected');
 
-  // Tour the routes
+  // Tour the routes — wait for wagmi rehydration on each.
+  // The connected state is detected by the header showing a 0x... address
+  // chip (or "Disconnect") instead of "Connect wallet". Give it up to 8s.
   for (const route of ['/', '/skills', '/global', '/dashboard', '/memory', '/r/280']) {
     await studio.goto(`${STUDIO}${route}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    // Wait for wagmi autoConnect to rehydrate (header switches Connect → 0x...)
+    await studio
+      .waitForFunction(
+        () => {
+          const txt = document.body && document.body.innerText ? document.body.innerText : '';
+          return /0x[a-f0-9]{4}.*0x[a-f0-9]{4}|Disconnect/i.test(txt);
+        },
+        { timeout: 8_000 }
+      )
+      .catch(() => {});
     await studio.waitForTimeout(1_500);
     await snap(studio, `studio-connected${route.replace(/[\/]/g, '-')}`);
   }
