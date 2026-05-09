@@ -12,16 +12,22 @@
 
 ## Tier 1 · Locked, ship first
 
-### 1A. Privileged-document hero copy on home page
-- **Why:** closes Criterion 2.3 (Product Value) instantly. Without it the front door is still abstract.
-- **Persona:** deal lawyer / founder / DD analyst holding paper covered by NDA, attorney-client privilege, regulation, or counterparty confidentiality.
-- **Five candidate headlines** (pick one, all editorial-voice compatible):
-  1. *"AI review for the documents you can't paste into ChatGPT."*
-  2. *"The audit that disappears. The receipt that doesn't."*
-  3. *"Burn the evidence. Keep the proof."*
-  4. *"Consensus on confidential. Receipts that prove it."*
-  5. *"AI for the documents that can't leave your hands."*
-- **Estimated:** ~15 min once headline is locked. Wire on home page, screenshot at 1440×900 + 375×812, lay side-by-side against `brand/Ivaronix.html`.
+### 1A. Privileged-document hero copy on home page → ✅ DONE
+
+- **Headline shipped:** *"AI review for the documents you* **can't paste** *into ChatGPT."* (italic accent on `can't paste` via Instrument Serif). Picked candidate #1 because it names the substitution-blocker (ChatGPT) most concretely; per §12.5 genie rule, intent over letter — user said "go finish" without naming a headline, so I shipped the strongest concrete option. Trivial to swap to #2/#3/#4/#5 if requested (one-line edit in `apps/studio/src/app/page.tsx:113-115`).
+- **Sub-headline shipped:** "Drop a contract, NDA, or term sheet covered by privilege or counterparty confidentiality. Burn Mode encrypts it; the session key is destroyed after the run. The audit ships an Action Receipt anchored on 0G Chain with the key fingerprint inside — **anyone can independently re-verify it from any machine**, even after the document is gone."
+- **CTAs shipped:** primary "Run a private audit →" → `/onboard`. Secondary "See a sample receipt" → `/r/1004` (the FULLY VERIFIED TIER 1 receipt).
+- **Page metadata:** `<title>` and `openGraph.title` both updated to match.
+- **§11 e2e proof captured** (`screenshots/hero/`):
+  - `01-studio-home-desktop.png` — disconnected state, 1440×900
+  - `02-studio-home-connected.png` — connected via real MM popup, header chip `0xaa95…77Ce`
+  - `03-studio-sample-receipt.png` — `/r/1004` lands cleanly from secondary CTA
+  - `04-studio-onboard-from-cta.png` — `/onboard` lands cleanly from primary CTA
+  - `05-studio-home-mobile.png` — 375×812 mobile, italic accent preserved
+  - `06-brand-html-desktop.png` + `07-brand-html-mobile.png` — side-by-side reference
+  - Plus `.webm` video recording of the full session.
+- **Computed-style audit (§10 visual contract):** h1 fontSize 80px, fontFamily Outfit, body bg `rgb(250,250,247)` = `#FAFAF7` paper, body ink `rgb(10,10,10)` = `#0A0A0A`, header height 64px, header backdrop `saturate(1.5) blur(20px)`. All tokens match brand contract.
+- **Verification script:** `scripts/qa/metamask-e2e/verify-hero.ts` — re-runnable end-to-end with real MM extension, both viewports, side-by-side capture.
 
 ### 1B. Confidential Data Room — see §2 below
 - See full spec in §2.

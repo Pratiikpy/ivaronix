@@ -103,31 +103,33 @@ export default async function HomePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             <h1
               style={{
-                fontSize: 88,
-                lineHeight: 0.96,
+                fontSize: 80,
+                lineHeight: 0.98,
                 margin: 0,
                 letterSpacing: '-2px',
                 fontWeight: 700,
               }}
             >
-              <span>Catch the risks.</span>
-              <br />
-              <span className="italic-display" style={{ fontWeight: 400 }}>Keep the receipts.</span>
+              <span>AI review for the documents you </span>
+              <span className="italic-display" style={{ fontWeight: 400 }}>can&apos;t paste</span>
+              <span> into ChatGPT.</span>
             </h1>
-            <p style={{ fontSize: 19, lineHeight: 1.5, color: 'var(--color-muted)', maxWidth: 540, margin: 0 }}>
-              AI agents that double-check themselves on 0G. Private memory, permissioned skills,
-              adjudicated consensus, action receipts — all anchored on chain.{' '}
+            <p style={{ fontSize: 19, lineHeight: 1.5, color: 'var(--color-muted)', maxWidth: 580, margin: 0 }}>
+              Drop a contract, NDA, or term sheet covered by privilege or counterparty confidentiality.
+              Burn Mode encrypts it; the session key is destroyed after the run. The audit ships an
+              Action Receipt anchored on 0G Chain with the key fingerprint inside —{' '}
               <strong style={{ color: 'var(--color-fg)', fontWeight: 600 }}>
-                One demo proves the entire OS.
+                anyone can independently re-verify it from any machine
               </strong>
+              , even after the document is gone.
             </p>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link href="/onboard" className="btn-primary" style={{ textDecoration: 'none' }}>
-                Try the killer demo →
+                Run a private audit →
               </Link>
-              <Link href="/skills" className="btn-secondary" style={{ textDecoration: 'none' }}>
-                Browse skills
+              <Link href="/r/1004" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                See a sample receipt
               </Link>
             </div>
 

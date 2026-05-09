@@ -29,12 +29,12 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Ivaronix — Catch the risks. Keep the receipts.',
-  description: 'AI agents that double-check themselves on 0G.',
+  title: "Ivaronix — AI review for the documents you can't paste into ChatGPT.",
+  description: 'Burn Mode encrypts it. The audit ships a receipt anyone can verify from any machine — even after the document is gone.',
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3300'),
   openGraph: {
-    title: 'Ivaronix',
-    description: 'AI agents that double-check themselves on 0G.',
+    title: "Ivaronix — AI review for the documents you can't paste into ChatGPT.",
+    description: 'Burn Mode encrypts it. The audit ships a receipt anyone can verify from any machine — even after the document is gone.',
     type: 'website',
   },
 };
