@@ -9,6 +9,7 @@
  */
 import { NextResponse } from 'next/server';
 import { SiweMessage } from 'siwe';
+import { z } from 'zod';
 import {
   consumeNonce,
   issueSession,
@@ -19,10 +20,21 @@ import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit
 
 export const dynamic = 'force-dynamic';
 
-interface VerifyBody {
-  message?: string;
-  signature?: string;
-}
+/**
+ * Runtime body validation per HALF_BAKED §J-2 (sweep 149). Caps:
+ *   message    1-4096 chars (SIWE messages run ~300-500 chars; 4 KB
+ *              is roomy without enabling a giant-message DoS). The
+ *              SiweMessage constructor parses below, so structural
+ *              correctness is checked twice — Zod caps the wire size,
+ *              SiweMessage validates the EIP-4361 shape.
+ *   signature  130-200 hex chars, leading 0x. A standard ECDSA sig
+ *              is 0x + 130 hex (132 chars total); range accommodates
+ *              compact + recoverable forms.
+ */
+const VerifyBodySchema = z.object({
+  message: z.string().min(1).max(4096),
+  signature: z.string().regex(/^0x[0-9a-fA-F]{130,260}$/),
+});
 
 export async function POST(req: Request) {
   // Per-IP cap on the 'siwe-handshake' bucket — verify is the CPU-heavy
@@ -37,15 +49,23 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: VerifyBody;
+  let rawBody: unknown;
   try {
-    body = (await req.json()) as VerifyBody;
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
-  if (!body.message || !body.signature) {
-    return NextResponse.json({ error: 'message and signature required' }, { status: 400 });
+  const parsedBody = VerifyBodySchema.safeParse(rawBody);
+  if (!parsedBody.success) {
+    return NextResponse.json(
+      {
+        error: 'invalid body',
+        issues: parsedBody.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      },
+      { status: 400 },
+    );
   }
+  const body = parsedBody.data;
 
   const cookieNonce = req.headers.get('cookie')?.match(new RegExp(`${NONCE_COOKIE_NAME}=([^;]+)`))?.[1];
   if (!cookieNonce) {
