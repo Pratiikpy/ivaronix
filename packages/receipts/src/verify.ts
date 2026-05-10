@@ -101,16 +101,50 @@ export function verifyClaimed(receiptJson: unknown): VerificationResult {
     return { checks, state: 'INVALID', receiptId: receipt.id };
   }
 
-  if (receipt.signature.signer.toLowerCase() !== receipt.agent.ownerWallet.toLowerCase()) {
+  // Tier-aware signer ↔ ownerWallet equality check. Closes HALF_BAKED
+  // §I-3 / §K-14 (sweep 156).
+  //
+  // The receipt's `agent.signedBy` field declares the trust tier:
+  //   - 'operator'                    → signer MUST equal ownerWallet
+  //                                     (operator owns both, legacy default)
+  //   - 'user-direct'                 → signer MUST equal ownerWallet
+  //                                     (browser-side SIWE end-state)
+  //   - 'operator-on-behalf-of-user'  → signer ≠ ownerWallet by design
+  //                                     (W9 trust tier: operator anchors
+  //                                     a receipt attributing the action
+  //                                     to a user wallet who authenticated
+  //                                     via SIWE before /api/run accepted
+  //                                     the request).
+  //
+  // Pre-sweep-156 the equality check was unconditional, so every
+  // 'operator-on-behalf-of-user' receipt failed verification with state
+  // INVALID — the project's own verifier rejected its own emitted W9
+  // receipts. HALF_BAKED §I-3 ranked this as "most embarrassing finding."
+  //
+  // For the delegated tier we accept the inequality as honest; the trust
+  // gradient (operator-signer vs end-user-signer) is recorded in the
+  // receipt body. A future enhancement can cross-check the operator's
+  // signing wallet against ReceiptRegistry's authorizedRecorders or the
+  // AgentPassportINFT V2 authorizedRelayers list — currently the
+  // operator's identity is captured by signature.signer alone.
+  const signedBy = receipt.agent.signedBy ?? 'operator';
+  if (signedBy === 'operator-on-behalf-of-user') {
     checks.push({
       name: 'signature',
-      pass: false,
-      detail: `signer ${receipt.signature.signer} != agent.ownerWallet ${receipt.agent.ownerWallet}`,
+      pass: true,
+      detail: `delegated · signer ${receipt.signature.signer} (operator) signed on behalf of ${receipt.agent.ownerWallet} (user)`,
     });
-    return { checks, state: 'INVALID', receiptId: receipt.id };
+  } else {
+    if (receipt.signature.signer.toLowerCase() !== receipt.agent.ownerWallet.toLowerCase()) {
+      checks.push({
+        name: 'signature',
+        pass: false,
+        detail: `signer ${receipt.signature.signer} != agent.ownerWallet ${receipt.agent.ownerWallet} (signedBy=${signedBy} requires equality)`,
+      });
+      return { checks, state: 'INVALID', receiptId: receipt.id };
+    }
+    checks.push({ name: 'signature', pass: true });
   }
-
-  checks.push({ name: 'signature', pass: true });
 
   return {
     checks,

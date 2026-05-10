@@ -2,12 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Wallet } from 'ethers';
 import { sha256HexAsync } from '@ivaronix/core';
-import { buildReceipt, signReceipt, defaultChainAnchor } from './builder.js';
+import { buildReceipt, signReceipt, defaultChainAnchor, type BuildReceiptInput } from './builder.js';
 import { verifyClaimed } from './verify.js';
 
 const TEST_REGISTRY = '0x000000000000000000000000000000000000bEEF' as `0x${string}`;
 
-function fixtureInput(walletAddress: string) {
+function fixtureInput(walletAddress: string): BuildReceiptInput {
   return {
     type: 'doc_ask' as const,
     agent: {
@@ -134,6 +134,57 @@ test('verifyClaimed rejects signature from a different wallet', async () => {
 
   const draft = buildReceipt(fixtureInput(owner.address));
   const signed = await signReceipt(draft, attacker); // signed by wrong key
+
+  const result = verifyClaimed(signed);
+  assert.equal(result.state, 'INVALID');
+  assert.equal(result.checks.find((c) => c.name === 'signature')?.pass, false);
+});
+
+test('verifyClaimed accepts operator-on-behalf-of-user · I-3/K-14 closure', async () => {
+  // The W9 trust tier: operator signs on behalf of an authenticated user.
+  // signer != ownerWallet BY DESIGN — operator's wallet anchors a receipt
+  // attributing the action to the user's wallet (verified via SIWE at
+  // /api/run before the receipt was created).
+  const operator = Wallet.createRandom();
+  const userWallet = Wallet.createRandom();
+
+  const input = fixtureInput(userWallet.address);
+  input.agent.signedBy = 'operator-on-behalf-of-user';
+  const draft = buildReceipt(input);
+  const signed = await signReceipt(draft, operator); // operator signs
+
+  const result = verifyClaimed(signed);
+  assert.equal(result.state, 'CLAIMED');
+  const sigCheck = result.checks.find((c) => c.name === 'signature');
+  assert.equal(sigCheck?.pass, true);
+  // Detail records the trust gradient honestly.
+  assert.match(sigCheck?.detail ?? '', /delegated/);
+});
+
+test('verifyClaimed rejects signer != ownerWallet when signedBy=operator (legacy)', async () => {
+  // Without the signedBy override, the equality check still fires.
+  const owner = Wallet.createRandom();
+  const attacker = Wallet.createRandom();
+
+  const input = fixtureInput(owner.address);
+  input.agent.signedBy = 'operator';
+  const draft = buildReceipt(input);
+  const signed = await signReceipt(draft, attacker);
+
+  const result = verifyClaimed(signed);
+  assert.equal(result.state, 'INVALID');
+  assert.equal(result.checks.find((c) => c.name === 'signature')?.pass, false);
+});
+
+test('verifyClaimed rejects signer != ownerWallet when signedBy=user-direct', async () => {
+  // The full-SIWE end-state requires the user's own wallet to sign.
+  const user = Wallet.createRandom();
+  const operator = Wallet.createRandom();
+
+  const input = fixtureInput(user.address);
+  input.agent.signedBy = 'user-direct';
+  const draft = buildReceipt(input);
+  const signed = await signReceipt(draft, operator); // operator wrongly signed for a user-direct claim
 
   const result = verifyClaimed(signed);
   assert.equal(result.state, 'INVALID');
