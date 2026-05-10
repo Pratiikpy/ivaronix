@@ -96,8 +96,15 @@ scripts/qa/metamask-e2e/mm/
 # Python cache from scripts/verifier-py/
 scripts/verifier-py/__pycache__/
 
-# Test target scratch files
-test-targets/
+# Test target scratch files (operator's local docs / receipts / etc.)
+test-targets/*
+# Exception: dd-batch/ holds the 3 vendor-agreement fixtures for the
+# `ivaronix doc bulk` flow (planning-01 §4B · DD-analyst batch audit).
+# Tracked, not ignored. The pre-sweep-85 gitignore was a single
+# `test-targets/` line that contradicted git ls-files (which had the
+# 3 dd-batch/ fixtures tracked anyway).
+!test-targets/dd-batch/
+!test-targets/dd-batch/**
 
 # _archive/ holds pre-v2 planning docs (kept for history; do not edit).
 # Tracked, not ignored — the README docs grid + planning-003 §A.5.X
