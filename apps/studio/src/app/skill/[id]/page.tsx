@@ -177,7 +177,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
           {onchainHash && (
             <div className="card">
               <div className="section-label">on-chain anchor</div>
-              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 11 }}>
+              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 12px', fontSize: 11 }}>
                 <dt style={{ color: 'var(--color-muted)' }}>hash</dt>
                 <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{onchainHash}</dd>
                 <dt style={{ color: 'var(--color-muted)' }}>creator</dt>
@@ -197,7 +197,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
           {skill.manifest.og.creator?.fee_split && (
             <div className="card">
               <div className="section-label">fee split (track 3)</div>
-              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12 }}>
+              <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 12px', fontSize: 12 }}>
                 <dt style={{ color: 'var(--color-muted)' }}>creator</dt>
                 <dd style={{ margin: 0 }}>
                   {(skill.manifest.og.creator.fee_split.creator / 100).toFixed(2)}%
@@ -221,7 +221,7 @@ export default async function SkillDetailPage({ params }: { params: Promise<{ id
 
           <div className="card">
             <div className="section-label">reputation</div>
-            <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12 }}>
+            <dl style={{ marginTop: 12, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 12px', fontSize: 12 }}>
               <dt style={{ color: 'var(--color-muted)' }}>on pass</dt>
               <dd style={{ margin: 0 }}>+{reputation.on_pass.trustScore} trust · +{reputation.on_pass.receiptCount} receipts</dd>
               <dt style={{ color: 'var(--color-muted)' }}>on fail</dt>

@@ -155,7 +155,7 @@ export default async function DataRoomPage({
         {/* Manifest card */}
         <div className="card">
           <div className="section-label" style={{ marginBottom: 12 }}>Manifest</div>
-          <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+          <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 16px', fontSize: 13, margin: 0 }}>
             <dt style={{ color: 'var(--color-muted)' }}>roomId</dt>
             <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{manifest.roomId}</dd>
             <dt style={{ color: 'var(--color-muted)' }}>manifest hash</dt>
@@ -203,7 +203,7 @@ export default async function DataRoomPage({
             Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side
             disclosure; local-machine compromise is out of scope.
           </p>
-          <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+          <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 16px', fontSize: 13, margin: 0 }}>
             <dt style={{ color: 'var(--color-muted)' }}>encryption</dt>
             <dd className="mono" style={{ margin: 0 }}>aes-256-gcm · header detected</dd>
             <dt style={{ color: 'var(--color-muted)' }}>key fingerprint</dt>

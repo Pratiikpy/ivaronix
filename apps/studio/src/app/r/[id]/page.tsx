@@ -306,7 +306,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
         <dl
           style={{
             display: 'grid',
-            gridTemplateColumns: 'auto 1fr',
+            gridTemplateColumns: 'auto minmax(0, 1fr)',
             gap: '12px 24px',
             fontSize: 14,
             borderTop: '1px solid var(--color-hairline)',

@@ -98,7 +98,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 4 }}>
                       ≥ {tierFor(Number(data.passport.trustScore)).threshold} trust
                     </p>
-                    <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 12px', fontSize: 12, marginTop: 16 }}>
+                    <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 12px', fontSize: 12, marginTop: 16 }}>
                       <dt style={{ color: 'var(--color-muted)' }}>tokenId</dt>
                       <dd style={{ margin: 0 }}>{data.passport.tokenId}</dd>
                       <dt style={{ color: 'var(--color-muted)' }}>trust</dt>

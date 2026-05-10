@@ -146,7 +146,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
         {/* Identity card */}
         <div className="card">
           <div className="section-label" style={{ marginBottom: 12 }}>Identity</div>
-          <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+          <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 16px', fontSize: 13, margin: 0 }}>
             <dt style={{ color: 'var(--color-muted)' }}>delegate id</dt>
             <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{manifest.delegateId}</dd>
             <dt style={{ color: 'var(--color-muted)' }}>name</dt>
@@ -201,7 +201,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
             <code className="mono">{shortAddr(manifest.delegateAddress)}</code>, not{' '}
             <code className="mono">{shortAddr(manifest.ownerUserWallet)}</code>.
           </p>
-          <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+          <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '6px 16px', fontSize: 13, margin: 0 }}>
             <dt style={{ color: 'var(--color-muted)' }}>phase</dt>
             <dd style={{ margin: 0 }}>
               <span className="badge" style={{ background: '#fff7d6', borderColor: '#e8c800', color: '#7a5d00' }}>

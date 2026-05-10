@@ -76,6 +76,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-studio-security-headers/, // HALF_BAKED §G Tier-A item 6 · X-Frame-Options + nosniff + Referrer-Policy + HSTS (sweep 130)
       /^verify-privacy-terms-routes/, // HALF_BAKED §G Tier-A item 7 · /privacy + /terms routes + footer links (sweep 131)
       /^verify-share-surface-fonts/, // HALF_BAKED §G Tier-A item 8 · brand fonts on /r/[id]/print + /embed/r/[id] (sweep 132)
+      /^verify-no-bare-auto-1fr/, // HALF_BAKED §G Tier-A item 9 · grid `auto 1fr` mobile-overflow (sweep 133)
     ],
   },
   'studio-live': {

@@ -180,7 +180,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
 
           <div style={{ marginTop: 24 }}>
             <div className="section-label">profile</div>
-            <dl style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: 12, marginTop: 8 }}>
+            <dl style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px 12px', fontSize: 12, marginTop: 8 }}>
               <dt style={{ color: 'var(--color-muted)' }}>tokenId</dt>
               <dd style={{ margin: 0 }}>{profile.tokenId.toString()}</dd>
               <dt style={{ color: 'var(--color-muted)' }}>trust</dt>

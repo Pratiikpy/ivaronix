@@ -189,7 +189,7 @@ const headlineStyle: React.CSSProperties = {
 
 const detailGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'auto 1fr',
+  gridTemplateColumns: 'auto minmax(0, 1fr)',
   gap: '6px 16px',
   fontSize: 12,
   paddingTop: 12,

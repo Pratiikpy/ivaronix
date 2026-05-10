@@ -266,7 +266,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
         <p className="mono" style={{ fontSize: 12, marginTop: 4, wordBreak: 'break-all' }}>{address}</p>
 
         <div className="section-label" style={{ marginTop: 24 }}>contracts</div>
-        <dl style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px', fontSize: 11 }}>
+        <dl style={{ marginTop: 8, display: 'grid', gridTemplateColumns: 'auto minmax(0, 1fr)', gap: '4px 12px', fontSize: 11 }}>
           <dt style={{ color: 'var(--color-muted)' }}>capability</dt>
           <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>{shortAddr(capabilityAddr)}</dd>
           <dt style={{ color: 'var(--color-muted)' }}>memory log</dt>
