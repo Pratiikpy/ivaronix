@@ -477,6 +477,75 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               )}
             </>
           )}
+
+          {/* Efficiency-game policy chip per planning-003 §A.4.4. The
+              receipt's `execution.consensus.policyApplied` records what
+              aggregation policy ran; `dissents` is how many reviewers
+              disagreed. STRICT/BALANCED/LENIENT/WEIGHTED labels match
+              the Studio Run-panel "How strict?" dropdown options so a
+              reviewer reading /r/<id> sees the same vocabulary the
+              user picked. */}
+          {(() => {
+            const exec = local?.execution as { consensus?: { policyApplied?: string; dissents?: number } } | undefined;
+            const policy = exec?.consensus?.policyApplied;
+            const dissents = exec?.consensus?.dissents;
+            if (!policy) return null;
+            const bucket =
+              policy === 'unanimous' ? 'STRICT'
+              : policy === 'majority' ? 'BALANCED'
+              : policy === 'first-objection' ? 'LENIENT'
+              : 'WEIGHTED';
+            const efficiency =
+              policy === 'unanimous' ? 95
+              : policy === 'majority' ? 80
+              : policy === 'first-objection' ? 70
+              : 85;
+            return (
+              <>
+                <dt style={{ color: 'var(--color-muted)' }}>efficiency</dt>
+                <dd style={{ margin: 0, fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      border: '1px solid var(--color-verified)',
+                      background: 'var(--color-verified-bg)',
+                      color: '#0e6428',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    EFFICIENCY {efficiency}%
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: 11,
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                      border: '1px solid var(--color-hairline)',
+                      background: 'var(--color-card)',
+                      color: 'var(--color-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {bucket}
+                  </span>
+                  {typeof dissents === 'number' && (
+                    <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
+                      {dissents} dissent{dissents === 1 ? '' : 's'}
+                    </span>
+                  )}
+                  <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
+                    aggregation policy applied to reviewer outputs · planning-003 §A.4.4
+                  </span>
+                </dd>
+              </>
+            );
+          })()}
         </dl>
 
         {citations.length > 0 && (

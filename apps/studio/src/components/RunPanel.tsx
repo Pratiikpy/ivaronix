@@ -5,7 +5,16 @@ import { useDropzone } from 'react-dropzone';
 import { useAccount } from 'wagmi';
 import { FourLightRow } from './FourLightRow';
 
-type Tier = 'quick' | 'standard' | 'high-stakes';
+type Tier = 'quick' | 'standard' | 'high-stakes' | 'audit';
+/**
+ * Aggregation policy override per planning-003 §A.4.4 (zer0Gig
+ * Efficiency Game). User-facing labels:
+ *   STRICT   = unanimous       (every reviewer must approve)
+ *   BALANCED = majority        (skill default for most flows)
+ *   LENIENT  = first-objection (any hard reject blocks; risks alone don't)
+ *   AUTO     = use the skill's manifest-declared default
+ */
+type PolicyOverride = 'AUTO' | 'STRICT' | 'BALANCED' | 'LENIENT';
 
 const SKILLS: { id: string; label: string; defaultTier: Tier }[] = [
   { id: 'private-doc-review', label: 'private-doc-review', defaultTier: 'standard' },
@@ -59,6 +68,13 @@ interface RunResponse {
 
 const EXPLORER_TX = (h: string) => `https://chainscan-galileo.0g.ai/tx/${h}`;
 
+/** UI label → policy name on the wire (planning-003 §A.4.4). */
+const POLICY_LABEL_TO_NAME: Record<Exclude<PolicyOverride, 'AUTO'>, 'unanimous' | 'majority' | 'first-objection'> = {
+  STRICT: 'unanimous',
+  BALANCED: 'majority',
+  LENIENT: 'first-objection',
+};
+
 export function RunPanel() {
   // W9 — capture connected wallet to send with /api/run so the receipt's
   // agent.ownerWallet records the user, not the operator.
@@ -75,6 +91,7 @@ export function RunPanel() {
     }
   }, []);
   const [tier, setTier] = useState<Tier>('quick');
+  const [policyOverride, setPolicyOverride] = useState<PolicyOverride>('AUTO');
   const [receipt, setReceipt] = useState<boolean>(true);
   const [burn, setBurn] = useState<boolean>(false);
   const [contentText, setContentText] = useState<string>('');
@@ -89,9 +106,15 @@ export function RunPanel() {
     'standard': { roles: 3, roleNames: ['analyst', 'critic', 'judge'], cost: '~0.0001 OG' },
     'high-stakes': {
       roles: 5,
-      roleNames: ['analyst', 'critic', 'judge', 'risk-reviewer', 'evidence-checker'],
+      roleNames: ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'judge'],
       cost: '~0.0003 OG',
-      warn: '5 roles fire concurrently — public testnet quota is 10 RPM, may rate-limit.',
+      warn: '5 roles fire sequentially — public testnet quota is 10 RPM, may rate-limit.',
+    },
+    'audit': {
+      roles: 6,
+      roleNames: ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'red-team-critic', 'judge'],
+      cost: '~0.0007 OG',
+      warn: '6 roles fire sequentially — premium adversarial-audit tier.',
     },
   };
   const tierMeta = TIER_META[tier];
@@ -125,6 +148,10 @@ export function RunPanel() {
         body: JSON.stringify({
           skillId,
           tier,
+          // Policy override per planning-003 §A.4.4. AUTO = use the
+          // skill's manifest-declared default; STRICT/BALANCED/LENIENT
+          // map to unanimous/majority/first-objection respectively.
+          ...(policyOverride !== 'AUTO' ? { policy: POLICY_LABEL_TO_NAME[policyOverride] } : {}),
           receipt,
           burn,
           contentText,
@@ -246,6 +273,30 @@ export function RunPanel() {
             <option value="quick">Quick</option>
             <option value="standard">Standard</option>
             <option value="high-stakes">High-Stakes</option>
+            <option value="audit">Audit</option>
+          </select>
+        </label>
+
+        {/* "How strict?" override per planning-003 §A.4.4 (zer0Gig Efficiency
+            Game). AUTO honours the skill manifest's `og.consensus.policy`.
+            STRICT/BALANCED/LENIENT map to unanimous/majority/first-objection.
+            Disabled for `quick` tier where there's only one reviewer (the
+            policy layer is meaningless on a single-reviewer run). */}
+        <label
+          title="Pick the aggregation policy for the reviewer outputs. AUTO uses the skill's declared default. STRICT = every reviewer must approve. BALANCED = majority. LENIENT = pass unless someone hard-rejects."
+          style={{ fontSize: 13, color: 'var(--color-muted)' }}
+        >
+          how strict?{' '}
+          <select
+            value={policyOverride}
+            onChange={(e) => setPolicyOverride(e.target.value as PolicyOverride)}
+            disabled={tier === 'quick'}
+            style={{ marginLeft: 6, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13, opacity: tier === 'quick' ? 0.5 : 1 }}
+          >
+            <option value="AUTO">Auto (skill default)</option>
+            <option value="STRICT">Strict (unanimous)</option>
+            <option value="BALANCED">Balanced (majority)</option>
+            <option value="LENIENT">Lenient (any reject blocks)</option>
           </select>
         </label>
 

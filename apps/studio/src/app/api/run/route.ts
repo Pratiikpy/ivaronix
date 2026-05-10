@@ -14,6 +14,14 @@ interface RunBody {
   question: string;
   contentText: string;
   tier?: ConsensusTier;
+  /**
+   * Aggregation-policy override per planning-003 §A.4.4 (zer0Gig
+   * Efficiency Game). When unset, the skill manifest's
+   * `og.consensus.policy` default applies. Values must match the
+   * `ConsensusPolicy` enum exactly: `unanimous` / `majority` /
+   * `first-objection` / `weighted`.
+   */
+  policy?: 'unanimous' | 'majority' | 'first-objection' | 'weighted';
   receipt?: boolean;
   burn?: boolean;
   /**
@@ -119,6 +127,11 @@ export async function POST(req: Request) {
       context: body.contentText,
       userPrompt: body.question,
       tier: body.tier,
+      // Policy override per planning-003 §A.4.4. Threaded into
+      // runConsensus → applyPolicy so the receipt's
+      // `execution.consensus.policyApplied` reflects what the user
+      // chose (or the skill default when unset).
+      ...(body.policy ? { policy: body.policy } : {}),
       receipt: !!body.receipt,
       burn: !!body.burn,
       receiptType: 'doc_ask',

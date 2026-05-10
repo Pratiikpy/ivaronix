@@ -94,6 +94,14 @@ export interface PipelineInput {
    * wired through Studio's run path.
    */
   delegatedOwnerWallet?: `0x${string}`;
+  /**
+   * Aggregation-policy override (planning-003 §A.4.4 · zer0Gig
+   * Efficiency Game). When unset, the loaded skill's
+   * `og.consensus.policy` default applies. Forwarded to runConsensus
+   * which records the applied policy on the receipt's
+   * `execution.consensus.policyApplied` field.
+   */
+  policy?: 'unanimous' | 'majority' | 'first-objection' | 'weighted';
 }
 
 export interface PipelineOutput {
@@ -324,6 +332,12 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     // not any leftover rotations from prior calls on the same
     // long-lived keyring instance.
     keyring.drainRotations();
+    // Aggregation-policy resolution per planning-003 §A.4.4:
+    // explicit input.policy (Studio "How strict?" override) wins; else
+    // the skill manifest's declared default; else 'majority' (the
+    // pre-A.4.4 implicit default that runConsensus uses when policy is
+    // absent).
+    const resolvedPolicy = input.policy ?? skill.manifest.og.consensus.policy ?? 'majority';
     consensus = await runConsensus({
       tier,
       keyring,
@@ -331,6 +345,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       context: enrichedContext,
       userPrompt: activePrompt,
       rawBytes: Buffer.from(activeContext, 'utf8'),
+      policy: resolvedPolicy,
       // Forward the operator's signer key so gate 2 can exact-match
       // against an accidental paste. Per planning-003 §A.5.15 this is
       // the only zero-false-positive path for private-key detection.
@@ -511,6 +526,22 @@ interface AnchorArgs {
   }>;
 }
 
+/**
+ * Map the `PolicyDecision.agreementBucket` UI label back to the wire
+ * policy name that lands on the receipt's
+ * `execution.consensus.policyApplied` field. Per planning-003 §A.4.4.
+ */
+function policyShortName(
+  bucket: 'STRICT' | 'BALANCED' | 'LENIENT' | 'WEIGHTED',
+): 'unanimous' | 'majority' | 'first-objection' | 'weighted' {
+  switch (bucket) {
+    case 'STRICT': return 'unanimous';
+    case 'BALANCED': return 'majority';
+    case 'LENIENT': return 'first-objection';
+    case 'WEIGHTED': return 'weighted';
+  }
+}
+
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
   const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled, resolvedModel, routerRotations } = a;
 
@@ -627,6 +658,17 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
                     content: roleContent.get(x.role),
                     independentVerified: null,
                   })),
+                // Per planning-003 §A.4.4 (zer0Gig Efficiency Game):
+                // record the policy that was applied + how many
+                // reviewers dissented. Verifiers can re-run
+                // `applyPolicy` against `individualAttestations` and
+                // confirm the recorded decision matches.
+                ...(consensus.policyDecision
+                  ? {
+                      policyApplied: policyShortName(consensus.policyDecision.agreementBucket),
+                      dissents: consensus.policyDecision.dissents,
+                    }
+                  : {}),
               };
             })()
           : undefined,
