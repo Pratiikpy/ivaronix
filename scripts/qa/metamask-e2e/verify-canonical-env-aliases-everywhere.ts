@@ -44,6 +44,15 @@
  *   - File-level skip: the alias chain definitions in env.ts and
  *     wording-amnesty.json are exempt.
  *
+ * Modes:
+ *   default                    — gate the repo; FAIL on new hits
+ *   --update-amnesty           — rewrite amnesty from current scan (use
+ *                                after a bulk cleanup; loses curation)
+ *   --prune-stale              — list amnesty entries that no longer
+ *                                match any source line (sweep 137)
+ *   --prune-stale --apply      — rewrite amnesty without stale entries,
+ *                                preserves curation
+ *
  * Captures sweep 107's closure. Testnet-only — the regression IS the
  * durable record.
  */
@@ -193,6 +202,34 @@ if (updateAmnesty) {
   entries.sort();
   writeFileSync(AMNESTY_PATH, JSON.stringify(Array.from(new Set(entries)), null, 2) + '\n');
   console.log(`  refreshed canonical-alias-amnesty.json · ${entries.length} entries`);
+  process.exit(0);
+}
+
+// Prune stale amnesty entries (those that match no current hit because
+// the underlying source was already fixed). This is for the post-cleanup
+// pass where you want to drop entries without losing your hand-curated
+// amnesty for entries that ARE still legitimately needed.
+//
+//   --prune-stale          : report stale entries to stdout
+//   --prune-stale --apply  : rewrite amnesty without stale entries
+const pruneStale = process.argv.includes('--prune-stale');
+if (pruneStale) {
+  const apply = process.argv.includes('--apply');
+  const liveKeys = new Set(allHits.map((h) => `${h.file}:${h.line}:${h.legacy}`));
+  const stale = Array.from(amnesty).filter((entry) => !liveKeys.has(entry));
+  if (stale.length === 0) {
+    console.log(`  PASS · all ${amnesty.size} amnesty entries match a live hit`);
+    process.exit(0);
+  }
+  console.log(`  found ${stale.length} stale amnesty entries (no longer matching any source line):\n`);
+  for (const s of stale) console.log(`    ${s}`);
+  if (apply) {
+    const kept = Array.from(amnesty).filter((entry) => liveKeys.has(entry)).sort();
+    writeFileSync(AMNESTY_PATH, JSON.stringify(kept, null, 2) + '\n');
+    console.log(`\n  pruned · amnesty went from ${amnesty.size} → ${kept.length}`);
+  } else {
+    console.log(`\n  pass --apply to rewrite the amnesty file dropping these entries`);
+  }
   process.exit(0);
 }
 
