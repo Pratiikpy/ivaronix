@@ -70,6 +70,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-stale-numeric-snapshots/, // meta · operational surfaces (NatSpec, JSDoc, comments, spec docs) don't hardcode numbers.json values without unit-word context (sweep 94)
       /^verify-no-ghost-surfaces/, // meta · every HLD §1 surface row maps to a real apps/<name>/ with tracked files (sweep 100)
       /^verify-seed-skill-manifests/, // .claude/rules/skills.md · every first-party SKILL.md parses against the canonical schema (sweep 103)
+      /^verify-canonical-env-aliases-everywhere/, // §15 · every legacy env-var alias has canonical IVARONIX_* counterpart adjacent (sweep 107 · amnesty pattern)
     ],
   },
   'studio-live': {

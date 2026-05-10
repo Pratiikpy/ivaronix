@@ -12,7 +12,8 @@ metadata:
         os: ["linux", "darwin", "win32"]
         label: "Install Ivaronix CLI to run this skill"
     requires:
-      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
+      # Lead with canonical IVARONIX_* per packages/runtime/src/env.ts; legacy aliases still resolve.
+      env: ["IVARONIX_SIGNER_KEY", "IVARONIX_WALLET_ADDRESS", "IVARONIX_ROUTER_KEY"]
 entrypoint: prompt.md
 
 og:
