@@ -207,6 +207,27 @@ receiptCommand
 
     const receipt = json as ReceiptV1;
 
+    // HALF_BAKED §I-3/§K-14 follow-up (sweep 173): surface the W9
+    // trust tier so a judge reading `ivaronix receipt verify <id>`
+    // sees not just "CLAIMED" but ALSO which signedBy gradient the
+    // receipt claims. Three gradients per packages/receipts/src/schema.ts:
+    //   - 'operator' (default · legacy) → operator's wallet signed
+    //   - 'operator-on-behalf-of-user'   → operator signed; ownerWallet
+    //                                       is user (W9; SIWE-precursor)
+    //   - 'user-direct'                  → user's wallet signed
+    //                                       (end-state SIWE)
+    const signedBy = receipt.agent.signedBy ?? 'operator';
+    const tierLabel: Record<typeof signedBy, string> = {
+      'operator': 'operator-signed (legacy default)',
+      'operator-on-behalf-of-user': 'operator signed on behalf of user (W9 · SIWE-precursor)',
+      'user-direct': 'user-direct (full SIWE end-state)',
+    };
+    ui.info(`signedBy             ${signedBy} · ${tierLabel[signedBy]}`);
+    if (signedBy === 'operator-on-behalf-of-user') {
+      ui.info(`  signer (operator)    ${receipt.signature?.signer ?? '?'}`);
+      ui.info(`  ownerWallet (user)   ${receipt.agent.ownerWallet}`);
+    }
+
     // ─── 2. ANCHORED check · V2-first, V1 fallback ────────────────────────
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
     const registries = buildReadRegistries(env.network, provider);
