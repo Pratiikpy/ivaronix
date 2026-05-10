@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { getDeployedAddress } from '@ivaronix/og-chain';
+import { getDeployedAddress, loadDeployments } from '@ivaronix/og-chain';
 import { getNetwork } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 import { CopyLinkButton } from './CopyLinkButton';
@@ -18,10 +18,25 @@ interface ModuleCard {
 function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
   const cfg = NETWORKS[network];
   const explorer = cfg.chainExplorer;
-  const addr = (key: 'ReceiptRegistry' | 'AgentPassportINFT' | 'CapabilityRegistry' | 'MemoryAccessLog' | 'SkillRegistry' | 'Erc7857Verifier'): string =>
-    getDeployedAddress(network, key) ?? '';
-
   const linkOf = (a: string): string => `${explorer}/address/${a}`;
+  // Used by single-contract callouts further down (Agent ID card, etc.).
+  const addr = (key: string): string => getDeployedAddress(network, key) ?? '';
+
+  // Auto-derive the contract list from the deployments file. Sweeps 56 +
+  // 59 caught the same V2-blindness in CLI commands; this page (the
+  // judge-facing 0G integration showcase) had the same drift. Iterating
+  // Object.keys() means future contract deploys surface here without
+  // hand-editing.
+  const deployments = loadDeployments(network);
+  const chainAddresses: Array<{ label: string; address: string; explorer: string }> =
+    deployments
+      ? Object.keys(deployments.contracts)
+          .sort()
+          .map((label) => {
+            const a = getDeployedAddress(network, label) ?? '';
+            return { label, address: a, explorer: linkOf(a) };
+          })
+      : [];
 
   return [
     {
@@ -29,14 +44,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       status: 'live',
       what: 'Every receipt anchors here. The chain is what makes a verification two years from now produce the same answer as the verification ten seconds after the run.',
       endpoint: { label: cfg.rpcUrl, href: cfg.rpcUrl },
-      addresses: [
-        { label: 'ReceiptRegistry', address: addr('ReceiptRegistry'), explorer: linkOf(addr('ReceiptRegistry')) },
-        { label: 'AgentPassportINFT', address: addr('AgentPassportINFT'), explorer: linkOf(addr('AgentPassportINFT')) },
-        { label: 'CapabilityRegistry', address: addr('CapabilityRegistry'), explorer: linkOf(addr('CapabilityRegistry')) },
-        { label: 'MemoryAccessLog', address: addr('MemoryAccessLog'), explorer: linkOf(addr('MemoryAccessLog')) },
-        { label: 'SkillRegistry', address: addr('SkillRegistry'), explorer: linkOf(addr('SkillRegistry')) },
-        { label: 'Erc7857Verifier', address: addr('Erc7857Verifier'), explorer: linkOf(addr('Erc7857Verifier')) },
-      ],
+      addresses: chainAddresses,
       seeItLive: { label: 'Open the dashboard', href: '/dashboard' },
     },
     {

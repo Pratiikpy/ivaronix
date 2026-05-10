@@ -58,6 +58,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
+      /^verify-no-hardcoded-contract-lists/, // meta · 3+ contract names in one array literal · iterate loadDeployments instead
     ],
   },
   'studio-live': {

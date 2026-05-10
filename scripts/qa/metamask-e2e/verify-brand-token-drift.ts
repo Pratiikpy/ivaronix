@@ -180,13 +180,66 @@ for (const file of sourceFiles) {
 }
 
 if (updateAmnesty) {
-  // Write the current violation set to brand-amnesty.json. Use this
-  // mode after a bulk cleanup that legitimately changes which hexes
-  // are present, OR on first install of this regression.
-  const tuples = violations.map((v) => `${v.file}:${v.line}:${v.hex}`).sort();
-  const out = JSON.stringify(tuples, null, 2) + '\n';
+  // Write the union of the existing amnesty + any new violations.
+  // BUG FIX (sweep 60): the previous version overwrote the amnesty
+  // with NEW violations only (the `violations` array, populated only
+  // when a hit is NOT in AMNESTY). Running --update against a clean
+  // codebase would have discarded every existing entry. The
+  // RIGHT behavior is union: old amnesty entries that no longer
+  // match (e.g. line numbers shifted by an edit) drop OUT (because
+  // they're not in the current violation set), while NEW violations
+  // get added IN.
+  //
+  // Approach: walk all source files again and capture EVERY hit
+  // (in-amnesty + new) as the new amnesty. The amnesty is then a
+  // snapshot of the current state, not a delta.
+  const allHits = new Set<string>(AMNESTY); // start with old amnesty
+  // Re-walk to capture hits that were in AMNESTY (skipped above) too.
+  for (const file of sourceFiles) {
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      if (line.includes('brand-check:allow:')) continue;
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
+      HEX_RE.lastIndex = 0;
+      for (const m of line.matchAll(HEX_RE)) {
+        const hex = m[2]!;
+        const body = hex.length - 1;
+        if (body !== 3 && body !== 4 && body !== 6 && body !== 8) continue;
+        const normalized = normalizeHex(hex);
+        if (canonical.has(normalized)) continue;
+        const relPath = relative(REPO_ROOT, file).replace(/\\/g, '/');
+        allHits.add(`${relPath}:${i + 1}:${hex}`);
+      }
+    }
+  }
+  // Drop stale entries: anything in old AMNESTY but no longer
+  // matching current line content. We do this by intersecting:
+  // keep only entries that are also in the current sweep result.
+  const currentSweep = new Set<string>();
+  for (const file of sourceFiles) {
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+      const trimmed = line.trimStart();
+      if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
+      HEX_RE.lastIndex = 0;
+      for (const m of line.matchAll(HEX_RE)) {
+        const hex = m[2]!;
+        const body = hex.length - 1;
+        if (body !== 3 && body !== 4 && body !== 6 && body !== 8) continue;
+        const normalized = normalizeHex(hex);
+        if (canonical.has(normalized)) continue;
+        const relPath = relative(REPO_ROOT, file).replace(/\\/g, '/');
+        currentSweep.add(`${relPath}:${i + 1}:${hex}`);
+      }
+    }
+  }
+  const finalAmnesty = Array.from(allHits).filter((entry) => currentSweep.has(entry)).sort();
+  const out = JSON.stringify(finalAmnesty, null, 2) + '\n';
   writeFileSync(AMNESTY_PATH, out);
-  console.log(`updated brand-amnesty.json with ${tuples.length} entries`);
+  console.log(`updated brand-amnesty.json: ${finalAmnesty.length} entries (was ${AMNESTY.size}, +${finalAmnesty.length - [...AMNESTY].filter((e) => currentSweep.has(e)).length} new, -${AMNESTY.size - [...AMNESTY].filter((e) => currentSweep.has(e)).length} stale)`);
   process.exit(0);
 }
 
