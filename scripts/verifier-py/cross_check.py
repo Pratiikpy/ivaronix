@@ -25,6 +25,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
 TS_ENTRY = REPO / "packages" / "core" / "src" / "jcs-cli.ts"
+RUST_DIR = REPO / "ivaronix-verifier-rs"
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from jcs import jcs as py_jcs  # noqa: E402
@@ -101,35 +102,64 @@ def ts_jcs(value) -> str:
     return proc.stdout.decode("utf-8")
 
 
+def rs_jcs(value) -> str:
+    """Pipe `value` (as JSON) through the Rust reference, return its stdout.
+
+    Builds in release mode lazily on first call; subsequent calls reuse
+    the cached binary. Cargo prints to stderr; we discard it to keep the
+    cross-impl output clean.
+    """
+    payload = json.dumps(value).encode("utf-8")
+    proc = subprocess.run(
+        ["cargo", "run", "-q", "--release"],
+        input=payload,
+        capture_output=True,
+        cwd=RUST_DIR,
+        timeout=120,
+        shell=False,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"Rust verifier exited {proc.returncode}: {proc.stderr.decode('utf-8', 'replace')}"
+        )
+    return proc.stdout.decode("utf-8")
+
+
 def main() -> int:
     failures = 0
+    diverged_inputs: list = []
+
     for i, v in enumerate(VECTORS):
-        try:
-            py_out = py_jcs(v)
-        except Exception as e:  # noqa: BLE001
-            print(f"#{i:>3}  PY ERROR: {e}  input={v!r}")
-            failures += 1
-            continue
-        try:
-            ts_out = ts_jcs(v)
-        except Exception as e:  # noqa: BLE001
-            print(f"#{i:>3}  TS ERROR: {e}  input={v!r}")
-            failures += 1
-            continue
-        if py_out == ts_out:
-            print(f"#{i:>3}  ok  {py_out[:60]}{'…' if len(py_out) > 60 else ''}")
+        outs: dict[str, str] = {}
+        for lang, fn in (("py", lambda x=v: py_jcs(x)), ("ts", lambda x=v: ts_jcs(x)), ("rs", lambda x=v: rs_jcs(x))):
+            try:
+                outs[lang] = fn()
+            except Exception as e:  # noqa: BLE001
+                print(f"#{i:>3}  {lang.upper()} ERROR: {e}  input={v!r}")
+                outs[lang] = f"<<ERROR: {e}>>"
+
+        unique = set(outs.values())
+        if len(unique) == 1 and not any(s.startswith("<<ERROR:") for s in outs.values()):
+            sample = next(iter(unique))
+            display = sample[:60] + ("…" if len(sample) > 60 else "")
+            print(f"#{i:>3}  ok  {display}")
         else:
             print(f"#{i:>3}  DIVERGE")
             print(f"     input: {v!r}")
-            print(f"     py:    {py_out!r}")
-            print(f"     ts:    {ts_out!r}")
+            for lang in ("py", "ts", "rs"):
+                print(f"     {lang}: {outs.get(lang, '<missing>')!r}")
             failures += 1
+            diverged_inputs.append((i, v))
 
     print()
     if failures:
-        print(f"FAIL: {failures} of {len(VECTORS)} vectors diverged across TS + Python")
+        print(
+            f"FAIL: {failures} of {len(VECTORS)} vectors diverged across TS + Python + Rust"
+        )
         return 1
-    print(f"OK: {len(VECTORS)} vectors byte-equal across TS + Python")
+    print(
+        f"OK: {len(VECTORS)} vectors byte-equal across TS + Python + Rust"
+    )
     return 0
 
 

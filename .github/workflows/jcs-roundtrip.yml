@@ -1,0 +1,50 @@
+name: jcs-roundtrip
+
+# K-15 cross-impl byte-equality gate · runs the canonical-JSON harness
+# in scripts/verifier-py/cross_check.py against TS + Python + Rust on
+# every PR + push. Blocks merge when any vector diverges.
+#
+# Go support is queued (operator action: install Go, then add a job here).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  cross-impl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node + pnpm (TS reference)
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Set up Python (Python reference)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up Rust (Rust reference)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: TS · self-tests
+        run: pnpm --filter @ivaronix/core exec tsx --test packages/core/src/jcs.test.ts
+
+      - name: Python · self-tests
+        run: cd scripts/verifier-py && python -m unittest test_jcs.py
+
+      - name: Rust · self-tests
+        run: cd ivaronix-verifier-rs && cargo test --release
+
+      - name: TS ↔ Python ↔ Rust · cross-impl byte-equality
+        run: python scripts/verifier-py/cross_check.py

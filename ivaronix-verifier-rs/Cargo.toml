@@ -1,0 +1,20 @@
+[package]
+name = "ivaronix-verifier"
+version = "0.1.0"
+edition = "2021"
+description = "RFC-8785 (JCS) canonical-JSON reference verifier for Ivaronix receipts."
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Pratiikpy/ivaronix"
+readme = "README.md"
+
+[lib]
+name = "ivaronix_verifier"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ivaronix-verifier"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = { version = "1", features = ["preserve_order"] }
+unicode-normalization = "0.1"

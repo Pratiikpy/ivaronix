@@ -99,10 +99,10 @@ K-15 in HALF_BAKED.md tracks the full migration. Status as of 2026-05-10:
 |---|---|---|
 | TypeScript | `packages/core/src/jcs.ts` + `jcs.test.ts` | ✅ shipped (17/17 tests green) |
 | Python | `scripts/verifier-py/jcs.py` + `test_jcs.py` | ✅ shipped (14/14 tests green) |
-| TS ↔ Python cross-impl | `scripts/verifier-py/cross_check.py` | ✅ shipped (29/29 byte-equal across both) |
-| Rust | `ivaronix-verifier-rs/` (planned) | queued — next cron firing (Cargo + ethers-rust + RustCrypto/sha3) |
-| Go | `verifier-go/` (planned) | queued — operator action: `winget install GoLang.Go` then cron picks up |
-| Cross-impl CI | `.github/workflows/jcs-roundtrip.yml` (planned) | queued — runs the harness on every PR |
+| Rust | `ivaronix-verifier-rs/` | ✅ shipped (11/11 tests green) |
+| TS ↔ Python ↔ Rust cross-impl | `scripts/verifier-py/cross_check.py` | ✅ shipped (29/29 byte-equal across all three) |
+| CI cross-impl gate | `.github/workflows/jcs-roundtrip.yml` | ✅ shipped — runs all four self-suites + the cross-impl harness on every PR + push |
+| Go | `verifier-go/` (planned) | queued — operator action: `winget install GoLang.Go` (or apt/brew/etc.) then the next cron firing extends `cross_check.py` with `go run ./cmd/verifier-go` and adds a Go job to the CI workflow |
 
 Each language MUST implement:
 1. The RFC-8785 JCS function over the test vectors above (§3).
