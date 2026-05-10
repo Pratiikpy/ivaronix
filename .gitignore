@@ -6,8 +6,11 @@
 *.pem
 keystore/
 
-# Claude Code internal state
-.claude/
+# Claude Code internal state · everything under .claude/ EXCEPT path-scoped rules.
+# Path-scoped agent rules ARE committed (planning-003 §A.4.2 · AlphaDawg pattern).
+# Pattern: ignore .claude/* (file or dir directly under .claude/), then re-include the rules subdir.
+.claude/*
+!.claude/rules/
 CLAUDE.md.local
 
 # Reference / research material — kept locally only; not pushed
