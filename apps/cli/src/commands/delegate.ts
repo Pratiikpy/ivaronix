@@ -120,6 +120,16 @@ function loadDelegateKey(delegateId: string): string | null {
   } catch { return null; }
 }
 
+/**
+ * Restore an env var to its prior value (or unset it if it wasn't set
+ * before). Used in the delegate run's finally block to make sure the
+ * temporary env-var swap doesn't pollute later commands.
+ */
+function restoreEnv(name: string, prev: string | undefined): void {
+  if (prev === undefined) delete process.env[name];
+  else process.env[name] = prev;
+}
+
 function parseTtl(input: string): number {
   const m = input.match(/^(\d+)([smhd])?$/);
   if (!m) throw new Error(`invalid TTL: ${input}`);
@@ -147,7 +157,7 @@ delegateCommand
   .action(async (opts: { name: string; description: string; skills: string; funding: string }) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
-      ui.fail('delegate create requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      ui.fail('delegate create requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
       process.exitCode = 1;
       return;
     }
@@ -291,7 +301,7 @@ delegateCommand
   .action(async (rawId: string, opts: { skill: string; ttl: string; reads: string }) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
-      ui.fail('delegate grant requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      ui.fail('delegate grant requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
       process.exitCode = 1;
       return;
     }
@@ -365,7 +375,7 @@ delegateCommand
   .option('--skill <id>', 'revoke a specific skill grant (default: most recent active)', '')
   .action(async (rawId: string, opts: { skill: string }) => {
     const env = loadEnv();
-    if (!env.privateKey) { ui.fail('need EVM_PRIVATE_KEY'); process.exitCode = 1; return; }
+    if (!env.privateKey) { ui.fail('need IVARONIX_SIGNER_KEY (legacy alias EVM_PRIVATE_KEY still resolves)'); process.exitCode = 1; return; }
 
     const dir = delegatesDir();
     let m: DelegateManifest | null = null;
@@ -415,7 +425,7 @@ delegateCommand
   .option('--tier <tier>', 'consensus tier', 'quick')
   .action(async (rawId: string, doc: string, opts: { skill: string; question: string; tier: string }) => {
     const env = loadEnv();
-    if (!env.privateKey) { ui.fail('need EVM_PRIVATE_KEY in .env'); process.exitCode = 1; return; }
+    if (!env.privateKey) { ui.fail('need IVARONIX_SIGNER_KEY in .env (legacy alias EVM_PRIVATE_KEY still resolves)'); process.exitCode = 1; return; }
 
     const dir = delegatesDir();
     let m: DelegateManifest | null = null;
@@ -463,11 +473,22 @@ delegateCommand
     const docPath = resolve(doc);
     if (!existsSync(docPath)) { ui.fail(`doc not found: ${docPath}`); process.exitCode = 1; return; }
 
-    // In-process invocation: swap EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in
-    // process.env, then call docCommand.parseAsync directly. loadEnv reads
-    // process.env fresh on every call (see src/lib/env.ts), so every
-    // downstream signing path picks up the delegate's identity. We restore
-    // env vars in `finally` so we don't pollute later commands.
+    // In-process invocation: swap the signer-key + wallet-address env
+    // vars in process.env, then call docCommand.parseAsync directly.
+    // loadEnv reads process.env fresh on every call (see
+    // src/lib/env.ts), so every downstream signing path picks up the
+    // delegate's identity. We restore env vars in `finally` so we
+    // don't pollute later commands.
+    //
+    // We must touch ALL alias names (canonical IVARONIX_SIGNER_KEY +
+    // legacy OG_PRIVATE_KEY + legacy EVM_PRIVATE_KEY) per
+    // packages/runtime/src/env.ts SIGNER_KEY_ALIASES order. loadEnv
+    // tries IVARONIX_SIGNER_KEY first, falls back to OG_PRIVATE_KEY,
+    // falls back to EVM_PRIVATE_KEY. If we only swap one alias and an
+    // earlier-priority alias is set, the swap silently no-ops and the
+    // delegated run uses the OPERATOR's key, not the delegate's —
+    // exactly the bug we're guarding against. Same shape for the
+    // wallet-address alias chain.
     const tierFlag = opts.tier === 'quick' ? '--quick'
       : opts.tier === 'standard' ? '--consensus'
       : opts.tier === 'high-stakes' ? '--high-stakes'
@@ -478,12 +499,24 @@ delegateCommand
     ui.info(`signing identity:    delegate (${m.delegateAddress})`);
     ui.divider();
 
-    const savedKey = process.env.EVM_PRIVATE_KEY;
-    const savedAddr = process.env.EVM_WALLET_ADDRESS;
+    // Save every alias (canonical + legacy) so the finally block can
+    // restore exactly what was set before this delegate run.
+    const savedIvSigner = process.env.IVARONIX_SIGNER_KEY;
     const savedOgKey = process.env.OG_PRIVATE_KEY;
-    process.env.EVM_PRIVATE_KEY = delegateKey;
-    process.env.EVM_WALLET_ADDRESS = m.delegateAddress;
-    delete process.env.OG_PRIVATE_KEY; // ensure EVM_PRIVATE_KEY wins in loadEnv
+    const savedEvmKey = process.env.EVM_PRIVATE_KEY;
+    const savedIvAddr = process.env.IVARONIX_WALLET_ADDRESS;
+    const savedEvmAddr = process.env.EVM_WALLET_ADDRESS;
+
+    // Set the canonical alias to the delegate's key/address. Delete the
+    // legacy aliases so loadEnv's resolveAlias chain unambiguously
+    // resolves to the canonical (delegate) value. If we left them set,
+    // resolveAlias would still pick canonical first (correct) — but
+    // deletion makes the swap visible in `pnpm env:check` output too.
+    process.env.IVARONIX_SIGNER_KEY = delegateKey;
+    process.env.IVARONIX_WALLET_ADDRESS = m.delegateAddress;
+    delete process.env.OG_PRIVATE_KEY;
+    delete process.env.EVM_PRIVATE_KEY;
+    delete process.env.EVM_WALLET_ADDRESS;
 
     let runOk = false;
     try {
@@ -499,12 +532,11 @@ delegateCommand
       // scripted callers checking $?, so a failed delegate run always
       // reported success. S-4 fix per HALF_BAKED.md: propagate runOk to
       // the exit code below the finally block instead.
-      if (savedKey === undefined) delete process.env.EVM_PRIVATE_KEY;
-      else process.env.EVM_PRIVATE_KEY = savedKey;
-      if (savedAddr === undefined) delete process.env.EVM_WALLET_ADDRESS;
-      else process.env.EVM_WALLET_ADDRESS = savedAddr;
-      if (savedOgKey === undefined) delete process.env.OG_PRIVATE_KEY;
-      else process.env.OG_PRIVATE_KEY = savedOgKey;
+      restoreEnv('IVARONIX_SIGNER_KEY', savedIvSigner);
+      restoreEnv('OG_PRIVATE_KEY', savedOgKey);
+      restoreEnv('EVM_PRIVATE_KEY', savedEvmKey);
+      restoreEnv('IVARONIX_WALLET_ADDRESS', savedIvAddr);
+      restoreEnv('EVM_WALLET_ADDRESS', savedEvmAddr);
     }
 
     ui.divider();
