@@ -74,13 +74,28 @@ function readClosures(opts: CliOpts): AuditClosure[] {
     if (parts.length < 4) continue;
     const [hash, dateIso, subject, body] = parts;
     if (!hash || !dateIso || !subject) continue;
-    // Audit-ID grammar: starts with a letter, then `[A-Za-z0-9._-]` plus
-    // an optional single space + number suffix (e.g. `WT 26`, `WT 32`).
-    // The trailing capture group is `(?:\s+\d+)?` so we accept both
-    // dashed (`A.5.9`, `B-V2-13`) and space-suffix (`WT 26`) shapes
-    // without grabbing arbitrary trailing prose.
+    // Audit-ID grammar (cron-sweep refinement 2026-05-10):
+    //   - Trailer must be its own line: line starts with optional
+    //     whitespace, then literal `Closes audit ` (mid-sentence
+    //     mentions like " with Closes audit K-N trailer" don't match).
+    //   - ID shape: starts with a letter, then [A-Za-z0-9._-], plus an
+    //     optional single space + number suffix (e.g. `WT 26`, `WT 32`).
+    //   - After the ID, the line may end immediately, contain a single
+    //     parenthetical context block `(...)` (possibly spanning
+    //     multiple lines via wrap), and/or a trailing period.
+    //     Any other prose after the ID disqualifies the line. This
+    //     filters out the three false-positive shapes that the looser
+    //     regex caught in earlier sweeps:
+    //       1. `with Closes audit K-N trailer`         (mid-sentence)
+    //       2. `+ Closes audit trailer convention`     (mid-sentence)
+    //       3. `Closes audit S-1          -> 'S-1'`    (docstring example)
+    //   - The parenthetical uses non-greedy `[\s\S]*?` so it tolerates
+    //     line wraps inside the context (real commits do this when the
+    //     description doesn't fit on one line, e.g. RULES-DRIFT-1's
+    //     `(og-chain/og-router/og-storage/skills\nrules-vs-reality...)`).
+    const TRAILER_RE = /^[ \t]*Closes audit[ \t]+([A-Za-z][A-Za-z0-9._\-]*(?:[ \t]+\d+)?)[ \t]*(?:\([\s\S]*?\))?[ \t]*\.?[ \t]*$/gm;
     const ids = Array.from(new Set(
-      [...body!.matchAll(/Closes audit\s+([A-Za-z][A-Za-z0-9._\-]*(?:\s+\d+)?)/g)].map((m) => m[1]!.trim()),
+      [...body!.matchAll(TRAILER_RE)].map((m) => m[1]!.trim()),
     ));
     if (ids.length === 0) continue;
     if (opts.grep && !ids.some((id) => id.includes(opts.grep!))) continue;
