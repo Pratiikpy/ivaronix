@@ -179,7 +179,7 @@ debugCommand
     const env = loadEnv();
     const target = address ?? env.walletAddress;
     if (!target) {
-      ui.fail('no address — pass one as arg or set EVM_WALLET_ADDRESS');
+      ui.fail('no address — pass one as arg or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
       process.exitCode = 1;
       return;
     }
@@ -449,7 +449,7 @@ debugCommand
     ui.divider();
 
     if (!env.privateKey) {
-      ui.fail('EVM_PRIVATE_KEY missing — required to construct broker');
+      ui.fail('IVARONIX_SIGNER_KEY missing — required to construct broker (legacy: EVM_PRIVATE_KEY, OG_PRIVATE_KEY)');
       process.exitCode = 1;
       return;
     }
@@ -515,13 +515,24 @@ debugCommand
     }
     ui.info(`.env                 ${envPath || '(not found)'}`);
 
-    // Required env vars
+    // Required env vars · check via canonical → legacy alias chain.
+    // Pre-sweep-111 only checked legacy names; canonical-only operators
+    // saw "missing" even when IVARONIX_* equivalents were set.
     ui.divider();
     ui.section('Required env vars');
-    const required = ['EVM_PRIVATE_KEY', 'EVM_WALLET_ADDRESS', 'OG_NETWORK'];
-    for (const k of required) {
-      if (process.env[k]) ui.pass(`${k.padEnd(22)} set`);
-      else ui.fail(`${k.padEnd(22)} missing`);
+    const requiredAliasGroups: Array<{ label: string; aliases: string[] }> = [
+      { label: 'IVARONIX_SIGNER_KEY', aliases: ['IVARONIX_SIGNER_KEY', 'OG_PRIVATE_KEY', 'EVM_PRIVATE_KEY'] },
+      { label: 'IVARONIX_WALLET_ADDRESS', aliases: ['IVARONIX_WALLET_ADDRESS', 'EVM_WALLET_ADDRESS'] },
+      { label: 'IVARONIX_NETWORK', aliases: ['IVARONIX_NETWORK', 'OG_NETWORK'] },
+    ];
+    for (const g of requiredAliasGroups) {
+      const resolved = g.aliases.find((n) => process.env[n]);
+      if (resolved) {
+        const tag = resolved === g.label ? 'set' : `set via legacy alias ${resolved}`;
+        ui.pass(`${g.label.padEnd(22)} ${tag}`);
+      } else {
+        ui.fail(`${g.label.padEnd(22)} missing (also accepts ${g.aliases.slice(1).join(', ')})`);
+      }
     }
 
     // Workspace package versions

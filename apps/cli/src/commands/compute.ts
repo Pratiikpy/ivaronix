@@ -15,7 +15,7 @@ computeCommand
   .action(async (opts: { prompt: string; model: string }) => {
     const keyring = keyringFromEnv();
     if (!keyring) {
-      ui.fail('No router key configured', 'Set ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS in .env');
+      ui.fail('No router key configured', 'Set IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_URL, IVARONIX_ROUTER_PROVIDER, IVARONIX_WALLET_ADDRESS in .env (legacy aliases ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS still resolve)');
       process.exitCode = 1;
       return;
     }
@@ -130,7 +130,7 @@ computeCommand
   .action(async (opts: { provider?: string; deposit: string; fund: string; apply?: boolean }) => {
     const env = loadEnv();
     if (!env.privateKey) {
-      ui.fail('warmup requires EVM_PRIVATE_KEY in .env');
+      ui.fail('warmup requires IVARONIX_SIGNER_KEY in .env (legacy aliases EVM_PRIVATE_KEY + OG_PRIVATE_KEY still resolve)');
       process.exitCode = 1;
       return;
     }

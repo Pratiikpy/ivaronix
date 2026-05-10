@@ -4,8 +4,10 @@
  *
  * Cross-platform TS launcher that:
  *   1. Builds (or reuses) the Docker image at scripts/dev/Dockerfile.kv-node
- *   2. Renders the runtime config from .env (EVM_WALLET_ADDRESS, EVM_PRIVATE_KEY,
- *      OG_NETWORK) into .ivaronix/kv-node/config.toml
+ *   2. Renders the runtime config from .env (IVARONIX_WALLET_ADDRESS,
+ *      IVARONIX_SIGNER_KEY, IVARONIX_NETWORK · legacy aliases
+ *      EVM_WALLET_ADDRESS, EVM_PRIVATE_KEY, OG_NETWORK still resolve)
+ *      into .ivaronix/kv-node/config.toml
  *   3. Runs the container with that config mounted, RPC bound to localhost:6789
  *   4. Polls until the node's HTTP RPC responds, then prints status
  *
@@ -196,10 +198,15 @@ async function pollRpc(timeoutMs: number): Promise<boolean> {
 }
 
 async function main(): Promise<void> {
-  const wallet = process.env.EVM_WALLET_ADDRESS;
-  const network = (process.env.OG_NETWORK ?? 'testnet') as Network;
+  // Resolve via canonical → legacy alias chain. Pre-sweep-111 read only
+  // EVM_WALLET_ADDRESS / OG_NETWORK; canonical-only operators got null
+  // wallet and the script failed with "EVM_WALLET_ADDRESS missing"
+  // even when IVARONIX_WALLET_ADDRESS was set. Same correctness-bug
+  // class as sweeps 108-109's amnesty-mining finds.
+  const wallet = process.env.IVARONIX_WALLET_ADDRESS ?? process.env.EVM_WALLET_ADDRESS;
+  const network = (process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'testnet') as Network;
   if (!wallet) {
-    fail('EVM_WALLET_ADDRESS missing in .env. Add it (read-only — used to derive the stream-ID).');
+    fail('IVARONIX_WALLET_ADDRESS missing in .env. Add it — read-only, used to derive the stream-ID. Legacy alias EVM_WALLET_ADDRESS still resolves.');
   }
   if (!(network in NETWORK_PROFILES)) {
     fail(`Unknown network "${network}". Use testnet or mainnet.`);
