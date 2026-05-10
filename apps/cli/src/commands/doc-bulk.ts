@@ -265,7 +265,8 @@ export function addBulkCommand(parent: Command): void {
       ui.pass(`receiptRoot          ${signed.storage!.receiptRoot}`);
       ui.pass(`written              ${localPath}`);
 
-      // Anchor on chain (slot 4 = memory_access, same Phase A constraint as 2B)
+      // Anchor on chain (slot 4 = memory_access; matches the constraint
+      // documented for the bulk-runner path in `docs/RECEIPT_SCHEMA.md`).
       const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
       const RECEIPT_TYPE_CODE = 4;
       ui.pending('anchoring aggregate on 0G Chain...');

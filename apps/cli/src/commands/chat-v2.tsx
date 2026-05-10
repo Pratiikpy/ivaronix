@@ -11,7 +11,8 @@ import { ChatScreen } from '../ui/ChatScreen.js';
 import { listConversations, loadConversation, type ConversationFile } from '../lib/conversation.js';
 
 /**
- * `ivaronix chat-v2` — opt-in Ink TUI (Phase B' scaffold).
+ * `ivaronix chat-v2` — opt-in Ink TUI scaffold (companion to the
+ * readline-based `ivaronix chat`).
  *
  * Lives next to the readline-based `ivaronix chat` so users can A/B
  * compare. When TUI reaches feature parity with the readline version,

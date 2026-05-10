@@ -45,7 +45,7 @@ Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates f
 
 | ID | Item | Commit |
 |---|---|---|
-| A.3.1 | Sprint-language scrub (4 Solidity NatSpec + 2 user-visible TS comments) | `a111765` |
+| A.3.1 | Sprint-language scrub completion (32 hits across apps + packages) | First pass landed in `a111765` (Solidity NatSpec + 2 user-visible TS comments). Second pass closes the remaining ~30 hits across `apps/{studio,cli,mcp-server,openclaw-skill}/` + `packages/{core,consensus,og-storage,memory,skills,trust-layer,og-toolkit,receipts,runtime}/` + `seed-skills/`. Replaced `Day-N` references with capability statements (`{ name: 'ReceiptRegistry', group: 'core' }` instead of `phase: 'Day 3'`), `Phase A/B` references with end-state framing pointing at USER_TODO §B-V2, `MVP` / `killer demo` / `Track 5 headline` with feature-statement language. Added CLAUDE.md §9 sub-rule: "JSDoc and NatSpec describe WHAT the code does, not WHEN it was written" with the explicit exception that `planning-003 §X` / `WT N` traceability links stay because they're audit-closure pointers, not sprint markers. Source-side scrub complete; remaining hits are in `apps/studio/.next/` build cache (regenerates on next build) and a binary asset in `packages/opencode-bin/`. |
 | A.3.2 | Threat-model JSDoc on 5 security primitives | `af54b30` |
 | A.3.3 | Brand-token consolidation (`brand/tokens.css` + `brand/tokens.json`) | (brand commit) |
 | A.3.4 | Env-var canonical `IVARONIX_*` with deprecation warnings | `ee243bc` |

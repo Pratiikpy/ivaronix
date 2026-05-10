@@ -85,8 +85,8 @@ const Burn = z.object({
 });
 
 /**
- * Lifecycle-hook subscriptions (Day 11). Each value is an ordered list of
- * built-in hook names. Unknown names are dropped at load time with a warning.
+ * Lifecycle-hook subscriptions. Each value is an ordered list of built-in
+ * hook names. Unknown names are dropped at load time with a warning.
  */
 const Hooks = z.object({
   session_start: z.array(z.string()).default([]),
@@ -171,8 +171,8 @@ const OgBlock = z.object({
   // produce the SAME canonical-JSON hash they did before this field was added.
   // Adding `.default({})` would silently mutate every old manifest's hash.
   hooks: Hooks.optional(),
-  // Skill-declared tools (Day 22+ polish). Optional so old manifests' canonical
-  // hash stays unchanged.
+  // Skill-declared tools. Optional so older manifests' canonical hash
+  // stays unchanged after this field was added.
   tools: SkillTools.optional(),
   creator: z
     .object({

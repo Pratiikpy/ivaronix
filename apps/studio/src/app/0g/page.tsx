@@ -79,7 +79,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       what: 'On the integration roadmap. We do not claim integration we have not shipped. The path — receipt batching and evidence sharding via 0G DA — is documented in docs/PHASE_B_DISCLOSURES.md, and we will wire it when a public testnet endpoint is available.',
       endpoint: null,
       addresses: [],
-      seeItLive: { label: 'Phase B disclosures (docs)', href: 'https://github.com/Pratiikpy/ivaronix/blob/main/docs/PHASE_B_DISCLOSURES.md' },
+      seeItLive: { label: 'Roadmap disclosures (docs)', href: 'https://github.com/Pratiikpy/ivaronix/blob/main/docs/PHASE_B_DISCLOSURES.md' },
     },
   ];
 }

@@ -192,7 +192,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
           </dl>
         </div>
 
-        {/* Custody card — Phase A vs Phase B disclosure */}
+        {/* Custody card — operator-machine custody today vs TEE-bound end-state disclosure */}
         <div className="card">
           <div className="section-label" style={{ marginBottom: 12 }}>Key custody · disclosure</div>
           <p style={{ fontSize: 13, color: 'var(--color-muted)', margin: 0, marginBottom: 12, lineHeight: 1.55 }}>

@@ -23,11 +23,10 @@ import type { ConsensusTier, Address } from '@ivaronix/core';
  * Ivaronix MCP Server.
  *
  * Exposes Ivaronix as an MCP server so Claude Desktop / Cursor / Codex /
- * any MCP-aware client can call into the testnet runtime. Five tools per
- * BUILD.md §Day 20:
+ * any MCP-aware client can call into the testnet runtime. Five tools:
  *   - ivaronix.ask           run a skill against text
  *   - ivaronix.verifyReceipt resolve a receipt by id and report state
- *   - ivaronix.searchMemory  search the local memory engine (Day-8)
+ *   - ivaronix.searchMemory  search the local memory engine
  *   - ivaronix.installSkill  list-only for now (publish stays a CLI op)
  *   - ivaronix.passportShow  read passport state for a wallet
  *

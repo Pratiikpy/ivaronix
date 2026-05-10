@@ -77,7 +77,8 @@ export class StorageClient {
       const msg = err.message ?? String(err);
       if (msg.includes('already') || msg.toLowerCase().includes('exists')) {
         // Upload succeeded earlier; try to retrieve the root hash by re-running merkle
-        // For now, re-throw with hint — Day 5 polish will handle dedupe gracefully
+        // Dedupe handling is queued; for now surface a hint in the error
+        // so callers can recognize an "already uploaded" path and recover.
         throw new Error(`0G Storage upload error (likely dedupe): ${msg}`);
       }
       throw new Error(`0G Storage upload failed: ${msg}`);

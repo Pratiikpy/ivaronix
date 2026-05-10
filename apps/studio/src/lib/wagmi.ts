@@ -10,7 +10,7 @@ import { injected } from 'wagmi/connectors';
 
 /**
  * 0G Galileo Testnet (chainId 16602) — canonical reference.
- * Aristotle Mainnet (chainId 16661) — Phase B Day 23 promotion target.
+ * Aristotle Mainnet (chainId 16661) — promotion gated on USER_TODO §B-V2.
  *
  * Per CLAUDE.md §10 wallet-flow rules: a single MetaMask connector keeps
  * the onboard step free of "which wallet?" friction. Future

@@ -105,13 +105,13 @@ export const doctorCommand = new Command('doctor')
     if (all || opts.chain) {
       ui.section('04 · Chain (contracts)');
       const deployments = loadDeployments(env.network);
-      const allContracts: { name: string; phase: string }[] = [
-        { name: 'ReceiptRegistry', phase: 'Day 3' },
-        { name: 'Erc7857Verifier', phase: 'Day 6' },
-        { name: 'AgentPassportINFT', phase: 'Day 6' },
-        { name: 'CapabilityRegistry', phase: 'Day 7' },
-        { name: 'MemoryAccessLog', phase: 'Day 7' },
-        { name: 'SkillRegistry', phase: 'Day 10' },
+      const allContracts: { name: string; group: string }[] = [
+        { name: 'ReceiptRegistry', group: 'core' },
+        { name: 'Erc7857Verifier', group: 'identity' },
+        { name: 'AgentPassportINFT', group: 'identity' },
+        { name: 'CapabilityRegistry', group: 'memory' },
+        { name: 'MemoryAccessLog', group: 'memory' },
+        { name: 'SkillRegistry', group: 'marketplace' },
       ];
       for (const c of allContracts) {
         const dep = deployments?.contracts[c.name];
@@ -129,7 +129,7 @@ export const doctorCommand = new Command('doctor')
             }
           }
         } else {
-          ui.pending(`${c.name.padEnd(18)} not yet deployed (Phase A ${c.phase})`);
+          ui.pending(`${c.name.padEnd(18)} not yet deployed (group: ${c.group})`);
         }
       }
     }

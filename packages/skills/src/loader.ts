@@ -6,7 +6,8 @@ import { SkillManifestSchema, type SkillManifest } from './manifest.js';
 
 /**
  * A loaded skill = parsed SKILL.md frontmatter + body, plus the on-disk path
- * and a content-addressable manifest hash (used for on-chain anchoring Day 10).
+ * and a content-addressable manifest hash (used for on-chain anchoring via
+ * `SkillRegistry.publish`).
  */
 export interface LoadedSkill {
   id: string;             // skill folder name == manifest.name

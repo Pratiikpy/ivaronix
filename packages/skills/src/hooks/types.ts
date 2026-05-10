@@ -1,5 +1,5 @@
 /**
- * Ivaronix lifecycle hooks (Day 11)
+ * Ivaronix lifecycle hooks
  *
  * Hooks are typed TypeScript modules referenced **by name** in a skill's
  * manifest under `og.hooks`. There is no arbitrary-code-execution surface —
@@ -8,8 +8,8 @@
  * forked skill cannot ship its own hook code via the manifest; it can only
  * subscribe to hooks the runtime has already vetted.
  *
- * (Day 19+ adds an opt-in WASM hook module path with capability-based
- * sandboxing; that is intentionally out of scope here.)
+ * (An opt-in WASM hook module path with capability-based sandboxing is
+ * queued for a future release; intentionally out of scope here.)
  */
 
 import type { ConsensusTier } from '@ivaronix/core';

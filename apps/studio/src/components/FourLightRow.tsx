@@ -5,8 +5,9 @@
  *
  * [●─Storage─][●─Compute─][●─TEE─][●─Chain─]
  *
- * Day-13 scaffold renders the Verified path. Day-14 wires per-layer state
- * to live inference progress.
+ * Renders the Verified state by default; per-layer states wire to the
+ * live verification result on /r/[id] and to inference progress on
+ * the Run panel.
  */
 
 type LayerState = 'pending' | 'active' | 'verified' | 'mismatch';

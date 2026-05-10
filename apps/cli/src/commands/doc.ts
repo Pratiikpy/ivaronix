@@ -647,7 +647,8 @@ docCommand
         const tokenId = await passport.passportOf(wallet.address as `0x${string}`);
         if (tokenId !== 0n) {
           ui.pending(`recording receipt against passport tokenId=${tokenId}...`);
-          // Trust delta: +1 per anchored receipt; can be tuned per skill in Day 9+
+          // Trust delta: +1 per anchored receipt; tunable per skill via the
+          // skill manifest's `og.reputation.on_pass.trustScore` field.
           const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
           await ptx.wait();
           // Re-read updated state

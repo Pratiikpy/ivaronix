@@ -7,7 +7,8 @@ import { resolve, dirname } from 'node:path';
  * directories from the studio cwd looking for `.ivaronix/receipts/anchored/`.
  *
  * Returns the parsed JSON or `null` when no matching receipt exists locally.
- * (Day 22 will fall back to 0G Storage download once B-1 is unblocked.)
+ * (Future: fall back to 0G Storage download via the receipt's storageRoot —
+ * gated on the storage upload path landing for Studio runs.)
  */
 export interface LocalReceiptLookup {
   root: string;             // 0x… 64-hex

@@ -2,8 +2,32 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "noEmit": true
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@opencode-ai/sdk": ["../opencode-sdk/src/index.ts"],
+      "@opencode-ai/sdk/client": ["../opencode-sdk/src/client.ts"],
+      "@opencode-ai/sdk/server": ["../opencode-sdk/src/server.ts"],
+      "@opencode-ai/sdk/v2": ["../opencode-sdk/src/v2/index.ts"],
+      "@opencode-ai/sdk/v2/client": ["../opencode-sdk/src/v2/client.ts"],
+      "@opencode-ai/sdk/v2/server": ["../opencode-sdk/src/v2/server.ts"],
+      "@opencode-ai/sdk/v2/gen/client": ["../opencode-sdk/src/v2/gen/client/index.ts"],
+      "@opencode-ai/plugin": ["../opencode-plugin/src/index.ts"],
+      "@opencode-ai/plugin/tool": ["../opencode-plugin/src/tool.ts"],
+      "@opencode-ai/plugin/tui": ["../opencode-plugin/src/tui.ts"],
+      "@opencode-ai/plugin/shell": ["../opencode-plugin/src/shell.ts"],
+      "@opencode-ai/script": ["../opencode-sdk/src/index.ts"],
+      "@opencode-ai/core": ["../opencode-core/src/index.ts"],
+      "@opencode-ai/core/*": ["../opencode-core/src/*"],
+      "@/*": ["./src/*"],
+      "@tui/*": ["./src/cli/cmd/tui/*"]
+    },
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
+    "strictNullChecks": false,
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js"
   },
   "include": ["src/**/*"]
 }

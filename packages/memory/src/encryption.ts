@@ -5,7 +5,7 @@ import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from 'node:
  * private key + a fixed namespace salt. The key is recomputed on demand and never
  * persisted; users with the private key (and no one else) can read their memory.
  *
- * Note: this is distinct from Burn Mode (Day 4), which destroys the session key.
+ * Note: this is distinct from Burn Mode (`packages/og-storage/src/burn.ts`), which destroys the session key.
  * For long-term memory the key MUST be recoverable so the user can re-read later.
  */
 

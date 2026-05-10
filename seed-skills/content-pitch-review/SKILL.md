@@ -43,7 +43,7 @@ og:
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
     # Track 3 marketing-persona surface. Lower creator share than
-    # private-doc-review (which is the legal-persona killer demo) because
+    # private-doc-review (the legal-persona reference flow) because
     # marketing-review skills are commoditised and we want the field
     # competition to set price discovery on this one.
     fee_split:

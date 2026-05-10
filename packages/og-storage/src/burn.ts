@@ -65,8 +65,8 @@ export function burnEncrypt(plaintext: Uint8Array | Buffer): BurnEncryptResult {
 /**
  * Decrypt ciphertext given a known key.
  * Note: Burn Mode receipts CANNOT be decrypted — the key is gone. This function
- * is only useful for callers who held the key separately (e.g., wallet-mode encryption,
- * not implemented yet at MVP).
+ * is only useful for callers who held the key separately (e.g., wallet-mode
+ * encryption — queued in USER_TODO §B-V2; not implemented today).
  */
 export function decryptWithKey(blob: Uint8Array, key: Uint8Array): Uint8Array {
   if (key.length !== KEY_LENGTH) throw new Error('decryptWithKey: key must be 32 bytes');

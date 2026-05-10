@@ -41,9 +41,11 @@ export interface SandboxDecision {
  * Returns a decision with structured violations. The CLI prints them and
  * exits 1 on `allow=false`.
  *
- * Day 10 enforcement is policy-only — no kernel/seccomp sandbox yet. The
- * goal is to make the boundary auditable and to fail loudly when a skill
- * exceeds its declared capabilities.
+ * Today's enforcement is policy-only — no kernel/seccomp sandbox yet.
+ * The goal is to make the boundary auditable and to fail loudly when a
+ * skill exceeds its declared capabilities. Hardened-sandbox path is
+ * queued in USER_TODO §B-V2 once the lifecycle-hooks runtime exposes
+ * shell/fs/wallet tools as gated capabilities.
  */
 export function evaluateSandbox(skill: LoadedSkill, ctx: SandboxContext): SandboxDecision {
   const v: SandboxViolation[] = [];
@@ -119,26 +121,26 @@ export function evaluateSandbox(skill: LoadedSkill, ctx: SandboxContext): Sandbo
 
   // 6. shell_access / writes_files / wallet_access — informational for now, since
   //    runSkill itself does not expose shell or fs to the model. They flip from
-  //    "warn" to "block" once Day 11's lifecycle hooks expose those tools.
+  //    "warn" to "block" once the lifecycle-hooks runtime gates those tools.
   if (p.shell_access !== 'none') {
     v.push({
       severity: 'warn',
       code: 'shell.access-declared',
-      message: `skill declares shell_access=${p.shell_access}; lifecycle hooks (Day 11) will enforce`,
+      message: `skill declares shell_access=${p.shell_access}; lifecycle hooks will enforce when the gated runtime ships`,
     });
   }
   if (p.writes_files) {
     v.push({
       severity: 'warn',
       code: 'fs.writes-declared',
-      message: `skill declares writes_files=true; lifecycle hooks (Day 11) will enforce`,
+      message: `skill declares writes_files=true; lifecycle hooks will enforce when the gated runtime ships`,
     });
   }
   if (p.wallet_access) {
     v.push({
       severity: 'warn',
       code: 'wallet.access-declared',
-      message: `skill declares wallet_access=true; lifecycle hooks (Day 11) will enforce`,
+      message: `skill declares wallet_access=true; lifecycle hooks will enforce when the gated runtime ships`,
     });
   }
 

@@ -5,7 +5,7 @@
  * `Xenova/all-MiniLM-L6-v2` (384-dim, mean-pooled, L2-normalized). Lazy-loaded
  * on first use; the ONNX weights cache to disk after the first call.
  *
- * Fallback: hashing-trick TF-IDF (the Day-8 baseline). Used when the model
+ * Fallback: hashing-trick TF-IDF baseline. Used when the MiniLM model
  * fails to load (e.g. network-restricted CI), so memory still works.
  *
  * Both produce 384-dim float vectors with cosine similarity ∈ [-1,1] —

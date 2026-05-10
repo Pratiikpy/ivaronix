@@ -88,8 +88,10 @@ export interface PipelineInput {
    * operator's), AND `agent.signedBy = 'operator-on-behalf-of-user'`.
    * The operator still signs the receipt body (browser cannot sign
    * server-side bytes); the chain anchor records the user as the
-   * owning agent so trust is correctly attributed. Phase B replaces
-   * this with full SIWE — the browser signs the receipt body itself.
+   * owning agent so trust is correctly attributed. The end-state is
+   * full SIWE — the browser signs the receipt body itself; tracked in
+   * USER_TODO §B-V2 as a follow-on once the wagmi typed-data flow is
+   * wired through Studio's run path.
    */
   delegatedOwnerWallet?: `0x${string}`;
 }

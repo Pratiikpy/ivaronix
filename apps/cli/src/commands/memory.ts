@@ -237,7 +237,7 @@ memoryCommand
       ui.info(`lastWriteAt          ${m.lastWriteAt > 0 ? new Date(m.lastWriteAt).toISOString() : '(never)'}`);
       ui.info(`embedding            ${m.embedding.method} dim=${m.embedding.dim}`);
       ui.divider();
-      ui.hint('Day 11+ will upload this manifest to 0G Storage and update passport.memoryRoot.');
+      ui.hint('Manifest upload to 0G Storage + passport.memoryRoot update queued in USER_TODO §B-V2.');
     } finally {
       engine.close();
     }

@@ -5,11 +5,12 @@ import { z } from 'zod';
  *
  * "Teams, DAOs, regulated industries. Policy engine, approval gates, team
  * memory, agent fleet management, spend limits, compliance exports, audit
- * log dashboards. Realistic enterprise revenue line; not built at MVP but
- * **designed in schema now**."
+ * log dashboards. Realistic enterprise revenue line; **designed in schema
+ * now** so Phase-3 contracts don't break the receipt format."
  *
- * The PRD locks the surface here. Day-30+ implementation maps each schema
- * to a contract / Studio surface / API endpoint.
+ * The PRD locks the surface here. Future implementation maps each schema
+ * to a contract / Studio surface / API endpoint; the receipt format stays
+ * stable through that transition.
  */
 
 // ─── Team / Organization ─────────────────────────────────────────────────────

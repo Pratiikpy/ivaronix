@@ -155,10 +155,10 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
 
   const { onChain, local, registryVersion } = result;
 
-  // Verification ladder — public surface
-  // Day 15: anchor present + (if local body) signature + hash match → VERIFIED
-  //         anchor present, no local body → still VERIFIED but partial (chain-only)
-  //         No anchor → wouldn't reach here (404)
+  // Verification ladder — public surface:
+  //   anchor present + local body + signature + hash match → VERIFIED
+  //   anchor present, no local body → still VERIFIED, partial (chain-only)
+  //   No anchor → wouldn't reach here (404)
   const hasLocalBody = local !== null;
   const teeVerified = local?.teeVerification?.routerVerified ?? false;
   // Trust tier: tier-1-tee (0G + TEE) vs tier-2-external-signed (NVIDIA NIM, …)

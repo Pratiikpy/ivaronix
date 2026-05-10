@@ -23,8 +23,8 @@ interface RunBody {
    * to this address (instead of the operator's), AND a new
    * `signedBy: 'operator-on-behalf-of-user'` field records the trust
    * model honestly: the user authorised but did not sign, the operator
-   * anchored on their behalf. Phase B replaces this with full SIWE
-   * (browser signs the receipt body before anchoring).
+   * anchored on their behalf. End-state is full SIWE (browser signs
+   * the receipt body before anchoring); queued in USER_TODO §B-V2.
    */
   userWallet?: string;
 }
@@ -43,8 +43,9 @@ interface RunBody {
  *    operator's wallet (legacy path) with `agent.signedBy = 'operator'`.
  *
  * Either way, `/r/[id]` renders a clear chip indicating the trust tier.
- * Phase B = SIWE: the browser signs the receipt body before anchor and
- * `signedBy = 'user-direct'` for fully self-sovereign provenance.
+ * The end-state is full SIWE: the browser signs the receipt body
+ * directly and `signedBy = 'user-direct'` for fully self-sovereign
+ * provenance. Queued in USER_TODO §B-V2.
  */
 export async function POST(req: Request) {
   await ensureEnv();

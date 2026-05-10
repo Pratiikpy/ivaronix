@@ -101,7 +101,7 @@ EVM_PRIVATE_KEY=0x…           # Wallet that signs receipts
 ZG_API_SECRET=…               # 0G Router API key
 ZG_SERVICE_URL=…              # 0G Router endpoint
 OG_COMPUTE_PROVIDER=…         # Compute provider address
-OG_NETWORK=testnet            # or `mainnet` after Phase B
+OG_NETWORK=testnet            # flip to `mainnet` after USER_TODO §B-V2 redeploy lands
 ```
 
 ## Why Ivaronix is different

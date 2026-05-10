@@ -62,7 +62,7 @@ export function canonicalHashV2(value: unknown, excludeKeys?: ReadonlySet<string
 export function sha256Hex(content: string): `sha256:${string}` {
   // Synchronous sha256 fallback using ethers' keccak isn't sha256. Use Web Crypto in async paths.
   // For sync sha256, callers should use the async sha256 in node:crypto. This stub returns a marker.
-  // Real implementation uses async sha256 via ./hash.ts (added in Day 2).
+  // Real implementation uses async sha256 via ./hash.ts.
   void content;
   throw new Error('sha256Hex is async — use sha256HexAsync from ./hash.ts');
 }

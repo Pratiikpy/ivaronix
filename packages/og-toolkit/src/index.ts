@@ -13,7 +13,7 @@
  *   await og.compute?.chat({ userPrompt, model });      // raw 0G router call
  *   await og.runSkill({ skillId: 'github-audit', ...});// receipt-aware
  *
- * Phase A status: composition is live. `runSkill` (the receipt-aware helper)
+ * Status: composition is live. `runSkill` (the receipt-aware helper)
  * delegates to `@ivaronix/runtime` which owns the canonical pipeline that
  * Studio and the CLI also use, so DX and behaviour stay aligned.
  */

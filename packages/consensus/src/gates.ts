@@ -118,7 +118,7 @@ const SENSITIVE_PII_REGEX = [
   /\b\d{16}\b/, // credit card-like
 ];
 
-const MAX_FILE_SIZE_MB = 10; // per Day 4 doc-ask scope
+const MAX_FILE_SIZE_MB = 10; // doc-ask hard limit; documents above this size belong in doc-bulk pipeline
 const MIN_INPUT_TOKENS = 5;
 const MIN_BALANCE_OG = 0.001; // ~1 mOG should be enough for any single audit + anchor
 

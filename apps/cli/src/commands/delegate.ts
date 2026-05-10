@@ -174,14 +174,16 @@ delegateCommand
     const delegateAddress = fresh.address as Address;
     ui.pass(`delegate wallet      ${delegateAddress}`);
 
-    // Persist key locally (Phase A: operator-side custody. Phase B: TEE-bound.)
+    // Persist key locally. Today: operator-machine custody (mode 0600).
+    // Hardened end-state is TEE-bound key custody so the operator process
+    // can't extract the secret; tracked in USER_TODO §B-V2.
     mkdirSync(dirname(delegateKeyPath(delegateId)), { recursive: true });
     writeFileSync(
       delegateKeyPath(delegateId),
       JSON.stringify({ privateKey: fresh.privateKey, address: delegateAddress, createdAt: Date.now() }, null, 2),
       { mode: 0o600 },
     );
-    ui.info(`key stored           ${delegateKeyPath(delegateId)} (mode 0600 — Phase A operator custody; Phase B is TEE-bound)`);
+    ui.info(`key stored           ${delegateKeyPath(delegateId)} (mode 0600 · operator-machine custody; TEE-bound custody queued)`);
 
     // 2. Fund the delegate from the user's wallet
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });

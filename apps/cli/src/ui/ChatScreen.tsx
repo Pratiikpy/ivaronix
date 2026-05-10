@@ -1,5 +1,5 @@
 /**
- * Phase B' Ink TUI — iteration 2.
+ * Ink TUI for the `chat` command — iteration 2.
  *
  * What's added since iteration 1:
  *   - streaming token render (assistant text fills in as it arrives)

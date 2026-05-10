@@ -115,6 +115,7 @@ When you write **anything that ships** (READMEs, docs, marketing copy, PR descri
 - **Show, don't adjective.** "200ms p95" not "blazingly fast." "61/61 tests" not "extensively tested." A real number is worth ten adjectives.
 - **Cut every word the sentence still works without.** Read it aloud — if you're embarrassed, rewrite.
 - **Match Ivaronix's voice**: terse, technical, blunt. Editorial cream-on-black. Receipts > rhetoric.
+- **JSDoc and NatSpec describe WHAT the code does, not WHEN it was written.** No `Day-N`, `Phase A/B/C`, `K-N fix`, `MVP`, `killer demo`, `Track N headline`, `sprint`. Use capability-statement framing ("this writes the receipt anchor"), threat-model framing ("defends against operator-side disclosure"), or roadmap framing ("queued in USER_TODO §B-V2"). Sprint references fossilize — in NatSpec they compile into permanent contract metadata. The exception is explicit traceability links (`planning-003 §A.5.X`, `WT 31`) that map a comment to a specific audit closure; those are intentional and stay.
 
 If you catch yourself writing AI slop: stop, delete the paragraph, write one sentence that is true, ship that.
 

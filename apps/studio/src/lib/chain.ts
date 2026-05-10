@@ -20,8 +20,9 @@ export function receiptTypeLabel(code: number | bigint): string {
 
 /**
  * Server-side Ethers provider. The Studio reads on-chain data directly using
- * the og-chain workspace package — no API proxy. Day-13 scaffold uses RPC at
- * request time; Day-17 will add caching + revalidation.
+ * the og-chain workspace package — no API proxy. RPC at request time; route
+ * handlers add per-call caching where the cost is meaningful (see
+ * `lib/dashboard.ts` 60s per-address cache for the findByAgent scan).
  */
 export function getNetwork(): Network {
   return (process.env.NEXT_PUBLIC_OG_NETWORK as Network) ?? 'testnet';

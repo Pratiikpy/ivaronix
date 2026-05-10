@@ -16,7 +16,7 @@ export const ReceiptTypeSchema = z.enum([
   'swarm',
   // Slot 9 (PASS 76 B-1): SubscriptionEscrow check-in tick.
   'subscription_skill_exec',
-  // Slots 10-11: Confidential Data Room (Track 5 headline).
+  // Slots 10-11: Confidential Data Room (Track 5 economy surface — multi-party rooms with grant-gated reads).
   'doc_room_create',
   'doc_room_read',
   // Slot 12: Memory consolidation rollup (planning-01 §2B). The agent
@@ -79,7 +79,7 @@ export const ReceiptV1Schema = z.object({
      * W9 · trust-tier marker: who actually held the signing key.
      *  - 'operator'                       → server-side operator key (legacy default)
      *  - 'operator-on-behalf-of-user'     → ownerWallet is user's; operator anchored on behalf (current SIWE-precursor path)
-     *  - 'user-direct'                    → user's wallet signed the receipt body itself (Phase B SIWE)
+     *  - 'user-direct'                    → user's wallet signed the receipt body itself (full SIWE end-state)
      *
      * Optional in the input — older code paths and tests don't set it.
      * When absent, render it as 'operator' (consumer side default).

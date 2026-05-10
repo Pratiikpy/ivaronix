@@ -1,16 +1,16 @@
 # `@ivaronix/trust-layer`
 
-> **Status:** Phase-3 schema scaffold per PRD §3.5. Implementation lands post-MVP; the schemas + policy evaluator below are the locked surface today.
+> **Status:** Schema scaffold per PRD §3.5. Implementation tracked in USER_TODO §B-V2; the schemas + policy evaluator below are the locked surface today.
 
 ## What lives here
 
-- **`schema.ts`** — Zod schemas for the Phase-3 types: `Team` · `TeamMember` · `PolicyRule` · `PolicySet` · `ApprovalGate` · `SpendLedgerEntry` · `AuditExportRequest` · `AuditExportRow`.
+- **`schema.ts`** — Zod schemas for the enterprise types: `Team` · `TeamMember` · `PolicyRule` · `PolicySet` · `ApprovalGate` · `SpendLedgerEntry` · `AuditExportRequest` · `AuditExportRow`.
 - **`policy.ts`** — pure-function policy evaluator: `evaluatePolicy(set, candidate) → {effect, rule, reason, approvers}`. Supports `allow` · `deny` · `require_approval` · `log_only` effects, trust-score gates, daily spend caps, glob matching on skill/mode/tier/network/caller.
 - **`defaultPolicySet(teamId, owner)`** — starter rules: `mainnet-high-stakes-requires-approval`, `mainnet-daily-cap-1og`, `auditor-readonly`.
 
-## How it slots into MVP
+## How it slots into the receipt format
 
-MVP receipts already carry `request.approvalChain` (per RECEIPTS_SPEC §1). Today every receipt records `[{gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:default-strict'}]` — a single hard-coded rule. **Phase 3 swaps the hard-coded rule for `evaluatePolicy(team.policy, candidate)` and writes the resulting `EvalDecision` into `approvalChain` instead.** No receipt schema change required.
+Receipts shipping today already carry `request.approvalChain` (per RECEIPTS_SPEC §1). Today every receipt records `[{gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:default-strict'}]` — a single hard-coded rule. **The end-state swaps the hard-coded rule for `evaluatePolicy(team.policy, candidate)` and writes the resulting `EvalDecision` into `approvalChain` instead.** No receipt schema change required.
 
 ## Phase-3 surfaces (locked)
 
@@ -25,10 +25,10 @@ MVP receipts already carry `request.approvalChain` (per RECEIPTS_SPEC §1). Toda
 
 ## Why a schema scaffold (not full impl)?
 
-Per PRD §3.5: *"Realistic enterprise revenue line; not built at MVP but designed in schema now."* Locking the surface today means:
+Per PRD §3.5: *"Realistic enterprise revenue line; designed in schema now."* Locking the surface today means:
 
-- MVP receipts already conform; Phase-3 doesn't break the receipt format.
-- Day-30+ contract additions are predictable (TeamRegistry + PolicyAnchor are the only new on-chain entities).
+- Receipts shipping today already conform; future Phase-3 contract additions don't break the receipt format.
+- Future contract additions are predictable (TeamRegistry + PolicyAnchor are the only new on-chain entities required).
 - Studio's Trust-Layer pages can be designed against the schema before the contracts ship.
 
 ## Quick example

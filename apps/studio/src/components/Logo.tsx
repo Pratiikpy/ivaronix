@@ -5,8 +5,8 @@
  * pulse. The green dot is load-bearing — it signals "live", "currently
  * thinking." A black dot defeats the mark's whole purpose.
  *
- * Color is the canonical `#0a0a0a` ink (not the warmer `#1a1a1a` we
- * shipped on Day 13 — superseded by Brand Kit v1.0).
+ * Color is the canonical `#0a0a0a` ink per `brand/tokens.css`. The
+ * earlier warmer `#1a1a1a` is superseded.
  *
  * Sizes: header (22-24px tall), nav (18px), hero (96px+).
  */
