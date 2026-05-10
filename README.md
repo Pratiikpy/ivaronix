@@ -91,6 +91,28 @@ No other project in the 0G APAC field ships a polyglot canonical hash with byte-
 - [docs/CI_WALLET.md](docs/CI_WALLET.md) · runbook for the chain-smoke CI wallet
 - [docs/planning-003.md](docs/planning-003.md) · no-compromise plan with full coverage map
 
+## Memory primitive · counters SealedMind on a single command
+
+SealedMind pitches "first portable memory layer for AI agents" and gets the headline. Ivaronix has the same primitive shipped, plus on-chain audit trail: `MemoryEngine` (encrypted hybrid vector + FTS via the K-20-fixed AES-GCM crypto) wired to `CapabilityRegistry` (on-chain grants) and `MemoryAccessLog` (on-chain access trail).
+
+```bash
+# Write an observation to your hybrid memory (encrypted, indexed, optional on-chain log)
+ivaronix memory remember "Vendor X's contract has a 90-day notice asymmetry" --tags work,legal
+
+# Recall by hybrid score (vector similarity + FTS keyword)
+ivaronix memory recall "asymmetric notice clauses" --top-k 5
+
+# Grant another wallet read access to a scoped slice
+ivaronix memory grant 0xPartner --scope "memory:work" --expires 1735689600
+
+# See on-chain access events for your wallet
+ivaronix memory log --agent $EVM_WALLET_ADDRESS --limit 10
+```
+
+10 sub-commands total: `remember`, `recall`, `forget`, `grant`, `revoke`, `list`, `log`, `log-emit`, `stream-id`, `snapshot`. The `stream-id` command derives a deterministic 0G KV stream-ID from any wallet so memory is portable across machines without a server-side index. Studio `/memory` page mirrors the surface: SIWE-gated, real-time event feed from `MemoryAccessLog`, grant management UI for `CapabilityRegistry`.
+
+Wedge vs SealedMind: receipts. Every `memory remember` anchors a `memory_access` receipt on chain (when `--no-log` isn't set). The receipt records the access type + the K-20-encrypted blob's storage root. Same memory layer, plus the audit trail competitors don't have.
+
 ## Verify a real receipt right now
 
 The single command that no other 0G project ships:
