@@ -168,18 +168,23 @@ function parseReceiptTypes(): { count: number; labels: string[] } {
  * were added (V2 migration) or removed.
  */
 function countDeployedContracts(): number {
+  return Object.keys(readDeployments().contracts).length;
+}
+
+interface Deployments { contracts: Record<string, { address: string }> }
+
+function readDeployments(): Deployments {
   // Canonical location: contracts/deployments/<network>.json (matches docs +
   // packages/og-chain/src/deployments.ts walk-up). Legacy fallback retained
   // for transition; will warn if used.
   const canonical = resolve(REPO_ROOT, 'contracts', 'deployments', 'testnet.json');
   const legacy = resolve(REPO_ROOT, 'deployments', 'testnet.json');
   const path = existsSync(canonical) ? canonical : legacy;
-  if (!existsSync(path)) return 0;
+  if (!existsSync(path)) return { contracts: {} };
   try {
-    const json = JSON.parse(readFileSync(path, 'utf8')) as { contracts?: Record<string, unknown> };
-    return json.contracts ? Object.keys(json.contracts).length : 0;
+    return JSON.parse(readFileSync(path, 'utf8')) as Deployments;
   } catch {
-    return 0;
+    return { contracts: {} };
   }
 }
 
@@ -316,17 +321,28 @@ async function buildSnapshot(): Promise<NumbersFile> {
       labels: receiptTypes.labels,
       source: existing.receiptTypes.source,
     },
-    contracts: {
-      ...existing.contracts,
-      // Auto-derived from deployments/testnet.json so V2-deploy or new
-      // contract additions reflect without hand-editing.
-      deployed: countDeployedContracts(),
-      // Auto-derived from `function test_` markers across contracts/test/*.t.sol
-      // so V2 migration test additions reflect without invoking `forge test`.
-      // Cron-sweep finding 2026-05-10: numbers.json claimed 121, actual 167
-      // (46 new V2-contract tests landed silently).
-      foundryTests: countFoundryTests(),
-    },
+    contracts: (() => {
+      // Auto-derive list + addresses from contracts/deployments/testnet.json
+      // so all three fields (deployed, list, addresses) update together
+      // when new contracts deploy. Hand-frozen list drifted in cron-sweep
+      // 2026-05-10: numbers.json contracts.list claimed SubscriptionEscrow
+      // was deployed (it is not), and was MISSING MemoryAccessLog (which
+      // is). Caught by the verify-numbers-vs-deployments regression.
+      const dep = readDeployments();
+      const list = Object.keys(dep.contracts).sort();
+      const addresses: Record<string, string> = {};
+      for (const name of list) {
+        addresses[name] = dep.contracts[name]!.address;
+      }
+      return {
+        deployed: list.length,
+        // Auto-derived from `function test_` markers across contracts/test/*.t.sol
+        // so V2 migration test additions reflect without invoking `forge test`.
+        foundryTests: countFoundryTests(),
+        list,
+        addresses,
+      };
+    })(),
     skills: (() => {
       // Auto-derive vendored count from filesystem; the original
       // hand-frozen value drifted whenever a new import landed without
