@@ -5,10 +5,10 @@ import { FourLightRow } from '@/components/FourLightRow';
 import { ReceiptStateChip } from '@/components/ReceiptStateChip';
 import { ShareButton } from '@/components/ShareButton';
 import {
-  getReceiptRegistry,
   explorerTxUrl,
   explorerAddrUrl,
   getNetwork,
+  getRegistries,
 } from '@/lib/chain';
 import { findLocalReceiptByRoot, type ReceiptBody } from '@/lib/local-receipt';
 import type { OnChainReceipt } from '@ivaronix/og-chain';
@@ -19,28 +19,52 @@ export const dynamic = 'force-dynamic';
 interface ResolvedReceipt {
   onChain: OnChainReceipt;
   local: ReceiptBody | null;
+  /** Which registry served this receipt — drives the legacy chip in the UI. */
+  registryVersion: 'v1' | 'v2';
 }
 
 async function loadReceipt(idOrRoot: string): Promise<ResolvedReceipt | null> {
-  const reg = getReceiptRegistry();
-  if (!reg) return null;
-  let onChain: OnChainReceipt | null = null;
-  if (/^\d+$/.test(idOrRoot)) {
+  const { v1, v2 } = getRegistries();
+  const isId = /^\d+$/.test(idOrRoot);
+  const isRoot = /^0x[0-9a-f]{64}$/i.test(idOrRoot);
+  if (!isId && !isRoot) return null;
+
+  // Try V2 first (K-2 fix is the active path); fall back to V1 (legacy
+  // 1,330+ receipts). Receipt id namespaces don't collide because V2
+  // starts at 0 with a fresh deploy; the same id can resolve in both
+  // contracts but V2 is the newer authority for fresh anchors.
+  const tries: Array<{ version: 'v1' | 'v2'; load: () => Promise<OnChainReceipt | null> }> = [];
+  if (v2) {
+    tries.push({
+      version: 'v2',
+      load: async () => {
+        if (isId) return v2.getReceipt(BigInt(idOrRoot));
+        return v2.findByReceiptRoot(idOrRoot as `0x${string}`, 200_000);
+      },
+    });
+  }
+  if (v1) {
+    tries.push({
+      version: 'v1',
+      load: async () => {
+        if (isId) return v1.getReceipt(BigInt(idOrRoot));
+        return v1.findByReceiptRoot(idOrRoot as `0x${string}`, 200_000);
+      },
+    });
+  }
+
+  for (const { version, load } of tries) {
     try {
-      onChain = await reg.getReceipt(BigInt(idOrRoot));
+      const onChain = await load();
+      if (onChain) {
+        const local = findLocalReceiptByRoot(onChain.receiptRoot);
+        return { onChain, local: local?.body ?? null, registryVersion: version };
+      }
     } catch {
-      return null;
-    }
-  } else if (/^0x[0-9a-f]{64}$/i.test(idOrRoot)) {
-    try {
-      onChain = await reg.findByReceiptRoot(idOrRoot as `0x${string}`, 200_000);
-    } catch {
-      return null;
+      // Move to the next registry on RPC error / decode error.
     }
   }
-  if (!onChain) return null;
-  const local = findLocalReceiptByRoot(onChain.receiptRoot);
-  return { onChain, local: local?.body ?? null };
+  return null;
 }
 
 // ─── SEO / OG metadata ───────────────────────────────────────────────────────
@@ -129,7 +153,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const result = await loadReceipt(id);
   if (!result) notFound();
 
-  const { onChain, local } = result;
+  const { onChain, local, registryVersion } = result;
 
   // Verification ladder — public surface
   // Day 15: anchor present + (if local body) signature + hash match → VERIFIED
@@ -217,6 +241,21 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           <ReceiptStateChip state={overallState} />
           <TierBadge tier={tier} providerKind={providerKind} />
           {risk(local?.outputs?.riskLevel)}
+          {registryVersion === 'v1' && (
+            <span
+              style={{
+                padding: '4px 10px',
+                fontSize: 11,
+                letterSpacing: '0.5px',
+                color: 'var(--color-fg-muted, #6b6b6b)',
+                border: '1px dashed var(--color-hairline, #d4d4d4)',
+                borderRadius: 999,
+              }}
+              title="Anchored on the V1 ReceiptRegistry. New receipts use V2 (EIP-712 agent recovery, K-2 fix). V1 stays live for the existing 1,330+ receipts."
+            >
+              LEGACY-REGISTRY
+            </span>
+          )}
           {/* I-1: when verifyClaimed reports INVALID, render the failed
               check + detail next to the chip so the operator + judge
               see exactly which step broke. No silent failure. */}

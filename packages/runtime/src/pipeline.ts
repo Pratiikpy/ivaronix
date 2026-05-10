@@ -13,6 +13,7 @@ import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from 
 import { burnEncrypt } from '@ivaronix/og-storage';
 import {
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   AgentPassportClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
@@ -478,8 +479,17 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
   const wallet = new Wallet(env.privateKey, provider);
 
-  const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-  if (!registryAddr) throw new Error(`ReceiptRegistry not deployed on ${env.network}`);
+  // Prefer V2 registry when deployed (HALF_BAKED K-2 fix). V1 stays live
+  // forever for the existing 1,330+ anchored receipts; new anchors land
+  // on V2 if present so the agentAddress on chain is the recovered
+  // EIP-712 signer instead of `msg.sender`.
+  const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+  const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+  const registryAddr = registryAddrV2 ?? registryAddrV1;
+  const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+  if (!registryAddr) {
+    throw new Error(`No ReceiptRegistry deployed on ${env.network}`);
+  }
 
   const evidenceDigest = await sha256HexAsync(activeContext);
   const outputHash = await sha256HexAsync(finalText);
@@ -684,22 +694,56 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     if (!r.allow) throw new Error(`receipt.pre-anchor hook "${r.blockingHook}" refused: ${r.reason}`);
   }
 
-  const registry = new ReceiptRegistryClient(registryAddr, wallet);
   const typeCode = RECEIPT_TYPES[draft.type];
   const evidenceBytes32 = ('0x' + evidenceDigest.replace(/^sha256:/, '')) as Hash;
-  const tx = await registry.anchor(
-    signed.storage.receiptRoot as Hash,
-    evidenceBytes32,
-    typeCode,
-    ('0x' + '0'.repeat(64)) as Hash,
-  );
-  const txReceipt = await tx.wait();
+  // H-1: bind on-chain attestationHash to the chat ID via keccak256 when
+  // the inference path produced one. Zero-fallback for TIER 2 / NIM runs.
+  const onChainAttestationHash: Hash = (primaryAtt?.zgResKey
+    ? keccak256(toUtf8Bytes(primaryAtt.zgResKey))
+    : ('0x' + '0'.repeat(64))) as Hash;
 
   let onchainId: bigint | null = null;
-  try {
-    const onChain = await registry.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
-    if (onChain) onchainId = onChain.id;
-  } catch { /* not fatal */ }
+  let txHash: string;
+  let txBlockNumber: number | null = null;
+
+  if (registryVersion === 'v2') {
+    // K-2 path: EIP-712 sign + anchor through V2. The recorded
+    // agentAddress is the recovered signer (this wallet); msg.sender
+    // is the relayer (also this wallet today; future flows split them).
+    const registryV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+    const { tx } = await registryV2.signAndAnchor(wallet, {
+      receiptRoot: signed.storage.receiptRoot as Hash,
+      storageRoot: evidenceBytes32,
+      receiptType: typeCode,
+      attestationHash: onChainAttestationHash,
+    });
+    const txReceipt = await tx.wait();
+    txHash = tx.hash;
+    txBlockNumber = txReceipt?.blockNumber ?? null;
+    try {
+      const onChain = await registryV2.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+      if (onChain) onchainId = onChain.id;
+    } catch { /* not fatal */ }
+  } else {
+    // Legacy V1 path. Kept for chains where V2 has not been deployed yet.
+    const registryV1 = new ReceiptRegistryClient(registryAddr, wallet);
+    const tx = await registryV1.anchor(
+      signed.storage.receiptRoot as Hash,
+      evidenceBytes32,
+      typeCode,
+      onChainAttestationHash,
+    );
+    const txReceipt = await tx.wait();
+    txHash = tx.hash;
+    txBlockNumber = txReceipt?.blockNumber ?? null;
+    try {
+      const onChain = await registryV1.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+      if (onChain) onchainId = onChain.id;
+    } catch { /* not fatal */ }
+  }
+  // Synthesise an ethers-shaped record for downstream loggers.
+  const tx = { hash: txHash } as { hash: string };
+  const txReceipt = txBlockNumber !== null ? { blockNumber: txBlockNumber } : undefined;
 
   log.pass(tag(`receipt              ${signed.id}  block=${txReceipt?.blockNumber}  on-chain id=${onchainId}`));
 
