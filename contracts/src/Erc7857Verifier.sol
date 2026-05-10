@@ -12,6 +12,22 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
  *      blob matches the attestation. Roadmap: swap the attestor for a TEE-backed
  *      remote attestation or ZKP verifier per ERC-7857 §integration when one
  *      lands in production. The attestor surface is intentionally swappable.
+ *
+ *      Threat model (planning-003 §A.3.2 · WT 66):
+ *      - Defends against: a transferred passport receiving an unattested
+ *        sealed-data blob. verifyDataIntegrity() reverts if no authorized
+ *        attestor signed the (recipient, metadataHash, nonce) tuple.
+ *      - Defends against: replay of a prior attestation. usedNonces marks
+ *        each (recipient, metadataHash, nonce) used after one successful
+ *        verification.
+ *      - Does NOT defend against: a compromised attestor. The attestor
+ *        signature is the trust root; if their key leaks, an attacker
+ *        signs arbitrary integrity claims. Mitigation: rotate via
+ *        addAttestor() / removeAttestor() and short attestation windows.
+ *      - Does NOT defend against: a forged off-chain blob that happens to
+ *        match a legitimate attestation. The contract verifies the
+ *        signature, not the blob's actual contents — the off-chain
+ *        consumer must hash the blob and compare to metadataHash.
  */
 contract Erc7857Verifier is Ownable2Step {
     /// @notice Authorized attestors that may sign integrity attestations.

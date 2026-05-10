@@ -14,6 +14,18 @@ pragma solidity 0.8.20;
  *      Anyone can call logAccess() — the event records who logged what; indexers filter by
  *      `agent` (the indexed param) for per-wallet history. There's no ACL because the events
  *      are public anyway, and the cost of a frivolous log is the gas the caller paid.
+ *
+ *      Threat model (planning-003 §A.3.2 · WT 66):
+ *      - Defends against: silent memory access. Every read/write/delete
+ *        emits an indexable event. A user can audit who touched their
+ *        memory by filtering on the `agent` topic.
+ *      - Does NOT defend against: log spoofing. Anyone can call
+ *        logAccess(agent=X, grantId=Y) and pollute X's audit trail for
+ *        the price of gas. planning-003 §A.5.12 ships V2 that requires
+ *        msg.sender == agent OR a valid grant from the caller.
+ *      - Does NOT defend against: a memory engine that bypasses the log.
+ *        Enforcement is policy-only; an off-chain reader could serve
+ *        memory without emitting an event.
  */
 contract MemoryAccessLog {
     /// @notice Access type codes

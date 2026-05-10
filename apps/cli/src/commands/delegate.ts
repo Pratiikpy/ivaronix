@@ -12,14 +12,14 @@ import { ui } from '../lib/ui.js';
 import { docCommand } from './doc.js';
 
 /**
- * Delegated AI Agent — Phase A.
+ * Delegated AI Agent.
  *
  * "I want an AI specialist to handle my contract reviews. The AI has its own
  * identity (AgentPassportINFT). Every action it takes is signed by the
  * delegate's own wallet, not mine. I grant capabilities via on-chain
  * CapabilityRegistry; I can revoke at any time."
  *
- * Phase A scope (this firing):
+ * Today's scope:
  * - Generate a fresh delegate keypair (operator-side, isolated under
  *   `.ivaronix/delegates/<id>/`).
  * - Fund the delegate from the user's wallet (small gas budget).
@@ -30,12 +30,22 @@ import { docCommand } from './doc.js';
  *   path.
  * - Revoke capability cleanly.
  *
- * Phase B upgrade path (NOT shipped here, documented honestly):
- * Replace step-1 keypair generation with 0G Compute TEE-derived key. The
- * delegate's private key is generated *inside* the TEE on first mint and
- * never leaves; the on-chain identity model is unchanged. Today the key is
- * held server-side; the trust boundary is "the operator does not export
- * the key from `.ivaronix/delegates/`." See planning-01.md §3 for details.
+ * Threat model (planning-003 §A.3.2 · WT 66):
+ *   - Defends against: the user's own signing key appearing in any receipt
+ *     produced by the delegate. Receipts are signed by the delegate
+ *     wallet only. The user's wallet is not used during run, so a
+ *     compromised delegate cannot forge a receipt as the user.
+ *   - Defends against: capability creep. Every delegate run reads its
+ *     scope from CapabilityRegistry; revoking the on-chain grant
+ *     invalidates future runs immediately.
+ *   - Does NOT defend against: an attacker who exfiltrates the delegate
+ *     private key from `.ivaronix/delegates/<id>/`. The key is plaintext
+ *     on disk under operator custody; mode 0600 prevents process-level
+ *     read but not whole-machine compromise.
+ *   - Roadmap: replace operator-custody keys with 0G Compute TEE-derived
+ *     keys generated inside the TEE on first mint. The on-chain identity
+ *     model stays the same; the trust boundary moves from the operator's
+ *     filesystem to the TEE.
  */
 
 const PASSPORT_ABI = [

@@ -10,6 +10,19 @@ import {
 /**
  * Multi-key rotation for Router calls per HLD §11.0.
  * Holds an ordered array of credentials; tries them in order, fails over on 402/429.
+ *
+ * Threat model (planning-003 §A.3.2 · WT 66):
+ *   - Defends against: a single Router credential being depleted (402),
+ *     rate-limited (429), or rejected (auth) mid-run. Rotation surfaces
+ *     the failure to the next credential without the caller noticing.
+ *   - Does NOT defend against: a malicious credential pretending to be
+ *     a legitimate Router endpoint (the caller trusts every credential
+ *     in the keyring equally — vetting is the operator's responsibility).
+ *     Does NOT defend against the underlying Router service being
+ *     compromised (the credentials still terminate at that service).
+ *   - Assumed attacker capabilities: the attacker holds zero valid
+ *     credentials and cannot inject one into the keyring. If the
+ *     operator's `.env` is compromised, rotation cannot help.
  */
 export class Keyring {
   private credentials: RouterCredential[];

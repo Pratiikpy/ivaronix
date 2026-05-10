@@ -11,6 +11,19 @@ pragma solidity 0.8.20;
  *      The hybrid memory engine queries this on every memory read to enforce
  *      the grant. Off-chain readers can also query directly to audit who has
  *      access to a given owner's memory.
+ *
+ *      Threat model (planning-003 §A.3.2 · WT 66):
+ *      - Defends against: an unauthorized agent reading another wallet's
+ *        memory. consumeRead() reverts if the caller has no live grant.
+ *      - Defends against: stale grants. expiresAt + revoke() let owners
+ *        invalidate access without changing the memory itself.
+ *      - Does NOT defend against: the social-graph leak. The reverse
+ *        index `grantsByGrantee` is a public mapping — anyone can
+ *        enumerate every grant ever issued to a wallet (planning-003
+ *        §A.5.10 ships V2 with private storage).
+ *      - Does NOT defend against: an off-chain memory store that ignores
+ *        consumeRead() and serves the data anyway. Enforcement requires
+ *        the memory engine to gate every read on this contract.
  */
 contract CapabilityRegistry {
     struct Grant {
