@@ -53,7 +53,9 @@ jobs:
           # Scoped CI wallet key. Set via repo secret; never the operator's
           # main signing key. Cost per run is ~0.0005 OG; allocate 0.5 OG
           # to this wallet for ~1000 PR/nightly runs of headroom.
-          EVM_PRIVATE_KEY: ${{ secrets.IVARONIX_CI_WALLET_KEY }}
+          # Lead with canonical IVARONIX_SIGNER_KEY per packages/runtime/src/env.ts.
+          # The legacy alias EVM_PRIVATE_KEY still resolves via the alias chain.
+          IVARONIX_SIGNER_KEY: ${{ secrets.IVARONIX_CI_WALLET_KEY }}
         working-directory: scripts/qa/metamask-e2e
         run: pnpm exec tsx verify-v2-anchor-live.ts
       - name: Print chainscan link on success

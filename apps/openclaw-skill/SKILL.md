@@ -16,7 +16,10 @@ metadata:
     os: ["darwin", "linux", "win32"]
     requires:
       bins: ["ivaronix"]
-      env: ["EVM_PRIVATE_KEY", "ZG_API_SECRET", "ZG_SERVICE_URL"]
+      # Lead with canonical IVARONIX_* names per packages/runtime/src/env.ts.
+      # Legacy aliases (EVM_PRIVATE_KEY, ZG_*) still resolve via the alias
+      # chain so existing operator .env files keep working.
+      env: ["IVARONIX_SIGNER_KEY", "IVARONIX_ROUTER_KEY", "IVARONIX_ROUTER_URL"]
     install:
       - id: node
         kind: node
