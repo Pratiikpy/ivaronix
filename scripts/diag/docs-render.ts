@@ -35,6 +35,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..');
 const NUMBERS_PATH = resolve(REPO_ROOT, 'docs', 'numbers.json');
+const DEPLOYMENTS_PATH = resolve(REPO_ROOT, 'contracts', 'deployments', 'testnet.json');
 
 /** Markdown docs that consume `<!-- numbers:auto:KEY -->` markers. */
 const TARGET_DOCS = [
@@ -68,6 +69,61 @@ function lookupValue(json: Record<string, unknown>, key: string): string | null 
 }
 
 const MARKER = /<!--\s*numbers:auto:([\w.]+)\s*-->([\s\S]*?)<!--\s*\/numbers:auto:\1\s*-->/g;
+
+// Block-level marker for auto-generated contracts table. Pulls
+// directly from contracts/deployments/testnet.json so the table can
+// never drift from the canonical address record. Each row carries the
+// chainscan link inline; V1/V2 rows get a context tag pulled from the
+// deployments file's `note` field (truncated for table density).
+const CONTRACTS_BLOCK = /<!--\s*contracts:auto:start\s*-->([\s\S]*?)<!--\s*contracts:auto:end\s*-->/g;
+
+interface ContractEntry { address: string; explorer: string; note?: string }
+interface DeploymentManifest { contracts: Record<string, ContractEntry> }
+
+function loadDeployments(): DeploymentManifest {
+  return JSON.parse(readFileSync(DEPLOYMENTS_PATH, 'utf8')) as DeploymentManifest;
+}
+
+function shortNote(note: string | undefined): string {
+  if (!note) return '';
+  // Pull the leading clause up to the first period or em-dash; cap at
+  // 60 chars so the table stays readable. Strip leading "Vx; " prefix
+  // if present (the prefix is implied by the contract name).
+  let snippet = note.split(/[.·—]/)[0] ?? '';
+  snippet = snippet.replace(/^V\d;\s*/, '').trim();
+  if (snippet.length > 60) snippet = snippet.slice(0, 57) + '…';
+  return snippet ? ` — ${snippet}` : '';
+}
+
+function renderContractsTable(): string {
+  const m = loadDeployments();
+  // Stable order: V1 then V2 of the same family adjacent, then the
+  // standalone supports. Sort alphabetically — V2 sorts after V1
+  // automatically because the suffix is appended.
+  const names = Object.keys(m.contracts).sort();
+  const lines: string[] = [
+    '',
+    '| Contract              | Address                                                                                                                                            |',
+    '|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|',
+  ];
+  for (const name of names) {
+    const c = m.contracts[name]!;
+    const nameCell = `\`${name}\``.padEnd(22);
+    const cell = `[\`${c.address}\`](${c.explorer})${shortNote(c.note)}`;
+    lines.push(`| ${nameCell} | ${cell} |`);
+  }
+  lines.push('');
+  return lines.join('\n');
+}
+
+function renderContractsBlocks(source: string): { rendered: string; replacements: number } {
+  let replacements = 0;
+  const rendered = source.replace(CONTRACTS_BLOCK, () => {
+    replacements++;
+    return `<!-- contracts:auto:start -->${renderContractsTable()}<!-- contracts:auto:end -->`;
+  });
+  return { rendered, replacements };
+}
 
 function renderDoc(source: string, numbers: Record<string, unknown>): { rendered: string; replacements: number; misses: string[] } {
   const misses: string[] = [];
@@ -111,7 +167,11 @@ function main(): void {
       console.warn(`SKIP: ${rel} not found`);
       continue;
     }
-    const { rendered, replacements, misses } = renderDoc(source, numbers);
+    const numbersResult = renderDoc(source, numbers);
+    const contractsResult = renderContractsBlocks(numbersResult.rendered);
+    const rendered = contractsResult.rendered;
+    const replacements = numbersResult.replacements + contractsResult.replacements;
+    const misses = numbersResult.misses;
     totalReplacements += replacements;
     totalMisses += misses.length;
     if (replacements === 0 && misses.length === 0) continue;
