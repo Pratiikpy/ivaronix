@@ -119,6 +119,8 @@ jobs:
         run: pnpm --filter @ivaronix/skills test
       - name: memory (encryption · 14 tests)
         run: pnpm --filter @ivaronix/memory test
+      - name: og-chain (deployments walk-up · 8 tests)
+        run: pnpm --filter @ivaronix/og-chain test
       - name: docs:check (numbers.json staleness + marker drift)
         run: pnpm docs:check
       - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)

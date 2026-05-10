@@ -27,7 +27,7 @@
 
 ## Tests
 
-`packages/og-storage/test/` — vitest. Run via `pnpm --filter @ivaronix/og-storage test`.
+No unit tests yet. `pnpm --filter @ivaronix/og-storage test` is `echo skip` today; queued in `docs/USER_TODO.md §B-V2-OG-STORAGE-TESTS`. When tests land, follow the convention: Node's built-in `node:test` runner via `tsx --test src/**/*.test.ts` (matches `packages/{core,consensus,skills,memory,receipts,og-chain}`). High-value targets: Burn Mode AES-GCM round-trip (encrypt → decrypt → original plaintext), nonce uniqueness across 10k randomBytes(12) draws (K-20 regression coverage), keyFingerprint capture happens BEFORE buffer zeroing.
 
 ## File location reference
 

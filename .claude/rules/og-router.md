@@ -37,7 +37,7 @@ Every file in `packages/og-router/` opens with the threat-model block per `docs/
 
 ## Tests
 
-`packages/og-router/test/` — vitest. Run via `pnpm --filter @ivaronix/og-router test`.
+No unit tests yet. `pnpm --filter @ivaronix/og-router test` is `echo skip` today; queued in `docs/USER_TODO.md §B-V2-OG-ROUTER-TESTS`. When tests land, follow the convention: Node's built-in `node:test` runner via `tsx --test src/**/*.test.ts` (matches `packages/{core,consensus,skills,memory,receipts,og-chain}`). High-value targets: `Keyring.invalidate(...)` failure-mode taxonomy (`'402'` / `'auth'` / `'429'` rotation rules), JSON-repair fallback paths, threat-model assertions on the third-party Router relay shape.
 
 ## File location reference
 

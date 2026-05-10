@@ -72,7 +72,7 @@ og:
 
 ## Tests
 
-`packages/skills/test/` — vitest. `seed-skills/<id>/tests/` for skill-level golden tests.
+`packages/skills/src/*.test.ts` — Node's built-in `node:test` runner via `tsx --test`. Run via `pnpm --filter @ivaronix/skills test`. Today: `sandbox.test.ts` (9 tests). Skill-level golden tests at `seed-skills/<id>/tests/` per skill (currently sparse · queued).
 
 ## File location reference
 

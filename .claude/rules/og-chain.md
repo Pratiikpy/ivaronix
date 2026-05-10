@@ -47,7 +47,7 @@ for (const r of registries) {
 
 ## Tests
 
-`packages/og-chain/test/` — vitest. Run via `pnpm --filter @ivaronix/og-chain test`.
+`packages/og-chain/src/*.test.ts` — Node's built-in `node:test` runner via `tsx --test` (matches `packages/{core,consensus,skills,memory,receipts}` convention). Run via `pnpm --filter @ivaronix/og-chain test`. Suite: `deployments.test.ts` (8 tests · canonical-first / legacy-fallback walk-up + real-repo manifest shape).
 
 ## File location reference
 

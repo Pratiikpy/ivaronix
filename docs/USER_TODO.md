@@ -413,6 +413,30 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   4. Trigger the workflow manually once to verify it can read the secret + anchor a receipt.
   5. Add the funded address to `contracts/deployments/testnet.json` under a `ci_wallet` key.
 
+### B-V2-OG-ROUTER-TESTS · Unit tests for `@ivaronix/og-router`
+- **Source:** cron-sweep finding 2026-05-10. The `.claude/rules/og-router.md` rules file claimed `packages/og-router/test/` vitest existed. It did not — `pnpm --filter @ivaronix/og-router test` was `echo skip`. Rules updated to reflect reality + queue this work.
+- **Why:** the keyring failure-mode taxonomy (`'402'` permanent / `'auth'` permanent / `'429'` transient) is a security-sensitive contract. A regression that collapses `'429'` into permanent invalidation silently halves the multi-key rotation pool; without tests, drift would only surface during a Router rate-limit incident under load. Same shape concern for `processResponse(provider, chatID, usageJSON)` — the 3-arg invariant is documented in code + rules but not test-locked.
+- **Action:**
+  1. Write `packages/og-router/src/keyring.test.ts` — invalidate by reason: `'402'` removes from rotation, `'auth'` removes, `'429'` rotates this turn but stays in the pool. Cover the "all keys depleted" recovery path.
+  2. Write `packages/og-router/src/json-repair.test.ts` — feed malformed JSON shapes from real 7B-model outputs (the `~5-10%` malform rate per rules) and assert the repair pass extracts valid JSON.
+  3. Wire `package.json` test command to `tsx --test src/**/*.test.ts` (matches og-chain pattern shipped 2026-05-10).
+  4. Add the new test step to `.github/workflows/ci.yml` `unit-tests` job after the og-chain step.
+- **Effort:** ~2h. No external deps; pure unit-test work against the existing keyring/json-repair logic.
+
+### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage`
+- **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.
+- **Why:** Burn Mode is the AES-GCM ciphertext that protects user data from operator-side disclosure (per `burn.ts:13-14` threat-model NatSpec). K-20 hardened the nonce to `randomBytes(12)`; without a regression test, a future "optimization" that derives the nonce from `Date.now()` or plaintext hash would silently downgrade the ciphertext to GCM-collision-vulnerable. The keyFingerprint-before-zero ordering is also security-load-bearing and currently uncovered.
+- **Action:**
+  1. Write `packages/og-storage/src/burn.test.ts` covering:
+     - encrypt → decrypt round-trip yields original plaintext (happy path)
+     - 10k `randomBytes(12)` nonce draws are all unique (K-20 nonce regression)
+     - `keyFingerprint = sha256(key)` captured BEFORE the key buffer is zeroed (security ordering)
+     - Layout invariant: `nonce (12) || ciphertext || auth-tag (16)` self-contained shape
+     - Decrypt-with-wrong-key fails closed (auth tag rejects)
+  2. Wire `package.json` test command to `tsx --test src/**/*.test.ts`.
+  3. Add the new step to `.github/workflows/ci.yml` `unit-tests` job.
+- **Effort:** ~2h. Pure crypto unit-test work; no chain/indexer dep. The 10k nonce-uniqueness draw is fast (under 50ms).
+
 ---
 
 ## C · Distribution + outreach (operator-only by nature)
