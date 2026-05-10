@@ -280,6 +280,23 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action (mainnet · post-A-V2):** set `IVARONIX_NETWORK=mainnet` in the wander-cycle env. CLI's V2-first read pattern routes anchors to `ReceiptRegistryV2` mainnet automatically.
 - **Effort:** ~30min daemon setup · ~3 months runtime to hit headline.
 
+### B-V2-18 · Deploy SubscriptionEscrowV2 (AGENT_AUTO accountability fix)
+- **Source:** plan-003 §A.5.9 · code-complete today (`contracts/src/SubscriptionEscrowV2.sol` + 10/10 Foundry tests pass).
+- **Why:** V1's `IntervalMode.AGENT_AUTO` lets an agent skip 30 days then fire 30 check-ins in a row, draining the budget without delivering value. V2 requires every `checkIn(id, attestationReceiptId)` and `alert(id, attestationReceiptId)` to bind to a real Action Receipt anchored on `ReceiptRegistry`. Cross-checks: receipt exists, agent matches, timestamp within `MAX_RECEIPT_AGE` (24h default), receipt id not already consumed (no replay).
+- **Status:** contract + deploy script + Foundry tests (10/10 PASS · MockReceiptRegistry-backed) shipped. Mainnet deploy waits on §A-2 funding + ReceiptRegistry address (V1 or V2; V2 preferred · pinned at construction).
+- **Cost:** ~0.05 OG each network.
+- **Run (testnet):**
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<deployer-key>
+  export RECEIPT_REGISTRY_ADDR=<V2-addr-from-A-V2-K2>    # or V1 fallback
+  forge script script/DeploySubscriptionEscrowV2.s.sol:DeploySubscriptionEscrowV2 \
+    --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
+  ```
+
+- **Post-deploy:** add address to `contracts/deployments/<network>.json` under `SubscriptionEscrowV2`. CLI `ivaronix subscription create / checkin / status` (queued · USER_TODO §B-7) routes to V2 first via the V2-first read pattern.
+
 ### B-V2-17 · Deploy SkillRegistryV2 (squatter risk fix)
 - **Source:** plan-003 §A.5.11 · code-complete today (`contracts/src/SkillRegistryV2.sol` + 16/16 Foundry tests pass).
 - **Why:** V1's first-come-first-served name lock means any wallet can publish `keccak256("skill:private-doc-review")` first and freeze the legitimate creator out forever. V2 ships two countermeasures: (1) reserved list pre-registers 6 first-party skill IDs to the operator wallet at construction; (2) owner-arbitration safety valve lets the contract owner reassign squatter-grabbed unreserved skillIds with off-chain evidence.
