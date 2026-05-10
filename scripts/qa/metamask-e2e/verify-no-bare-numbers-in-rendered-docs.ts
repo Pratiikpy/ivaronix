@@ -113,12 +113,21 @@ for (const key of GATED_KEYS) {
 // Also strip 0x-hex strings (addresses + tx hashes) so a "0" or "8"
 // embedded inside an address doesn't false-positive against
 // receipts.v2Anchored=0 or contracts.deployed=8.
+//
+// Critical: PRESERVE NEWLINES. ' '.repeat(N) wipes \n / \r and shifts
+// every subsequent line number after a multi-line code block. Same
+// bug class as the wording-lint script had pre-sweep-46 — caught
+// when reported violation lines didn't actually contain the matched
+// value. Sweep 47 audits + fixes every regression that strips content.
+function blank(s: string): string {
+  return s.replace(/[^\r\n]/g, ' ');
+}
 function stripCode(src: string): string {
-  let out = src.replace(/```[\s\S]*?```/g, (m) => ' '.repeat(m.length));
-  out = out.replace(/`[^`\n]*`/g, (m) => ' '.repeat(m.length));
-  // 0x hex (any length >= 2 hex chars after 0x) — covers addresses (40),
-  // tx hashes (64), and shorter hex literals.
-  out = out.replace(/0x[a-fA-F0-9]+/g, (m) => ' '.repeat(m.length));
+  let out = src.replace(/```[\s\S]*?```/g, (m) => blank(m));
+  out = out.replace(/`[^`\n]*`/g, (m) => blank(m));
+  // 0x hex (any length >= 2 hex chars after 0x) — single-line by
+  // construction (hex doesn't span lines), but blank() is harmless.
+  out = out.replace(/0x[a-fA-F0-9]+/g, (m) => blank(m));
   return out;
 }
 
@@ -126,10 +135,16 @@ function stripCode(src: string): string {
 // outer markers so unbalanced-marker errors still surface, but we
 // don't penalize the value INSIDE the marker — that's exactly where
 // it's supposed to be).
+//
+// Same blank() helper as stripCode: preserves newlines so line/column
+// offsets stay accurate for accurate violation reports. Markers can
+// span multiple lines in principle (the contracts:auto block does);
+// without preserving newlines, the line counter drifts and reports
+// violations at lines that don't contain the matched value.
 function stripInsideMarkers(src: string): string {
   return src.replace(
     /<!--\s*numbers:auto:[\w.]+\s*-->[\s\S]*?<!--\s*\/numbers:auto:[\w.]+\s*-->/g,
-    (m) => ' '.repeat(m.length),
+    (m) => blank(m),
   );
 }
 
