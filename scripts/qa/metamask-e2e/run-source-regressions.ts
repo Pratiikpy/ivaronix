@@ -66,6 +66,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-tracked-but-ignored/, // meta · no tracked file matches a gitignore rule (sweep 86 · third occurrence pattern closure)
       /^verify-markdown-internal-links/, // meta · every internal markdown link in render-target docs resolves to an existing file (sweep 88)
       /^verify-no-empty-catch/, // meta · no empty catch blocks in first-party code (sweep 91)
+      /^verify-no-stale-port-3000/, // meta · stale-port-3000-allow:meta-wiring · no `:3000` references (Studio runs on :3300) (sweep 92)
     ],
   },
   'studio-live': {

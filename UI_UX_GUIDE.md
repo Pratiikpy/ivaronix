@@ -1,6 +1,16 @@
 # Ivaronix — UI/UX Guide & Design System
 
-> **Status:** v1, locked 2026-05-08.
+> **ARCHIVAL · 2026-05-10.** Sprint-internal design-system reference frozen
+> at v1. Visual contract has since moved per planning-003 §A.5.19:
+> CLAUDE.md §10 owns the COLOR / FONT / RADIUS contract, `brand/tokens.css`
+> + `brand/tokens.json` hold the canonical palette + type ramp + radii +
+> motion. `brand/Ivaronix.html` remains the visual reference for layout
+> composition. This doc retains LAYOUT-level guidance (page composition,
+> component placement, copy patterns) but should NOT be cited as the
+> visual contract — that drift was the WT 6 + 24 disagreement that
+> planning-003 §A.3.3 closed.
+>
+> **Status:** v1, locked 2026-05-08 (archived 2026-05-10).
 > **Visual source of truth:** `brand/Ivaronix.html` — the bundled mockup. Open in browser to see the rendered reference.
 > **Companion docs:** `COMPONENTS.md` (per-component decisions), `HLD.md §4` (Studio architecture), `docs/build/BUILD.md §1` (Day 13-18 Studio build).
 >
@@ -436,7 +446,7 @@ Save screenshots to `apps/studio/screenshots/reference-*.png`. Compare against r
 Build Studio components per `COMPONENTS.md` using the design tokens above. Real backend data only. Loading/empty/error states match the design language.
 
 ### Step 4 — Verify
-Run Playwright again on the real Studio at `localhost:3000`:
+Run Playwright again on the real Studio at `localhost:3300`:
 ```bash
 playwright test apps/studio/tests/visual.spec.ts
 ```
