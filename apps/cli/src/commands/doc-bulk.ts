@@ -5,6 +5,7 @@ import { Wallet, JsonRpcProvider } from 'ethers';
 import {
   AgentPassportClient,
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
@@ -160,10 +161,13 @@ export function addBulkCommand(parent: Command): void {
       ui.title('Aggregate receipt');
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const wallet = new Wallet(env.privateKey, provider);
-      const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      // V2-first WRITE per .claude/rules/og-chain.md
+      const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const registryAddr = registryAddrV2 ?? registryAddrV1;
+      const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
       const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
       if (!registryAddr) { ui.fail('ReceiptRegistry not deployed'); process.exitCode = 1; return; }
-      const reg = new ReceiptRegistryClient(registryAddr, wallet);
 
       const childIds = children.filter((c) => c.receiptId).map((c) => c.receiptId!);
       const dominantRisk = (() => {
@@ -269,18 +273,39 @@ export function addBulkCommand(parent: Command): void {
       // documented for the bulk-runner path in `docs/RECEIPT_SCHEMA.md`).
       const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
       const RECEIPT_TYPE_CODE = 4;
-      ui.pending('anchoring aggregate on 0G Chain...');
-      const tx = await reg.anchor(
-        signed.storage!.receiptRoot as Hash,
-        childIdsBytes32,
-        RECEIPT_TYPE_CODE,
-        ZERO_HASH,
-      );
-      const txReceipt = await tx.wait();
-      const nextId = await reg.nextId();
-      const onChainId = (nextId - 1n).toString();
-      ui.pass(`tx                   ${tx.hash}`);
-      ui.pass(`block                ${txReceipt?.blockNumber ?? '?'}`);
+      ui.pending(`anchoring aggregate on 0G Chain (${registryVersion.toUpperCase()})...`);
+      let txHash: string;
+      let txBlock: number | null;
+      let onChainId: string;
+      if (registryVersion === 'v2') {
+        const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+        const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
+          receiptRoot: signed.storage!.receiptRoot as Hash,
+          storageRoot: childIdsBytes32,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v2Tx.hash;
+        const r = await v2Tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await regV2.nextId();
+        onChainId = (nextId - 1n).toString();
+      } else {
+        const reg = new ReceiptRegistryClient(registryAddr, wallet);
+        const tx = await reg.anchor(
+          signed.storage!.receiptRoot as Hash,
+          childIdsBytes32,
+          RECEIPT_TYPE_CODE,
+          ZERO_HASH,
+        );
+        txHash = tx.hash;
+        const r = await tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await reg.nextId();
+        onChainId = (nextId - 1n).toString();
+      }
+      ui.pass(`tx                   ${txHash}`);
+      ui.pass(`block                ${txBlock ?? '?'}`);
       ui.pass(`on-chain id          ${onChainId}`);
 
       // Update the persisted receipt with anchor info
@@ -290,8 +315,8 @@ export function addBulkCommand(parent: Command): void {
           ...signed.chainAnchor,
           status: 'anchored' as const,
           onChainId: onChainId,
-          anchorTxHash: tx.hash,
-          anchorBlockNumber: txReceipt?.blockNumber,
+          anchorTxHash: txHash,
+          anchorBlockNumber: txBlock ?? undefined,
           anchorTimestamp: Math.floor(Date.now() / 1000),
         },
       };

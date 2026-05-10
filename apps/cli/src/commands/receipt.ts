@@ -452,7 +452,11 @@ receiptCommand
       return;
     }
 
-    const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    // V2-first WRITE per .claude/rules/og-chain.md
+    const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+    const registryAddr = registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -461,14 +465,13 @@ receiptCommand
 
     ui.title(`Anchoring ${receipt.id}`);
     ui.info(`network              ${env.network}`);
-    ui.info(`registry             ${registryAddr}`);
+    ui.info(`registry             ${registryAddr} (${registryVersion.toUpperCase()})`);
     ui.info(`receiptRoot          ${receipt.storage.receiptRoot}`);
     ui.info(`type                 ${receipt.type} (code ${RECEIPT_TYPES[receipt.type as ReceiptType]})`);
     ui.divider();
 
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
     const wallet = new Wallet(env.privateKey, provider);
-    const registry = new ReceiptRegistryClient(registryAddr, wallet);
 
     try {
       const typeCode = RECEIPT_TYPES[receipt.type as ReceiptType];
@@ -476,28 +479,55 @@ receiptCommand
       const storageRoot: Hash = (receipt.storage.evidenceRoot ?? receipt.storage.receiptRoot) as Hash;
 
       ui.pending('Submitting anchor tx...');
-      const tx = await registry.anchor(
-        receipt.storage.receiptRoot as Hash,
-        storageRoot,
-        typeCode,
-        attestationHash,
-      );
-      ui.info(`tx hash              ${tx.hash}`);
-
-      ui.pending('Waiting for confirmation...');
-      const receipt2 = await tx.wait();
-      if (!receipt2) {
-        ui.fail('Transaction did not return a receipt');
-        return;
+      let txHash: string;
+      let blockNumber: number;
+      let gasUsed: bigint;
+      let onChain: { id: bigint } | null = null;
+      if (registryVersion === 'v2') {
+        const registryV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+        const { tx: v2Tx } = await registryV2.signAndAnchor(wallet, {
+          receiptRoot: receipt.storage.receiptRoot as Hash,
+          storageRoot,
+          receiptType: typeCode,
+          attestationHash,
+        });
+        txHash = v2Tx.hash;
+        ui.info(`tx hash              ${txHash}`);
+        ui.pending('Waiting for confirmation...');
+        const r = await v2Tx.wait();
+        if (!r) { ui.fail('Transaction did not return a receipt'); return; }
+        blockNumber = r.blockNumber;
+        gasUsed = r.gasUsed;
+        try {
+          const found = await registryV2.findByReceiptRoot(receipt.storage.receiptRoot as Hash, 50);
+          if (found) onChain = { id: found.id };
+        } catch { /* not fatal */ }
+      } else {
+        const registry = new ReceiptRegistryClient(registryAddr, wallet);
+        const tx = await registry.anchor(
+          receipt.storage.receiptRoot as Hash,
+          storageRoot,
+          typeCode,
+          attestationHash,
+        );
+        txHash = tx.hash;
+        ui.info(`tx hash              ${txHash}`);
+        ui.pending('Waiting for confirmation...');
+        const r = await tx.wait();
+        if (!r) { ui.fail('Transaction did not return a receipt'); return; }
+        blockNumber = r.blockNumber;
+        gasUsed = r.gasUsed;
+        try {
+          const found = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash, 50);
+          if (found) onChain = { id: found.id };
+        } catch { /* not fatal */ }
       }
 
-      ui.pass(`block                ${receipt2.blockNumber}`);
-      ui.pass(`gas used             ${receipt2.gasUsed}`);
-
-      const onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash, 50);
+      ui.pass(`block                ${blockNumber}`);
+      ui.pass(`gas used             ${gasUsed}`);
       if (onChain) {
         ui.pass(`receipt id           ${onChain.id}`);
-        ui.pass(`explorer             ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
+        ui.pass(`explorer             ${NETWORKS[env.network].chainExplorer}/tx/${txHash}`);
       }
 
       if (opts.writeBack) {
@@ -505,8 +535,8 @@ receiptCommand
           ...receipt,
           chainAnchor: {
             ...receipt.chainAnchor,
-            anchorTxHash: tx.hash as Hash,
-            anchorBlockNumber: receipt2.blockNumber,
+            anchorTxHash: txHash as Hash,
+            anchorBlockNumber: blockNumber,
             anchorTimestamp: Math.floor(Date.now() / 1000),
           },
         };
