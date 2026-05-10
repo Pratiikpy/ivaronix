@@ -67,6 +67,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-markdown-internal-links/, // meta · every internal markdown link in render-target docs resolves to an existing file (sweep 88)
       /^verify-no-empty-catch/, // meta · no empty catch blocks in first-party code (sweep 91)
       /^verify-no-stale-port-3000/, // meta · stale-port-3000-allow:meta-wiring · no `:3000` references (Studio runs on :3300) (sweep 92)
+      /^verify-no-stale-numeric-snapshots/, // meta · operational surfaces (NatSpec, JSDoc, comments, spec docs) don't hardcode numbers.json values without unit-word context (sweep 94)
     ],
   },
   'studio-live': {

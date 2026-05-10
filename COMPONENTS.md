@@ -91,7 +91,7 @@ It looks like a court receipt, not a chat log. Every claim is a chip you can cli
 ## 4. Skill Browser (`/skills`)
 
 **What I looked at:**
-- `CLI Open Source Project/awesome-claude-skills/README.md` — categorized index (Document Processing, Dev & Code, Data, Business, Communication, Creative, Productivity, Collaboration, Security, App Automation), each entry a one-line description with author handle. ~150 skills, one page, scannable.
+- `CLI Open Source Project/awesome-claude-skills/README.md` — categorized index (Document Processing, Dev & Code, Data, Business, Communication, Creative, Productivity, Collaboration, Security, App Automation), each entry a one-line description with author handle. ~150 skills, one page, scannable. <!-- numbers-snapshot-allow:third-party-readme-approximation -->
 - `og-projects-showcase/Agent0G/SHOWCASE_ANALYSIS.md` — agent marketplace with category browsing, agent cards, ratings, usage counters, price-per-use. The card *is* the contract.
 - `entries/AgentHub/ANALYSIS.md` — permission-disclosure on cards (network access, secrets, scoped data). Trust info upfront, not hidden in a modal.
 - `og-projects-showcase/dont-get-drained/frontend/app/marketplace/page.tsx` — small specialized agent marketplace with creator filter.
