@@ -28,7 +28,7 @@ import { JsonRpcProvider } from 'ethers';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
 import { IndexerDb } from '@ivaronix/indexer';
 import { RECEIPT_TYPES, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
@@ -232,16 +232,19 @@ prCommand
       return;
     }
 
-    // Verify each id is in the local indexer AND on chain
+    // Verify each id is in the local indexer AND on chain.
+    // V2-first read per .claude/rules/og-chain.md: try V2, fall back to V1.
     const env = loadEnv();
-    const recAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!recAddr) {
+    const recAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    const recAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+    if (!recAddrV1 && !recAddrV2) {
       ui.fail(`No ReceiptRegistry deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const client = new ReceiptRegistryClient(recAddr as Address, provider);
+    const clientV2 = recAddrV2 ? new ReceiptRegistryV2Client(recAddrV2 as Address, provider) : null;
+    const clientV1 = recAddrV1 ? new ReceiptRegistryClient(recAddrV1 as Address, provider) : null;
 
     let db: IndexerDb | null = null;
     try { db = new IndexerDb(indexerDbPath()); } catch {/* ok */}
@@ -250,8 +253,14 @@ prCommand
     for (const id of ids) {
       let onchainOk = false;
       try {
-        const r = await client.getReceipt(BigInt(id));
-        onchainOk = r !== null;
+        // V2-first: a receipt anchored on V2 wins; V1 fallback handles legacy ids.
+        const r2 = clientV2 ? await clientV2.getReceipt(BigInt(id)) : null;
+        if (r2) {
+          onchainOk = true;
+        } else if (clientV1) {
+          const r1 = await clientV1.getReceipt(BigInt(id));
+          onchainOk = r1 !== null;
+        }
       } catch {/* ignore */}
       const local = db?.getReceipt(id);
       if (onchainOk && local && local.receiptRoot.toLowerCase() === db?.getReceipt(id)?.receiptRoot.toLowerCase()) {

@@ -5,6 +5,7 @@ import { Wallet, JsonRpcProvider } from 'ethers';
 import {
   AgentPassportClient,
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
@@ -138,14 +139,22 @@ export function addConsolidateCommand(parent: Command): void {
 
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const wallet = new Wallet(env.privateKey, provider);
-      const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      // V2-first WRITE per .claude/rules/og-chain.md. The READ below
+      // (reg.findByAgent) stays on V1 because legacy receipts being
+      // consolidated were anchored on V1; a unified-across-both read
+      // is queued for the unifiedFindByAgent migration (CLI parity
+      // with apps/studio/src/lib/chain.ts).
+      const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const writeAddr = registryAddrV2 ?? registryAddrV1;
+      const writeVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
       const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-      if (!registryAddr) {
+      if (!registryAddrV1 || !writeAddr) {
         ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
         process.exitCode = 1;
         return;
       }
-      const reg = new ReceiptRegistryClient(registryAddr, wallet);
+      const reg = new ReceiptRegistryClient(registryAddrV1, wallet);
 
       ui.title(`Consolidating recent receipts · window=${window.label}`);
       ui.info(`agent wallet         ${env.walletAddress}`);
@@ -294,7 +303,7 @@ export function addConsolidateCommand(parent: Command): void {
           ),
           totalCostOg: consensusBilling.estimatedCostOg.toFixed(10),
         },
-        chainAnchor: defaultChainAnchor(env.network as 'testnet' | 'mainnet', registryAddr as Address),
+        chainAnchor: defaultChainAnchor(env.network as 'testnet' | 'mainnet', writeAddr as Address),
         storage: {
           proofDownloadVerified: false,
           encryption: { enabled: false, type: 'none', headerDetected: false },
@@ -334,20 +343,38 @@ export function addConsolidateCommand(parent: Command): void {
       // consumed — as a semantically meaningful root: anyone who fetches
       // the receipt body and recomputes sha256 of its priorReceiptIds list
       // gets the same hash that's anchored on chain.
-      const tx = await reg.anchor(
-        signed.storage!.receiptRoot as Hash,
-        sourceIdsHashBytes32,
-        RECEIPT_TYPE_CODE,
-        ZERO_HASH,
-      );
-      const txReceipt = await tx.wait();
+      let txHash: string;
+      let txBlock: number | null;
+      let onChainId: string;
+      if (writeVersion === 'v2') {
+        const regV2 = new ReceiptRegistryV2Client(writeAddr, wallet);
+        const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
+          receiptRoot: signed.storage!.receiptRoot as Hash,
+          storageRoot: sourceIdsHashBytes32,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v2Tx.hash;
+        const r = await v2Tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await regV2.nextId();
+        onChainId = (nextId - 1n).toString();
+      } else {
+        const tx = await reg.anchor(
+          signed.storage!.receiptRoot as Hash,
+          sourceIdsHashBytes32,
+          RECEIPT_TYPE_CODE,
+          ZERO_HASH,
+        );
+        txHash = tx.hash;
+        const r = await tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await reg.nextId();
+        onChainId = (nextId - 1n).toString();
+      }
 
-      // Resolve the on-chain id from the latest nextId (the just-anchored is nextId-1)
-      const nextId = await reg.nextId();
-      const onChainId = (nextId - 1n).toString();
-
-      ui.pass(`tx                   ${tx.hash}`);
-      ui.pass(`block                ${txReceipt?.blockNumber ?? '?'}`);
+      ui.pass(`tx                   ${txHash} (${writeVersion.toUpperCase()})`);
+      ui.pass(`block                ${txBlock ?? '?'}`);
       ui.pass(`on-chain id          ${onChainId}`);
 
       // Update the local receipt with the anchor info (so /r/<id> can resolve)
@@ -357,8 +384,8 @@ export function addConsolidateCommand(parent: Command): void {
           ...signed.chainAnchor,
           status: 'anchored' as const,
           onChainId: onChainId,
-          anchorTxHash: tx.hash,
-          anchorBlockNumber: txReceipt?.blockNumber,
+          anchorTxHash: txHash,
+          anchorBlockNumber: txBlock ?? undefined,
           anchorTimestamp: Math.floor(Date.now() / 1000),
         },
       };

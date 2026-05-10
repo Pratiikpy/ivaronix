@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { sha256HexAsync, RECEIPT_TYPES, type Hash, type ReceiptType } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -203,9 +203,12 @@ modelCommand
     if (opts.receipt && env.privateKey) {
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const wallet = new Wallet(env.privateKey, provider);
-      const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      // V2-first per .claude/rules/og-chain.md
+      const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const registryAddr = registryAddrV2 ?? registryAddrV1;
+      const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
       if (registryAddr) {
-        const receiptRegistry = new ReceiptRegistryClient(registryAddr, wallet);
         const receiptType: ReceiptType = 'skill_exec';
         const draft = buildReceipt({
           type: receiptType,
@@ -238,14 +241,34 @@ modelCommand
         mkdirSync(resolve(process.cwd(), opts.outDir), { recursive: true });
         const path = resolve(process.cwd(), opts.outDir, `${signed.id}.json`);
         writeFileSync(path, JSON.stringify(signed, null, 2));
-        const tx = await receiptRegistry.anchor(
-          signed.storage.receiptRoot as Hash,
-          ('0x' + datasetHash.replace(/^sha256:/, '')) as Hash,
-          RECEIPT_TYPES[receiptType],
-          ('0x' + '0'.repeat(64)) as Hash,
-        );
-        const txReceipt = await tx.wait();
-        ui.pass(`receipt              ${signed.id}  tx=${tx.hash}  block=${txReceipt?.blockNumber}`);
+        const storageRoot = ('0x' + datasetHash.replace(/^sha256:/, '')) as Hash;
+        const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
+        let txHash: string;
+        let blockNumber: number | null;
+        if (registryVersion === 'v2') {
+          const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+          const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
+            receiptRoot: signed.storage.receiptRoot as Hash,
+            storageRoot,
+            receiptType: RECEIPT_TYPES[receiptType],
+            attestationHash: ZERO_HASH,
+          });
+          txHash = v2Tx.hash;
+          const r = await v2Tx.wait();
+          blockNumber = r?.blockNumber ?? null;
+        } else {
+          const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
+          const v1Tx = await regV1.anchor(
+            signed.storage.receiptRoot as Hash,
+            storageRoot,
+            RECEIPT_TYPES[receiptType],
+            ZERO_HASH,
+          );
+          txHash = v1Tx.hash;
+          const r = await v1Tx.wait();
+          blockNumber = r?.blockNumber ?? null;
+        }
+        ui.pass(`receipt              ${signed.id}  tx=${txHash}  block=${blockNumber} (${registryVersion.toUpperCase()})`);
 
         // Best-effort passport update
         try {
