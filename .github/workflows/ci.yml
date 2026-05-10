@@ -103,19 +103,16 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Verify a representative committed receipt
-        # If at least one anchored receipt JSON exists in the repo's snapshot
-        # under .ivaronix/receipts/anchored/, run schema + hash + signature
-        # checks (skip chain-anchor + TEE — those need network).
-        run: |
-          set -e
-          if compgen -G ".ivaronix/receipts/anchored/*.json" > /dev/null; then
-            FIRST=$(ls .ivaronix/receipts/anchored/*.json | head -n 1)
-            echo "Verifying $FIRST (schema + hash + signature only)"
-            pnpm exec tsx apps/cli/src/bin/ivaronix.ts receipt verify "$FIRST" || true
-          else
-            echo "no anchored receipts in repo snapshot — skipping"
-          fi
+      - name: Verify the tracked fixture receipt (V1, id=8)
+        # Verify the committed fixture in tests/fixtures/anchored-receipts/.
+        # Pre-sweep-75 the job pointed at .ivaronix/receipts/anchored/ which
+        # is gitignored — the gate had been a silent no-op for weeks.
+        # Runs schema + hash + signature (always offline) AND chain-anchor
+        # lookup against Galileo RPC (CI runners reach the public testnet
+        # endpoint). NO `|| true` — INVALID/error must fail CI loudly.
+        # Per sweep 74's anti-pattern list: silent failures defeat the
+        # gate's purpose.
+        run: pnpm exec tsx apps/cli/src/bin/ivaronix.ts receipt verify tests/fixtures/anchored-receipts/v1-anchored-id-8.json
 
   unit-tests:
     # Package-level unit tests via Node's built-in `node:test` runner

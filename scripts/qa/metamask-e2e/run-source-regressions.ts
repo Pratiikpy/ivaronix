@@ -60,6 +60,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
       /^verify-no-hardcoded-contract-lists/, // meta · 3+ contract names in one array literal · iterate loadDeployments instead
       /^verify-no-frozen-lockfile-bypass/, // meta · CI workflows must use strict --frozen-lockfile (sweep 74)
+      /^verify-no-ci-suppress-exit/, // meta · no '|| true' / 'continue-on-error: true' silent-failure suppressions (sweep 75)
     ],
   },
   'studio-live': {
