@@ -227,21 +227,41 @@ docCommand
         if (!reachable.ok) {
           ui.fail(`0G DA ping failed; receipt will omit daBlobRef`, reachable.reason.slice(0, 80));
         } else {
-          const result = await daClient.disperseBlob(evidenceBytes);
-          const requestIdHex = '0x' + Buffer.from(result.requestId).toString('hex');
-          // Schema enum is the disperser.proto's canonical states. The
-          // SDK's BlobStatus also includes 'FINALIZED' (a post-CONFIRMED
-          // state); we collapse it to 'CONFIRMED' for schema-faithful
-          // recording — the request_id is still retrievable.
-          const status = result.status === 'FINALIZED' ? 'CONFIRMED' : result.status;
+          // HALF_BAKED §I-16 closure (sweep 167): pre-sweep we called
+          // disperseBlob() once and recorded result.status (typically
+          // PROCESSING) as the terminal value in daBlobRef. That meant
+          // every receipt's daBlobRef said PROCESSING permanently — a
+          // provisional state captured as a permanent fact. Now we
+          // poll via disperseAndFinalize() with a 30s timeout (short
+          // enough to keep CLI responsive, long enough that most
+          // testnet dispersals finalize). On timeout / failure we
+          // record the LAST-OBSERVED status honestly (PROCESSING if
+          // polling timed out; the receipt body is then explicit that
+          // the blob hadn't finalized when the receipt was signed).
+          const dispersed = await daClient.disperseBlob(evidenceBytes);
+          const requestIdHex = '0x' + Buffer.from(dispersed.requestId).toString('hex');
+          type SchemaBlobStatus = 'UNKNOWN' | 'PROCESSING' | 'CONFIRMED' | 'FAILED' | 'INSUFFICIENT_SIGNATURES';
+          const collapse = (s: string): SchemaBlobStatus =>
+            s === 'FINALIZED' ? 'CONFIRMED' : (s as SchemaBlobStatus);
+          let finalStatus: SchemaBlobStatus = collapse(dispersed.status);
+          const pollDeadline = Date.now() + 30_000;
+          try {
+            while (Date.now() < pollDeadline) {
+              const s = await daClient.getBlobStatus(dispersed.requestId);
+              if (s.status === 'FINALIZED') { finalStatus = 'CONFIRMED'; break; }
+              if (s.status === 'FAILED' || s.status === 'INSUFFICIENT_SIGNATURES') { finalStatus = s.status; break; }
+              if (s.status === 'PROCESSING' || s.status === 'UNKNOWN') finalStatus = s.status;
+              await new Promise((r) => setTimeout(r, 2_000));
+            }
+          } catch { /* polling errors leave finalStatus at the last observed value */ }
           daBlobRef = {
             endpoint: daClient.endpoint,
             requestIdHex,
-            status,
+            status: finalStatus,
             blobBytes: evidenceBytes.length,
             dispersedAt: Date.now(),
           };
-          ui.pass(`0G DA dispersed: status=${result.status} request_id=${requestIdHex.slice(0, 18)}…`);
+          ui.pass(`0G DA dispersed: status=${finalStatus} request_id=${requestIdHex.slice(0, 18)}…`);
         }
         daClient.close();
       } catch (err) {
