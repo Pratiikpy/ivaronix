@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -b",
     "lint": "echo skip",
-    "test": "echo skip",
+    "test": "tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },
@@ -23,6 +23,7 @@
     "ulid": "^2.4.0"
   },
   "devDependencies": {
+    "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }
 }
