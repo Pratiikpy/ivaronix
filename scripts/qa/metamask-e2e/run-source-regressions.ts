@@ -78,6 +78,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-share-surface-fonts/, // HALF_BAKED §G Tier-A item 8 · brand fonts on /r/[id]/print + /embed/r/[id] (sweep 132)
       /^verify-no-bare-auto-1fr/, // HALF_BAKED §G Tier-A item 9 · grid `auto 1fr` mobile-overflow (sweep 133)
       /^verify-api-route-zod-validation/, // HALF_BAKED §J-2 · every body-taking API route validates via Zod safeParse (sweeps 145-149 fixed; sweep 150 locks)
+      /^verify-publishable-metadata/, // HALF_BAKED §J-14 · npm-publishable packages have description/license/homepage/repository/bugs/engines (sweep 155)
     ],
   },
   'studio-live': {
