@@ -9,7 +9,7 @@ import {
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { sha256HexAsync, type Address, type Hash } from '@ivaronix/core';
+import { sha256HexAsync, studioUrl, type Address, type Hash } from '@ivaronix/core';
 import { docCommand } from './doc.js';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -343,7 +343,7 @@ export function addBulkCommand(parent: Command): void {
 
       ui.divider();
       ui.pass(`Bulk audit complete · ${okCount} child receipt${okCount === 1 ? '' : 's'} + 1 aggregate (#${onChainId})`);
-      ui.hint(`View aggregate:  http://localhost:3300/r/${onChainId}`);
+      ui.hint(`View aggregate:  ${studioUrl(`/r/${onChainId}`)}`);
       ui.hint(`Verify:          ivaronix receipt verify ${localPath} --tee-independent`);
 
       void extname; // keep import used

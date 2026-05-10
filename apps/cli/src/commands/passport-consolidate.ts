@@ -9,7 +9,7 @@ import {
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { sha256HexAsync, type Address, type Hash } from '@ivaronix/core';
+import { sha256HexAsync, studioUrl, type Address, type Hash } from '@ivaronix/core';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
@@ -418,8 +418,8 @@ export function addConsolidateCommand(parent: Command): void {
       ui.divider();
       ui.pass(`Consolidation complete (${consolidationMethod})`);
       ui.hint(`Verify:    ivaronix receipt verify ${localPath} --tee-independent`);
-      ui.hint(`View:      http://localhost:3300/r/${onChainId}`);
-      ui.hint(`Agent:     http://localhost:3300/agent/${env.walletAddress}`);
+      ui.hint(`View:      ${studioUrl(`/r/${onChainId}`)}`);
+      ui.hint(`Agent:     ${studioUrl(`/agent/${env.walletAddress}`)}`);
       if (consolidationMethod === 'local-synthesis') {
         ui.info(`(local synthesis path; ${tryCompute ? '0G Compute call failed' : 'compute disabled or no router key'} — receipt body records this honestly)`);
       }

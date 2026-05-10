@@ -6,7 +6,7 @@ import {
   CapabilityRegistryClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
-import { ulid, type Address, type Hash } from '@ivaronix/core';
+import { ulid, studioUrl, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { docCommand } from './doc.js';
@@ -263,7 +263,7 @@ delegateCommand
     ui.section('Next steps');
     ui.info(`Grant a skill capability:    ivaronix delegate grant ${delegateId.slice(0, 12)} --skill <skillId>`);
     ui.info(`Run a skill via delegate:    ivaronix delegate run ${delegateId.slice(0, 12)} <doc> "question"`);
-    ui.info(`Studio:                      http://localhost:3300/delegate/${delegateId}`);
+    ui.info(`Studio:                      ${studioUrl(`/delegate/${delegateId}`)}`);
   });
 
 // ─── delegate list ───────────────────────────────────────────────────────

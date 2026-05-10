@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlinkSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { ulid } from '@ivaronix/core';
+import { ulid, studioUrl } from '@ivaronix/core';
 import { docCommand } from './doc.js';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -253,7 +253,7 @@ export function addScheduleCommand(parent: Command): void {
       ui.divider();
       ui.hint(`Fire once now:    ivaronix skill schedule fire ${id.slice(0, 12)}`);
       ui.hint(`Run daemon:       ivaronix skill schedule run`);
-      ui.hint(`Studio:           http://localhost:3300/dashboard`);
+      ui.hint(`Studio:           ${studioUrl('/dashboard')}`);
     });
 
   // ─── list ──────────────────────────────────────────────────────────────

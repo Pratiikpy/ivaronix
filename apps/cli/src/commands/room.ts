@@ -10,7 +10,7 @@ import {
 } from '@ivaronix/og-chain';
 import { createStorageClient, burnEncrypt } from '@ivaronix/og-storage';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { sha256HexAsync, ulid, type Address, type Hash } from '@ivaronix/core';
+import { sha256HexAsync, studioUrl, ulid, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -386,10 +386,10 @@ roomCommand
     if (manifestStorageRoot) {
       // W6 — append ?storage=<root> so a judge on a different machine can
       // fetch the manifest from 0G Storage without our local FS.
-      ui.info(`Studio: http://localhost:3300/data-room/${roomId}?storage=${manifestStorageRoot}`);
+      ui.info(`Studio: ${studioUrl(`/data-room/${roomId}?storage=${manifestStorageRoot}`)}`);
       ui.info(`(Studio falls back to 0G Storage when local manifest is missing.)`);
     } else {
-      ui.info(`Studio: http://localhost:3300/data-room/${roomId}`);
+      ui.info(`Studio: ${studioUrl(`/data-room/${roomId}`)}`);
       ui.info(`(Storage upload failed; only the operator's machine can resolve this URL.)`);
     }
     ui.info(`Manifest hash: ${manifestHash}`);
@@ -611,5 +611,5 @@ roomCommand
     ui.pass(`tx                   ${txHash}`);
     ui.pass(`block                ${blockNumber ?? '?'}`);
     ui.divider();
-    ui.hint(`Public proof: http://localhost:3300/r/<onchain-id>  (use \`ivaronix indexer backfill\` to resolve the on-chain id)`);
+    ui.hint(`Public proof: ${studioUrl('/r/<onchain-id>')}  (use \`ivaronix indexer backfill\` to resolve the on-chain id)`);
   });

@@ -53,7 +53,8 @@ function loadConfig(): Config {
     token,
     network,
     cliEntry,
-    studioBase: process.env.STUDIO_BASE ?? 'http://localhost:3300',
+    // IVARONIX_STUDIO_BASE canonical; STUDIO_BASE legacy.
+    studioBase: process.env.IVARONIX_STUDIO_BASE ?? process.env.STUDIO_BASE ?? 'http://localhost:3300',
   };
 }
 

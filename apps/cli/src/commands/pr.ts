@@ -34,7 +34,8 @@ import { RECEIPT_TYPES, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
-const STUDIO_BASE = process.env.STUDIO_BASE ?? 'http://localhost:3300';
+// IVARONIX_STUDIO_BASE canonical; STUDIO_BASE legacy.
+const STUDIO_BASE = process.env.IVARONIX_STUDIO_BASE ?? process.env.STUDIO_BASE ?? 'http://localhost:3300';
 
 function indexerDbPath(): string {
   let dir = process.cwd();

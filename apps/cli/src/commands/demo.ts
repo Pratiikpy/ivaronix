@@ -6,7 +6,7 @@ import { JsonRpcProvider } from 'ethers';
 import { runPipeline } from '../lib/pipeline.js';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { AgentPassportClient, ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
-import { NETWORKS, type Address } from '@ivaronix/core';
+import { NETWORKS, studioUrl, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -146,7 +146,7 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
 
     ui.banner(true, `→ ${total > 0n ? `${total} receipts on testnet · ` : ''}DEMO ANCHORED ✓`);
     const explorer = NETWORKS[env.network].chainExplorer;
-    ui.hint(`Public proof URL   http://localhost:3300/r/${result.receiptOnchainId}`);
+    ui.hint(`Public proof URL   ${studioUrl(`/r/${result.receiptOnchainId}`)}`);
     ui.hint(`Chain explorer     ${explorer}/tx/${result.receiptTxHash}`);
     ui.hint(`Independent verify ivaronix receipt verify ${result.receiptOnchainId} --tee-independent`);
   });
