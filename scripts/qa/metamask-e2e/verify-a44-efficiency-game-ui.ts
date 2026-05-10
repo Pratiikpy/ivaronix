@@ -54,13 +54,18 @@ must(runPanel, /BALANCED:\s*'majority'/, 'BALANCED label maps to majority on the
 must(runPanel, /LENIENT:\s*'first-objection'/, 'LENIENT label maps to first-objection on the wire');
 must(runPanel, /disabled=\{tier === 'quick'\}/, 'How-strict dropdown disabled for quick tier (1-reviewer policy is meaningless)');
 
-// 4. API accepts policy field.
+// 4. API accepts policy field. Accepts either the legacy TS-interface
+//    form `policy?: 'unanimous' | 'majority' | 'first-objection' |
+//    'weighted'` OR the Zod-schema form `z.enum(['unanimous',
+//    'majority', 'first-objection', 'weighted'])` (sweep 145 rewrote
+//    RunBody as Zod for HALF_BAKED §J-2 closure).
 const runRoute = read('apps/studio/src/app/api/run/route.ts');
-must(
-  runRoute,
-  /policy\?:\s*'unanimous'\s*\|\s*'majority'\s*\|\s*'first-objection'\s*\|\s*'weighted'/,
-  'RunBody declares the policy field with the canonical ConsensusPolicy enum',
-);
+const policyTsForm = /policy\?:\s*'unanimous'\s*\|\s*'majority'\s*\|\s*'first-objection'\s*\|\s*'weighted'/;
+const policyZodForm = /z\.enum\(\s*\[\s*'unanimous'\s*,\s*'majority'\s*,\s*'first-objection'\s*,\s*'weighted'\s*\]\s*\)/;
+if (!policyTsForm.test(runRoute) && !policyZodForm.test(runRoute)) {
+  fail('RunBody declares the policy field with the canonical ConsensusPolicy enum (TS-interface or Zod-schema form)');
+}
+ok('RunBody declares the policy field with the canonical ConsensusPolicy enum (TS or Zod form)');
 must(runRoute, /\.\.\.\(body\.policy\s*\?\s*\{\s*policy:\s*body\.policy\s*\}\s*:\s*\{\}\)/, 'run route forwards body.policy to runPipeline');
 
 // 5. runPipeline resolves + forwards policy.

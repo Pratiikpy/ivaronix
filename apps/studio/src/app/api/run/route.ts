@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
-import type { ConsensusTier } from '@ivaronix/core';
 import { ensureEnv } from '@/lib/boot-env';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
@@ -9,33 +9,34 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Vercel: cap at 60s for hobby; 300s for pro
 
-interface RunBody {
-  skillId: string;
-  question: string;
-  contentText: string;
-  tier?: ConsensusTier;
-  /**
-   * Aggregation-policy override per planning-003 §A.4.4 (zer0Gig
-   * Efficiency Game). When unset, the skill manifest's
-   * `og.consensus.policy` default applies. Values must match the
-   * `ConsensusPolicy` enum exactly: `unanimous` / `majority` /
-   * `first-objection` / `weighted`.
-   */
-  policy?: 'unanimous' | 'majority' | 'first-objection' | 'weighted';
-  receipt?: boolean;
-  burn?: boolean;
-  /**
-   * W9 · Connected user wallet (lowercase 0x…40-hex). When the client
-   * is connected via wagmi, the browser sends the wallet address along
-   * with the run request. The receipt body's `agent.ownerWallet` is set
-   * to this address (instead of the operator's), AND a new
-   * `signedBy: 'operator-on-behalf-of-user'` field records the trust
-   * model honestly: the user authorised but did not sign, the operator
-   * anchored on their behalf. End-state is full SIWE (browser signs
-   * the receipt body before anchoring); queued in USER_TODO §B-V2.
-   */
-  userWallet?: string;
-}
+/**
+ * Runtime-validated request body. Closes HALF_BAKED §J-2 — pre-sweep-145
+ * the body was a TypeScript `as RunBody` cast with no runtime check,
+ * letting attackers post `{ contentText: '<10MB string>' }` past the
+ * rate-limit gate straight into runPipeline.
+ *
+ * Size caps are conservative for testnet operator-paid runs:
+ *   skillId         ≤ 80 chars (matches @ivaronix/skills manifest)
+ *   question        ≤ 4 KB    (the user prompt; 4 KB ≈ a long paragraph)
+ *   contentText     ≤ 2 MB    (the document content; covers a 400-page
+ *                              contract in plaintext)
+ *   userWallet      0x + 40 hex (regex)
+ *
+ * W9 trust model: when userWallet is set, the receipt records
+ * `agent.signedBy = 'operator-on-behalf-of-user'`; SIWE session must
+ * match the claimed wallet or the request is rejected.
+ */
+const RunBodySchema = z.object({
+  skillId: z.string().min(1).max(80),
+  question: z.string().min(1).max(4_000),
+  contentText: z.string().max(2 * 1024 * 1024),
+  tier: z.enum(['quick', 'standard', 'high-stakes', 'audit']).optional(),
+  policy: z.enum(['unanimous', 'majority', 'first-objection', 'weighted']).optional(),
+  receipt: z.boolean().optional(),
+  burn: z.boolean().optional(),
+  userWallet: z.string().regex(/^0x[0-9a-fA-F]{40}$/).optional(),
+});
+type RunBody = z.infer<typeof RunBodySchema>;
 
 /**
  * Run a skill against an uploaded text payload. Returns the consensus output,
@@ -69,18 +70,23 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: RunBody;
+  let rawBody: unknown;
   try {
-    body = (await req.json()) as RunBody;
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
-  if (!body.skillId || !body.question || typeof body.contentText !== 'string') {
+  const parsed = RunBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'skillId, question, contentText are required' },
+      {
+        error: 'invalid body',
+        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      },
       { status: 400 },
     );
   }
+  const body: RunBody = parsed.data;
 
   // K-8: when the body claims a userWallet, require an active SIWE session
   // matching that wallet. Without this gate the operator's key would anchor
@@ -91,9 +97,7 @@ export async function POST(req: Request) {
 
   let userWallet: `0x${string}` | undefined;
   if (body.userWallet) {
-    if (!/^0x[0-9a-fA-F]{40}$/.test(body.userWallet)) {
-      return NextResponse.json({ error: 'malformed userWallet' }, { status: 400 });
-    }
+    // Zod regex above guarantees shape; lowercase-normalize for chain comparison.
     const claimed = body.userWallet.toLowerCase() as `0x${string}`;
     if (!session) {
       return NextResponse.json(
