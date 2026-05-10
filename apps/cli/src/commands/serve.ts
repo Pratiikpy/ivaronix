@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { JsonRpcProvider } from 'ethers';
 import {
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   AgentPassportClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
@@ -84,13 +85,25 @@ export const serveCommand = new Command('serve')
 
         if (req.method === 'GET' && url.pathname === '/healthz') {
           const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-          const reg = getDeployedAddress(env.network, 'ReceiptRegistry');
+          const regV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+          const regV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
           const passport = getDeployedAddress(env.network, 'AgentPassportINFT');
-          const [r, p] = await Promise.all([
-            reg ? new ReceiptRegistryClient(reg, provider).nextId().then((n) => Number(n)).catch(() => null) : null,
+          // Anchored count = nextId - 1 on each registry (1-indexed).
+          // Sum V1 + V2 for the total receipts count exposed via /healthz.
+          const [v1, v2, p] = await Promise.all([
+            regV1 ? new ReceiptRegistryClient(regV1, provider).nextId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
+            regV2 ? new ReceiptRegistryV2Client(regV2, provider).nextId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
             passport ? new AgentPassportClient(passport, provider).nextTokenId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
           ]);
-          return json(res, 200, { ok: true, network: env.network, receipts: r, passports: p });
+          const receipts = (v1 ?? 0) + (v2 ?? 0);
+          return json(res, 200, {
+            ok: true,
+            network: env.network,
+            receipts,
+            receiptsV1: v1,
+            receiptsV2: v2,
+            passports: p,
+          });
         }
 
         if (req.method === 'GET' && url.pathname === '/v1/skills') {
@@ -132,13 +145,27 @@ export const serveCommand = new Command('serve')
         const receiptMatch = url.pathname.match(/^\/v1\/receipt\/(.+)$/);
         if (req.method === 'GET' && receiptMatch) {
           const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-          const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-          if (!addr) return json(res, 503, { error: `ReceiptRegistry not deployed on ${env.network}` });
-          const reg = new ReceiptRegistryClient(addr, provider);
+          const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+          const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+          if (!v1Addr && !v2Addr) {
+            return json(res, 503, { error: `ReceiptRegistry (V1 or V2) not deployed on ${env.network}` });
+          }
           const id = receiptMatch[1]!;
+          // V2-first read pattern (per .claude/rules/og-chain.md): try V2,
+          // fall back to V1. New anchors land on V2; V1 holds the legacy
+          // 1,330+ receipts. Either path can resolve depending on which
+          // registry the receipt was anchored to.
           let onChain;
-          if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id));
-          else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000);
+          if (v2Addr) {
+            const reg = new ReceiptRegistryV2Client(v2Addr, provider);
+            if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id)).catch(() => null);
+            else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000).catch(() => null);
+          }
+          if (!onChain && v1Addr) {
+            const reg = new ReceiptRegistryClient(v1Addr, provider);
+            if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id)).catch(() => null);
+            else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000).catch(() => null);
+          }
           if (!onChain) return json(res, 404, { error: `no receipt for ${id}` });
           return json(res, 200, {
             id: onChain.id.toString(),
