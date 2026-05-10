@@ -391,8 +391,20 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               <dt style={{ color: 'var(--color-muted)' }}>storage root</dt>
               <dd className="mono" style={{ margin: 0, wordBreak: 'break-all' }}>
                 {local.storage.evidenceRoot}
+                {/*
+                  HALF_BAKED §I-17 closure (sweep 168): pre-fix the caption
+                  promised "anyone with the SDK can re-download this blob"
+                  unconditionally. The same field is also populated by the
+                  sha256 fallback path when 0G Storage upload fails, which
+                  produces a 0x-prefixed 64-hex value that LOOKS like a
+                  Storage Merkle root but has no retrievable preimage.
+                  proofDownloadVerified is the schema's source-of-truth
+                  for "the upload happened AND the retrieve was checked".
+                */}
                 <span style={{ color: 'var(--color-muted)', marginLeft: 8, fontSize: 11 }}>
-                  0G Storage Merkle root — anyone with the SDK can re-download this blob.
+                  {local.storage.proofDownloadVerified
+                    ? '0G Storage Merkle root — re-download verified by independent fetch.'
+                    : '0G Storage Merkle root for the run\'s evidence blob.'}
                 </span>
               </dd>
             </>

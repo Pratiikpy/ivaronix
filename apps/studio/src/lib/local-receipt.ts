@@ -56,6 +56,14 @@ export interface ReceiptBody {
   storage?: {
     receiptRoot?: string;
     evidenceRoot?: string;
+    /**
+     * True only if a fresh re-download from 0G Storage succeeded for the
+     * evidenceRoot. Used by /r/[id] to gate the storage caption between
+     * "re-download verified" (proof of upload) and "Merkle root for the
+     * run's evidence blob" (no claim about retrievability). HALF_BAKED
+     * §I-17 closure · sweep 168.
+     */
+    proofDownloadVerified?: boolean;
     encryption?: {
       enabled?: boolean;
       type?: 'aes-256-gcm' | 'wallet' | 'none';
