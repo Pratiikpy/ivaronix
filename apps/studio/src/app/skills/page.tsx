@@ -70,11 +70,18 @@ export default async function SkillsPage() {
     return a.id.localeCompare(b.id);
   });
 
+  // HALF_BAKED §I-9 closure (sweep 163): pre-sweep the header said
+  // "First-party skills" but loadAllSkills() returns every entry under
+  // seed-skills/, including the 150 imported skills from `imports/`.
+  // Most imports are not anchored on the SkillRegistry contract. Renaming
+  // to "Skill catalog" with a count breakdown is the honest framing.
+  const firstPartyCount = cards.filter((c) => c.registryStatus === 'match' || c.registryStatus === 'mismatch').length;
+  const importsCount = cards.length - firstPartyCount;
   return (
     <Section
       label="§ 01 · SKILL CATALOG"
-      title="First-party skills"
-      description="Each skill ships with a manifest hash anchored on the SkillRegistry contract. Sorted by registry verification — MATCH first."
+      title="Skill catalog"
+      description={`${cards.length} skills total · ~${firstPartyCount} anchored on the SkillRegistry contract · ~${importsCount} imported from upstream sources (not yet anchored). Sorted by registry verification — MATCH first.`}
       cta={
         <Link href="/skill/new" className="btn-primary" style={{ textDecoration: 'none' }}>
           + Compose a new skill
