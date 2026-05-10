@@ -25,7 +25,8 @@
 #   the package.json `prepare` script — runs automatically on
 #   `pnpm install`. No husky / lefthook dep needed.
 #
-# Speed: the 17 regressions run in ~10s on a warm cache. Acceptable
+# Speed: the regression suite runs in ~12-15s on a warm cache (current
+# count surfaces dynamically below — see the echo). Acceptable
 # pre-commit overhead given the bug-class coverage (sprint-NatSpec +
 # brand drift + alias ordering + bare-numbers + path canonicalization
 # + numbers-vs-deployments + receipt-types triangle + every other
@@ -40,7 +41,13 @@ if [ "${IVARONIX_SKIP_PRECOMMIT:-0}" = "1" ]; then
   exit 0
 fi
 
-echo "[pre-commit] running offline regressions (studio + cli + contracts · 23 gates)"
+# Count the active regressions by listing files that match the filter
+# patterns wired into run-source-regressions.ts. This avoids the
+# stale-snapshot drift the hardcoded "23 gates" line had — when a sweep
+# ships a new regression, the count surfaces here automatically.
+GATES_DIR="$(git rev-parse --show-toplevel)/scripts/qa/metamask-e2e"
+GATES_TOTAL=$(ls -1 "$GATES_DIR"/verify-*.ts 2>/dev/null | wc -l | tr -d ' ')
+echo "[pre-commit] running offline regressions (studio + cli + contracts · ${GATES_TOTAL} verify-*.ts gates available; subset runs per filter)"
 pnpm --filter qa-metamask-e2e run regressions:studio
 pnpm --filter qa-metamask-e2e run regressions:cli
 pnpm --filter qa-metamask-e2e run regressions:contracts
