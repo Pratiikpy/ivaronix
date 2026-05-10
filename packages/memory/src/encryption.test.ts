@@ -65,9 +65,11 @@ test('K-20 · decrypting with wrong key fails (auth tag mismatch)', () => {
 
 test('K-20 · tampered ciphertext fails authenticated decryption', () => {
   const ct = encryptObservation('the original message', KEY);
-  // Flip a byte in the middle of the ciphertext.
+  // Flip a byte in the middle of the ciphertext. Index 15 is past the
+  // 12-byte GCM nonce so it lands inside the encrypted payload.
   const tampered = new Uint8Array(ct);
-  tampered[15] = tampered[15] ^ 0xff;
+  if (tampered.length <= 15) throw new Error('ciphertext too short to tamper-test');
+  tampered[15] = tampered[15]! ^ 0xff;
   assert.throws(() => decryptObservation(tampered, KEY));
 });
 
