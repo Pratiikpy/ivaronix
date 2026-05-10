@@ -82,14 +82,31 @@ export type ReceiptState = 'draft' | 'claimed' | 'anchored' | 'fully-verified' |
 /** Three-state UI chip per COMPONENTS.md §12 + UI_UX_GUIDE.md §6. */
 export type ChipState = 'pending' | 'verified' | 'mismatch';
 
-/** Consensus tier per HLD §11 + COMPONENTS.md §15. */
-export type ConsensusTier = 'quick' | 'standard' | 'high-stakes';
+/**
+ * Consensus tier per HLD §11 + COMPONENTS.md §15 + planning-003 §A.5.20.
+ *
+ * Tier composition (locked):
+ *   quick       1 role  — single-pass answer
+ *   standard    3 roles — analyst + critic + judge (adversarial review)
+ *   high-stakes 5 roles — adds risk-reviewer + evidence-checker (legal /
+ *               contract / financial review)
+ *   audit       6 roles — adds red-team-critic on top of high-stakes
+ *               (premium adversarial-audit tier; Track-3 marketplace
+ *               pricing top tier)
+ *
+ * The `audit` tier was added 2026-05-10 to land the previously orphan
+ * `red-team-critic` role declared in `packages/consensus/src/prompts.ts`.
+ * Per planning-003 §A.5.20: "ship a 6-role audit tier; track 3
+ * marketplace pricing gets audit as a premium tier."
+ */
+export type ConsensusTier = 'quick' | 'standard' | 'high-stakes' | 'audit';
 
 /** Roles per consensus tier. */
 export const ROLES_BY_TIER: Record<ConsensusTier, readonly string[]> = {
   quick: ['analyst'],
   standard: ['analyst', 'critic', 'judge'],
-  'high-stakes': ['analyst', 'risk-reviewer', 'evidence-checker', 'red-team-critic', 'judge'],
+  'high-stakes': ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'judge'],
+  audit: ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'red-team-critic', 'judge'],
 };
 
 /** Address (0x-prefixed 40-hex). */

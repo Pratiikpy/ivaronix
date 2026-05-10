@@ -13,7 +13,9 @@
 import { readdirSync, readFileSync, writeFileSync, statSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 
-const ROOT = resolve(__dirname, '..', 'seed-skills', 'imports');
+// __dirname = scripts/migrations → seed-skills/imports = ../../seed-skills/imports
+// (planning-003 §A.5.6 reorg).
+const ROOT = resolve(__dirname, '..', '..', 'seed-skills', 'imports');
 
 const OPENCLAW_BLOCK = `metadata:
   openclaw:

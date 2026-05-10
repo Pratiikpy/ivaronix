@@ -28,7 +28,8 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { dirname, join, resolve } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 
-const REPO_ROOT = resolve(__dirname, '..');
+// __dirname = scripts/migrations → REPO_ROOT = scripts/migrations/../.. (planning-003 §A.5.6 reorg).
+const REPO_ROOT = resolve(__dirname, '..', '..');
 const SOURCE_ROOT = resolve(REPO_ROOT, 'CLI Open Source Project', 'awesome-claude-skills');
 const TARGET_ROOT = resolve(REPO_ROOT, 'seed-skills', 'imports');
 const MAX_PORTS = 75;

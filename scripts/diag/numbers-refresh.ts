@@ -21,7 +21,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, '..');
+// HERE = scripts/diag → REPO_ROOT = scripts/diag/../../ (planning-003 §A.5.6 reorg).
+const REPO_ROOT = resolve(HERE, '..', '..');
 const NUMBERS_PATH = resolve(REPO_ROOT, 'docs/numbers.json');
 
 interface NumbersFile {

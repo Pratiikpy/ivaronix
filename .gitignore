@@ -74,4 +74,13 @@ playwright-report/
 # Visual evidence — kept locally, organized by round / surface; not pushed
 screenshots/
 
+# MetaMask Playwright profile dirs (runtime artefacts, not code)
+scripts/qa/metamask-e2e/mm/
+
+# Python cache from scripts/verifier-py/
+scripts/verifier-py/__pycache__/
+
+# Test target scratch files
+test-targets/
+
 # (do NOT gitignore _archive/ — those are intentional reference docs)

@@ -12,6 +12,7 @@
  * sandboxing; that is intentionally out of scope here.)
  */
 
+import type { ConsensusTier } from '@ivaronix/core';
 import type { LoadedSkill } from '../loader.js';
 
 /** Lifecycle event kinds. */
@@ -44,7 +45,7 @@ export interface HookEvent_PreConsensus extends HookContextBase {
   /** The plaintext context that will be sent to the router. Hooks may patch it. */
   context: string;
   userPrompt: string;
-  tier: 'quick' | 'standard' | 'high-stakes';
+  tier: ConsensusTier;
   estimatedCostOg: number;
 }
 

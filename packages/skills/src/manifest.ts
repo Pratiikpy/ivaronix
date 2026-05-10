@@ -66,8 +66,12 @@ const Reputation = z.object({
  * Consensus tier enum, exported separately so the Studio skill-builder
  * form derives its `default_tier` dropdown options from this schema
  * (planning-003 §A.1.6 · same pattern as MemoryAccessEnum / ShellAccessEnum).
+ *
+ * Tier composition is the source-of-truth `ROLES_BY_TIER` map in
+ * `@ivaronix/core/types`. The `audit` tier (6 roles incl. red-team-critic)
+ * lands per planning-003 §A.5.20 as the Track-3 marketplace premium tier.
  */
-export const ConsensusTierEnum = z.enum(['quick', 'standard', 'high-stakes']);
+export const ConsensusTierEnum = z.enum(['quick', 'standard', 'high-stakes', 'audit']);
 
 export type ConsensusTier = z.infer<typeof ConsensusTierEnum>;
 

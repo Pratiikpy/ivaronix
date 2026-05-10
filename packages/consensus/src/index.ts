@@ -61,11 +61,19 @@ export interface ConsensusResult {
   gateResult: GateResult;
 }
 
-/** Estimated cost per tier for fee-display UX (per HLD §11 + COMPONENTS §15). */
+/**
+ * Estimated cost per tier for fee-display UX (HLD §11 + COMPONENTS §15).
+ * Numerator is the all-in budget across all roles; divisor is the rough
+ * cost-per-100-tokens factor used for billing previews. Per
+ * planning-003 §A.5.20 the `audit` tier is priced as a premium
+ * marketplace tier (~6/5 of high-stakes for the extra red-team-critic
+ * role; rounded up for headroom on long inputs).
+ */
 export const TIER_COST_OG: Record<ConsensusTier, number> = {
-  quick: 0.02 / 5,        // single call, ~0.004 OG
-  standard: 0.10 / 5,     // 3 calls, ~0.02 OG (rough; depends on tokens)
+  quick: 0.02 / 5,         // 1 call, ~0.004 OG
+  standard: 0.10 / 5,      // 3 calls, ~0.02 OG
   'high-stakes': 0.25 / 5, // 5 calls, ~0.05 OG
+  audit: 0.36 / 5,         // 6 calls, ~0.072 OG (premium adversarial audit)
 };
 
 /**
@@ -114,7 +122,10 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
   };
 
   let reviewerResults: { role: RoleId; content: string; raw: RouterCallResult }[];
-  if (tier === 'high-stakes') {
+  // Tiers above 3 reviewers run sequentially to stay under the testnet
+  // 10-req/min Router cap. Once the rate limit lifts on mainnet (USER_TODO
+  // §B-V2-3) we can flip back to parallel for everything.
+  if (tier === 'high-stakes' || tier === 'audit') {
     reviewerResults = [];
     for (const roleId of reviewerRoleIds) {
       reviewerResults.push(await runReviewer(roleId));

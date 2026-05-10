@@ -4,8 +4,8 @@
 
 ## Stack
 
-- Multi-role inference orchestrator. Tiers: `quick` (1 role) · `standard` (3 roles) · `high-stakes` (5 roles) · `audit` (6 roles, queued).
-- Convergence scoring: tokenized Jaccard today (`packages/consensus/src/convergence.ts`). Embeddings via `vector.ts` `embedAsync` queued (planning-003 §A.4.9).
+- Multi-role inference orchestrator. Tiers: `quick` (1 role) · `standard` (3 roles) · `high-stakes` (5 roles) · `audit` (6 roles, shipped 2026-05-10).
+- Convergence scoring: tokenized Jaccard plus embedding-cosine (MiniLM) when an embedder is injected (`packages/consensus/src/convergence.ts` · planning-003 §A.4.9).
 
 ## Hard rules
 
@@ -15,16 +15,18 @@
 
 - **Convergence threshold defaults to 0.6** (Jaccard). Skill manifests can override via `og.consensus.threshold`. Below threshold → "no convergence" recorded on the receipt.
 
-- **`red-team-critic`** is currently orphan (queued · planning-003 §A.5.20 ships the audit tier that uses it). Don't add it to standard or high-stakes tiers; ship the audit tier first.
+- **`red-team-critic` lives in the `audit` tier only.** Closes planning-003 §A.5.20 (the role was orphan in `prompts.ts` until the audit tier shipped). Don't add it to standard or high-stakes — that's why audit exists. The `tier-shape.test.ts` regression suite enforces this.
 
-## Tier composition
+## Tier composition (locked 2026-05-10)
 
 | Tier | Roles | Use case |
 |---|---|---|
 | `quick` | analyst | one-shot answer |
 | `standard` | analyst + critic + judge | reviewed answer with one objection cycle |
 | `high-stakes` | analyst + critic + risk-reviewer + evidence-checker + judge | legal / contract / financial review |
-| `audit` (queued) | + red-team-critic (6 total) | adversarial review, premium tier |
+| `audit` | analyst + critic + risk-reviewer + evidence-checker + red-team-critic + judge | premium adversarial audit (Track-3 marketplace top tier) |
+
+Composition is **monotone**: `standard ⊂ high-stakes ⊂ audit`. Every higher tier strictly extends the previous. Drift on this is a regression and `tier-shape.test.ts` will catch it.
 
 ## Aggregation policies (queued · planning-003 §A.4.4)
 
@@ -32,7 +34,7 @@
 
 ## Tests
 
-`packages/consensus/test/` — vitest. Run via `pnpm --filter @ivaronix/consensus test`.
+`packages/consensus/src/*.test.ts` — Node's built-in `node:test` runner via `tsx`. Run via `pnpm --filter @ivaronix/consensus test`. Suites: `convergence.test.ts` · `gates.test.ts` (planning-003 §A.5.15) · `tier-shape.test.ts` (planning-003 §A.5.20).
 
 ## File location reference
 

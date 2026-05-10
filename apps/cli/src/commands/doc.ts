@@ -39,13 +39,14 @@ docCommand
   .option('--burn', 'enable Burn Mode (AES-256-GCM session key destroyed after use)')
   .option('--consensus', 'enable Standard 3-role consensus (analyst/critic/judge) — default tier when set')
   .option('--high-stakes', 'use 5-role High-Stakes consensus (legal/contract/financial/medical)')
-  .option('--quick', 'force 1-model Quick tier (overrides --consensus / --high-stakes)')
+  .option('--audit', 'use 6-role Audit consensus (adds red-team-critic on top of high-stakes; premium adversarial review)')
+  .option('--quick', 'force 1-model Quick tier (overrides --consensus / --high-stakes / --audit)')
   .option('--receipt', 'create an Action Receipt for this run', true)
   .option('--skill <id>', 'use this skill (defaults to private-doc-review)', 'private-doc-review')
   .option('--model <id>', 'override default model', 'qwen/qwen-2.5-7b-instruct')
   .option('--out-dir <dir>', 'where to write the signed receipt JSON', '.ivaronix/receipts/anchored')
   .option('--memory-depth <n>', 'load N most recent receipts for this agent + skill into context (planning-01 §3A)', '0')
-  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string; memoryDepth?: string }) => {
+  .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; audit?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string; memoryDepth?: string }) => {
     const env = loadEnv();
 
     // ─── 0. Load skill ────────────────────────────────────────────────────
@@ -57,9 +58,11 @@ docCommand
       return;
     }
 
-    // Resolve tier — explicit flag wins; otherwise skill's default_tier; finally Quick fallback
+    // Resolve tier — explicit flag wins; otherwise skill's default_tier; finally Quick fallback.
+    // Precedence: --quick > --audit > --high-stakes > --consensus > skill default.
     let tier: ConsensusTier = skill.manifest.og.consensus.default_tier;
-    if (opts.highStakes) tier = 'high-stakes';
+    if (opts.audit) tier = 'audit';
+    else if (opts.highStakes) tier = 'high-stakes';
     else if (opts.consensus) tier = 'standard';
     if (opts.quick) tier = 'quick';
 

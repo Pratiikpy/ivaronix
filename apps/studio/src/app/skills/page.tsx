@@ -4,6 +4,7 @@ import { PermissionPills } from '@/components/PermissionPills';
 import { loadAllSkills } from '@/lib/skills';
 import { getSkillRegistry } from '@/lib/chain';
 import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
+import type { ConsensusTier } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -12,7 +13,7 @@ interface SkillCard {
   id: string;
   version: string;
   description: string;
-  defaultTier: 'quick' | 'standard' | 'high-stakes';
+  defaultTier: ConsensusTier;
   burnAuto: boolean;
   permissions: ReturnType<typeof permissionsView>;
   registryStatus: 'match' | 'mismatch' | 'unregistered' | 'unknown';

@@ -23,7 +23,7 @@ export const RegistryEntrySchema = z.object({
    * (community-contributed, see imports/<id>/SKILL.md). */
   source: z.enum(['first-party', 'imports']),
   /** Default consensus tier the skill prescribes; useful for cost UX. */
-  default_tier: z.enum(['quick', 'standard', 'high-stakes']),
+  default_tier: z.enum(['quick', 'standard', 'high-stakes', 'audit']),
   /** Whether the skill auto-enables Burn Mode (AES-256-GCM session-key
    * destroy after each run). */
   burn_auto: z.boolean(),
