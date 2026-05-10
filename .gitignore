@@ -20,7 +20,6 @@ oglabs resources/
 og-projects-showcase/
 entries/
 new-entries/
-_archive/
 
 # Bundled visual mockup at brand/Ivaronix.html — pushed as design source of truth.
 
@@ -100,4 +99,7 @@ scripts/verifier-py/__pycache__/
 # Test target scratch files
 test-targets/
 
-# (do NOT gitignore _archive/ — those are intentional reference docs)
+# _archive/ holds pre-v2 planning docs (kept for history; do not edit).
+# Tracked, not ignored — the README docs grid + planning-003 §A.5.X
+# both reference these files. Earlier `_archive/` entry in this file
+# was self-contradicting drift; removed.
