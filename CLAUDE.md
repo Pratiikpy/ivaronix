@@ -275,3 +275,36 @@ For package-specific conventions, env vars, hot files, and test commands, see th
 - `seed-skills/AGENTS.md` — manifest skeleton, three publishing paths.
 
 Path-scoped rules at `.claude/rules/<package>.md` auto-load when editing files under `<package>/**`. Treat the AGENTS.md files as the human-readable index and the rules files as the operational contract.
+
+## 15. Bookkeeping in the same commit (the "ship X → discover X" rule)
+
+Every time you ship a new file, script, test, rule, or env var, the **same commit** (or the next commit before EOD) updates every reference that should mention it. This is the rule that 8 separate cron-sweep audits on 2026-05-10 each independently caught one violation of, even though the underlying ships were all done correctly.
+
+The pattern looks like this. You ship a new diag script at `scripts/diag/audit-list.ts` and add it to `package.json` as `pnpm audit:list`. The work is done. But:
+
+- `scripts/README.md` (the canonical script inventory · `planning-003 §A.5.6`) doesn't mention it → operators searching for the canonical command list won't find it.
+- The doc-comment in the consumer file (`packages/runtime/src/env.ts`) still says "queued · USER_TODO §B-V2-11" → readers think the script doesn't exist yet.
+- `docs/USER_TODO.md §B-V2-11` (the source-of-truth queue) still reads as queued → future contributors re-do the work.
+- `CHANGELOG.md` mentions "Until pnpm audit:list ships, run the grep manually" → stale narrative.
+
+Each of these is a 1-minute fix. None of them block the ship. **All four were missed in the original commit** because the contributor's mental model was "I'm shipping the script" not "I'm shipping the script AND closing every reference to its absence."
+
+### The discipline
+
+When you add a new ____, also update ____:
+
+| You added… | Update these in the same commit… |
+|---|---|
+| A new `pnpm <verb>` script | `package.json` scripts, `scripts/README.md` "Running" section, the relevant `<package>/AGENTS.md` test-command block, `CONTRIBUTING.md` pre-PR command list |
+| A new `verify-*.ts` source-file regression | `scripts/qa/metamask-e2e/run-source-regressions.ts` filter list, `scripts/README.md` qa/ section |
+| A new threat-model JSDoc on a security primitive | `SECURITY.md` "What the receipt system defends against" list with file:line citation |
+| A new top-level repo doc (e.g. `BRAND.md`) | `README.md` Documentation index, the relevant CLAUDE.md section if it adds a rule |
+| A new env var | `packages/runtime/src/env.ts` alias chain, `docs/PRIVACY_NOTES.md` if it touches privacy, `apps/studio/.env.production.template`, `pnpm env:check` runs naturally so no separate update there |
+| A new contract V2 | `contracts/deployments/{testnet,mainnet}.json`, `apps/studio/src/lib/chain.ts` `unifiedX` helpers, `apps/cli/src/commands/receipt.ts` `buildReadRegistries`, `docs/MAINNET_READINESS.md`, `CHANGELOG.md` with `Closes audit K-N` trailer |
+| A new audit closure | `CHANGELOG.md` row, `Closes audit <ID>` commit trailer, `docs/USER_TODO.md` row marked ✅ SHIPPED if it was queued there |
+
+### Why this matters
+
+A repo at "production-ready" feels different from a repo at "everything works": every doc points at every file that exists, every rule references every place it applies, every "queued" entry in any tracker is fresh. The cost of not doing the bookkeeping is invisibility — the work is real, but the next contributor has to re-discover it from scratch by grepping the codebase.
+
+**Rule of thumb: if you spent more than 20 minutes shipping something, spend 5 minutes updating its references.** The 25% overhead is what production-ready repos look like and what hackathon-stage repos skip.
