@@ -121,6 +121,8 @@ jobs:
         run: pnpm --filter @ivaronix/memory test
       - name: og-chain (deployments walk-up · 8 tests)
         run: pnpm --filter @ivaronix/og-chain test
+      - name: og-router (keyring failure-mode taxonomy · 14 tests)
+        run: pnpm --filter @ivaronix/og-router test
       - name: docs:check (numbers.json staleness + marker drift)
         run: pnpm docs:check
       - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)

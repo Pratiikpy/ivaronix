@@ -12,7 +12,7 @@
   "scripts": {
     "build": "tsc -b",
     "lint": "echo skip",
-    "test": "echo skip",
+    "test": "tsx --test src/**/*.test.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist .turbo"
   },

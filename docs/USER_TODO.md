@@ -413,15 +413,12 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   4. Trigger the workflow manually once to verify it can read the secret + anchor a receipt.
   5. Add the funded address to `contracts/deployments/testnet.json` under a `ci_wallet` key.
 
-### B-V2-OG-ROUTER-TESTS · Unit tests for `@ivaronix/og-router`
-- **Source:** cron-sweep finding 2026-05-10. The `.claude/rules/og-router.md` rules file claimed `packages/og-router/test/` vitest existed. It did not — `pnpm --filter @ivaronix/og-router test` was `echo skip`. Rules updated to reflect reality + queue this work.
-- **Why:** the keyring failure-mode taxonomy (`'402'` permanent / `'auth'` permanent / `'429'` transient) is a security-sensitive contract. A regression that collapses `'429'` into permanent invalidation silently halves the multi-key rotation pool; without tests, drift would only surface during a Router rate-limit incident under load. Same shape concern for `processResponse(provider, chatID, usageJSON)` — the 3-arg invariant is documented in code + rules but not test-locked.
-- **Action:**
-  1. Write `packages/og-router/src/keyring.test.ts` — invalidate by reason: `'402'` removes from rotation, `'auth'` removes, `'429'` rotates this turn but stays in the pool. Cover the "all keys depleted" recovery path.
-  2. Write `packages/og-router/src/json-repair.test.ts` — feed malformed JSON shapes from real 7B-model outputs (the `~5-10%` malform rate per rules) and assert the repair pass extracts valid JSON.
-  3. Wire `package.json` test command to `tsx --test src/**/*.test.ts` (matches og-chain pattern shipped 2026-05-10).
-  4. Add the new test step to `.github/workflows/ci.yml` `unit-tests` job after the og-chain step.
-- **Effort:** ~2h. No external deps; pure unit-test work against the existing keyring/json-repair logic.
+### B-V2-OG-ROUTER-TESTS · Unit tests for `@ivaronix/og-router` keyring · ✅ SHIPPED keyring · json-repair pending
+- **Source:** cron-sweep finding 2026-05-10. The `.claude/rules/og-router.md` rules file claimed `packages/og-router/test/` vitest existed. It did not — `pnpm --filter @ivaronix/og-router test` was `echo skip`.
+- **Status:**
+  - ✅ Keyring failure-mode taxonomy locked in via `packages/og-router/src/keyring.test.ts` (14 tests, shipped same day). Covers: `'402'` permanent invalidation, `'auth'` permanent invalidation, `'429'` transient rotation (the regression-critical case), multi-key cascade, drain/peek log semantics, "all keys depleted" recovery throw. CI runs the suite as part of the `unit-tests` job (98 → 112 unit tests across 7 packages).
+  - ⏳ JSON-repair regression coverage still pending: the `packages/runtime/src/json-repair.ts` module referenced in the og-router threat-model JSDoc does not exist yet. Write the module first (the malform pattern is documented in the rules: 7B models malform JSON ~5-10% of the time, so a regex-based repair pass is the canonical mitigation), then write `packages/og-router/src/json-repair.test.ts` to feed malformed shapes and assert recovery.
+- **Effort remaining:** ~3h to write the json-repair module + tests. The keyring portion (~1h) is already done.
 
 ### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage`
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.

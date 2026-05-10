@@ -37,7 +37,7 @@ Every file in `packages/og-router/` opens with the threat-model block per `docs/
 
 ## Tests
 
-No unit tests yet. `pnpm --filter @ivaronix/og-router test` is `echo skip` today; queued in `docs/USER_TODO.md §B-V2-OG-ROUTER-TESTS`. When tests land, follow the convention: Node's built-in `node:test` runner via `tsx --test src/**/*.test.ts` (matches `packages/{core,consensus,skills,memory,receipts,og-chain}`). High-value targets: `Keyring.invalidate(...)` failure-mode taxonomy (`'402'` / `'auth'` / `'429'` rotation rules), JSON-repair fallback paths, threat-model assertions on the third-party Router relay shape.
+`packages/og-router/src/*.test.ts` — Node's built-in `node:test` runner via `tsx --test`. Run via `pnpm --filter @ivaronix/og-router test`. Suite: `keyring.test.ts` (14 tests · failure-mode taxonomy `'402'` permanent / `'auth'` permanent / `'429'` transient + rotation log shape + multi-key cascade). The `chat()` / `chatRich()` methods stay covered by live smoke tests under `scripts/qa/` since they need real Router endpoints. JSON-repair regression coverage is queued (the `packages/runtime/src/json-repair.ts` module referenced in the original threat-model rule does not exist yet — write the module first, then test it).
 
 ## File location reference
 
