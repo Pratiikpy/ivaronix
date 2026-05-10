@@ -35,6 +35,33 @@ const config: NextConfig = {
   env: {
     NEXT_PUBLIC_OG_NETWORK: process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet',
   },
+  async headers() {
+    // Defence-in-depth HTTP security headers per HALF_BAKED Tier A item 6.
+    // CSP deliberately omitted — it needs end-to-end app testing to draft
+    // a working policy that allows wagmi + Next.js inline scripts +
+    // brand-token style attrs without breaking flows. Tracked in
+    // USER_TODO §B-V2 as a separate piece of work.
+    //
+    // The four headers below are safe defaults that don't risk breaking
+    // any flow:
+    //   X-Frame-Options: DENY            — defeats clickjacking
+    //   X-Content-Type-Options: nosniff  — defeats MIME-sniff XSS
+    //   Referrer-Policy: strict-origin-when-cross-origin
+    //                                     — leaks scheme+host but no path on cross-origin
+    //   Strict-Transport-Security        — HSTS · 2 years + subdomains + preload-eligible.
+    //                                     Browsers ignore on HTTP so safe in dev too.
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+    ];
+  },
 };
 
 export default config;
