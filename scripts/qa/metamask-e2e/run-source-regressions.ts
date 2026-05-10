@@ -116,6 +116,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-s4/, // delegate exit code
       /^verify-h2/, // processResponse third arg
       /^verify-h1-h4/, // attestation + memoryClient
+      /^verify-no-hardcoded-studio-base/, // HALF_BAKED §J-10 · CLI proof URLs use studioUrl() not hardcoded localhost (sweep 144)
     ],
   },
   contracts: {
