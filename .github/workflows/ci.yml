@@ -109,7 +109,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile=false
-      - name: core (JCS canonical hash · 17 tests)
+      - name: core (JCS + canonical V1/V2 + sha256 + ULID · 52 tests)
         run: pnpm --filter @ivaronix/core test
       - name: consensus (gates + policy + tier-shape + convergence · 34 tests)
         run: pnpm --filter @ivaronix/consensus test

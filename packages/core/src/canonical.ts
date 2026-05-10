@@ -1,4 +1,5 @@
 import { keccak256, toUtf8Bytes } from 'ethers';
+import { jcs } from './jcs.js';
 
 /**
  * Canonical JSON serialization per RECEIPTS_SPEC.md §3.
@@ -52,9 +53,11 @@ export function canonicalHashV2(value: unknown, excludeKeys?: ReadonlySet<string
     }
     return out;
   };
-  // Lazy import to avoid a circular dep — canonical.ts is depended on
-  // by jcs consumers indirectly. The barrel exports both side by side.
-  const { jcs } = require('./jcs.js') as typeof import('./jcs.js');
+  // Static import: there's no actual circular dep (jcs.ts doesn't
+  // import from canonical.ts). The previous `require('./jcs.js')`
+  // inside this ESM module ("type": "module" in package.json) threw
+  // ReferenceError at runtime — caught by canonical.test.ts on the
+  // first call. Fixed in the cron-sweep that locked V2 hash semantics.
   return keccak256(toUtf8Bytes(jcs(strip(value)))) as `0x${string}`;
 }
 
