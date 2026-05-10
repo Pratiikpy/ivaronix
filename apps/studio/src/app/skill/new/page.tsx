@@ -6,8 +6,10 @@ import { useAccount } from 'wagmi';
 import {
   MemoryAccessEnum,
   ShellAccessEnum,
+  ConsensusTierEnum,
   type MemoryAccess,
   type ShellAccess,
+  type ConsensusTier,
 } from '@ivaronix/skills';
 
 /**
@@ -30,10 +32,9 @@ import {
  *   signing key stays out of the operator path.
  */
 
-const TIER_OPTIONS = ['quick', 'standard', 'high-stakes'] as const;
-
 // Derived from the canonical Zod schema. Updating the schema
 // automatically updates the form (no manual edit required).
+const TIER_OPTIONS = ConsensusTierEnum.options;
 const MEMORY_OPTIONS = MemoryAccessEnum.options;
 const SHELL_OPTIONS = ShellAccessEnum.options;
 
@@ -45,7 +46,7 @@ interface SkillForm {
   description: string;
   license: typeof LICENSE_OPTIONS[number];
   systemPrompt: string;
-  defaultTier: typeof TIER_OPTIONS[number];
+  defaultTier: ConsensusTier;
   burnAutoEnable: boolean;
   consensusRequired: boolean;
   memoryAccess: MemoryAccess;

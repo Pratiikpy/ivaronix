@@ -62,9 +62,18 @@ const Reputation = z.object({
     .default({ trustScore: -10, locked: false }),
 });
 
+/**
+ * Consensus tier enum, exported separately so the Studio skill-builder
+ * form derives its `default_tier` dropdown options from this schema
+ * (planning-003 §A.1.6 · same pattern as MemoryAccessEnum / ShellAccessEnum).
+ */
+export const ConsensusTierEnum = z.enum(['quick', 'standard', 'high-stakes']);
+
+export type ConsensusTier = z.infer<typeof ConsensusTierEnum>;
+
 const Consensus = z.object({
   required: z.boolean().default(false),
-  default_tier: z.enum(['quick', 'standard', 'high-stakes']).default('quick'),
+  default_tier: ConsensusTierEnum.default('quick'),
 });
 
 const Burn = z.object({

@@ -17,7 +17,7 @@
  *   3. Form file does NOT contain the legacy literal values that triggered
  *      the original bug.
  */
-import { MemoryAccessEnum, ShellAccessEnum } from '@ivaronix/skills';
+import { MemoryAccessEnum, ShellAccessEnum, ConsensusTierEnum } from '@ivaronix/skills';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,18 +41,21 @@ console.log('A.1.1 · skill/new form schema parity\n');
 // 1. Schema enums match expected canonical values.
 const memoryEnum = MemoryAccessEnum.options;
 const shellEnum = ShellAccessEnum.options;
+const tierEnum = ConsensusTierEnum.options;
 check('schema memory_access enum', JSON.stringify(memoryEnum) === JSON.stringify(['none', 'project_only', 'all']), `got ${JSON.stringify(memoryEnum)}`);
 check('schema shell_access enum', JSON.stringify(shellEnum) === JSON.stringify(['none', 'sandbox-only', 'full']), `got ${JSON.stringify(shellEnum)}`);
+check('schema consensus tier enum', JSON.stringify(tierEnum) === JSON.stringify(['quick', 'standard', 'high-stakes']), `got ${JSON.stringify(tierEnum)}`);
 check('schema memory_access has 3 values', memoryEnum.length === 3);
 check('schema shell_access has 3 values', shellEnum.length === 3);
+check('schema consensus tier has 3 values', tierEnum.length === 3);
 
 // 2. Form file derives options from schema.
 check('form file exists', existsSync(FORM_PATH), FORM_PATH);
 const formSrc = existsSync(FORM_PATH) ? readFileSync(FORM_PATH, 'utf8') : '';
 check(
-  'form imports MemoryAccessEnum + ShellAccessEnum from @ivaronix/skills',
-  /import\s*\{[\s\S]*?\bMemoryAccessEnum\b[\s\S]*?\bShellAccessEnum\b[\s\S]*?\}\s*from\s*['"]@ivaronix\/skills['"]/.test(formSrc),
-  'expected import of both enum schemas from @ivaronix/skills',
+  'form imports MemoryAccessEnum + ShellAccessEnum + ConsensusTierEnum from @ivaronix/skills',
+  /import\s*\{[\s\S]*?\bMemoryAccessEnum\b[\s\S]*?\bShellAccessEnum\b[\s\S]*?\bConsensusTierEnum\b[\s\S]*?\}\s*from\s*['"]@ivaronix\/skills['"]/.test(formSrc),
+  'expected import of all three enum schemas from @ivaronix/skills',
 );
 check(
   'form derives MEMORY_OPTIONS from MemoryAccessEnum.options',
@@ -61,6 +64,10 @@ check(
 check(
   'form derives SHELL_OPTIONS from ShellAccessEnum.options',
   /SHELL_OPTIONS\s*=\s*ShellAccessEnum\.options/.test(formSrc),
+);
+check(
+  'form derives TIER_OPTIONS from ConsensusTierEnum.options',
+  /TIER_OPTIONS\s*=\s*ConsensusTierEnum\.options/.test(formSrc),
 );
 
 // 3. Form file does NOT contain the legacy literal values.
@@ -79,6 +86,10 @@ check(
 check(
   'form does not redeclare SHELL_OPTIONS as inline literal array',
   !/SHELL_OPTIONS\s*=\s*\[\s*['"]none['"]/.test(formSrc),
+);
+check(
+  'form does not redeclare TIER_OPTIONS as inline literal array',
+  !/TIER_OPTIONS\s*=\s*\[\s*['"]quick['"]/.test(formSrc),
 );
 
 console.log();
