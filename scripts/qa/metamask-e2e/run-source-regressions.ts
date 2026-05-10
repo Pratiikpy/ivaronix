@@ -51,6 +51,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-brand-token-drift/, // CLAUDE.md §10 · hex literals must be in brand/tokens.json (or amnesty)
       /^verify-no-bare-require-esm/, // meta · bare require() inside ESM packages throws ReferenceError at runtime
       /^verify-deployments-path-canonical/, // §15 bookkeeping · docs reference contracts/deployments/ post-fb3db59 move
+      /^verify-pnpm-scripts-exist/, // meta · every pnpm <verb> in CI + package.json resolves to a real script
     ],
   },
   'studio-live': {
