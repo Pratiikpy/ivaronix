@@ -243,6 +243,18 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** ship `pnpm brand:check` script that greps `apps/studio/src/**/*.{ts,tsx,css}` + `UI_UX_GUIDE.md` + `CLAUDE.md` for hex literals NOT present in `brand/tokens.json`. Fail CI on any drift.
 - **Effort:** ~30min.
 
+### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY`
+- **Source:** plan-003 §A.3.4 follow-up · `packages/runtime/src/env.ts` already supports the canonical name with legacy aliases.
+- **Why:** today every `forge script script/Deploy*.s.sol` reads `OG_PRIVATE_KEY` directly via `vm.envString("OG_PRIVATE_KEY")`. Operators bridging from CLI (which now prefers `IVARONIX_SIGNER_KEY`) hit a "missing OG_PRIVATE_KEY" error mid-deploy.
+- **Action:** in every `contracts/script/Deploy*.s.sol`, replace `vm.envString("OG_PRIVATE_KEY")` with `vm.envOr("IVARONIX_SIGNER_KEY", vm.envString("OG_PRIVATE_KEY"))` so the canonical name is preferred but the legacy alias still works.
+- **Effort:** ~30min · 8 scripts · zero functional change.
+
+### B-V2-11 · `pnpm env:check` script
+- **Source:** plan-003 §A.3.4 · `envCheckReport()` exported from `packages/runtime/src/env.ts`.
+- **Why:** operators copy-paste `.env` files and hit "missing env var" errors. A one-shot diagnostic prints which canonical name resolved to which alias.
+- **Action:** add `pnpm env:check` script that calls `envCheckReport()` and prints a table: canonical name | used alias | value-set status. Highlight legacy aliases in yellow.
+- **Effort:** ~15min.
+
 ### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
 - **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
 - **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
