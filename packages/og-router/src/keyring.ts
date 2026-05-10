@@ -174,16 +174,35 @@ export class Keyring {
 
 /**
  * Build a Keyring from environment variables.
- * Format: ZG_API_SECRET + ZG_SERVICE_URL + OG_COMPUTE_PROVIDER + EVM_WALLET_ADDRESS = primary key.
- * Future: add OG_KEYRING_PATH for multi-key JSON file (HLD §11.0).
+ * Resolves each credential field via the canonical → legacy alias chain
+ * defined in packages/runtime/src/env.ts:
+ *   IVARONIX_ROUTER_KEY      ← ZG_API_SECRET            (api key)
+ *   IVARONIX_ROUTER_URL      ← ZG_SERVICE_URL           (endpoint)
+ *   IVARONIX_ROUTER_PROVIDER ← OG_COMPUTE_PROVIDER      (provider address)
+ *   IVARONIX_WALLET_ADDRESS  ← EVM_WALLET_ADDRESS       (operator wallet)
+ *
+ * Pre-sweep-109 the function read ONLY legacy names. An operator using
+ * the canonical IVARONIX_ROUTER_KEY (post-sweep-80 convention) got a
+ * null keyring — the consensus pipeline silently failed every Router
+ * call. Same correctness-bug class as sweep 108's delegate.ts fix.
+ *
+ * Future: a multi-key JSON file (loaded via env var) per HLD §11.0.
  */
+function pickAlias(env: NodeJS.ProcessEnv, ...names: string[]): string | undefined {
+  for (const n of names) {
+    const v = env[n];
+    if (v !== undefined && v !== '') return v;
+  }
+  return undefined;
+}
+
 export function keyringFromEnv(env: NodeJS.ProcessEnv = process.env): Keyring | null {
   const credentials: RouterCredential[] = [];
 
-  const primaryKey = env.ZG_API_SECRET;
-  const primaryUrl = env.ZG_SERVICE_URL;
-  const primaryProvider = env.OG_COMPUTE_PROVIDER;
-  const primaryWallet = env.EVM_WALLET_ADDRESS;
+  const primaryKey = pickAlias(env, 'IVARONIX_ROUTER_KEY', 'ZG_API_SECRET');
+  const primaryUrl = pickAlias(env, 'IVARONIX_ROUTER_URL', 'ZG_SERVICE_URL');
+  const primaryProvider = pickAlias(env, 'IVARONIX_ROUTER_PROVIDER', 'OG_COMPUTE_PROVIDER');
+  const primaryWallet = pickAlias(env, 'IVARONIX_WALLET_ADDRESS', 'EVM_WALLET_ADDRESS');
 
   if (primaryKey && primaryUrl && primaryProvider && primaryWallet) {
     credentials.push({

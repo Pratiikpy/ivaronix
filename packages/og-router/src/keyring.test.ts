@@ -21,7 +21,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Keyring } from './keyring.js';
+import { Keyring, keyringFromEnv } from './keyring.js';
 import type { RouterCredential } from './index.js';
 
 function makeCred(label: string): RouterCredential {
@@ -182,4 +182,71 @@ test("invalidate('429') with a depleted next-cred skips the depleted one", () =>
   // logging purposes. This test pins that exact semantics so any
   // refactor changes are intentional.
   assert.ok(['a', 'c'].includes(r[0]!.toCredential));
+});
+
+// ─── keyringFromEnv · alias-chain resolution ─────────────────────────
+// Sweep 109 fix: keyringFromEnv was reading ONLY legacy names. An
+// operator using canonical IVARONIX_ROUTER_KEY etc. got a null
+// keyring; the consensus pipeline silently failed every Router call.
+
+test('keyringFromEnv returns null when no credentials are set', () => {
+  const k = keyringFromEnv({});
+  assert.equal(k, null);
+});
+
+test('keyringFromEnv resolves the canonical IVARONIX_* names', () => {
+  const k = keyringFromEnv({
+    IVARONIX_ROUTER_KEY: 'app-sk-test-canonical',
+    IVARONIX_ROUTER_URL: 'https://compute.example/v1/proxy',
+    IVARONIX_ROUTER_PROVIDER: '0x0000000000000000000000000000000000000002',
+    IVARONIX_WALLET_ADDRESS: '0x0000000000000000000000000000000000000001',
+  });
+  assert.notEqual(k, null);
+  // The single primary credential should resolve to the canonical-named values.
+  const cred = k!.pickActive();
+  assert.equal(cred.apiKey, 'app-sk-test-canonical');
+});
+
+test('keyringFromEnv falls back to legacy names when canonical unset', () => {
+  const k = keyringFromEnv({
+    ZG_API_SECRET: 'app-sk-test-legacy',
+    ZG_SERVICE_URL: 'https://compute.example/v1/proxy',
+    OG_COMPUTE_PROVIDER: '0x0000000000000000000000000000000000000002',
+    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000001',
+  });
+  assert.notEqual(k, null);
+  const cred = k!.pickActive();
+  assert.equal(cred.apiKey, 'app-sk-test-legacy');
+});
+
+test('keyringFromEnv prefers canonical over legacy when both are set', () => {
+  const k = keyringFromEnv({
+    IVARONIX_ROUTER_KEY: 'canonical',
+    ZG_API_SECRET: 'legacy',
+    IVARONIX_ROUTER_URL: 'https://canonical.example',
+    ZG_SERVICE_URL: 'https://legacy.example',
+    IVARONIX_ROUTER_PROVIDER: '0x0000000000000000000000000000000000000002',
+    OG_COMPUTE_PROVIDER: '0x0000000000000000000000000000000000000003',
+    IVARONIX_WALLET_ADDRESS: '0x0000000000000000000000000000000000000001',
+    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000004',
+  });
+  assert.notEqual(k, null);
+  const cred = k!.pickActive();
+  assert.equal(cred.apiKey, 'canonical');
+  assert.equal(cred.serviceUrl, 'https://canonical.example');
+});
+
+test('keyringFromEnv mixed-alias resolution: canonical key + legacy wallet', () => {
+  const k = keyringFromEnv({
+    IVARONIX_ROUTER_KEY: 'canonical',
+    IVARONIX_ROUTER_URL: 'https://canonical.example',
+    IVARONIX_ROUTER_PROVIDER: '0x0000000000000000000000000000000000000002',
+    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000005', // legacy wallet
+  });
+  assert.notEqual(k, null);
+  const cred = k!.pickActive();
+  assert.equal(
+    cred.wallet,
+    '0x0000000000000000000000000000000000000005',
+  );
 });
