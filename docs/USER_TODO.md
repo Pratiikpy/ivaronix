@@ -356,6 +356,17 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   3. Add a CI gate via `pnpm numbers:check` that fails if `docs/numbers.json` is more than 24h older than the latest receipt anchored on chain (= the docs are demonstrably stale).
 - **Effort:** ~1.5h. Useful but not blocking; the manual-refresh pattern works for the submission window.
 
+### B-V2-23 · Refresh README screenshot grid via `pnpm screenshots:refresh`
+- **Source:** plan-003 §A.2.2. The capture pipeline + the README 2×3 grid markup are shipped (`scripts/qa/metamask-e2e/capture-readme-shots.ts`, README "Visual tour" section). The 6 PNGs at `screenshots/readme/` are operator-action — they need a live Studio dev server + (for receipt-tier1) at least one real anchored receipt.
+- **Why:** Aishi packs 8 phone screenshots in their README; before this captures land, Ivaronix renders broken-image icons on GitHub. The capture script is deterministic; running it produces the grid in ~30 seconds.
+- **Action:**
+  1. Start Studio in one terminal: `pnpm --filter @ivaronix/studio dev` (binds `:3300`).
+  2. Confirm a real receipt id exists. Default `RECEIPT_ID=1644`. To pick a different shot: `set RECEIPT_ID=<id>` (PowerShell) or `RECEIPT_ID=<id>` (bash) before the next step.
+  3. Run the capture: `pnpm screenshots:refresh`. The script writes `screenshots/readme/{01-home,02-runpanel-mid,03-receipt-tier1,04-burn-mode,05-agents,06-onboard}.png`.
+  4. Spot-check the 6 PNGs — they're 1200×800 by design and should match what a judge sees in the browser.
+  5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
+- **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
+
 ### B-V2-22 · 0G DA live disperse + retrieve capture for the README "judges can replay" headline
 - **Source:** plan-003 §A.5.21 scaffolding shipped: `docker-compose.yml` + `da.env.example` + `ivaronix da preflight` now points operators at the compose stack instead of a raw `docker run`. The remaining piece is the *captured artefact* — a real `request_id` + `storage_root` from a live disperse + retrieve roundtrip — that the README + JUDGE_GUIDE can quote so a judge knows the integration isn't theoretical.
 - **Why:** AIsphere / Provus / Aishi all *diagram* 0G DA but none *retrieve* a live blob. A captured request_id + storage_root in the README is the field-unique flex (planning-003 §2.1). Without it, "wired in code" reads as paper-thin.

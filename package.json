@@ -28,6 +28,7 @@
     "numbers:refresh": "tsx scripts/diag/numbers-refresh.ts",
     "numbers:print": "tsx scripts/diag/numbers-refresh.ts --print",
     "numbers:check": "tsx scripts/diag/numbers-refresh.ts --check",
+    "screenshots:refresh": "pnpm --filter qa-metamask-e2e exec tsx capture-readme-shots.ts",
     "wander:cycle": "tsx scripts/wander-cycle/cycle.ts",
     "wander:loop": "tsx scripts/wander-cycle/loop.ts",
     "dev:kv": "tsx scripts/dev/start-local-0g-kv.ts",

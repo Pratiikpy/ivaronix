@@ -21,6 +21,17 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 
 > Track positioning: Ivaronix targets **Track 1 (Agentic Infrastructure)** as primary and **Track 3 (Agentic Economy)** as automatic-secondary. We do not compete on Track 2 (Verifiable Finance) production-rigor metrics — Aegis Vault holds that bar with 235 Hardhat tests + sealed strategies on mainnet. Track 1 rewards the metric set above.
 
+## Visual tour
+
+Six product surfaces, captured by `pnpm screenshots:refresh` at 1200×800 against a live Studio dev server. Each shot is a real screen, not a mockup. Source script: [`scripts/qa/metamask-e2e/capture-readme-shots.ts`](scripts/qa/metamask-e2e/capture-readme-shots.ts). When the captures haven't been refreshed against the latest deploy, the operator runs `pnpm screenshots:refresh` per the runbook in [USER_TODO §B-V2-23](docs/USER_TODO.md).
+
+| | | |
+|---|---|---|
+| ![Studio home with hero + receipt counter](screenshots/readme/01-home.png) | ![Run panel mid-execution · four lights pending](screenshots/readme/02-runpanel-mid.png) | ![Receipt page · all four lights green · TIER 1 chip](screenshots/readme/03-receipt-tier1.png) |
+| **Studio home** · hero + live receipt counter rendered from chain | **Run panel** · four-light row mid-flight on a real run | **/r/&lt;id&gt;** · TIER 1 verified, all four lights green |
+| ![Burn Mode · AES-256-GCM key fingerprint visible](screenshots/readme/04-burn-mode.png) | ![Agents leaderboard · 4 minted passports](screenshots/readme/05-agents.png) | ![/onboard · 5-row stepper with green checkmarks](screenshots/readme/06-onboard.png) |
+| **Burn Mode** · 256-bit session key + on-chain fingerprint | **/agents** · ERC-7857 Agent Passports with trust scores | **/onboard** · five steps to first share-able receipt |
+
 ## Track 3 (Agentic Economy) · by the numbers
 
 Receipt-gated fee splits, on-chain creator wallet, marketplace primitive on every action.

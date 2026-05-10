@@ -42,6 +42,7 @@ const FILTERS: Record<string, Filter> = {
     patterns: [
       /^verify-a11/, // form/schema enum
       /^verify-a13/, // Studio V2-first
+      /^verify-a22/, // README screenshot grid (planning-003 §A.2.2)
       /^verify-a44/, // Efficiency-Game UI (planning-003 §A.4.4)
       /^verify-a48/, // memory routes (planning-003 §A.4.8)
     ],

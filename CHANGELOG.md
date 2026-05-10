@@ -31,10 +31,11 @@ Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates f
 | A.1.5 | V2 anchor smoke not CI-gated | `verify-v2-anchor-live.ts` ran only manually. **Now:** `.github/workflows/chain-smoke.yml` runs label-gated PR + nightly cron with `IVARONIX_CI_WALLET_KEY` secret. Operator runbook `docs/CI_WALLET.md` ships. | `eb91d1b` |
 | A.1.6 | TIER_OPTIONS hardcoded | Form had third hardcoded enum. **Now:** `ConsensusTierEnum` extracted from manifest schema; form imports it. | `21a849d` |
 
-### Phase 2 · Submission polish (5/7 — A.2.1 partial, A.2.2 deferred)
+### Phase 2 · Submission polish (6/7 — A.2.1 partial; A.2.2 capture pipeline shipped, PNGs operator-action)
 
 | ID | Item | Commit |
 |---|---|---|
+| A.2.2 | README screenshot grid + Playwright capture pipeline | New `scripts/qa/metamask-e2e/capture-readme-shots.ts` (Playwright chromium, 1200×800, captures 6 surfaces: home / runpanel-mid / receipt-tier1 / burn-mode / agents / onboard). New `pnpm screenshots:refresh` script. README "Visual tour" section with 2×3 markdown table pointing at `screenshots/readme/{01-06}-*.png` paths. Operator-action capture step queued in USER_TODO §B-V2-23 (5min: start Studio dev → run script → commit PNGs). New `verify-a22-readme-grid.ts` regression with 18 assertions enforces wiring (capture script imports playwright, names the 6 surfaces, package.json declares the script, README has Visual tour section + 6 PNG references, USER_TODO documents the operator step). Studio offline filter now 5/5. |
 | A.2.3 | Documentation section linking 11 deep docs from README | `0f2578f` |
 | A.2.4 | Track 1 + Track 3 by-the-numbers headline blocks | `0f2578f` |
 | A.2.5 | Counter-position table (vs OpenClaw, 0GClaw, Trapezohe, AlphaTrace) + honest TIER 1/2 disclosure callout | `0f2578f` |
