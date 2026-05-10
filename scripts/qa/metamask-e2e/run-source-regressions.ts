@@ -54,6 +54,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-pnpm-scripts-exist/, // meta · every pnpm <verb> in CI + package.json resolves to a real script
       /^verify-numbers-vs-deployments/, // numbers.json contracts.* must match contracts/deployments/testnet.json
       /^verify-env-template-completeness/, // §15 · every IVARONIX_* var in code is in at least one env template
+      /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
     ],
   },
   'studio-live': {
