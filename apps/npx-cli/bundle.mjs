@@ -17,6 +17,28 @@ const OUT = resolve(OUT_DIR, 'ivaronix.mjs');
 
 if (!existsSync(OUT_DIR)) mkdirSync(OUT_DIR, { recursive: true });
 
+// Stub plugin: replaces dev-mode-only modules with an empty object.
+// react-devtools-core is imported by ink's devtools.js for React
+// DevTools integration. Ink's runtime gracefully handles a falsy
+// return; no consumer of the npx-cli will ever connect to a
+// React DevTools instance over a CLI bin. Without the stub the
+// bundle either fails to compile (no external) or fails to run
+// (external + missing dep) or fails to run (external + dep present
+// but breaks at module load).
+const stubPlugin = {
+  name: 'stub-dev-only',
+  setup(build) {
+    build.onResolve({ filter: /^react-devtools-core$/ }, () => ({
+      path: 'react-devtools-core',
+      namespace: 'stub-ns',
+    }));
+    build.onLoad({ filter: /.*/, namespace: 'stub-ns' }, () => ({
+      contents: 'export default {}; export const connectToDevTools = () => {};',
+      loader: 'js',
+    }));
+  },
+};
+
 await esbuild.build({
   entryPoints: [ENTRY],
   bundle: true,
@@ -24,6 +46,7 @@ await esbuild.build({
   target: 'node20',
   format: 'esm',
   outfile: OUT,
+  plugins: [stubPlugin],
   // entry has its own #!/usr/bin/env node shebang; don't double it
   external: [
     'better-sqlite3',
@@ -36,16 +59,18 @@ await esbuild.build({
     // memory layers (transformers.js → onnxruntime-node).
     'onnxruntime-node',
     '@xenova/transformers',
-    // ink's React DevTools integration is optional (dev-mode only) but
-    // esbuild fails closed when the import isn't resolvable. Mark it
-    // external so the bundle skips it entirely; ink falls back to
-    // production rendering at runtime when react-devtools-core isn't
-    // installed.
-    'react-devtools-core',
   ],
   legalComments: 'linked',
   sourcemap: false,
   logLevel: 'info',
+  // ESM bundles can't dynamically `require()` CJS-only Node modules
+  // (e.g. `node:events`, transitive `node:fs` reads from a CJS dep).
+  // Inject a top-level createRequire shim so `require()` works inside
+  // the ESM bundle. Standard esbuild + ESM workaround.
+  banner: {
+    js: `import { createRequire as __ivaronixCreateRequire } from 'node:module';
+const require = __ivaronixCreateRequire(import.meta.url);`,
+  },
 });
 
 chmodSync(OUT, 0o755);
