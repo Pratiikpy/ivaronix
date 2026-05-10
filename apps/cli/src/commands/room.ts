@@ -88,7 +88,7 @@ roomCommand
   .action(async (opts: { doc: string; parties: string; ttl: string; reads: string }) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
-      ui.fail('room create requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      ui.fail('room create requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS (legacy: EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS) in .env');
       process.exitCode = 1;
       return;
     }
@@ -428,7 +428,7 @@ roomCommand
   .action(async (roomId: string) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
-      ui.fail('room read requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      ui.fail('room read requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS (legacy: EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS) in .env');
       process.exitCode = 1;
       return;
     }

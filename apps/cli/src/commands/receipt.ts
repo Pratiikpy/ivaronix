@@ -303,7 +303,7 @@ receiptCommand
     }
 
     if (!env.privateKey) {
-      ui.fail('--tee-independent requires EVM_PRIVATE_KEY in .env to construct broker');
+      ui.fail('--tee-independent requires IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY) in .env to construct broker');
       process.exitCode = 1;
       return;
     }
@@ -620,7 +620,7 @@ receiptCommand
 
     const agent = (opts.agent ?? env.walletAddress) as `0x${string}` | undefined;
     if (!agent) {
-      ui.fail('No agent address — pass --agent or set EVM_WALLET_ADDRESS');
+      ui.fail('No agent address — pass --agent or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
       process.exitCode = 1;
       return;
     }
