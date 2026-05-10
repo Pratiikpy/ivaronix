@@ -48,6 +48,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-a44/, // Efficiency-Game UI (planning-003 §A.4.4)
       /^verify-a48/, // memory routes (planning-003 §A.4.8)
       /^verify-no-sprint-natspec/, // CLAUDE.md §9 · no K-N fix / Phase / sprint in contract NatSpec
+      /^verify-brand-token-drift/, // CLAUDE.md §10 · hex literals must be in brand/tokens.json (or amnesty)
     ],
   },
   'studio-live': {

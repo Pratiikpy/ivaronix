@@ -237,11 +237,20 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1 week.
 - **Decision:** post-hackathon. Not on critical path for judging.
 
-### B-V2-9 · Brand-token drift lint (`pnpm brand:check`)
+### B-V2-9 · Brand-token drift lint (`pnpm brand:check`) · ✅ SHIPPED gate · cleanup queued §B-V2-BRAND-AMNESTY
 - **Source:** plan-003 §A.3.3 follow-up · `brand/tokens.css` + `brand/tokens.json` shipped today.
 - **Why:** the canonical palette is now in `brand/tokens.*`. Without a lint, future PRs can re-introduce hardcoded hex values that drift from the canonical set.
-- **Action:** ship `pnpm brand:check` script that greps `apps/studio/src/**/*.{ts,tsx,css}` + `UI_UX_GUIDE.md` + `CLAUDE.md` for hex literals NOT present in `brand/tokens.json`. Fail CI on any drift.
-- **Effort:** ~30min.
+- **Status:** ✅ Gate shipped same day. `pnpm brand:check` runs `scripts/qa/metamask-e2e/verify-brand-token-drift.ts` which scans `apps/studio/src/**/*.{ts,tsx,css}` for hex literals not present in `brand/tokens.json`. Found 123 existing drift entries on first run · captured to `scripts/qa/metamask-e2e/brand-amnesty.json` so the gate ships without forcing a 100+-file color refactor in one commit. New violations outside the amnesty fail the build. Wired into `pnpm --filter @ivaronix/studio test` (8/8 → 9/9 offline regs pass).
+
+### B-V2-BRAND-AMNESTY · Clean up the 123 brand-amnesty.json entries
+- **Source:** cron-sweep finding 2026-05-10 (B-V2-9 ship). The drift snapshot at `scripts/qa/metamask-e2e/brand-amnesty.json` documents 123 hex literals across 69 Studio source files that don't match `brand/tokens.json`. Categories:
+  1. `apps/studio/src/app/r/[id]/print/page.tsx` (~10 entries) — print stylesheet uses traditional black/grays. Either keep with `brand-check:allow:` markers or move print colors into `brand/tokens.json` under a `print.*` namespace.
+  2. `apps/studio/src/app/0g/page.tsx` + `opengraph-image.tsx` (~15 entries) — 0G integration showcase + OG image. The OG image generator uses inline-styles (Next.js image API constraint), not CSS vars; align hexes with tokens.json or document why they differ.
+  3. `apps/studio/src/app/brand/page.tsx` (~25 entries) — brand showcase page literally displays palette swatches as hex values. These are intentional — convert to `brand-check:allow:swatch-display` markers.
+  4. `apps/studio/src/app/agent/[handle]/page.tsx`, `agents/page.tsx`, `MemoryPanel.tsx`, `RunPanel.tsx`, `PermissionPills.tsx`, `skill/new/page.tsx`, `skills/page.tsx` (~70 entries) — CSS-var fallback hexes (`var(--color-X, #fallback)`) where the fallback drifted from `tokens.json`. Real cleanup: align fallbacks with the canonical state colors so if CSS doesn't load, the fallback still renders the brand color.
+- **Why:** the regression keeps NEW drift out, but existing drift means the rendered Studio doesn't fully match `brand/Ivaronix.html` per CLAUDE.md §10. Judges who side-by-side compare may notice subtle palette differences (Tailwind red-800 vs canonical red-700, etc.).
+- **Action:** sweep file-by-file, choose between (a) move to brand-token CSS var, (b) extend `brand/tokens.json`, or (c) add `// brand-check:allow:reason`. Re-run `pnpm brand:check:update` after each batch to shrink the amnesty list. Goal: < 30 entries (only the brand-showcase page and intentional print colors).
+- **Effort:** 4–6h. Mostly mechanical hex replacement with sed-like edits across ~10 files.
 
 ### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY`
 - **Source:** plan-003 §A.3.4 follow-up · `packages/runtime/src/env.ts` already supports the canonical name with legacy aliases.

@@ -33,6 +33,8 @@
     "receipt-types:render": "tsx scripts/diag/render-receipt-types.ts",
     "receipt-types:check": "tsx scripts/diag/render-receipt-types.ts --check",
     "audit:list": "tsx scripts/diag/audit-list.ts",
+    "brand:check": "tsx scripts/qa/metamask-e2e/verify-brand-token-drift.ts",
+    "brand:check:update": "tsx scripts/qa/metamask-e2e/verify-brand-token-drift.ts --update-amnesty",
     "env:check": "tsx scripts/diag/env-check.ts",
     "docs:render": "tsx scripts/diag/docs-render.ts",
     "docs:check": "tsx scripts/diag/docs-render.ts --check",
