@@ -40,7 +40,7 @@ export function Header() {
           <Link href="/thesis" className="btn-ghost">
             Why
           </Link>
-          <Link href="/docs" className="btn-ghost">
+          <Link href="/0g" className="btn-ghost">
             0G
           </Link>
           <Link href="/skills" className="btn-ghost">

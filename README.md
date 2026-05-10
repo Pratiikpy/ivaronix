@@ -285,6 +285,8 @@ The receipt is the spine. Every other surface is plumbing that makes the receipt
 
 ## Built on 0G
 
+> Live receipt-grade proof at **[ivaronix.app/0g](https://ivaronix-studio.vercel.app/0g)** — six-module grid with live `getDeployedAddress` lookups + chainscan links.
+
 Each 0G primitive carries a specific user-visible value. We adopted the modules where the product needed them, and we say so honestly when one is on the roadmap rather than wired today.
 
 - **0G Chain** — every receipt anchors here. The chain is what makes a verification two years from now produce the same answer as the verification ten seconds after the run.
