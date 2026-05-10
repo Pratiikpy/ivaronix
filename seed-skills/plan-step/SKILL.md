@@ -24,7 +24,7 @@ og:
     wallet_access: false
     writes_files: false
     shell_access: none
-    receipt_required: false
+    receipt_required: true
     compute_tee_required: true
   reputation:
     on_pass: { trustScore: 1, receiptCount: 1 }
@@ -39,6 +39,12 @@ og:
     post_consensus: ["log_tokens"]
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
+    # Default 90/10 (creator/treasury). Closes WT 50 + the receipt_required
+    # flip from false to true (WT 80, planning-003 §A.3.6) — every skill
+    # now anchors a receipt + routes the fee split.
+    fee_split:
+      creator: 9000
+      treasury: 1000
 ---
 
 # Plan-Step

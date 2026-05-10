@@ -40,6 +40,11 @@ og:
     auto_enable: false
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
+    # Default 90/10 (creator/treasury). Code+security audit is a
+    # differentiated specialty per docs/MARKETPLACE_DESIGN.md.
+    fee_split:
+      creator: 9000
+      treasury: 1000
 ---
 
 # Code & Security Audit

@@ -40,6 +40,12 @@ og:
     auto_enable: false
   creator:
     passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
+    # Default Track 3 fee split: 90% creator / 10% treasury. Differentiated
+    # auditor skill (per docs/MARKETPLACE_DESIGN.md) earns the higher creator
+    # share. Closes WT 50 (planning-003 §A.3.8).
+    fee_split:
+      creator: 9000
+      treasury: 1000
 ---
 
 # 0G Integration Auditor
