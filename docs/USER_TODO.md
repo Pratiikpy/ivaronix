@@ -237,6 +237,15 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1 week.
 - **Decision:** post-hackathon. Not on critical path for judging.
 
+### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
+- **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
+- **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
+- **Action:**
+  1. Add `<!-- numbers:auto:KEY -->` markers to README + PITCH.md + JUDGE_GUIDE.md + MAINNET_READINESS.md wherever a numeric claim appears (e.g. `<!-- numbers:auto:receipts.total --> 1,644+`).
+  2. Write `pnpm docs:render` script that reads `docs/numbers.json` + does the substitution in-place.
+  3. Add a CI gate via `pnpm numbers:check` that fails if `docs/numbers.json` is more than 24h older than the latest receipt anchored on chain (= the docs are demonstrably stale).
+- **Effort:** ~1.5h. Useful but not blocking; the manual-refresh pattern works for the submission window.
+
 ### B-V2-7 · Set up scoped CI wallet for chain-smoke workflow
 - **Source:** plan-003 §A.1.5 + `.github/workflows/chain-smoke.yml`
 - **Why:** the V2 anchor smoke workflow needs a scoped EVM key to anchor a synthetic receipt on Galileo on PR (label `run-chain-smoke`) + nightly cron. Using the operator's main signing key would leak the operator wallet address into GitHub Actions logs.

@@ -2,7 +2,7 @@
 
 > **Catch the risks. Keep the receipts.** AI review for documents you can't paste into ChatGPT — every audit anchored as a verifiable receipt on 0G Chain, re-runnable from any machine in any language.
 >
-> 1,330+ receipts anchored on 0G Galileo Testnet · 121/121 Foundry tests · 8 deployed contracts (V1 + V2 active) · 25 workspace packages typecheck-clean.
+> 1,644+ receipts anchored on 0G Galileo Testnet · 121/121 Foundry tests · 8 deployed contracts (V1 + V2 active) · 25 workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
 
 ## Track 1 (Agentic Infrastructure) · by the numbers
 

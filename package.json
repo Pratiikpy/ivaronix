@@ -25,6 +25,9 @@
     "ivaronix": "pnpm --filter @ivaronix/cli exec ivaronix",
     "doctor": "pnpm --filter @ivaronix/cli exec ivaronix doctor",
     "wording-lint": "tsx scripts/wording-lint.ts",
+    "numbers:refresh": "tsx scripts/numbers-refresh.ts",
+    "numbers:print": "tsx scripts/numbers-refresh.ts --print",
+    "numbers:check": "tsx scripts/numbers-refresh.ts --check",
     "dev:kv": "tsx scripts/dev/start-local-0g-kv.ts",
     "dev:kv:stop": "docker rm -f ivaronix-kv-node"
   },

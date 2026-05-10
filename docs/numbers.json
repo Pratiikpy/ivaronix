@@ -1,0 +1,107 @@
+{
+  "$schema": "Single source of truth for numeric claims across README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md. Refresh with: pnpm numbers:refresh. See planning-003 §A.2.7 for the auto-render pipeline (queued).",
+  "lastRefreshed": "2026-05-10",
+  "network": "testnet · Galileo (chainId 16602)",
+  "receipts": {
+    "v1Anchored": 1644,
+    "v2Anchored": 0,
+    "total": 1644,
+    "headlineLabel": "1,644+ receipts anchored across V1 + V2 registries"
+  },
+  "receiptTypes": {
+    "count": 13,
+    "labels": [
+      "doc_ask",
+      "audit",
+      "consensus",
+      "burn",
+      "memory_access",
+      "skill_exec",
+      "code_change",
+      "passport_update",
+      "swarm",
+      "subscription_skill_exec",
+      "doc_room_create",
+      "doc_room_read",
+      "memory_consolidation"
+    ],
+    "source": "packages/core/src/types.ts RECEIPT_TYPES"
+  },
+  "contracts": {
+    "deployed": 8,
+    "foundryTests": 121,
+    "list": [
+      "ReceiptRegistry",
+      "ReceiptRegistryV2",
+      "AgentPassportINFT",
+      "AgentPassportINFTV2",
+      "Erc7857Verifier",
+      "CapabilityRegistry",
+      "SkillRegistry",
+      "SubscriptionEscrow"
+    ],
+    "addresses": {
+      "ReceiptRegistry": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+      "ReceiptRegistryV2": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+      "AgentPassportINFT": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
+      "AgentPassportINFTV2": "0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d",
+      "Erc7857Verifier": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
+      "CapabilityRegistry": "0x3783f3c4834fCCBD553860e15c64C7E052646a8D",
+      "SkillRegistry": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
+      "MemoryAccessLog": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119"
+    }
+  },
+  "skills": {
+    "firstParty": 6,
+    "firstPartyList": [
+      "0g-integration-auditor",
+      "code-edit",
+      "content-pitch-review",
+      "github-audit",
+      "plan-step",
+      "private-doc-review"
+    ],
+    "vendored": 150,
+    "catalogTotal": 156,
+    "creatorEarningsOG": "0.0014",
+    "creatorEarningsLabel": "0.0014 OG · 26 paid runs of private-doc-review · 90/10 split"
+  },
+  "packages": {
+    "workspaceTotal": 33,
+    "apps": 8,
+    "typecheckClean": 25,
+    "appsList": [
+      "api",
+      "cli",
+      "forge-daemon",
+      "mcp-server",
+      "npx-cli",
+      "openclaw-skill",
+      "studio",
+      "telegram-bot"
+    ]
+  },
+  "polyglotHash": {
+    "languages": 3,
+    "languageList": [
+      "TypeScript",
+      "Python",
+      "Rust"
+    ],
+    "tests": {
+      "ts": 17,
+      "python": 14,
+      "rust": 11,
+      "crossImplVectors": 29
+    },
+    "ciWorkflow": ".github/workflows/jcs-roundtrip.yml",
+    "queued": [
+      "Go (operator-action: install Go runtime per USER_TODO §A-V2-K15-Go)"
+    ]
+  },
+  "mainnet": {
+    "readinessChecklistGreen": "13/13",
+    "deployedContractsToday": 0,
+    "blockedOn": "operator funding 0.1 OG to deployer wallet · USER_TODO §A-2"
+  }
+}
