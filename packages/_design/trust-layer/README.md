@@ -1,6 +1,14 @@
-# `@ivaronix/trust-layer`
+# `@ivaronix/trust-layer` — design-only scaffold (moved 2026-05-11)
 
-> **Status:** Schema scaffold per PRD §3.5. Implementation tracked in USER_TODO §B-V2; the schemas + policy evaluator below are the locked surface today.
+> **Workspace status:** Moved from `packages/trust-layer/` → `packages/_design/trust-layer/` in sweep 151. **Not in the active pnpm workspace** (`pnpm-workspace.yaml` matches only `packages/*`, not `packages/_design/*`). The code is preserved; the package is no longer presented as a shipped capability.
+>
+> **Why moved:** HALF_BAKED §J-7 — the package exports `evaluatePolicy()` and `defaultPolicySet()` with mainnet-high-stakes-requires-approval rules but zero callers in `runPipeline`. Per CLAUDE.md §1, a package with zero importers shipping under the active workspace is a marketing claim, not a feature. Two honest paths: wire it into `runPipeline` before consensus, or remove from active workspace until wiring lands. This is the second path.
+>
+> **To revive:** `git mv packages/_design/trust-layer packages/trust-layer && pnpm install`. Then wire the `evaluatePolicy()` call into `packages/runtime/src/pipeline.ts` before consensus runs and feed the result into the receipt's `request.approvalChain` field.
+
+---
+
+> **Original design status (preserved):** Schema scaffold per PRD §3.5. Implementation tracked in USER_TODO §B-V2; the schemas + policy evaluator below are the locked surface today.
 
 ## What lives here
 
