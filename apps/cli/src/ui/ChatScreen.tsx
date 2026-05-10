@@ -630,7 +630,7 @@ async function runMemoryRecall(
     const { getDeployedAddress } = await import('@ivaronix/og-chain');
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
-      setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: 'memory: requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env' } : m));
+      setMessages((prev) => prev.map((m) => m.id === placeholderId ? { ...m, content: 'memory: requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS (legacy: EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS) in .env' } : m));
       return;
     }
     let dir = process.cwd();

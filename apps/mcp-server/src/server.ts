@@ -130,7 +130,7 @@ async function handleSearchMemory(params: z.infer<typeof SearchMemoryInput>): Pr
     return {
       content: [{
         type: 'text',
-        text: 'memory engine requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in the server env',
+        text: 'memory engine requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS (legacy: EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS) in the server env',
       }],
     };
   }
