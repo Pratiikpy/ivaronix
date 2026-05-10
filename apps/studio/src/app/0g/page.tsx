@@ -67,7 +67,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       name: '0G Router',
       status: 'live',
       what: 'Carries the inference traffic and supplies the per-provider rate-limit and cost telemetry the receipt records. A reviewer can read the receipt and see how the work was billed.',
-      endpoint: { label: 'ZG_SERVICE_URL — surfaced as routerTrace.x0gTrace inside every receipt' },
+      endpoint: { label: 'IVARONIX_ROUTER_URL (legacy: ZG_SERVICE_URL) — surfaced as routerTrace.x0gTrace inside every receipt' },
       addresses: [],
       seeItLive: { label: 'See receipt #1004', href: '/r/1004' },
     },

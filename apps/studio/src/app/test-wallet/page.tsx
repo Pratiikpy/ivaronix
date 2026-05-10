@@ -1,6 +1,7 @@
 /**
  * Test-only page that injects a window.ethereum shim signing with the
- * server's EVM_PRIVATE_KEY. Lets us drive /onboard end-to-end from
+ * server's IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY). Lets us
+ * drive /onboard end-to-end from
  * playwright without a real MetaMask extension. Hidden behind a search
  * param + only mounts when NEXT_PUBLIC_TEST_WALLET=1.
  *

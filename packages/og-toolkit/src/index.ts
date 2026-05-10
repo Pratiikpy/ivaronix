@@ -51,7 +51,7 @@ export class OgToolkit {
 
     if (!opts.privateKey) {
       throw new Error(
-        '@ivaronix/og-toolkit requires a private key. Set OG_PRIVATE_KEY in your environment.',
+        '@ivaronix/og-toolkit requires a private key. Set IVARONIX_SIGNER_KEY (legacy: OG_PRIVATE_KEY) in your environment.',
       );
     }
 

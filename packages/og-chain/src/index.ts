@@ -65,7 +65,7 @@ export class ChainClient {
   }
 
   async getSignerAddress(): Promise<string> {
-    if (!this.signer) throw new Error('No signer configured (missing OG_PRIVATE_KEY).');
+    if (!this.signer) throw new Error('No signer configured (missing IVARONIX_SIGNER_KEY · legacy: OG_PRIVATE_KEY).');
     return this.signer.getAddress();
   }
 }
