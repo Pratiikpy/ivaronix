@@ -22,7 +22,7 @@
 - `IVARONIX_ROUTER_KEY` + `IVARONIX_ROUTER_URL` + `IVARONIX_ROUTER_PROVIDER` + `IVARONIX_WALLET_ADDRESS` — Router credentials (TIER 1). Legacy aliases (`ZG_API_SECRET`, `ZG_SERVICE_URL`, `OG_COMPUTE_PROVIDER`, `EVM_WALLET_ADDRESS`) still resolve.
 - `NVIDIA_API_KEY` (optional) — TIER 2 fallback per `packages/og-router/src/nvidia.ts`.
 
-Legacy aliases (`OG_PRIVATE_KEY`, `EVM_PRIVATE_KEY`, `OG_NETWORK`) still resolve with a one-time deprecation warning.
+Legacy aliases (`OG_PRIVATE_KEY`, `EVM_PRIVATE_KEY`, `OG_NETWORK`) still resolve with a one-time deprecation warning. <!-- agents-alias:allow:legacy-summary-line -->.
 
 ## Test command
 

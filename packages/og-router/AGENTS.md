@@ -22,10 +22,10 @@
 
 ## Required env
 
-- `ZG_API_SECRET` — Router API secret.
-- `ZG_SERVICE_URL` — `https://compute-network-1.integratenetwork.work/v1/proxy`.
-- `OG_COMPUTE_PROVIDER` — `0x...` provider address.
-- `EVM_WALLET_ADDRESS` — paying wallet address.
+- `IVARONIX_ROUTER_KEY` (legacy alias: `ZG_API_SECRET`) — Router API secret.
+- `IVARONIX_ROUTER_URL` (legacy alias: `ZG_SERVICE_URL`) — `https://compute-network-1.integratenetwork.work/v1/proxy`.
+- `IVARONIX_ROUTER_PROVIDER` (legacy alias: `OG_COMPUTE_PROVIDER`) — `0x...` provider address.
+- `IVARONIX_WALLET_ADDRESS` (legacy alias: `EVM_WALLET_ADDRESS`) — paying wallet address.
 
 ## Test command
 
