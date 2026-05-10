@@ -178,7 +178,17 @@ export const importCommand = new Command('import')
 
     let bundle: IvaronixBundle;
     try {
-      bundle = JSON.parse(readFileSync(bundlePath, 'utf8')) as IvaronixBundle;
+      const raw: unknown = JSON.parse(readFileSync(bundlePath, 'utf8'));
+      // Lightweight shape guard per HALF_BAKED §J-3 (sweep 160). A bundle
+      // with valid JSON but missing top-level structure would pass `as
+      // IvaronixBundle` and crash mid-import at `bundle.workspace.network`.
+      // Now we fail-fast with a structured message naming what's missing.
+      if (!raw || typeof raw !== 'object') throw new Error('bundle must be a JSON object');
+      const r = raw as Record<string, unknown>;
+      if (typeof r.schema_version !== 'number') throw new Error('bundle missing or non-numeric schema_version');
+      if (!r.workspace || typeof r.workspace !== 'object') throw new Error('bundle missing workspace block');
+      if (!Array.isArray(r.receipts)) throw new Error('bundle.receipts must be an array');
+      bundle = raw as IvaronixBundle;
     } catch (err) {
       ui.fail('bundle parse failed', (err as Error).message);
       process.exitCode = 1;

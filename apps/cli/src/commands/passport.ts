@@ -222,12 +222,21 @@ passportCommand
       return;
     }
 
-    // Try to read any existing local passport.json for richer metadata
+    // Try to read any existing local passport.json for richer metadata.
+    // Pre-sweep this cast `as LocalPassportFile` lied to the type system —
+    // the read value might be any shape. `Partial<LocalPassportFile>` is
+    // honest about the lack of validation: downstream reads of `prior.field`
+    // safely return undefined for fields the disk file omitted. Closes one
+    // of HALF_BAKED §J-3's CLI sites; full Zod validation queued in
+    // USER_TODO §B-V2 as part of the broader receipt-on-disk hardening.
     const outPath = resolve(process.cwd(), opts.out);
     let prior: Partial<LocalPassportFile> = {};
     if (existsSync(outPath)) {
       try {
-        prior = JSON.parse(readFileSync(outPath, 'utf8')) as LocalPassportFile;
+        const raw: unknown = JSON.parse(readFileSync(outPath, 'utf8'));
+        if (raw && typeof raw === 'object') {
+          prior = raw as Partial<LocalPassportFile>;
+        }
       } catch {
         /* ignore parse errors */
       }
