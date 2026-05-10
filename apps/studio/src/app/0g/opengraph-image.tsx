@@ -2,6 +2,12 @@ import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
 
 export const runtime = 'nodejs';
+// Skip static prerender at build time — the loadFonts() helper does
+// runtime fetches against fonts.googleapis.com that can fail in CI
+// sandboxes without network. OG images are short-lived and re-rendered
+// on every request anyway when a social-card unfurl hits this route.
+// Sweep 67 fix · was failing `next build` with TypeError: Invalid URL.
+export const dynamic = 'force-dynamic';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 

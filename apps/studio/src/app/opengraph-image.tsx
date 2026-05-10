@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
 
 export const runtime = 'nodejs';
+// Skip build-time prerender — see /0g/opengraph-image for rationale.
+export const dynamic = 'force-dynamic';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 

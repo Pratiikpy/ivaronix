@@ -66,25 +66,28 @@ jobs:
         # workspace tsconfig settings. The vendored code is upstream-
         # owned and runs through its own CI.
         #
-        # @ivaronix/studio also excluded — its `next build` is
-        # platform-flaky on macOS-arm runners and is handled in the
-        # explicit best-effort step below. Without these exclusions
-        # the strict gate I added in sweep 54 was silently red on
-        # every push.
+        # @ivaronix/studio is built strictly in its own step below
+        # (sweep 67 fixed the webpack node:fs scheme + OG-image
+        # prerender bugs that previously kept it best-effort).
         run: pnpm -r --filter "@ivaronix/*" --filter "!@ivaronix/opencode-*" --filter "!@ivaronix/studio" run build
       - name: Build npx-cli bundle (strict)
         # Bare-name `ivaronix` package isn't matched by @ivaronix/* filter.
         # Bundle is the npm-publish artifact + the README's Quick Start
         # `npx ivaronix` workflow target — must succeed.
         run: pnpm --filter ivaronix run build
-      - name: Build Studio (best-effort)
-        # Next.js build can flake on macOS-arm runners (font preload
-        # platform issue) and on linux-CI without the full env. Workspace
-        # typecheck above is the source-of-truth for code correctness;
-        # a failing Studio next-build is a deploy concern, not a code-
-        # correctness concern. Continue-on-error keeps it advisory.
+      - name: Build Studio (strict · next build)
+        # Sweep 67 made next build deterministic by:
+        #   1. Switching apps/studio/src/app/skill/new/page.tsx to
+        #      import directly from @ivaronix/skills/manifest (was
+        #      pulling node:fs / node:crypto / node:path through the
+        #      barrel re-export of loader.ts).
+        #   2. Setting `export const dynamic = 'force-dynamic'` on
+        #      all three OG-image routes — they fetch fonts at
+        #      runtime and can't be statically prerendered.
+        # If next build flakes on a future commit, surface it loudly
+        # rather than silencing with continue-on-error (sweep 54's
+        # original hint).
         run: pnpm --filter @ivaronix/studio run build
-        continue-on-error: true
 
   receipt-roundtrip:
     name: Receipt verify roundtrip

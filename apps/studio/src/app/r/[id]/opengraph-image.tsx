@@ -9,6 +9,11 @@ export const runtime = 'nodejs';
 // @/lib/chain for the headline lookup; ethers can't run on edge. Production
 // on Vercel (Linux) is unaffected. Tracked in TEST_REPORT.md as
 // "OG image dev-only bug" — Discord/Twitter unfurls work post-deploy.
+//
+// Sweep 67: also skip build-time prerender — same rationale as
+// /0g/opengraph-image. The font fetch + chain RPC at build time
+// can fail in CI sandboxes; this route generates per-request anyway.
+export const dynamic = 'force-dynamic';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 

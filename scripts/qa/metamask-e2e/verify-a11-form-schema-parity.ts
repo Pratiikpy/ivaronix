@@ -55,9 +55,15 @@ check('schema consensus tier has 4 values', tierEnum.length === 4);
 check('form file exists', existsSync(FORM_PATH), FORM_PATH);
 const formSrc = existsSync(FORM_PATH) ? readFileSync(FORM_PATH, 'utf8') : '';
 check(
-  'form imports MemoryAccessEnum + ShellAccessEnum + ConsensusTierEnum from @ivaronix/skills',
-  /import\s*\{[\s\S]*?\bMemoryAccessEnum\b[\s\S]*?\bShellAccessEnum\b[\s\S]*?\bConsensusTierEnum\b[\s\S]*?\}\s*from\s*['"]@ivaronix\/skills['"]/.test(formSrc),
-  'expected import of all three enum schemas from @ivaronix/skills',
+  'form imports MemoryAccessEnum + ShellAccessEnum + ConsensusTierEnum from @ivaronix/skills (or /manifest sub-path)',
+  // Accept either the bare barrel `@ivaronix/skills` OR the schema-only
+  // sub-path `@ivaronix/skills/manifest` — sweep 67 switched to the
+  // sub-path to avoid pulling node:fs into the client bundle. Both
+  // import paths expose the same three enum schemas; the regression
+  // cares about WHICH module the form derives from, not which path
+  // string the import line uses.
+  /import\s*\{[\s\S]*?\bMemoryAccessEnum\b[\s\S]*?\bShellAccessEnum\b[\s\S]*?\bConsensusTierEnum\b[\s\S]*?\}\s*from\s*['"]@ivaronix\/skills(?:\/manifest)?['"]/.test(formSrc),
+  'expected import of all three enum schemas from @ivaronix/skills or @ivaronix/skills/manifest',
 );
 check(
   'form derives MEMORY_OPTIONS from MemoryAccessEnum.options',

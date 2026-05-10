@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
+// Direct import from /manifest avoids the @ivaronix/skills barrel
+// which re-exports loader.ts (uses node:fs / node:crypto / node:path).
+// Webpack cannot bundle node: scheme imports for client components,
+// so the barrel breaks `next build`. Sweep 67 fix.
 import {
   MemoryAccessEnum,
   ShellAccessEnum,
@@ -10,7 +14,7 @@ import {
   type MemoryAccess,
   type ShellAccess,
   type ConsensusTier,
-} from '@ivaronix/skills';
+} from '@ivaronix/skills/manifest';
 
 /**
  * Visual skill creator. Form-driven SKILL.md generator: a non-developer
