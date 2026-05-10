@@ -28,6 +28,7 @@ import { resolve, dirname } from 'node:path';
 import { platform, release, arch } from 'node:os';
 import {
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   AgentPassportClient,
   SkillRegistryClient,
   loadDeployments,
@@ -108,18 +109,39 @@ debugCommand
       ui.info(`(receipt #${id} not in local index — run \`ivaronix indexer backfill\`)`);
     }
 
-    // 2. On-chain re-read
+    // 2. On-chain re-read · V2-first then V1 fallback (sweep 59).
     ui.section('02 · On-chain ReceiptRegistry');
-    const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!addr) {
-      ui.fail(`no ReceiptRegistry deployed on ${env.network}`);
+    const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    if (!v1Addr && !v2Addr) {
+      ui.fail(`no ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
     const provider = buildProvider(env.network, env.rpcUrl, env.chainId);
+    let onchain;
+    let onchainSource: 'v1' | 'v2' | null = null;
     try {
-      const client = new ReceiptRegistryClient(addr as Address, provider);
-      const onchain = await client.getReceipt(BigInt(id));
+      if (v2Addr) {
+        const c = new ReceiptRegistryV2Client(v2Addr as Address, provider);
+        onchain = await c.getReceipt(BigInt(id)).catch(() => null);
+        if (onchain) onchainSource = 'v2';
+      }
+      if (!onchain && v1Addr) {
+        const c = new ReceiptRegistryClient(v1Addr as Address, provider);
+        onchain = await c.getReceipt(BigInt(id)).catch(() => null);
+        if (onchain) onchainSource = 'v1';
+      }
+      if (onchain && onchainSource) {
+        ui.info(`source               ${onchainSource === 'v2' ? 'ReceiptRegistryV2 (active)' : 'ReceiptRegistry V1 (legacy)'}`);
+      }
+      // Re-bind addr/client used by the rest of the function to the
+      // resolving registry so downstream prints remain consistent.
+      const addr = (onchainSource === 'v2' ? v2Addr : v1Addr) as Address;
+      const client = onchainSource === 'v2'
+        ? new ReceiptRegistryV2Client(addr, provider)
+        : new ReceiptRegistryClient(addr, provider);
+      void client; void addr; // referenced via `onchain` below — keep symbols defined for the rest of the block
       if (!onchain) {
         ui.fail(`receipt #${id} not on chain (nextId says it doesn't exist yet)`);
         process.exitCode = 1;
@@ -186,12 +208,25 @@ debugCommand
         return;
       }
       ui.pass(`tokenId              ${tokenId}`);
-      const receiptRegAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-      if (receiptRegAddr) {
-        const recClient = new ReceiptRegistryClient(receiptRegAddr as Address, provider);
-        const count = await recClient.agentReceiptCount(target as Address);
-        ui.pass(`receipts anchored    ${count}`);
+      // V1 + V2 receipt counts for the wallet (sweep 59 follow-through).
+      // agentReceiptCount is a per-wallet read; sum across both registries.
+      const v1RegAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const v2RegAddr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      let v1Count = 0n;
+      let v2Count = 0n;
+      if (v1RegAddr) {
+        try {
+          const c = new ReceiptRegistryClient(v1RegAddr as Address, provider);
+          v1Count = await c.agentReceiptCount(target as Address);
+        } catch { /* ignore */ }
       }
+      if (v2RegAddr) {
+        try {
+          const c = new ReceiptRegistryV2Client(v2RegAddr as Address, provider);
+          v2Count = await c.agentReceiptCount(target as Address);
+        } catch { /* ignore */ }
+      }
+      ui.pass(`receipts anchored    ${v1Count + v2Count}  (V1: ${v1Count} + V2: ${v2Count})`);
     } catch (err) {
       ui.fail('passport lookup failed', (err as Error).message);
       process.exitCode = 1;
@@ -320,7 +355,15 @@ debugCommand
     const deployments: DeploymentManifest | null = loadDeployments(env.network);
     ui.divider();
     ui.section('Deployed contracts');
-    const names = ['ReceiptRegistry', 'Erc7857Verifier', 'AgentPassportINFT', 'CapabilityRegistry', 'MemoryAccessLog', 'SkillRegistry'] as const;
+    // Iterate every contract in deployments.json directly (sweep 59 ·
+    // same auto-derive pattern as doctor sweep 56). Hardcoded list
+    // missed V2 deploys; this surfaces them automatically.
+    const names = deployments
+      ? Object.keys(deployments.contracts).sort()
+      : [];
+    if (names.length === 0) {
+      ui.info('  (no deployments file found · run forge script first)');
+    }
     for (const name of names) {
       const a = deployments?.contracts[name]?.address;
       if (!a) {
@@ -330,17 +373,29 @@ debugCommand
       ui.pass(`  ${name.padEnd(20)} ${a}`);
     }
 
-    // Live nextId
+    // Live nextId · V1 + V2 (sweep 59). nextId - 1 = anchored count
+    // because the registries are 1-indexed (slot 0 unused).
     const recAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    const recV2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    let v1Anchored = 0n;
+    let v2Anchored = 0n;
     if (recAddr) {
       try {
         const client = new ReceiptRegistryClient(recAddr as Address, provider);
-        const nextId = await client.nextId();
-        ui.divider();
-        ui.pass(`receipts anchored    ${nextId}  (ReceiptRegistry.nextId())`);
-      } catch {
-        // ignore
-      }
+        const next = await client.nextId();
+        v1Anchored = next > 0n ? next - 1n : 0n;
+      } catch { /* ignore */ }
+    }
+    if (recV2Addr) {
+      try {
+        const client = new ReceiptRegistryV2Client(recV2Addr as Address, provider);
+        const next = await client.nextId();
+        v2Anchored = next > 0n ? next - 1n : 0n;
+      } catch { /* ignore */ }
+    }
+    if (recAddr || recV2Addr) {
+      ui.divider();
+      ui.pass(`receipts anchored    ${v1Anchored + v2Anchored}  (V1: ${v1Anchored} + V2: ${v2Anchored})`);
     }
   });
 
