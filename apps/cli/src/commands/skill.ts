@@ -39,7 +39,7 @@ function skillSearchDirs(): string[] {
 
 function requireKey(k: string | undefined): string {
   if (!k) {
-    throw new Error('Missing EVM private key. Set EVM_PRIVATE_KEY or OG_PRIVATE_KEY in .env');
+    throw new Error('Missing signer key. Set IVARONIX_SIGNER_KEY (legacy: OG_PRIVATE_KEY · EVM_PRIVATE_KEY) in .env');
   }
   return k;
 }

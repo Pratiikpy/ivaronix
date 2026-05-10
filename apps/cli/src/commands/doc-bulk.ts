@@ -45,7 +45,7 @@ export function addBulkCommand(parent: Command): void {
     .action(async (dir: string, opts: { pattern: string; question: string; skill: string; tier: string; maxFiles: string; outDir: string }) => {
       const env = loadEnv();
       if (!env.privateKey || !env.walletAddress) {
-        ui.fail('doc bulk requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+        ui.fail('doc bulk requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS (legacy: EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS) in .env');
         process.exitCode = 1;
         return;
       }

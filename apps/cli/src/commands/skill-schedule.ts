@@ -205,7 +205,7 @@ export function addScheduleCommand(parent: Command): void {
     .action((opts: { skill: string; cron: string; input: string; prompt?: boolean; question: string; tier: string; maxRuns: string }) => {
       const env = loadEnv();
       if (!env.walletAddress) {
-        ui.fail('schedule create requires EVM_WALLET_ADDRESS in .env');
+        ui.fail('schedule create requires IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS) in .env');
         process.exitCode = 1;
         return;
       }

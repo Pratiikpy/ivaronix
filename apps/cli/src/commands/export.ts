@@ -83,7 +83,7 @@ export const exportCommand = new Command('export')
   .action(async (opts: { output: string; allAgents?: boolean; limit: string }) => {
     const env = loadEnv();
     if (!env.walletAddress && !opts.allAgents) {
-      ui.fail('No EVM_WALLET_ADDRESS in .env. Pass --all-agents to skip the wallet filter.');
+      ui.fail('No IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS) in .env. Pass --all-agents to skip the wallet filter.');
       process.exitCode = 1;
       return;
     }
@@ -207,8 +207,8 @@ export const importCommand = new Command('import')
     // Sanity: refuse to mix networks unless explicitly forced.
     const env = loadEnv();
     if (bundle.workspace.network !== env.network) {
-      ui.fail(`bundle is from ${bundle.workspace.network}, current OG_NETWORK is ${env.network}`);
-      ui.hint(`Switch network in .env (OG_NETWORK=${bundle.workspace.network}) before importing, or use a clean bundle.`);
+      ui.fail(`bundle is from ${bundle.workspace.network}, current IVARONIX_NETWORK is ${env.network}`);
+      ui.hint(`Switch network in .env (IVARONIX_NETWORK=${bundle.workspace.network} · legacy: OG_NETWORK) before importing, or use a clean bundle.`);
       process.exitCode = 1;
       return;
     }
