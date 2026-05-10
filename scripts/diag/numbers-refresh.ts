@@ -161,6 +161,42 @@ function parseReceiptTypes(): { count: number; labels: string[] } {
   return { count: labels.length, labels };
 }
 
+/**
+ * Count keys in `deployments/testnet.json`'s `contracts` object. Same
+ * anti-staleness rationale as countTypecheckClean: the value previously
+ * preserved verbatim across refreshes, drifting silently when contracts
+ * were added (V2 migration) or removed.
+ */
+function countDeployedContracts(): number {
+  const path = resolve(REPO_ROOT, 'deployments', 'testnet.json');
+  if (!existsSync(path)) return 0;
+  try {
+    const json = JSON.parse(readFileSync(path, 'utf8')) as { contracts?: Record<string, unknown> };
+    return json.contracts ? Object.keys(json.contracts).length : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * Count test cases for the polyglot canonical-hash references. Each
+ * language uses a different test-runner convention, so we grep for the
+ * convention's marker:
+ *   TS:     `test('…', …)` calls in `packages/core/src/jcs.test.ts`
+ *           (Node's built-in `node:test` runner).
+ *   Python: `def test_` in `scripts/verifier-py/test_jcs.py`.
+ *   Rust:   `#[test]` attributes in `ivaronix-verifier-rs/src/lib.rs`.
+ */
+function countPolyglotTests(): { ts: number; python: number; rust: number } {
+  const tsPath = resolve(REPO_ROOT, 'packages', 'core', 'src', 'jcs.test.ts');
+  const pyPath = resolve(REPO_ROOT, 'scripts', 'verifier-py', 'test_jcs.py');
+  const rsPath = resolve(REPO_ROOT, 'ivaronix-verifier-rs', 'src', 'lib.rs');
+  const ts = existsSync(tsPath) ? (readFileSync(tsPath, 'utf8').match(/^\s*test\(/gm) ?? []).length : 0;
+  const python = existsSync(pyPath) ? (readFileSync(pyPath, 'utf8').match(/^\s*def test_/gm) ?? []).length : 0;
+  const rust = existsSync(rsPath) ? (readFileSync(rsPath, 'utf8').match(/^\s*#\[test\]/gm) ?? []).length : 0;
+  return { ts, python, rust };
+}
+
 async function buildSnapshot(): Promise<NumbersFile> {
   const [receipts] = await Promise.all([fetchReceiptCounts()]);
   const firstPartySkills = listFirstPartySkills();
@@ -192,6 +228,9 @@ async function buildSnapshot(): Promise<NumbersFile> {
     },
     contracts: {
       ...existing.contracts,
+      // Auto-derived from deployments/testnet.json so V2-deploy or new
+      // contract additions reflect without hand-editing.
+      deployed: countDeployedContracts(),
     },
     skills: {
       firstParty: firstPartySkills.length,
@@ -207,7 +246,17 @@ async function buildSnapshot(): Promise<NumbersFile> {
       typecheckClean: countTypecheckClean(),
       appsList: apps,
     },
-    polyglotHash: existing.polyglotHash,
+    polyglotHash: {
+      ...existing.polyglotHash,
+      // Auto-derived from each language's test-runner convention so
+      // adding a new test in any of the 3 languages reflects without
+      // hand-editing. Same anti-staleness rationale as
+      // countTypecheckClean (cron-sweep finding · 2026-05-10).
+      tests: {
+        ...existing.polyglotHash.tests,
+        ...countPolyglotTests(),
+      },
+    },
     mainnet: existing.mainnet,
   };
 }
