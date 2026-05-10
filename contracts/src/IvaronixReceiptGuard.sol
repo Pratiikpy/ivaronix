@@ -16,19 +16,44 @@ import {ReceiptRegistry} from "./ReceiptRegistry.sol";
  *         `IvaronixReceiptGuard.requireValidReceipt(...)` becomes a *gate*,
  *         not just a *log*.
  *
- *         Trust model:
- *         - The receipt MUST exist on the named ReceiptRegistry deployment.
- *         - The receipt's agent address MUST equal `expectedAgent`.
- *         - The receipt's type code MUST equal `expectedReceiptType`.
- *         - Reverts with a string reason on any mismatch — caller can
- *           branch on the revert message.
- *
- *         Skill-id matching is intentionally OUT of the on-chain guard:
- *         the chain stores a numeric type code, not the canonical skill
- *         id (`private-doc-review`, `0g-integration-auditor`, etc.). Skill
- *         identity belongs to the off-chain receipt body. A consuming
- *         contract that wants per-skill granularity should follow the
- *         guard with a body-level check (read by an oracle, etc.).
+ *         Threat model:
+ *         - Defends against: gate-as-log substitution. Without this guard
+ *           a calling contract typically only LOGS that a receipt ought to
+ *           have existed (event emission); the guard upgrades the same
+ *           pattern to a HARD gate that reverts before any state effect
+ *           if the receipt is missing or mismatched.
+ *         - Defends against: receipt-id range forgery. Reverts when
+ *           receiptId >= registry.nextId() before any agent/type check.
+ *         - Defends against: agent substitution. The recorded agentAddress
+ *           in the registry MUST equal expectedAgent (passed by the
+ *           caller); a receipt anchored by a different wallet won't pass.
+ *         - Defends against: type substitution. The receipt's type code
+ *           MUST match expectedReceiptType; a doc_ask receipt cannot
+ *           satisfy a gate that requires audit (1) or skill_exec (5).
+ *         - Defends against: empty-receiptRoot acceptance. Reverts when
+ *           receiptRoot == bytes32(0) so a deleted/zeroed slot can't
+ *           pass a gate that previously accepted it.
+ *         - Does NOT defend against: V1-registry agentAddress forgery.
+ *           ReceiptRegistry V1 records agentAddress = msg.sender on
+ *           anchor; a guard pointed at the V1 registry inherits that
+ *           pre-K-2 weakness — any caller could anchor a receipt
+ *           claiming any agent. Pass the V2 registry address (which
+ *           records the EIP-712-recovered signer) for the K-2 fix.
+ *         - Does NOT defend against: receipt-content fabrication. The
+ *           guard checks chain-anchor identity; receipt-body trust
+ *           still rests on the off-chain TIER 1 (TEE-attested) vs
+ *           TIER 2 (external-signed) distinction.
+ *         - Does NOT defend against: skill-id substitution. The chain
+ *           stores a numeric type code, not the canonical skill id
+ *           (private-doc-review, 0g-integration-auditor, etc.). A
+ *           consuming contract that wants per-skill granularity must
+ *           follow the guard with a body-level check (read by an
+ *           oracle, etc.).
+ *         - Assumed attacker capabilities: holds zero valid agent
+ *           private keys; may try to pass arbitrary (receiptId,
+ *           expectedAgent, expectedReceiptType) tuples. None pass
+ *           when the registry is V2 (signature-recovered agent).
+ *           Only the V1-pointing case has known weakness.
  *
  *         Library, not a contract: zero deployment cost, zero state. The
  *         caller's contract embeds the guard at compile time.
