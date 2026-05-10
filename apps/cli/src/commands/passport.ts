@@ -157,7 +157,7 @@ passportCommand
 
     const target = (opts.wallet ?? env.walletAddress) as Address | undefined;
     if (!target) {
-      ui.fail('No target wallet — pass --wallet <address> or set EVM_WALLET_ADDRESS in .env');
+      ui.fail('No target wallet — pass --wallet <address> or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS) in .env');
       return;
     }
 
@@ -268,7 +268,7 @@ passportCommand
   .action(async (executor: string, opts: { ttl: string }) => {
     const env = loadEnv();
     if (!env.privateKey) {
-      ui.fail('No EVM_PRIVATE_KEY in .env — cannot sign the authorizeExecutor tx');
+      ui.fail('No IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY) in .env — cannot sign the authorizeExecutor tx');
       process.exitCode = 1;
       return;
     }
@@ -319,7 +319,7 @@ passportCommand
   .action(async (executor: string) => {
     const env = loadEnv();
     if (!env.privateKey) {
-      ui.fail('No EVM_PRIVATE_KEY in .env');
+      ui.fail('No IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY) in .env');
       process.exitCode = 1;
       return;
     }
@@ -362,7 +362,7 @@ passportCommand
       return;
     }
     if (!env.walletAddress) {
-      ui.fail('No EVM_WALLET_ADDRESS in .env');
+      ui.fail('No IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS) in .env');
       process.exitCode = 1;
       return;
     }
