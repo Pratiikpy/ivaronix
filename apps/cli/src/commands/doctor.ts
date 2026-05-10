@@ -110,14 +110,16 @@ export const doctorCommand = new Command('doctor')
       // surface here without hand-editing — same shape as
       // numbers-refresh.ts countDeployedContracts() (sweep 36) and the
       // README contracts:auto block (sweep 40).
+      if (!deployments) {
+        ui.pending('  no deployments file found · run forge script first');
+      }
       const contractNames = deployments
         ? Object.keys(deployments.contracts).sort()
         : [];
-      if (contractNames.length === 0) {
-        ui.pending('  no deployments file found · run forge script first');
-      }
       for (const name of contractNames) {
-        const dep = deployments!.contracts[name]!;
+        if (!deployments) break; // narrow for TS; unreachable since contractNames is empty when deployments is null
+        const dep = deployments.contracts[name];
+        if (!dep) continue;
         const padName = name.padEnd(20);
         ui.pass(`${padName} ${dep.address}`);
         // Live read for receipt-anchor count: prefer V2 if deployed

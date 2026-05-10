@@ -185,7 +185,8 @@ openclawCommand
     let envFailures: string[] = [];
     if (opts.checkEnv) {
       const requires = (fm.metadata as { openclaw?: { requires?: { env?: string[] } } } | undefined)?.openclaw?.requires;
-      const envVars = Array.isArray(requires?.env) ? requires!.env! : [];
+      const requiresEnv = requires?.env;
+      const envVars = Array.isArray(requiresEnv) ? requiresEnv : [];
       if (envVars.length === 0) {
         ui.info(`env check            (no metadata.openclaw.requires.env declared)`);
       } else {
