@@ -43,9 +43,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'ownerWallet must be 0x + 40 hex' }, { status: 400 });
   }
 
-  const pk = process.env.EVM_PRIVATE_KEY;
+  // Canonical → legacy alias chain (matches packages/runtime/src/env.ts).
+  const pk = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
   if (!pk) {
-    return NextResponse.json({ error: 'server misconfigured (EVM_PRIVATE_KEY missing)' }, { status: 500 });
+    return NextResponse.json({ error: 'server misconfigured (IVARONIX_SIGNER_KEY missing · legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)' }, { status: 500 });
   }
 
   const metadata = {

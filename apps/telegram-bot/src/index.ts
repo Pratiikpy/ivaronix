@@ -47,7 +47,7 @@ function loadConfig(): Config {
   if (!token) {
     throw new Error('TELEGRAM_BOT_TOKEN missing. Get one from @BotFather and set it in .env.');
   }
-  const network = (process.env.OG_NETWORK as Network) ?? 'testnet';
+  const network = ((process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK) as Network) ?? 'testnet';
   const cliEntry = resolveCliEntry();
   return {
     token,

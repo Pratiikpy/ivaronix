@@ -38,7 +38,7 @@ async function fetchManifestFromStorage(rootHash: string): Promise<RoomManifest 
   // The og-storage SDK requires a signer for indexer auth even on read;
   // server-side we have the operator key in env. The download itself is
   // a public chain operation — the signer is just for SDK plumbing.
-  const operatorKey = process.env.EVM_PRIVATE_KEY ?? process.env.OG_PRIVATE_KEY;
+  const operatorKey = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
   if (!operatorKey) return null;
   const { tmpdir } = await import('node:os');
   const { unlinkSync } = await import('node:fs');

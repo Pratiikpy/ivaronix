@@ -40,8 +40,8 @@ const CHAIN_ID = 16602;
 const STUDIO_URL = 'http://127.0.0.1:3300';
 
 async function main() {
-  const dadKey = process.env.EVM_PRIVATE_KEY;
-  if (!dadKey) throw new Error('EVM_PRIVATE_KEY missing');
+  const dadKey = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
+  if (!dadKey) throw new Error('IVARONIX_SIGNER_KEY missing (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)');
 
   const provider = new JsonRpcProvider(RPC, { chainId: CHAIN_ID, name: 'testnet' });
   const dadWallet = new Wallet(dadKey, provider);
