@@ -52,6 +52,33 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
      `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $OG_PRIVATE_KEY --legacy`
   3. Studio `/agents` will need a follow-up to read V2 first and fall back to V1 with a `LEGACY-PASSPORT` chip — already documented in HALF_BAKED.md K-1; agent picks it up post-deploy.
 
+### A-V2-K15-Go · Install Go so the cron loop can ship the Go reference verifier
+- **Why:** K-15 in HALF_BAKED.md ships the canonical-JSON reference verifier in three languages already (TS, Python, Rust). All three produce byte-identical output (29/29 vectors). Go is the fourth, queued because this machine has no `go` binary yet.
+- **Status:** TS + Python + Rust shipped + 3-language cross-impl proof live. Go pending operator install.
+- **Cost:** free.
+- **Run:**
+
+  ```bash
+  ! winget install GoLang.Go
+  # or on macOS / Linux:
+  # ! brew install go
+  # ! sudo apt install golang-go
+  go version  # should print 1.21+
+  ```
+
+  After Go is installed, the next cron firing scaffolds `verifier-go/` mirroring the Rust shape, extends `scripts/verifier-py/cross_check.py` with `go run ./cmd/verifier-go`, and adds a Go job to `.github/workflows/jcs-roundtrip.yml`. No further operator action required after installing Go.
+
+- **Optional `crates.io` publish (operator-action when ready):**
+
+  ```bash
+  ! cargo login                          # one-time, takes the API token from crates.io
+  cd ivaronix-verifier-rs
+  cargo publish --dry-run                # safety check
+  cargo publish
+  ```
+
+  After publish, the Rust verifier is `cargo install ivaronix-verifier` for any third party.
+
 ### A-V2-L7 · Vercel-deploy Studio
 - **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio is `pnpm --filter @ivaronix/studio dev` only. A judge who doesn't clone never sees Studio at all.
 - **Status:** code-complete · `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.

@@ -593,7 +593,16 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - See I-3. The W9 path produces receipts that our `verify.ts:85-92` rejects.
 - **Fix:** branch verify on `agent.signedBy`; for `'operator-on-behalf-of-user'` require operator signer in an allow-list AND `agent.ownerWallet` matches the SIWE-authenticated user. Until SIWE handshake exists, do not advertise this tier.
 
-### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ TS FOUNDATION SHIPPED 2026-05-10 (`39d7f29`) · Rust + Go + Python + cross-impl CI queued for next cron firings
+### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ 3 OF 4 LANGUAGES SHIPPED 2026-05-10 (`39d7f29` TS · `<sha>` Python · `a97058b` Rust + cross-impl + CI) · Go queued (operator-action A-V2-K15-Go)
+- **TS reference:** `packages/core/src/jcs.ts` + `jcs.test.ts` · 17/17 self-tests green.
+- **Python reference:** `scripts/verifier-py/jcs.py` + `test_jcs.py` · 14/14 self-tests green.
+- **Rust reference:** `ivaronix-verifier-rs/` (publishable as `ivaronix-verifier` crate) · 11/11 self-tests green. Deps `serde_json` + `unicode-normalization` only.
+- **Cross-impl harness:** `scripts/verifier-py/cross_check.py` runs all three implementations on the same 29-vector corpus and asserts byte-equality. **Result: 29/29 byte-equal across TS + Python + Rust.**
+- **CI gate:** `.github/workflows/jcs-roundtrip.yml` runs all three self-suites + the cross-impl harness on every push + PR. Block merge on any divergence.
+- **What's still queued:** Go reference verifier (operator-action A-V2-K15-Go: install Go, then next cron firing scaffolds `verifier-go/` and extends the harness + CI).
+- **Schema activation gate:** receipt `schemaVersion: '2.0'` stays disabled until Go lands and 4-language byte-equality is proven. Until then, new receipts continue using the V1 canonical hash; the V2 hash function is exported as `canonicalHashV2` in `packages/core/src/canonical.ts` for forward-compatible tooling.
+
+(legacy plan text below preserved for context):
 - **TS reference impl:** `packages/core/src/jcs.ts` — strict RFC-8785 (NFC strings, ECMAScript number formatting with explicit `±0` / NaN / Infinity carve-outs, key sort by UTF-16 code-unit value, undefined-skip).
 - **TS test suite:** `packages/core/src/jcs.test.ts` — 17 test vectors all green, covering primitives, numbers, strings (incl. NFC of decomposed Unicode), objects (key sort), arrays, nested receipt-shaped values, rejects (NaN / Infinity / symbol / function / bigint / undefined-at-top).
 - **V2 hash export:** `packages/core/src/canonical.ts` now exports `canonicalHashV2(value, excludeKeys)` = `keccak256(jcs(strip(value)))`. Same exclude-set as v1; the difference is the JSON serialiser.
