@@ -237,6 +237,17 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1 week.
 - **Decision:** post-hackathon. Not on critical path for judging.
 
+### B-V2-7 · Set up scoped CI wallet for chain-smoke workflow
+- **Source:** plan-003 §A.1.5 + `.github/workflows/chain-smoke.yml`
+- **Why:** the V2 anchor smoke workflow needs a scoped EVM key to anchor a synthetic receipt on Galileo on PR (label `run-chain-smoke`) + nightly cron. Using the operator's main signing key would leak the operator wallet address into GitHub Actions logs.
+- **Cost:** 0.5 OG one-time allocation from the operator's testnet wallet (~69 OG balance). Each smoke run costs ~0.0005 OG; 0.5 OG covers ~1000 runs.
+- **Action:** follow `docs/CI_WALLET.md` runbook end-to-end:
+  1. Generate a fresh wallet via `node -e 'const {Wallet}=require("ethers"); const w=Wallet.createRandom(); console.log(w.address); console.log(w.privateKey);'`
+  2. Send 0.5 OG to the new address on Galileo (chainID 16602).
+  3. Add the private key to GitHub repo secrets as `IVARONIX_CI_WALLET_KEY`.
+  4. Trigger the workflow manually once to verify it can read the secret + anchor a receipt.
+  5. Add the funded address to `contracts/deployments/testnet.json` under a `ci_wallet` key.
+
 ---
 
 ## C · Distribution + outreach (operator-only by nature)
