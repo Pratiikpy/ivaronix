@@ -180,6 +180,65 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 ---
 
+## B-V2 · plan-003 mainnet items (additional · captured 2026-05-10)
+
+> Captured from `docs/planning-003.md` Section B. Each item is mainnet-only (testnet versions ship as part of Section A · already underway). Operator action lands these on Aristotle (chainID 16661).
+
+### B-V2-1 · V2 marketplace contracts mainnet deploy
+- **Source:** plan-003 §B.1.3
+- **Depends on:** A.5.9 (SubscriptionEscrowV2) + A.5.10 (CapabilityRegistryV2) + A.5.11 (SkillRegistryV2) + A.5.12 (MemoryAccessLogV2) testnet versions verified first.
+- **Why:** rolls the V2 marketplace + privacy + audit-trail contracts onto mainnet alongside K-1/K-2 V2 redeploys.
+- **Cost:** ~0.05 OG total on mainnet.
+- **Action:** after testnet versions are deployed and Foundry-verified, write `contracts/script/DeployV2Marketplace.s.sol` (mirrors existing DeployPassportV2 pattern) and run:
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<deployer-key>
+  forge script script/DeployV2Marketplace.s.sol --rpc-url https://evmrpc.0g.ai --broadcast --legacy
+  ```
+
+  Add addresses to `contracts/deployments/mainnet.json` under each new V2 key.
+
+### B-V2-2 · OG-image generation verified on production Studio
+- **Source:** plan-003 §A.5.5 + §B.2.3
+- **Depends on:** A.5.5 (OG-image route shipped) + A-V2-L7 (Vercel custom domain live).
+- **Why:** every `/r/<id>` shared link must render Ivaronix-branded social-card image, not a default Vercel placeholder.
+- **Action:** after Vercel custom domain lands, hit `https://<your-url>/r/1004/opengraph-image` and confirm 1200×630 PNG renders with receipt id + status chip + skill name. Run preview check via `https://cards-dev.twitter.com/validator`. Capture a screenshot.
+
+### B-V2-3 · Mainnet autonomous wander-cycle
+- **Source:** plan-003 §A.4.1 (testnet) → §B.3.1 (mainnet)
+- **Depends on:** A-V2-K1 + A-V2-K2 + A.4.1 (testnet wander-cycle producing receipts cleanly) + mainnet OG funding.
+- **Why:** Provus has 30K mainnet TXs from a 15s autonomous loop. Ivaronix matches with `private-doc-review` runs every 5min from a CI wallet. 8,640 receipts/month × 90 days = ~26K mainnet receipts. Headline becomes "1,332 manual + 26K autonomous = 27K+ mainnet receipts" before judging.
+- **Cost:** ~2.6 OG over 90 days from operator wallet.
+- **Action:** once testnet wander-cycle is shipping receipts (per A.4.1), set `WANDER_CYCLE_NETWORK=mainnet` in the CI wallet env. Same agent code, different RPC + V2 address.
+
+### B-V2-4 · npm publish `@ivaronix/cli`
+- **Source:** plan-003 §B.5.1
+- **Depends on:** A-V2-L7 (Vercel custom domain so widget URLs in the package work) + `npm login` on operator's machine.
+- **Action:** `cd apps/cli && pnpm publish --access public`.
+- **Verify:** `npmjs.com/package/ivaronix` page live; `npx ivaronix receipt verify <id>` works on a clean machine.
+
+### B-V2-5 · PyPI publish `ivaronix-verifier-py`
+- **Source:** plan-003 §B.5.4
+- **Depends on:** PyPI account configured in operator's `~/.pypirc` (free).
+- **Action:**
+
+  ```bash
+  cd scripts/verifier-py
+  python -m build
+  twine upload dist/*
+  ```
+
+- **Verify:** `pip install ivaronix-verifier-py` works on a clean machine.
+
+### B-V2-6 · Khalani cross-chain adapter (post-hackathon, optional)
+- **Source:** plan-003 §B.6.1
+- **Why:** Aegis Vault ships Khalani venue adapter for 0G-native intent settlement on Arbitrum without orchestrator custody. Same primitive applies to Ivaronix receipts — a 0G receipt could anchor to Arbitrum or Base via Khalani.
+- **Effort:** ~1 week.
+- **Decision:** post-hackathon. Not on critical path for judging.
+
+---
+
 ## C · Distribution + outreach (operator-only by nature)
 
 > **Network targeting note:** C-1, C-3, C-4 are **network-agnostic** (they apply whether the user is on testnet or mainnet). C-2 (ChainGPT audit) is **mainnet-only** — you audit *before* mainnet, not before testnet.

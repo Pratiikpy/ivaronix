@@ -7,12 +7,30 @@ import { z } from 'zod';
  * SKILL.md. A forker who copies just `name`/`description` gets nothing.
  */
 
-const Permissions = z.object({
-  memory_access: z.enum(['none', 'project_only', 'all']).default('none'),
+/**
+ * Raw enum schemas for the Permissions block. Exported separately so
+ * consumers (the Studio skill-builder form, source-file regressions, etc.)
+ * can read the enum values directly via `.options` without unwrapping
+ * `.default(...)` runtime metadata.
+ *
+ * Derived from these enums + form-field defaults, the Studio
+ * `apps/studio/src/app/skill/new/page.tsx` builder produces SKILL.md
+ * frontmatter that always parses against `SkillManifestSchema` — the
+ * form/schema drift bug (planning-003 §A.1.1 / WT 43, 44, 85) is closed
+ * by this single source of truth.
+ */
+export const MemoryAccessEnum = z.enum(['none', 'project_only', 'all']);
+export const ShellAccessEnum = z.enum(['none', 'sandbox-only', 'full']);
+
+export type MemoryAccess = z.infer<typeof MemoryAccessEnum>;
+export type ShellAccess = z.infer<typeof ShellAccessEnum>;
+
+export const Permissions = z.object({
+  memory_access: MemoryAccessEnum.default('none'),
   network_access: z.array(z.string()).default([]),
   wallet_access: z.boolean().default(false),
   writes_files: z.boolean().default(false),
-  shell_access: z.enum(['none', 'sandbox-only', 'full']).default('none'),
+  shell_access: ShellAccessEnum.default('none'),
   receipt_required: z.boolean().default(true),
   storage_quota_per_run: z.string().optional(), // e.g. "5MB"
   storage_namespace: z.string().optional(),
@@ -20,6 +38,8 @@ const Permissions = z.object({
   chain_gas_budget: z.string().optional(), // e.g. "0.01 OG"
   passport_min_trust: z.number().int().default(0),
 });
+
+export type SkillPermissions = z.infer<typeof Permissions>;
 
 const Reputation = z.object({
   on_pass: z

@@ -948,6 +948,9 @@ importers:
       '@ivaronix/og-chain':
         specifier: workspace:*
         version: link:../../../packages/og-chain
+      '@ivaronix/skills':
+        specifier: workspace:*
+        version: link:../../../packages/skills
       dotenv:
         specifier: ^16.4.0
         version: 16.6.1

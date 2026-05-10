@@ -3,28 +3,40 @@
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
 import { useAccount } from 'wagmi';
+import {
+  MemoryAccessEnum,
+  ShellAccessEnum,
+  type MemoryAccess,
+  type ShellAccess,
+} from '@ivaronix/skills';
 
 /**
- * Visual skill creator (planning-01 §3B).
+ * Visual skill creator. Form-driven SKILL.md generator: a non-developer
+ * creator picks fields (name, system prompt, tier default, fee split,
+ * permissions) and the page composes a real manifest. One click writes
+ * it to `.ivaronix/skills/<id>/SKILL.md` via /api/skill/save.
  *
- * Form-driven SKILL.md generator: a non-developer creator picks fields
- * (name, system prompt, tier default, fee split, permissions) and the
- * page composes a real manifest in the right shape on the right. One
- * click writes it to `.ivaronix/skills/<id>/SKILL.md` via /api/skill/save.
+ * Schema-as-source-of-truth: the dropdown options for `memory_access` and
+ * `shell_access` are derived from the canonical Zod schema in
+ * `@ivaronix/skills/manifest`, NOT redeclared here. Any drift between
+ * form and schema would surface immediately in the type system and the
+ * `verify-a11-form-schema-parity` regression script.
  *
  * Honest scope:
  * - Local save is shipped — the skill becomes immediately runnable via
  *   `ivaronix doc ask <doc> "..." --skill <id>`.
- * - Publishing on-chain (SkillRegistry mint) is a separate step that uses
- *   the existing wallet-connected pattern. The form surfaces the
- *   `ivaronix skill publish <id>` CLI command for a publisher to run
- *   from their wallet — keeps the user's signing key out of the operator
- *   path. Phase B will wire wagmi sign-and-publish in the form itself.
+ * - On-chain publishing (SkillRegistry mint) is a separate step. The form
+ *   surfaces the `ivaronix skill publish <id>` CLI command so the user's
+ *   signing key stays out of the operator path.
  */
 
 const TIER_OPTIONS = ['quick', 'standard', 'high-stakes'] as const;
-const MEMORY_OPTIONS = ['none', 'project_only', 'cross_project'] as const;
-const SHELL_OPTIONS = ['none', 'read', 'read-write'] as const;
+
+// Derived from the canonical Zod schema. Updating the schema
+// automatically updates the form (no manual edit required).
+const MEMORY_OPTIONS = MemoryAccessEnum.options;
+const SHELL_OPTIONS = ShellAccessEnum.options;
+
 const LICENSE_OPTIONS = ['Apache-2.0', 'MIT', 'GPL-3.0'] as const;
 
 interface SkillForm {
@@ -36,10 +48,10 @@ interface SkillForm {
   defaultTier: typeof TIER_OPTIONS[number];
   burnAutoEnable: boolean;
   consensusRequired: boolean;
-  memoryAccess: typeof MEMORY_OPTIONS[number];
+  memoryAccess: MemoryAccess;
   walletAccess: boolean;
   writesFiles: boolean;
-  shellAccess: typeof SHELL_OPTIONS[number];
+  shellAccess: ShellAccess;
   passportMinTrust: number;
   creatorBps: number; // 0..10000
 }
