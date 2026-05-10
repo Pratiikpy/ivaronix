@@ -43,8 +43,8 @@ When asked "where are we lacking" or "how do we win", do **not** answer with obv
 - **Lacking:** **0G DA is not integrated**, not even as a documented stub for receipt batching or evidence sharding. AIsphere claims all 6 0G primitives; we use 4-5 (Chain, Compute, Storage, Agent ID, Router). Document the DA integration path even if no public testnet endpoint exists yet.
 
 ### 2.2 · Technical Implementation & Completeness
-- **Strong:** 61/61 Foundry tests, 14 packages typecheck-clean, edge-case discipline proven (tampered receiptRoot → INVALID, empty input → gated, bogus id → honest error). 6 contracts deployed on Galileo. 13/13 mainnet-readiness checklist green.
-- **Lacking:** the README does not lead with these numbers. Provus's headline is "10,000+ attestations · 99.7% uptime" — a sentence judges remember. 1071 receipts is competitive but only useful if it is the first thing a reader sees.
+- **Strong:** Foundry tests + packages typecheck-clean (current counts in `docs/numbers.json` — `foundryTests` + `packages.typecheckClean`), edge-case discipline proven (tampered receiptRoot → INVALID, empty input → gated, bogus id → honest error). 6 contracts deployed on Galileo. 13/13 mainnet-readiness checklist green.
+- **Lacking:** the README does not lead with these numbers. Provus's headline is "10,000+ attestations · 99.7% uptime" — a sentence judges remember. Our anchored-receipt count is competitive but only useful if it is the first thing a reader sees.
 
 ### 2.3 · Product Value & Market Potential — biggest gap
 - **Strong:** Track 1 + Track 3 fit (cognitive backbone + Agent-as-a-Service marketplace via creator/treasury fee split), proven across 5 first-party skills + 150+ skill catalog.

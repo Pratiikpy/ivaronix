@@ -404,14 +404,12 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   4. Add a redirect stub at the old paths for one release cycle (`# Moved → docs/spec/RECEIPT_SCHEMA.md`).
 - **Effort:** ~1h (mostly cross-reference cleanup). Defer to a slack window — the current archived-header approach already separates evergreen from sprint-internal at the top of each doc.
 
-### B-V2-21 · Pre-commit hook: block absolute receipt-numbers in root markdown
-- **Source:** plan-003 §A.5.4. Root-level docs (README, CLAUDE.md, PRD, HLD) referencing absolute receipt counts ("1,644 receipts") drift the moment a new receipt anchors. The auto-render pipeline (B-V2-8) fixes the read path; this fixes the write path.
-- **Why:** prevent the next sprint snapshot from being committed verbatim into a long-lived doc. The hook fails on `^[A-Z][A-Z_]*\.md|^README\.md|^CLAUDE\.md` files containing patterns like `\b\d{1,3},?\d{3}\s+receipts\b` that aren't wrapped in a `<!-- numbers:auto:* -->` marker.
-- **Action:**
-  1. Add `scripts/precommit/no-absolute-numbers.ts`.
-  2. Wire into `husky` or `lefthook` pre-commit hook.
-  3. Run on staged files only — full-repo scan is too noisy for the workflow.
-- **Effort:** ~30min. Pairs with B-V2-8 (auto-render) — both ship together or this hook will block the manual-refresh workflow.
+### B-V2-21 · Pre-commit hook: block absolute receipt-numbers in root markdown · ✅ SHIPPED (sweep 81 close)
+- **Source:** plan-003 §A.5.4. Root-level docs referencing absolute receipt counts drift the moment a new receipt anchors.
+- **Status (sweep 81):** ✅ Shipped via two complementary mechanisms (more sophisticated than the originally-spec'd regex hook):
+  1. `verify-no-bare-numbers-in-rendered-docs.ts` regression — gates README, PITCH, JUDGE_GUIDE, MAINNET_READINESS against bare numerical claims that match values in `numbers.json`. Targeted (only flags numbers that ARE auto-derivable) rather than the original blanket regex (which would have false-positived on every "1,000+" round-number marketing phrase). Wired into the studio filter.
+  2. Pre-commit hook (`.githooks/pre-commit`) runs `regressions:studio` (which includes verify-no-bare-numbers) on every commit. Combined coverage: any commit that adds a stale auto-derivable number to a render-target doc fails locally before pushing.
+- **Sweep 81 cleanup:** caught one CLAUDE.md drift surface (`§2.2`) hardcoding "1071 receipts" + "61/61 Foundry tests" + "14 packages typecheck-clean" — all stale (current: 1644 receipts, 168 Foundry tests, 23 packages). CLAUDE.md is operational guidance, NOT a render-target doc, so the gate doesn't catch it. Rewrote the line to defer to `docs/numbers.json` rather than hardcode snapshot numbers. Future stale-snapshot drift in CLAUDE.md needs occasional manual refresh — the gate scope deliberately excludes hand-written operational docs (different lifecycle from rendered claim docs).
 
 ### B-V2-7 · Set up scoped CI wallet for chain-smoke workflow
 - **Source:** plan-003 §A.1.5 + `.github/workflows/chain-smoke.yml`
