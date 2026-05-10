@@ -12,14 +12,13 @@
 |---|---|---|---|
 | 1 | **Studio** (web app, primary) | Users, teams, judges | `apps/studio` (Next.js 15 on Vercel) |
 | 2 | **Forge CLI** | Developers, power users | `apps/cli` (Node 20 + TypeScript binary) |
-| 3 | **HTTP API** | Builders, integrators | `apps/api` (Next.js / Vercel) |
-| 4 | **MCP server** | Claude Desktop, Cursor, OpenCode users | `apps/mcp-server` (stdio-mode tools) |
-| 5 | **npx CLI shim** | One-shot reviewers, judges | `apps/npx-cli` (`npx @ivaronix/run`) |
-| 6 | **OpenClaw skill** | OpenClaw users | `apps/openclaw-skill` (manifest + scripts) |
-| 7 | **Telegram bot** | Mobile / chat-native users | `apps/telegram-bot` (long-poll worker) |
-| 8 | **Skill Registry browser** | Skill creators, ecosystem | `apps/studio/app/skills/*` (page in Studio, no separate app) |
+| 3 | **MCP server** | Claude Desktop, Cursor, OpenCode users | `apps/mcp-server` (stdio-mode tools) |
+| 4 | **npx CLI shim** | One-shot reviewers, judges | `apps/npx-cli` (`npx @ivaronix/run`) |
+| 5 | **OpenClaw skill** | OpenClaw users | `apps/openclaw-skill` (manifest + scripts) |
+| 6 | **Telegram bot** | Mobile / chat-native users | `apps/telegram-bot` (long-poll worker) |
+| 7 | **Skill Registry browser** | Skill creators, ecosystem | `apps/studio/app/skills/*` (page in Studio, no separate app) |
 
-All surfaces are real today. There is no separate `apps/skill-store` (the registry lives inside Studio at `/skills`), no `apps/forge-daemon` (Studio talks to chain/storage/router directly via `packages/og-toolkit` + `packages/runtime` from server actions and route handlers), and no `apps/worker` (long-running jobs run via `scripts/wander-cycle/` for now and graduate to a worker app only when receipt volume justifies it). The shared SDK surface is `packages/og-toolkit` (chain/storage/router clients) + `packages/runtime` (`runPipeline`); the earlier `packages/sdk` ghost dir is gone.
+All 7 surfaces above are real today. There is no separate `apps/skill-store` (the registry lives inside Studio at `/skills`), no `apps/forge-daemon` (Studio talks to chain/storage/router directly via `packages/og-toolkit` + `packages/runtime` from server actions and route handlers), no `apps/worker` (long-running jobs run via `scripts/wander-cycle/` for now and graduate to a worker app only when receipt volume justifies it), and **no separate `apps/api` HTTP API** (Studio's own `/api/*` routes — `apps/studio/src/app/api/run`, `/api/skill/save`, `/api/dashboard/[addr]`, etc. — are the HTTP API surface today; an external `apps/api` Next.js app is queued only if integrators need an OpenAI-compatible facade per `docs/pitch/PITCH.md` Phase B). The shared SDK surface is `packages/og-toolkit` (chain/storage/router clients) + `packages/runtime` (`runPipeline`); the earlier `packages/sdk` ghost dir is gone.
 
 ---
 
@@ -80,7 +79,7 @@ All surfaces are real today. There is no separate `apps/skill-store` (the regist
 
 **Key invariants:**
 - **The runtime never holds wallet keys.** Wallet signs in user's environment (Studio: WalletConnect/wagmi; CLI: keystore). The runtime orchestrates; the user's wallet attests.
-- **Router API key stays server-side** (in `apps/api` / Studio server actions). Studio NEVER ships Router credentials to the browser — every Router call goes through a server route handler that holds the key.
+- **Router API key stays server-side** (in Studio server actions / route handlers under `apps/studio/src/app/api/`). Studio NEVER ships Router credentials to the browser — every Router call goes through a server route handler that holds the key.
 - **Storage uploads & chain anchors are deterministic side-effects of receipt creation.** User issues one action → all artifacts produced.
 - **Hub pages read from chain + storage**, never from a daemon. The /r/<id>, /@<handle>, /skill/<id>, /global pages each call `packages/og-chain` + `packages/og-storage` from server components. They keep working forever as long as the chain is up. SEO-friendly.
 - **Studio and CLI share `packages/sdk`** so behavior is identical across surfaces.
@@ -250,7 +249,7 @@ See `COMPONENTS.md §14`.
 ### 4.4 State + auth
 - WalletConnect (wagmi + viem) for wallet auth. SIWE for backend session.
 - Server actions for all mutations (Next.js 15 native).
-- Studio runs all chain/storage/router calls inside its own server actions and route handlers using `packages/sdk` directly. Power users hit the same code path through the CLI; cloud users hit it through Studio + `apps/api` route handlers. There is no separate forge-daemon process.
+- Studio runs all chain/storage/router calls inside its own server actions and route handlers using `packages/og-toolkit` + `packages/runtime` directly. Power users hit the same code path through the CLI; cloud users hit it through Studio's own `/api/*` route handlers. There is no separate forge-daemon process and no separate `apps/api` HTTP service today.
 - 0G KV pointer (`passport:{wallet}:latest`) is the source of truth for passport state — Studio reads chain + KV directly without daemon dependency.
 
 ### 4.5 Onboarding flow (visual specification)
@@ -268,7 +267,7 @@ Target: <90 seconds end-to-end.
 ### 4.6 Hosting
 - Vercel for Studio + API.
 - Daemon runs locally on power-user machines (auto-start with transparent logs per `BUILD.md §11.5`).
-- For cloud users (no daemon), the Vercel-hosted apps/api proxies daemon-equivalent calls.
+- For cloud users (no daemon), Studio's Vercel-hosted `/api/*` route handlers proxy daemon-equivalent calls.
 
 ---
 
@@ -763,7 +762,7 @@ All contracts: Solidity 0.8.24, OpenZeppelin v5, EVM `cancun`, deployed via Foun
 | Default model | `qwen/qwen-2.5-7b-instruct` with `--model` override | confirmed TEE-verifiable. See `BUILD.md §11.4` |
 | Studio framework | Next.js 15 + React 19 | Provus stack precedent. See `BUILD.md §11.8` |
 | Studio styling | Tailwind v4 + shadcn/ui | clean theming with `@theme inline` |
-| Hosting | Vercel (Studio + apps/api) | Provus precedent |
+| Hosting | Vercel (Studio · its `/api/*` routes serve as the HTTP API) | Provus precedent |
 | Audit | apply for ChainGPT free audit during Phase B | Provus precedent |
 
 ---
@@ -772,7 +771,7 @@ All contracts: Solidity 0.8.24, OpenZeppelin v5, EVM `cancun`, deployed via Foun
 
 ### 14.1 Key handling (non-negotiable)
 - Wallet private key NEVER touches CLI/daemon process. Sign via wallet client (Studio: WalletConnect; CLI: keystore).
-- Router API key lives ONLY in daemon's env. CLI/Studio request Router via daemon (or apps/api proxy).
+- Router API key lives ONLY in the operator wallet env. CLI uses the key directly; Studio's `/api/*` route handlers hold the key server-side and never ship it to the browser.
 - Session keys (Burn Mode AES-256-GCM) generated, used, fingerprinted, then zeroed.
 
 ### 14.2 Permission gates
