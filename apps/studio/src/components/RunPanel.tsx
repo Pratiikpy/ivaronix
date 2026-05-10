@@ -16,7 +16,25 @@ type Tier = 'quick' | 'standard' | 'high-stakes' | 'audit';
  */
 type PolicyOverride = 'AUTO' | 'STRICT' | 'BALANCED' | 'LENIENT';
 
-const SKILLS: { id: string; label: string; defaultTier: Tier }[] = [
+/**
+ * Skill option exposed in the Run-panel dropdown. Server-component pages
+ * pass the actual loaded set via the `skills` prop (planning-003 §A.2.7);
+ * the fallback below is the safety net for ad-hoc usage that doesn't
+ * thread props through.
+ */
+export interface RunPanelSkillOption {
+  id: string;
+  label: string;
+  defaultTier: Tier;
+}
+
+/**
+ * Fallback skill list. Only used when the host page doesn't pass a
+ * `skills` prop. Per planning-003 §A.2.7, the dropdown should derive
+ * from `loadAllSkills()` server-side so first-party + community-imported
+ * skills appear without manual list maintenance.
+ */
+const FALLBACK_SKILLS: RunPanelSkillOption[] = [
   { id: 'private-doc-review', label: 'private-doc-review', defaultTier: 'standard' },
   { id: 'content-pitch-review', label: 'content-pitch-review', defaultTier: 'quick' },
   { id: 'github-audit', label: 'github-audit', defaultTier: 'standard' },
@@ -75,7 +93,23 @@ const POLICY_LABEL_TO_NAME: Record<Exclude<PolicyOverride, 'AUTO'>, 'unanimous' 
   LENIENT: 'first-objection',
 };
 
-export function RunPanel() {
+export interface RunPanelProps {
+  /**
+   * Skill options for the dropdown. When omitted, the panel falls back
+   * to {@link FALLBACK_SKILLS}. Server-component host pages should
+   * pass the result of `loadAllSkills()` here so the dropdown reflects
+   * what's actually on disk (first-party + community-imported).
+   * Per planning-003 §A.2.7.
+   */
+  skills?: RunPanelSkillOption[];
+}
+
+export function RunPanel(props: RunPanelProps = {}) {
+  // Skill options: prop wins, else the fallback list. Empty arrays
+  // collapse to the fallback so a misconfigured host doesn't render an
+  // unselectable dropdown.
+  const SKILLS: RunPanelSkillOption[] =
+    props.skills && props.skills.length > 0 ? props.skills : FALLBACK_SKILLS;
   // W9 — capture connected wallet to send with /api/run so the receipt's
   // agent.ownerWallet records the user, not the operator.
   const { address: connectedAddress } = useAccount();

@@ -14,6 +14,9 @@ Receipts are the product. If different surfaces (CLI, web, MCP, API) emit differ
 
 ## 1. Receipt Types
 
+The canonical source is `RECEIPT_TYPES` in `packages/core/src/types.ts`. Per planning-003 §A.2.7, the table below is regenerated from that enum between the `<!-- AUTO:types -->` markers; do NOT hand-edit the table body — edit the source enum and re-render.
+
+<!-- AUTO:types:start -->
 | Type | Code | When created |
 |---|---|---|
 | `doc_ask` | 0 | `ivaronix doc ask` completed |
@@ -25,8 +28,13 @@ Receipts are the product. If different surfaces (CLI, web, MCP, API) emit differ
 | `code_change` | 6 | `ivaronix code` produced a diff |
 | `passport_update` | 7 | Agent passport mutated (skill install, key rotation) |
 | `swarm` | 8 | Parent-of-workers swarm run completed |
+| `subscription_skill_exec` | 9 | Recurring-billing tick under a `SubscriptionEscrow` agreement |
+| `doc_room_create` | 10 | Confidential data-room creation (manifest hash + parties + encrypted blob root) |
+| `doc_room_read` | 11 | Confidential data-room read (reader wallet + grant id + AI summary hash; Burn Mode auto-enabled) |
+| `memory_consolidation` | 12 | Memory consolidation rollup — agent reads its own past receipts in a window, anchors a TEE-attested summary |
+<!-- AUTO:types:end -->
 
-A receipt may have a single `parentReceiptId` (e.g., a `burn` receipt is a child of `doc_ask`).
+A receipt may have a single `parentReceiptId` (e.g., a `burn` receipt is a child of `doc_ask`). For lineage that points at multiple parents (consolidation rollups, swarm runs), use `request.priorReceiptIds`.
 
 ---
 

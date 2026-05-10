@@ -40,7 +40,7 @@ Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates f
 | A.2.4 | Track 1 + Track 3 by-the-numbers headline blocks | `0f2578f` |
 | A.2.5 | Counter-position table (vs OpenClaw, 0GClaw, Trapezohe, AlphaTrace) + honest TIER 1/2 disclosure callout | `0f2578f` |
 | A.2.6 | Polyglot canonical hash Criterion-1 moat surfaced | `0f2578f` |
-| A.2.7 | `docs/numbers.json` + `pnpm numbers:refresh` (1,644 receipts confirmed live) | (numbers commit) |
+| A.2.7 | `docs/numbers.json` + `pnpm numbers:refresh` + RunPanel + RECEIPTS_SPEC types render | First-pass `docs/numbers.json` + `pnpm numbers:refresh` shipped earlier (live 1,644 receipts confirmed). This commit closes the remaining drift surfaces: (a) RunPanel.tsx hardcoded 6 skills; now accepts a `skills` prop and the home page passes `loadAllSkills().filter(curatedIds).map({id, manifest.og.consensus.default_tier})` so the dropdown tracks `seed-skills/` reality + manifest-declared tier. (b) RECEIPTS_SPEC.md §1 type table claimed 9 types while `RECEIPT_TYPES` enum has 13; now wrapped in `<!-- AUTO:types:start --> ... <!-- AUTO:types:end -->` markers + new `pnpm receipt-types:render` script regenerates the table from `packages/core/src/types.ts` (preserves per-row "When created" descriptions across renders so copy-edits don't get clobbered). New `pnpm receipt-types:check` is the CI gate that fails on drift. | partial · numbers infra + RunPanel + receipt-types render shipped; full markdown auto-render pipeline queued in §B-V2-8 |
 
 ### Phase 3 · Schema + voice (8/8 done or queued)
 

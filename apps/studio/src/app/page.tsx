@@ -36,7 +36,20 @@ export default async function HomePage() {
   const network = getNetwork();
   // W11 — derive the verified-skills count from the manifest loader so it
   // tracks reality (was hardcoded "5" and would drift silently).
-  const verifiedSkillsCount = loadAllSkills().length;
+  const allSkills = loadAllSkills();
+  const verifiedSkillsCount = allSkills.length;
+  // Surface only first-party + manually-curated skills in the Run-panel
+  // dropdown — the 150+ vendored community skills under `imports/` would
+  // overwhelm the picker. Selection mirrors the skill ids the home page
+  // already references in marketing copy.
+  const RUN_PANEL_IDS = new Set(['private-doc-review', 'content-pitch-review', 'github-audit', '0g-integration-auditor', 'plan-step', 'code-edit']);
+  const runPanelSkills = allSkills
+    .filter((s) => RUN_PANEL_IDS.has(s.id))
+    .map((s) => ({
+      id: s.id,
+      label: s.id,
+      defaultTier: s.manifest.og.consensus.default_tier,
+    }));
 
   return (
     <>
@@ -181,9 +194,12 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* RIGHT: live RunPanel preview card */}
+          {/* RIGHT: live RunPanel preview card. Skill list is loaded
+              server-side per planning-003 §A.2.7 so the dropdown
+              tracks `seed-skills/` reality + each skill's manifest
+              default tier — no hardcoded list to drift. */}
           <div className="hero-runpanel">
-            <RunPanel />
+            <RunPanel skills={runPanelSkills} />
           </div>
         </div>
       </section>
