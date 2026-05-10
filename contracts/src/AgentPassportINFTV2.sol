@@ -57,6 +57,32 @@ interface IReceiptRegistryView {
  * `trustScore` resets to 0 for every new passport because V1's self-claimed
  * scores cannot be migrated honestly. Studio renders a `LEGACY-PASSPORT`
  * chip on V1 rows.
+ *
+ * Threat model:
+ *   - Defends against: a passport owner self-minting reputation. Only
+ *     authorizedRecorders may write trust deltas, and every write is
+ *     bounded ([-100, +100]) AND cross-checked against a real
+ *     ReceiptRegistry row whose agentAddress equals the passport owner.
+ *   - Defends against: a previous owner's executor grants surviving
+ *     transfer. executorVersion bumps on every owner change, so the
+ *     per-version map slot rotates and old grants stop matching.
+ *   - Defends against: re-entry during mint. passportOf is set BEFORE
+ *     _safeMint (CEI ordering) AND the function carries nonReentrant.
+ *   - Does NOT defend against: a compromised authorizedRecorder. If
+ *     msg.sender holds the recorder role, the per-call cap is the only
+ *     gate; over many calls a malicious recorder could grind reputation
+ *     up or down. Recorder set is operator-vetted and revocable.
+ *   - Does NOT defend against: receiptRegistry.receipts() returning a
+ *     forged row. The cross-check assumes the configured registry is
+ *     trustworthy; a malicious registry pointer would let any anchored
+ *     receipt be claimed against any passport. setReceiptRegistry() is
+ *     onlyOwner; default deploys point at the canonical V2 registry.
+ *   - Assumed attacker capabilities: any wallet may mint a fresh
+ *     passport (intentional · permissionless). The attacker may try to
+ *     pass a spoofed receipt id, a recipient contract that re-enters
+ *     mint, or transfer-grant tricks. They cannot mint as someone
+ *     else (msg.sender == minter) and cannot record reputation without
+ *     holding the authorizedRecorder role.
  */
 contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard {
     /// @notice Sealed-data integrity verifier (ERC-7857 oracle role)
