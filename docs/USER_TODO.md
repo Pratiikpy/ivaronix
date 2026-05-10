@@ -356,6 +356,34 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   3. Add a CI gate via `pnpm numbers:check` that fails if `docs/numbers.json` is more than 24h older than the latest receipt anchored on chain (= the docs are demonstrably stale).
 - **Effort:** ~1.5h. Useful but not blocking; the manual-refresh pattern works for the submission window.
 
+### B-V2-19 · Auto-generated `docs/STATUS.md` from chain reads
+- **Source:** plan-003 §A.5.4. SESSION_FINAL.md was archived at the doc top with a "live state lives here →" pointer; the long-lived replacement (`docs/STATUS.md`, auto-generated) is queued.
+- **Why:** a judge reading the repo for the first time should land on a one-page status doc with live numbers (receipt count, contract addresses, agent count, last anchor tx), not a 2026-05-08 snapshot. SESSION_FINAL.md fossilises the moment it's written; STATUS.md regenerates on every chain-smoke run.
+- **Action:**
+  1. Write `scripts/render-status.ts` that reads `docs/numbers.json` + `contracts/deployments/{testnet,mainnet}.json` and renders `docs/STATUS.md` from a template.
+  2. Wire into `pnpm numbers:refresh` so the same command refreshes both `numbers.json` and `STATUS.md`.
+  3. Wire into `.github/workflows/chain-smoke.yml` so STATUS.md commits on every nightly cron after a successful smoke run.
+- **Effort:** ~1h. Defer until B-V2-3 (mainnet promotion) so STATUS.md launches with mainnet numbers, not stale testnet snapshots.
+
+### B-V2-20 · Doc subdir restructure (`docs/{spec,judge,audit,_internal}/`)
+- **Source:** plan-003 §A.5.4. Today `docs/` is 24 markdown files at one level — sprint-internal (planning-001/002/003, PASS77_*) sits next to evergreen-canonical (RECEIPT_SCHEMA, HASH_FUNCTION, CRYPTO_NOTES) sits next to judge-facing (JUDGE_GUIDE, PITCH, MAINNET_READINESS). Reviewers can't tell which one to read first.
+- **Why:** flat `docs/` is fine until file count crosses ~20; we're past the threshold. The subdirs sort docs by audience: spec (technical contracts) / judge (external-facing) / audit (honest internal state) / _internal (sprint planning + research).
+- **Action:**
+  1. Cross-reference sweep: `grep -rn "docs/RECEIPT_SCHEMA\|docs/HASH_FUNCTION\|docs/QA_LOOP_BRIEF\|docs/HALF_BAKED\|docs/JUDGE_GUIDE\|docs/PITCH\|docs/MAINNET_READINESS\|docs/USER_TODO\|docs/PHASE_B_DISCLOSURES\|docs/QA_FULL_PRODUCT_REPORT\|docs/QA_MISSION\|docs/planning-01\|docs/planning-002\|docs/planning-003\|docs/PASS77_\|docs/PLAN_pass76\|docs/PLAN_pass77_cli"` and list every consumer.
+  2. `git mv` the files into the four subdirs (preserves history).
+  3. Update every cross-reference (README, CLAUDE.md, package READMEs, planning-003, USER_TODO itself, scripts/qa/metamask-e2e/verify-*.ts) in the same commit.
+  4. Add a redirect stub at the old paths for one release cycle (`# Moved → docs/spec/RECEIPT_SCHEMA.md`).
+- **Effort:** ~1h (mostly cross-reference cleanup). Defer to a slack window — the current archived-header approach already separates evergreen from sprint-internal at the top of each doc.
+
+### B-V2-21 · Pre-commit hook: block absolute receipt-numbers in root markdown
+- **Source:** plan-003 §A.5.4. Root-level docs (README, CLAUDE.md, PRD, HLD) referencing absolute receipt counts ("1,644 receipts") drift the moment a new receipt anchors. The auto-render pipeline (B-V2-8) fixes the read path; this fixes the write path.
+- **Why:** prevent the next sprint snapshot from being committed verbatim into a long-lived doc. The hook fails on `^[A-Z][A-Z_]*\.md|^README\.md|^CLAUDE\.md` files containing patterns like `\b\d{1,3},?\d{3}\s+receipts\b` that aren't wrapped in a `<!-- numbers:auto:* -->` marker.
+- **Action:**
+  1. Add `scripts/precommit/no-absolute-numbers.ts`.
+  2. Wire into `husky` or `lefthook` pre-commit hook.
+  3. Run on staged files only — full-repo scan is too noisy for the workflow.
+- **Effort:** ~30min. Pairs with B-V2-8 (auto-render) — both ship together or this hook will block the manual-refresh workflow.
+
 ### B-V2-7 · Set up scoped CI wallet for chain-smoke workflow
 - **Source:** plan-003 §A.1.5 + `.github/workflows/chain-smoke.yml`
 - **Why:** the V2 anchor smoke workflow needs a scoped EVM key to anchor a synthetic receipt on Galileo on PR (label `run-chain-smoke`) + nightly cron. Using the operator's main signing key would leak the operator wallet address into GitHub Actions logs.

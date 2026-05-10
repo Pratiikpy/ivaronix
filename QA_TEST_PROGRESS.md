@@ -1,5 +1,7 @@
 # Ivaronix · QA Test Progress
 
+> **ARCHIVAL · 2026-05-10.** Sprint-internal tracker for the 2026-05-08 QA contractor engagement. Live test progress now lives in `docs/QA_FULL_PRODUCT_REPORT.md` (per-feature matrix), `CHANGELOG.md` (closed audits), and `docs/HALF_BAKED.md` (open audits).
+
 > Live tracker for the QA mission. Source of truth: `docs/QA_MISSION.md`.
 > Started: 2026-05-08
 > Engineer: agent (cron-paced 1m ticks until TIER 1 PRIMARY green)

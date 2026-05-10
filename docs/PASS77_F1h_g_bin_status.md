@@ -1,5 +1,7 @@
 # PASS 77 F-1h-g — opencode-bin status
 
+> **ARCHIVAL · 2026-05-10.** Sprint-internal status snapshot from the OpenCode port decision. The chosen path is reflected in `packages/opencode-bin/`. Read live state in code; this doc remains for traceability.
+
 > Locked: 2026-05-08 · status: blocking decision
 
 ## What landed

@@ -1,5 +1,7 @@
 # PASS 77 F-1h-f — zod version decision (side-by-side coexistence)
 
+> **ARCHIVAL · 2026-05-10.** Sprint-internal research artefact from the OpenCode port. The decision recorded here is captured in `packages/opencode-bin/package.json` (zod@3) + workspace root (zod@4). Read live state in code; this doc remains for traceability.
+
 > Locked: 2026-05-08 · supersedes the "migrate all 81 of our files to zod@4" recommendation in `PASS77_F1h_impact_analysis.md` §2.
 
 ## The finding

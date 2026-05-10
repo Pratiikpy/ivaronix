@@ -1,5 +1,7 @@
 # Ivaronix · Planning 01 — Parked Decisions
 
+> **SUPERSEDED · 2026-05-10.** Planning-01 → Planning-002 → **Planning-003** is the live plan. Read `docs/planning-003.md` for the current state. This doc remains for archaeological reference; do not act on items here without checking planning-003 first.
+
 > Status: **PARKED**, not built.
 > All items below are decisions we agreed on the strategy for. Full implementation plan, scope, and sequencing TBD next session. Captured here so we don't lose them.
 >

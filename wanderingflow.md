@@ -1,5 +1,7 @@
 # Wandering · Flow Log
 
+> **SOURCE DOC — drove `docs/planning-003.md`. Frozen 2026-05-09.** Use as a tour of the codebase as it stood when planning-003 was written; do not act on items here directly. The plan is the contract.
+
 > Short flow log of where I wandered and what jumped out. One line per file/area visited. Companion: `wanderingthoughts.md` (deep takes).
 
 ## Areas covered (TOC)

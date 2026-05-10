@@ -1,5 +1,7 @@
 # PASS 77 — CLI Depth (fork OpenCode + re-skin to Ivaronix + 0G receipts layer)
 
+> **SUPERSEDED · 2026-05-10.** PASS 77's CLI-depth items were absorbed into Planning-003 §A. The OpenCode fork lives at `packages/opencode-bin/` today. Read `docs/planning-003.md` for live priorities; this doc remains for archaeological reference.
+
 > Companion to `docs/PLAN_pass76.md`. Grounded in deep reads of `CLI Open Source Project/{OpenCode, Octogent, hermes-agent, claude-mem, awesome-claude-skills}` and a license + architecture check.
 >
 > Locked: 2026-05-08. Status: pending kickoff.

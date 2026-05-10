@@ -316,6 +316,10 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       context: enrichedContext,
       userPrompt: activePrompt,
       rawBytes: Buffer.from(activeContext, 'utf8'),
+      // Forward the operator's signer key so gate 2 can exact-match
+      // against an accidental paste. Per planning-003 §A.5.15 this is
+      // the only zero-false-positive path for private-key detection.
+      signerPrivateKey: env.privateKey,
     });
   }
   const elapsedMs = Date.now() - startTime;

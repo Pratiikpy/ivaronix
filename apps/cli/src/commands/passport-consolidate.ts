@@ -201,6 +201,7 @@ export function addConsolidateCommand(parent: Command): void {
             context,
             userPrompt: SUMMARY_PROMPT,
             rawBytes: Buffer.from(context, 'utf8'),
+            signerPrivateKey: env.privateKey,
           });
           const judgement = result.judgement?.content ?? result.reviewerOutputs[0]?.content ?? '';
           summaryText = judgement.trim();

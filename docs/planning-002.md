@@ -1,5 +1,7 @@
 # Planning-002 · the #1 plan
 
+> **SUPERSEDED · 2026-05-10.** Planning-002 was rolled forward into **Planning-003** after the wandering-flow synthesis. Read `docs/planning-003.md` for the live testnet (Section A) + mainnet (Section B) split. This doc remains for archaeological reference.
+
 > Mission: become the **#1** project on the OG APAC Hackathon ($45K grand prize). No compromise.
 > Started 2026-05-09 from the post-Tier-4 state — every item in `planning-01.md` already shipped on testnet. This doc captures what's left.
 >

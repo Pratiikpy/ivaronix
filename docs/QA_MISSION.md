@@ -1,5 +1,9 @@
 # Ivaronix · QA Mission
 
+> **ARCHIVED · 2026-05-10.** This brief was written for a specific 2026-05-08 QA contractor engagement. The evergreen quality philosophy now lives in **`docs/QUALITY.md`**, and the verbatim test-everything contract lives in **`docs/QA_LOOP_BRIEF.md`**. Read those first.
+>
+> The body below is preserved verbatim because some open-audit items in `docs/HALF_BAKED.md` still cross-reference its checkpoint numbering. Per planning-003 §A.5.4, this doc moves to `_archive/` once those refs are migrated. Not yet — pre-mainnet ripple risk too high.
+
 > Locked: 2026-05-08 · this is the verify-everything brief for the contracted QA engineer.
 >
 > **Goal:** confirm every CLI command and every Studio surface is **smooth, premium, professional, and functionally top-notch**, with **real keys, real chain, real broker — no mocks, no soft-fails** (CLAUDE.md §1, §6, §8).

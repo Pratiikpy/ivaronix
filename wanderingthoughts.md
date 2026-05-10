@@ -1,5 +1,7 @@
 # Wandering · Thoughts
 
+> **SOURCE DOC — drove `docs/planning-003.md`. Frozen 2026-05-09.** Each numbered thought below has a corresponding `A.x.y` or `B.x` entry in planning-003. Don't act on items here directly; act on the plan. This doc remains for traceability between thought-id and audit-id.
+
 > Opinionated takes from the wandering. Each entry: what's there now, what could be the best version, why it matters, concrete proposal. Companion: `wanderingflow.md` (the lean log).
 
 > Voice: terse, blunt. No em-dashes, no AI slop. Numbers > adjectives.

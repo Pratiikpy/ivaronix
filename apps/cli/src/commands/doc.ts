@@ -382,6 +382,9 @@ docCommand
       context: enrichedContext,
       userPrompt: activeQuestion,
       rawBytes: docBytes,
+      // Forward the operator's signer key so gate 2 can exact-match
+      // against an accidental paste. Per planning-003 §A.5.15.
+      signerPrivateKey: env.privateKey,
     });
 
     const elapsedMs = Date.now() - startTime;

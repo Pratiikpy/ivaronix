@@ -1,10 +1,22 @@
 # Ivaronix — Session Final Status
 
+> **ARCHIVED · 2026-05-10.** This file is a snapshot from the 37-round verification arc on 2026-05-08, when Ivaronix had ~287 anchored receipts on Galileo testnet. The numbers, todos, and "remaining work" sections below are FROZEN as of that date.
+>
+> For the live state, read these instead:
+> - **Live receipt count + numbers:** `docs/numbers.json` (auto-refreshed via `pnpm numbers:refresh`).
+> - **Open audit ledger:** `docs/HALF_BAKED.md`.
+> - **Closed audit ledger:** `CHANGELOG.md` (with `Closes audit <ID>` commit trailers).
+> - **Operator-action gates:** `docs/USER_TODO.md`.
+> - **Mainnet readiness checklist:** `docs/MAINNET_READINESS.md`.
+> - **Reviewer journey:** `docs/JUDGE_GUIDE.md`.
+>
+> Per planning-003 §A.5.4 (and CLAUDE.md §11.4): root-level docs that quote absolute receipt numbers from a sprint snapshot fossilize. The replacement long-lived doc is `docs/STATUS.md` (auto-generated from chain reads, queued in `USER_TODO §B-V2-19`).
+
 > 37-round verification arc · 2026-05-08 · network: 0G Galileo Testnet (chainId 16602)
 
 ## What this document is
 
-A single page a grant reviewer or judge can read in 5 minutes to assess Ivaronix without running it. Cross-references back into `docs/build/BUILD_PROGRESS.md` (per-round detail) and `docs/build/TEST_REPORT.md` (matrices) when deeper proof is needed.
+A single page a grant reviewer or judge could read in 5 minutes to assess Ivaronix without running it as of 2026-05-08. Cross-references back into `docs/build/BUILD_PROGRESS.md` (per-round detail) and `docs/build/TEST_REPORT.md` (matrices) when deeper proof is needed. Numbers below are frozen at the snapshot date; live numbers live in `docs/numbers.json`.
 
 ## TL;DR — functionality proven
 

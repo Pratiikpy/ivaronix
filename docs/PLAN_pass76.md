@@ -1,5 +1,7 @@
 # PASS 76 — Steal-and-Reorg Plan
 
+> **SUPERSEDED · 2026-05-10.** PASS 76's competitive-steal items were absorbed into Planning-003 §A (testnet). This doc remains for archaeological reference. Read `docs/planning-003.md` for live priorities.
+
 > Synthesis target: ship five fastest wins from the new-entries cohort + close one platform-completeness gap, **without diluting the receipts-as-primitive thesis**. Grounded in `new-entries/Codex Thinking/claude-thinking.md` (deep-read of 9 competing hackathon repos).
 >
 > Locked: 2026-05-08. Status: pending kickoff.

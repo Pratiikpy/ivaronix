@@ -1,5 +1,7 @@
 # PASS 77 F-1h — Porting Impact Analysis
 
+> **ARCHIVAL · 2026-05-10.** Sprint-internal research artefact from the OpenCode port. The actual implementation choices live in `packages/opencode-bin/`; this doc remains for context on why those choices were made.
+
 > Locked: 2026-05-08 · status: research artifact · companion to `docs/PLAN_pass77_cli.md`
 
 After F-1a..F-1g landed (499 TS files vendored across 6 OpenCode packages — `opencode-{plugin, sdk, function, script, core, bin}`), this doc surveys the **actual concrete porting work** needed before any of those packages compile in our pnpm/Node/tsx workspace.

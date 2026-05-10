@@ -17,6 +17,12 @@ export interface RunSkillInput {
   keyring: Keyring;
   /** Model id (defaults to qwen-2.5-7b). */
   model?: string;
+  /**
+   * Optional operator signer private key. Forwarded to gate 2 for
+   * exact-match private-key detection (zero false positives).
+   * Per planning-003 §A.5.15.
+   */
+  signerPrivateKey?: string;
 }
 
 export interface RunSkillResult extends ConsensusResult {
@@ -36,7 +42,7 @@ export interface RunSkillResult extends ConsensusResult {
  * frame on top — the skill prompt is the *what* and the role prompt is the *how*.
  */
 export async function runSkill(input: RunSkillInput): Promise<RunSkillResult> {
-  const { skill, context, rawBytes, userPrompt, tierOverride, keyring, model } = input;
+  const { skill, context, rawBytes, userPrompt, tierOverride, keyring, model, signerPrivateKey } = input;
 
   const tier: ConsensusTier = tierOverride ?? skill.manifest.og.consensus.default_tier;
 
@@ -51,6 +57,7 @@ export async function runSkill(input: RunSkillInput): Promise<RunSkillResult> {
     context: enrichedContext,
     userPrompt,
     rawBytes,
+    signerPrivateKey,
   });
 
   return {

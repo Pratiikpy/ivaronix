@@ -20,6 +20,12 @@ export interface ConsensusInput {
   routerBalanceOg?: number;
   registryPaused?: boolean;
   modelCapabilities?: GateInput['modelCapabilities'];
+  /**
+   * Operator signer private key (hex). Forwarded to gate 2 so it can
+   * exact-match against the doc body. Per planning-003 §A.5.15 this is the
+   * only zero-false-positive path for detecting an accidental key paste.
+   */
+  signerPrivateKey?: string;
 }
 
 export interface RoleAttestation {
@@ -79,6 +85,7 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
     modelCapabilities: input.modelCapabilities,
     routerBalanceOg: input.routerBalanceOg,
     registryPaused: input.registryPaused,
+    signerPrivateKey: input.signerPrivateKey,
   });
 
   if (!gateResult.pass) {
