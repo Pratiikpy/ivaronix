@@ -55,6 +55,8 @@ console.log('');
 console.log(`Summary: ${GREEN(String(canonical))} canonical · ${YELLOW(String(legacyAliases))} legacy aliases · ${RED(String(unset))} unset.`);
 if (legacyAliases > 0) {
   console.log('');
+  // canonical-alias-allow:rename-tip · this string IS the operator's rename
+  // guidance; the legacy names are the data of the message, not drift.
   console.log(YELLOW('Tip:'), 'rename legacy aliases (`OG_PRIVATE_KEY`, `EVM_PRIVATE_KEY`, `OG_NETWORK`, etc.) to their `IVARONIX_*` canonical forms to silence the deprecation warnings on every CLI start.');
 }
 
