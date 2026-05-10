@@ -29,6 +29,7 @@
     "numbers:print": "tsx scripts/diag/numbers-refresh.ts --print",
     "numbers:check": "tsx scripts/diag/numbers-refresh.ts --check",
     "screenshots:refresh": "pnpm --filter qa-metamask-e2e exec tsx capture-readme-shots.ts",
+    "tour:refresh": "pnpm --filter qa-metamask-e2e exec tsx capture-readme-tour.ts",
     "receipt-types:render": "tsx scripts/diag/render-receipt-types.ts",
     "receipt-types:check": "tsx scripts/diag/render-receipt-types.ts --check",
     "audit:list": "tsx scripts/diag/audit-list.ts",

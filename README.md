@@ -55,6 +55,8 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 
 Six product surfaces, captured by `pnpm screenshots:refresh` at 1200×800 against a live Studio dev server. Each shot is a real screen, not a mockup. Source script: [`scripts/qa/metamask-e2e/capture-readme-shots.ts`](scripts/qa/metamask-e2e/capture-readme-shots.ts). When the captures haven't been refreshed against the latest deploy, the operator runs `pnpm screenshots:refresh` per the runbook in [USER_TODO §B-V2-23](docs/USER_TODO.md).
 
+A 30-second tour video at [`screenshots/readme/tour.webm`](screenshots/readme/tour.webm) walks the same six surfaces in motion (home → skills → `/r/<id>` → agents → `/0g` → memory). Refresh via `pnpm tour:refresh` against the same dev server (`scripts/qa/metamask-e2e/capture-readme-tour.ts`).
+
 | | | |
 |---|---|---|
 | ![Studio home with hero + receipt counter](screenshots/readme/01-home.png) | ![Run panel mid-execution · four lights pending](screenshots/readme/02-runpanel-mid.png) | ![Receipt page · all four lights green · TIER 1 chip](screenshots/readme/03-receipt-tier1.png) |
