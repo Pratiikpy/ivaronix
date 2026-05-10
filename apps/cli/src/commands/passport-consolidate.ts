@@ -12,6 +12,7 @@ import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipt
 import { sha256HexAsync, studioUrl, type Address, type Hash } from '@ivaronix/core';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
+import { deriveRiskLevel } from '@ivaronix/runtime';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -311,7 +312,11 @@ export function addConsolidateCommand(parent: Command): void {
         outputs: {
           outputHash,
           citations: [],
-          riskLevel: 'low',
+          // Sweep 174: extend deriveRiskLevel (sweep 165) to the
+          // consolidate path. summaryText is real model output that
+          // can mention severity markers when the consolidation
+          // surfaced something concerning in the window's receipts.
+          riskLevel: deriveRiskLevel(summaryText),
           wording: {
             headline: summaryText.split('\n')[0]?.slice(0, 200) ?? `Memory consolidation · ${windowKey}`,
             doNotSay: ['truth score', 'verified by AI', 'guaranteed safe'],
