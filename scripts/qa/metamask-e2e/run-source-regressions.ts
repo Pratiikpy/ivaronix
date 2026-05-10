@@ -79,6 +79,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-bare-auto-1fr/, // HALF_BAKED §G Tier-A item 9 · grid `auto 1fr` mobile-overflow (sweep 133)
       /^verify-api-route-zod-validation/, // HALF_BAKED §J-2 · every body-taking API route validates via Zod safeParse (sweeps 145-149 fixed; sweep 150 locks)
       /^verify-publishable-metadata/, // HALF_BAKED §J-14 · npm-publishable packages have description/license/homepage/repository/bugs/engines (sweep 155)
+      /^verify-fully-verified-gates-on-verifyclaimed/, // I-1 mirror · FULLY VERIFIED chip on every tamper-sensitive surface requires verifyClaimed pass (sweeps 175-176)
     ],
   },
   'studio-live': {

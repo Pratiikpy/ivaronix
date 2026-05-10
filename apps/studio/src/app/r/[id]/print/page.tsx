@@ -10,6 +10,7 @@ import {
 } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
 import { PrintControls } from './print-controls';
+import { verifyClaimed } from '@ivaronix/receipts';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,19 @@ export default async function PrintableReceipt({ params }: { params: Promise<{ i
   const headline = local?.outputs?.wording?.headline ?? '';
   const txHash = local?.chainAnchor?.anchorTxHash;
   const tee = local?.teeVerification;
-  const isFullyVerified = tee?.routerVerified === true && tee?.independentVerified === true;
+  // Sweep 176: mirror /r/[id] + /embed/r/[id]'s I-1 verifyClaimed gate.
+  // The printable surface is a save-as-PDF artifact that gets emailed,
+  // notarized, attached to contracts — same tamper-sensitivity as embed.
+  // A malicious operator could flip routerVerified + independentVerified
+  // in the local body and the PDF would print FULLY VERIFIED. Now gated.
+  let localValid = false;
+  if (local) {
+    try {
+      const r = verifyClaimed(local);
+      localValid = r.state === 'CLAIMED';
+    } catch { localValid = false; }
+  }
+  const isFullyVerified = localValid && tee?.routerVerified === true && tee?.independentVerified === true;
   const tierLabel = tee?.verificationMethod === 'router_flag' || tee?.verificationMethod === 'compute_sdk_process_response'
     ? 'TIER 1 · TEE-attested'
     : tee?.verificationMethod === 'external-signed'
