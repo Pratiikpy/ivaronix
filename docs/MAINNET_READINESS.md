@@ -13,7 +13,7 @@
 | # | Item | Status | Evidence |
 |---|---|---|---|
 | 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
-| 2 | Env vars (9/9 required) | ✓ | OG_NETWORK, RPC, EVM_PRIVATE_KEY, ZG_API_SECRET, OG_COMPUTE_PROVIDER, NVIDIA_API_KEY, … all set |
+| 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
 | 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry.nextId()` (V1) + `ReceiptRegistryV2.nextId()` |

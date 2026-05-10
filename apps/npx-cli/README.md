@@ -51,7 +51,7 @@ The receipt URL renders the answer, the TIER 1 / TIER 2 verification chip, the o
 A first run will prompt you to drop a few values into `.env` (the CLI prints exact lines):
 
 - `IVARONIX_SIGNER_KEY` — the EVM key Ivaronix uses to sign receipts and pay testnet gas. Generate fresh: `node -e 'const{Wallet}=require("ethers");const w=Wallet.createRandom();console.log(w.address);console.log(w.privateKey);'`. Top up at the [Galileo faucet](https://faucet.0g.ai).
-- `ZG_API_SECRET` — your 0G Router credential (TIER 1 TEE-attested inference path).
+- `IVARONIX_ROUTER_KEY` — your 0G Router credential (TIER 1 TEE-attested inference path). Legacy alias `ZG_API_SECRET` still resolves via the alias chain.
 - `IVARONIX_NETWORK=testnet` — switch to `mainnet` once the operator has redeployed (USER_TODO §B-V2-3).
 
 ## Source + docs

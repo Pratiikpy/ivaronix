@@ -203,7 +203,7 @@ That's the spine. Everything else in this repo exists to make that command produ
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix
 pnpm install
-cp .env.example .env   # add your ZG_API_SECRET + EVM_PRIVATE_KEY (faucet at faucet.0g.ai is free)
+cp .env.example .env   # add your IVARONIX_ROUTER_KEY + IVARONIX_SIGNER_KEY (faucet at faucet.0g.ai is free)
 pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
 ```
 

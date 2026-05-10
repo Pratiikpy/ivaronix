@@ -100,11 +100,11 @@ openclaw run ivaronix.passportShow --wallet 0xaa954c33810029a3eFb0bf755FEF17863E
 `.env` (loaded from cwd or any parent):
 
 ```
-EVM_PRIVATE_KEY=0x…           # Wallet that signs receipts
-ZG_API_SECRET=…               # 0G Router API key
-ZG_SERVICE_URL=…              # 0G Router endpoint
-OG_COMPUTE_PROVIDER=…         # Compute provider address
-OG_NETWORK=testnet            # flip to `mainnet` after USER_TODO §B-V2 redeploy lands
+IVARONIX_SIGNER_KEY=0x…        # Wallet that signs receipts (legacy: EVM_PRIVATE_KEY)
+IVARONIX_ROUTER_KEY=…          # 0G Router API key (legacy: ZG_API_SECRET)
+IVARONIX_ROUTER_URL=…          # 0G Router endpoint (legacy: ZG_SERVICE_URL)
+IVARONIX_ROUTER_PROVIDER=…     # Compute provider address (legacy: OG_COMPUTE_PROVIDER)
+IVARONIX_NETWORK=testnet       # flip to `mainnet` after USER_TODO §B-V2 redeploy lands (legacy: OG_NETWORK)
 ```
 
 ## Why Ivaronix is different

@@ -89,7 +89,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   ! vercel login
   cd apps/studio
   cp .env.production.template .env.production
-  # Fill .env.production with the real values (private key, ZG_API_SECRET, etc.)
+  # Fill .env.production with the real values (IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, etc.)
   # Then push the env vars to Vercel:
   vercel env pull .env.local             # Sanity check: pulls back what's set
   vercel --prod                          # Deploys to your team's prod URL
