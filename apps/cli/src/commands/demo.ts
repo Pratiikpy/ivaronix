@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { JsonRpcProvider } from 'ethers';
 import { runPipeline } from '../lib/pipeline.js';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
-import { AgentPassportClient, ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { AgentPassportClient, ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
 import { NETWORKS, studioUrl, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -133,14 +133,24 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
     ui.info(`receipt JSON         ${result.receiptPath}`);
     ui.divider();
 
-    // Bump cumulative count for headline copy
+    // Bump cumulative count for headline copy. Sweep 178: V1+V2 union
+    // so post-K-2 anchors show up in the demo headline. Pre-sweep this
+    // read V1 only — once V2 receipts started landing (sweep 222 +
+    // subsequent demo runs), the "X receipts on testnet" headline
+    // under-counted by the V2 anchor delta.
     let total = 0n;
     try {
-      const regAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-      if (regAddr) {
-        const reg = new ReceiptRegistryClient(regAddr, provider);
-        total = await reg.nextId();
-        if (total > 0n) total -= 1n;
+      const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      if (v2Addr) {
+        const regV2 = new ReceiptRegistryV2Client(v2Addr, provider);
+        const next = await regV2.nextId();
+        if (next > 0n) total += next - 1n;
+      }
+      const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      if (v1Addr) {
+        const reg = new ReceiptRegistryClient(v1Addr, provider);
+        const next = await reg.nextId();
+        if (next > 0n) total += next - 1n;
       }
     } catch { /* optional */ }
 
