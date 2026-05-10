@@ -18,6 +18,7 @@ import type { Address, Hash } from '@ivaronix/core';
 
 export interface IndexedReceipt {
   id: number;
+  registryVersion: 1 | 2; // V1 = legacy ReceiptRegistry, V2 = ReceiptRegistryV2 (sweep 65)
   receiptRoot: Hash;
   storageRoot: Hash;
   attestationHash: Hash;
@@ -31,6 +32,8 @@ export interface IndexedReceipt {
 
 export interface IndexerStats {
   totalReceipts: number;
+  totalV1: number; // sweep 65: split V1 + V2 anchored counts
+  totalV2: number;
   byType: Record<number, number>;
   latestBlock: number;
   latestReceiptId: number;
@@ -51,9 +54,23 @@ export class IndexerDb {
   }
 
   private bootstrap(): void {
+    // Sweep 65: V2 ReceiptRegistry support. V1 id=100 and V2 id=100 are
+    // DIFFERENT receipts (separate counters per registry contract), so
+    // the PK is now composite (id, registry_version). Existing V1 rows
+    // migrate by tagging registry_version=1.
+    //
+    // Migration path: detect old schema (PK on id only · no
+    // registry_version column) and migrate via copy-into-new-table.
+    // Safe to run repeatedly; the IF NOT EXISTS guards handle clean
+    // installs.
+    const hasOldSchema = this.detectOldSchema();
+    if (hasOldSchema) {
+      this.migrateV1ToMultiVersion();
+    }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS receipts (
-        id INTEGER PRIMARY KEY,
+        id INTEGER NOT NULL,
+        registry_version INTEGER NOT NULL DEFAULT 1,
         receipt_root TEXT NOT NULL,
         storage_root TEXT NOT NULL,
         attestation_hash TEXT NOT NULL,
@@ -62,13 +79,15 @@ export class IndexerDb {
         block_number INTEGER NOT NULL,
         block_timestamp INTEGER NOT NULL,
         tx_hash TEXT NOT NULL,
-        log_index INTEGER NOT NULL
+        log_index INTEGER NOT NULL,
+        PRIMARY KEY (id, registry_version)
       );
 
       CREATE INDEX IF NOT EXISTS idx_receipts_agent     ON receipts (agent);
       CREATE INDEX IF NOT EXISTS idx_receipts_type      ON receipts (receipt_type);
       CREATE INDEX IF NOT EXISTS idx_receipts_block     ON receipts (block_number);
       CREATE INDEX IF NOT EXISTS idx_receipts_agent_type ON receipts (agent, receipt_type);
+      CREATE INDEX IF NOT EXISTS idx_receipts_version   ON receipts (registry_version);
 
       CREATE TABLE IF NOT EXISTS ingest_cursor (
         contract_address TEXT PRIMARY KEY,
@@ -78,13 +97,60 @@ export class IndexerDb {
     `);
   }
 
+  /**
+   * Detect the pre-V2 schema: PRIMARY KEY on `id` only (no
+   * registry_version column). Returns true if migration is needed.
+   */
+  private detectOldSchema(): boolean {
+    try {
+      const cols = this.db
+        .prepare("PRAGMA table_info('receipts')")
+        .all() as Array<{ name: string }>;
+      if (cols.length === 0) return false; // table doesn't exist yet
+      return !cols.some((c) => c.name === 'registry_version');
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Sweep 65 migration: copy old (V1-only · single-PK) rows into the
+   * new multi-version schema, tagging every existing row as V1.
+   */
+  private migrateV1ToMultiVersion(): void {
+    this.db.exec(`
+      ALTER TABLE receipts RENAME TO receipts_v1_only;
+      CREATE TABLE receipts (
+        id INTEGER NOT NULL,
+        registry_version INTEGER NOT NULL DEFAULT 1,
+        receipt_root TEXT NOT NULL,
+        storage_root TEXT NOT NULL,
+        attestation_hash TEXT NOT NULL,
+        agent TEXT NOT NULL,
+        receipt_type INTEGER NOT NULL,
+        block_number INTEGER NOT NULL,
+        block_timestamp INTEGER NOT NULL,
+        tx_hash TEXT NOT NULL,
+        log_index INTEGER NOT NULL,
+        PRIMARY KEY (id, registry_version)
+      );
+      INSERT INTO receipts (id, registry_version, receipt_root, storage_root,
+                            attestation_hash, agent, receipt_type, block_number,
+                            block_timestamp, tx_hash, log_index)
+      SELECT id, 1, receipt_root, storage_root, attestation_hash, agent,
+             receipt_type, block_number, block_timestamp, tx_hash, log_index
+      FROM receipts_v1_only;
+      DROP TABLE receipts_v1_only;
+    `);
+  }
+
   upsertReceipt(r: IndexedReceipt): void {
     this.db.prepare(
       `INSERT OR REPLACE INTO receipts
-        (id, receipt_root, storage_root, attestation_hash, agent, receipt_type,
+        (id, registry_version, receipt_root, storage_root, attestation_hash, agent, receipt_type,
          block_number, block_timestamp, tx_hash, log_index)
       VALUES
-        (@id, @receiptRoot, @storageRoot, @attestationHash, @agent, @receiptType,
+        (@id, @registryVersion, @receiptRoot, @storageRoot, @attestationHash, @agent, @receiptType,
          @blockNumber, @blockTimestamp, @txHash, @logIndex)`,
     ).run(r);
   }
@@ -93,10 +159,10 @@ export class IndexerDb {
     if (rows.length === 0) return 0;
     const stmt = this.db.prepare(
       `INSERT OR REPLACE INTO receipts
-        (id, receipt_root, storage_root, attestation_hash, agent, receipt_type,
+        (id, registry_version, receipt_root, storage_root, attestation_hash, agent, receipt_type,
          block_number, block_timestamp, tx_hash, log_index)
       VALUES
-        (@id, @receiptRoot, @storageRoot, @attestationHash, @agent, @receiptType,
+        (@id, @registryVersion, @receiptRoot, @storageRoot, @attestationHash, @agent, @receiptType,
          @blockNumber, @blockTimestamp, @txHash, @logIndex)`,
     );
     const tx = this.db.transaction((batch: IndexedReceipt[]) => {
@@ -127,20 +193,22 @@ export class IndexerDb {
     return row ?? null;
   }
 
-  getReceipt(id: number): IndexedReceipt | null {
+  getReceipt(id: number, registryVersion: 1 | 2 = 1): IndexedReceipt | null {
     const row = this.db.prepare(
-      `SELECT id, receipt_root AS receiptRoot, storage_root AS storageRoot,
+      `SELECT id, registry_version AS registryVersion,
+              receipt_root AS receiptRoot, storage_root AS storageRoot,
               attestation_hash AS attestationHash, agent, receipt_type AS receiptType,
               block_number AS blockNumber, block_timestamp AS blockTimestamp,
               tx_hash AS txHash, log_index AS logIndex
-         FROM receipts WHERE id = ?`,
-    ).get(id) as IndexedReceipt | undefined;
+         FROM receipts WHERE id = ? AND registry_version = ?`,
+    ).get(id, registryVersion) as IndexedReceipt | undefined;
     return row ?? null;
   }
 
   listReceipts(opts: {
     agent?: Address;
     receiptType?: number;
+    registryVersion?: 1 | 2; // sweep 65: filter by V1 / V2
     limit?: number;
     offset?: number;
   } = {}): IndexedReceipt[] {
@@ -156,20 +224,31 @@ export class IndexerDb {
       where.push('receipt_type = @type');
       params.type = opts.receiptType;
     }
+    if (opts.registryVersion !== undefined) {
+      where.push('registry_version = @version');
+      params.version = opts.registryVersion;
+    }
     const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
     return this.db.prepare(
-      `SELECT id, receipt_root AS receiptRoot, storage_root AS storageRoot,
+      `SELECT id, registry_version AS registryVersion,
+              receipt_root AS receiptRoot, storage_root AS storageRoot,
               attestation_hash AS attestationHash, agent, receipt_type AS receiptType,
               block_number AS blockNumber, block_timestamp AS blockTimestamp,
               tx_hash AS txHash, log_index AS logIndex
          FROM receipts ${whereSql}
-         ORDER BY id DESC
+         ORDER BY id DESC, registry_version DESC
          LIMIT @limit OFFSET @offset`,
     ).all(params) as IndexedReceipt[];
   }
 
   stats(): IndexerStats {
     const totalRow = this.db.prepare('SELECT COUNT(*) AS n FROM receipts').get() as { n: number };
+    const v1Row = this.db
+      .prepare('SELECT COUNT(*) AS n FROM receipts WHERE registry_version = 1')
+      .get() as { n: number };
+    const v2Row = this.db
+      .prepare('SELECT COUNT(*) AS n FROM receipts WHERE registry_version = 2')
+      .get() as { n: number };
     const latestRow = this.db.prepare(
       'SELECT MAX(id) AS id, MAX(block_number) AS blk FROM receipts',
     ).get() as { id: number | null; blk: number | null };
@@ -183,6 +262,8 @@ export class IndexerDb {
     for (const r of typeRows) byType[r.t] = r.n;
     return {
       totalReceipts: totalRow.n,
+      totalV1: v1Row.n,
+      totalV2: v2Row.n,
       byType,
       latestBlock: latestRow.blk ?? 0,
       latestReceiptId: latestRow.id ?? -1,

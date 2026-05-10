@@ -43,6 +43,7 @@ const ZERO_HASH: Hash = ('0x' + '0'.repeat(64)) as Hash;
 function makeReceipt(overrides: Partial<IndexedReceipt> = {}): IndexedReceipt {
   return {
     id: 1,
+    registryVersion: 1, // sweep 65: V1 default for backwards-compat fixtures
     receiptRoot: ('0x' + '11'.repeat(32)) as Hash,
     storageRoot: ('0x' + '22'.repeat(32)) as Hash,
     attestationHash: ZERO_HASH,
@@ -313,5 +314,59 @@ test('persistence: rows survive close + reopen on the same path', () => {
     db2.close();
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+// Sweep 65 · V2-aware indexing tests
+test('V1 id=N and V2 id=N coexist (composite PK)', () => {
+  const { db, cleanup } = makeTempDb();
+  try {
+    db.upsertReceipt(makeReceipt({ id: 1, registryVersion: 1, blockNumber: 100 }));
+    db.upsertReceipt(makeReceipt({ id: 1, registryVersion: 2, blockNumber: 200 }));
+    const v1 = db.getReceipt(1, 1);
+    const v2 = db.getReceipt(1, 2);
+    assert.equal(v1?.blockNumber, 100);
+    assert.equal(v2?.blockNumber, 200);
+    assert.equal(db.stats().totalReceipts, 2);
+  } finally {
+    cleanup();
+  }
+});
+
+test('stats split V1 vs V2 anchored counts', () => {
+  const { db, cleanup } = makeTempDb();
+  try {
+    db.upsertMany([
+      makeReceipt({ id: 1, registryVersion: 1 }),
+      makeReceipt({ id: 2, registryVersion: 1 }),
+      makeReceipt({ id: 1, registryVersion: 2 }),
+    ]);
+    const s = db.stats();
+    assert.equal(s.totalReceipts, 3);
+    assert.equal(s.totalV1, 2);
+    assert.equal(s.totalV2, 1);
+  } finally {
+    cleanup();
+  }
+});
+
+test('listReceipts filter by registryVersion', () => {
+  const { db, cleanup } = makeTempDb();
+  try {
+    db.upsertMany([
+      makeReceipt({ id: 1, registryVersion: 1 }),
+      makeReceipt({ id: 2, registryVersion: 1 }),
+      makeReceipt({ id: 1, registryVersion: 2 }),
+    ]);
+    const v1Only = db.listReceipts({ registryVersion: 1 });
+    const v2Only = db.listReceipts({ registryVersion: 2 });
+    const all = db.listReceipts();
+    assert.equal(v1Only.length, 2);
+    assert.equal(v2Only.length, 1);
+    assert.equal(all.length, 3);
+    assert.ok(v1Only.every((r) => r.registryVersion === 1));
+    assert.ok(v2Only.every((r) => r.registryVersion === 2));
+  } finally {
+    cleanup();
   }
 });

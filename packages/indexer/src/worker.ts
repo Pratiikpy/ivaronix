@@ -22,6 +22,10 @@ export interface WorkerOptions {
   rpcUrl: string;
   chainId: number;
   contractAddress: Address;
+  /** Sweep 65: V1 = legacy ReceiptRegistry, V2 = ReceiptRegistryV2 with
+   *  EIP-712 signer recovery. The worker tags every indexed row by the
+   *  registry it came from so V1 id=N and V2 id=N coexist in the DB. */
+  registryVersion?: 1 | 2;
   /** Max blocks per RPC call. Galileo public RPC caps around 10k; default 5k for safety. */
   blockChunkSize?: number;
 }
@@ -35,7 +39,7 @@ export interface BackfillResult {
 
 export class IndexerWorker {
   readonly db: IndexerDb;
-  readonly opts: Required<Pick<WorkerOptions, 'rpcUrl' | 'chainId' | 'contractAddress' | 'blockChunkSize'>>;
+  readonly opts: Required<Pick<WorkerOptions, 'rpcUrl' | 'chainId' | 'contractAddress' | 'registryVersion' | 'blockChunkSize'>>;
   private provider: JsonRpcProvider;
   private contract: Contract;
   private stopFlag = false;
@@ -46,6 +50,7 @@ export class IndexerWorker {
       rpcUrl: opts.rpcUrl,
       chainId: opts.chainId,
       contractAddress: opts.contractAddress,
+      registryVersion: opts.registryVersion ?? 1,
       blockChunkSize: opts.blockChunkSize ?? 5000,
     };
     this.provider = new JsonRpcProvider(this.opts.rpcUrl, { chainId: this.opts.chainId, name: 'og' });
@@ -85,6 +90,7 @@ export class IndexerWorker {
         if (!args) continue;
         rows.push({
           id: Number(args.id ?? 0n),
+          registryVersion: this.opts.registryVersion,
           receiptRoot: (args.receiptRoot ?? '0x') as Hash,
           storageRoot: (args.storageRoot ?? '0x') as Hash,
           attestationHash: (args.attestationHash ?? '0x') as Hash,

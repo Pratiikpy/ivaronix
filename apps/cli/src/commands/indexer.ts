@@ -36,18 +36,42 @@ function indexerDbPath(): string {
   return resolve(process.cwd(), '.ivaronix', 'indexer', 'receipts.db');
 }
 
-function buildContext(): { db: IndexerDb; address: Address; rpcUrl: string; chainId: number } | null {
+interface RegistryTarget {
+  address: Address;
+  registryVersion: 1 | 2;
+}
+
+interface IndexerContext {
+  db: IndexerDb;
+  // Sweep 65: backfill iterates over BOTH V1 and V2 registries when
+  // both are deployed. The single-address `address` field below is the
+  // V1 contract for backwards-compat with code that still reads it
+  // (sweep 64's stats display, the V1 cursor key in ingest_cursor);
+  // multi-version code paths use `registries` instead.
+  address: Address;
+  registries: RegistryTarget[];
+  rpcUrl: string;
+  chainId: number;
+}
+
+function buildContext(): IndexerContext | null {
   const env = loadEnv();
-  const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-  if (!addr) {
-    ui.fail(`No ReceiptRegistry address known for network=${env.network}`);
+  const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+  const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+  if (!v1Addr && !v2Addr) {
+    ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
     return null;
   }
+  const registries: RegistryTarget[] = [];
+  if (v1Addr) registries.push({ address: v1Addr as Address, registryVersion: 1 });
+  if (v2Addr) registries.push({ address: v2Addr as Address, registryVersion: 2 });
   const dbPath = indexerDbPath();
   mkdirSync(dirname(dbPath), { recursive: true });
+  // address kept for legacy stats output; multi-registry callers use registries[].
   return {
     db: new IndexerDb(dbPath),
-    address: addr as Address,
+    address: (v1Addr ?? v2Addr) as Address,
+    registries,
     rpcUrl: env.rpcUrl,
     chainId: env.chainId,
   };
@@ -69,40 +93,48 @@ indexerCommand
   .action(async (opts: { from?: string; to?: string; chunk: string }) => {
     const ctx = buildContext();
     if (!ctx) { process.exitCode = 1; return; }
-    const worker = new IndexerWorker(ctx.db, {
-      rpcUrl: ctx.rpcUrl,
-      chainId: ctx.chainId,
-      contractAddress: ctx.address,
-      blockChunkSize: Math.max(100, Number(opts.chunk) || 5000),
-    });
-
-    const cursor = ctx.db.getCursor(ctx.address);
-    const fromBlock = opts.from
-      ? Number(opts.from)
-      : cursor
-        ? cursor.lastBlock + 1
-        : 0;
-    const toBlockMaybe = opts.to ? Number(opts.to) : undefined;
-
-    ui.title('indexer · backfill');
-    ui.info(`db                   ${ctx.db.path}`);
-    ui.info(`contract             ${ctx.address}`);
-    ui.info(`from block           ${fromBlock}`);
-    ui.info(`to block             ${toBlockMaybe ?? '(chain head)'}`);
-    ui.divider();
-
-    try {
-      ui.pending('querying ReceiptAnchored events...');
-      const r = await worker.backfill(fromBlock, toBlockMaybe);
-      ui.pass(`scanned blocks       ${r.scannedBlocks}`);
-      ui.pass(`inserted rows        ${r.insertedRows}`);
-      ui.pass(`final block          ${r.toBlock}`);
-    } catch (err) {
-      ui.fail('backfill failed', (err as Error).message);
-      process.exitCode = 1;
-    } finally {
-      ctx.db.close();
+    // Sweep 65: backfill iterates each deployed registry (V1, V2, ...)
+    // with its own per-contract cursor in ingest_cursor. Each worker
+    // tags rows by registryVersion so V1 id=N and V2 id=N coexist.
+    let totalScanned = 0;
+    let totalInserted = 0;
+    let finalBlock = 0;
+    for (const reg of ctx.registries) {
+      const worker = new IndexerWorker(ctx.db, {
+        rpcUrl: ctx.rpcUrl,
+        chainId: ctx.chainId,
+        contractAddress: reg.address,
+        registryVersion: reg.registryVersion,
+        blockChunkSize: Math.max(100, Number(opts.chunk) || 5000),
+      });
+      const cursor = ctx.db.getCursor(reg.address);
+      const fromBlockReg = opts.from
+        ? Number(opts.from)
+        : cursor
+          ? cursor.lastBlock + 1
+          : 0;
+      const toBlockMaybeReg = opts.to ? Number(opts.to) : undefined;
+      ui.section(`backfill V${reg.registryVersion} · ${reg.address}`);
+      ui.info(`from block           ${fromBlockReg}`);
+      ui.info(`to block             ${toBlockMaybeReg ?? '(chain head)'}`);
+      try {
+        const r = await worker.backfill(fromBlockReg, toBlockMaybeReg);
+        ui.pass(`scanned blocks       ${r.scannedBlocks}`);
+        ui.pass(`inserted rows        ${r.insertedRows}`);
+        ui.pass(`final block          ${r.toBlock}`);
+        totalScanned += r.scannedBlocks;
+        totalInserted += r.insertedRows;
+        finalBlock = Math.max(finalBlock, r.toBlock);
+      } catch (err) {
+        ui.fail(`V${reg.registryVersion} backfill failed`, (err as Error).message);
+      }
     }
+    ctx.db.close();
+    ui.divider();
+    ui.pass(`total scanned        ${totalScanned} blocks`);
+    ui.pass(`total inserted       ${totalInserted} rows (V1 + V2 combined)`);
+    return;
+
   });
 
 indexerCommand
@@ -157,21 +189,21 @@ indexerCommand
     try {
       const s = ctx.db.stats();
       const cursor = ctx.db.getCursor(ctx.address);
+      // Sweep 65: indexer now indexes both V1 and V2. Display the
+      // split + per-registry cursors so operators can see migration
+      // state at a glance. The previous V1-only caveat is removed
+      // because the real fix landed.
       ui.title('indexer · stats');
       ui.info(`db                   ${ctx.db.path}`);
-      ui.info(`contract             ${ctx.address}  (V1 only · V2 indexing queued)`);
-      ui.info(`cursor (last block)  ${cursor?.lastBlock ?? '(none)'}`);
-      ui.info(`total receipts       ${s.totalReceipts}  (V1 events only)`);
+      for (const reg of ctx.registries) {
+        const c = ctx.db.getCursor(reg.address);
+        ui.info(`contract V${reg.registryVersion}          ${reg.address}`);
+        ui.info(`  cursor (last block) ${c?.lastBlock ?? '(none)'}`);
+      }
+      ui.info(`total receipts       ${s.totalReceipts}  (V1: ${s.totalV1} + V2: ${s.totalV2})`);
       ui.info(`distinct agents      ${s.distinctAgents}`);
       ui.info(`latest receipt id    ${s.latestReceiptId >= 0 ? s.latestReceiptId : '(none)'}`);
       ui.info(`latest block         ${s.latestBlock}`);
-      // V1-only caveat per sweep 64. The local SQLite indexer was
-      // built before V2 contracts existed; extending it to multi-
-      // registry is queued in USER_TODO §B-V2-INDEXER-V2. Until then,
-      // operators reading these stats need to know V2 anchors are
-      // invisible here. The chain-side `pnpm doctor` and `pnpm stats`
-      // commands DO show V1 + V2 split (sweeps 56-57).
-      ui.hint('V2 receipts are NOT indexed locally yet — see `ivaronix doctor` for live V1+V2 chain counts.');
       ui.divider();
       ui.title('by type');
       for (const [t, n] of Object.entries(s.byType).sort((a, b) => Number(a[0]) - Number(b[0]))) {

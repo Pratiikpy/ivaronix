@@ -219,6 +219,9 @@ export const importCommand = new Command('import')
       const db = new IndexerDb(indexerDbPath());
       inserted = db.upsertMany(bundle.receipts.map((r) => ({
         id: r.id,
+        // sweep 65: bundles serialized before V2 indexing have no
+        // registryVersion field; default to V1 for backwards-compat.
+        registryVersion: ((r as { registryVersion?: 1 | 2 }).registryVersion ?? 1) as 1 | 2,
         receiptRoot: r.receiptRoot as `0x${string}`,
         storageRoot: r.storageRoot as `0x${string}`,
         attestationHash: r.attestationHash as `0x${string}`,
