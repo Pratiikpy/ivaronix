@@ -8,7 +8,9 @@ import {Erc7857Verifier} from "./Erc7857Verifier.sol";
 
 /**
  * @title AgentPassportINFT
- * @notice ERC-7857 Agent Passport — wallet-bound identity for Ivaronix AI agents.
+ * @notice ERC-7857 Agent Passport — wallet-bound identity for Ivaronix AI
+ *         agents. LEGACY (V1) — new mints land on AgentPassportINFTV2.
+ *         V1 stays live for existing tokenIds (chain history immutable).
  * @dev Strict superset of Aishi / MUSASHI / SealedMind / MindVault patterns:
  *      - One passport per wallet (one-agent-per-wallet enforcement)
  *      - On-chain reputation: trustScore + receiptCount + violationCount
@@ -16,6 +18,26 @@ import {Erc7857Verifier} from "./Erc7857Verifier.sol";
  *      - ERC-7857 secure transfer flow gated by Erc7857Verifier
  *      - recordReceipt() integration: each Action Receipt updates the passport
  *      - Memory + skill manifest roots stored on chain (mutable)
+ *
+ *      Threat model:
+ *      - Defends against: unauthorized recordReceipt() callers via the
+ *        authorizedRecorders mapping (only whitelisted contracts can mutate
+ *        on-chain reputation).
+ *      - Defends against: integrity loss on transfer via Erc7857Verifier
+ *        attestation (the inbound sealed-data blob must match an attestor-
+ *        signed (recipient, metadataHash, nonce) tuple).
+ *      - Defends against: pause-during-incident via Pausable (owner can
+ *        halt mints/transfers if a downstream bug is discovered).
+ *      - Does NOT defend against: self-claimed trust score in a single
+ *        recordReceipt() call. AgentPassportINFTV2 hardens this with a
+ *        per-token monotonic delta cap (±100) plus cross-check against
+ *        ReceiptRegistry to confirm the passed receiptId matches a real
+ *        anchored receipt. New mints should use V2.
+ *      - Does NOT defend against: a compromised attestor key. The attestor
+ *        signature is the trust root for transfer integrity; mitigation is
+ *        to rotate via Erc7857Verifier.addAttestor / removeAttestor.
+ *      - Does NOT defend against: a malicious owner pausing the contract
+ *        indefinitely. Mitigation: Ownable2Step transfer + multisig review.
  */
 contract AgentPassportINFT is ERC721, Ownable2Step, Pausable {
     /// @notice Sealed-data integrity verifier (ERC-7857 oracle role)

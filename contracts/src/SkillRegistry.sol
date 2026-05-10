@@ -3,7 +3,9 @@ pragma solidity 0.8.20;
 
 /**
  * @title SkillRegistry
- * @notice On-chain anchoring of Ivaronix skill manifests.
+ * @notice On-chain anchoring of Ivaronix skill manifests. LEGACY (V1) —
+ *         new skills publish to SkillRegistryV2. V1 stays live for
+ *         existing skillIds (chain history immutable).
  * @dev Each skill is identified by `skillId = keccak256("skill:<lowercase-name>")` and may
  *      have many immutable versions. The first wallet to publish a `skillId` becomes its
  *      creator — subsequent versions must be published from the same wallet (or the
@@ -14,6 +16,19 @@ pragma solidity 0.8.20;
  *      look up `(skillId, versionId)` here, confirm the `manifestHash` matches what the
  *      receipt claims, and that the version is not revoked — proving the receipt was
  *      produced by a canonical, attested skill version.
+ *
+ *      Threat model:
+ *      - Defends against: skillId hijack after publication. The first publisher's
+ *        wallet is locked into the creator slot; subsequent publishVersion() calls
+ *        revert from any other sender.
+ *      - Defends against: silent revocation reversal. revoked=true is monotonic;
+ *        no path un-revokes a published version. Verifiers can trust the boolean.
+ *      - Does NOT defend against: skillId squatting at publish time. The first
+ *        wallet to claim a name owns it. SkillRegistryV2 fixes this with
+ *        creator-binding via ERC-7857 passport ownership cross-check.
+ *      - Does NOT defend against: manifest-hash forgery. The contract stores
+ *        the bytes32 only; off-chain verifiers must hash the manifest content
+ *        and compare against the recorded hash.
  */
 contract SkillRegistry {
     struct SkillVersion {

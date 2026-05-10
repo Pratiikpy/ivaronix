@@ -5,7 +5,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 
 /**
  * @title SubscriptionEscrow
- * @notice Recurring agent-billing escrow on 0G Chain. Per PASS 76 B-1.
+ * @notice Recurring agent-billing escrow on 0G Chain. LEGACY (V1) — new
+ *         subscriptions land on SubscriptionEscrowV2. V1 stays live for
+ *         existing subscriptions (chain history immutable).
  * @dev Pattern lifted from zer0Gig's SubscriptionEscrow.sol (3 interval modes
  *      + grace-period auto-pause). Re-implemented under our brand with per-
  *      check-in / per-alert drain rates so each tick maps cleanly to a
@@ -22,6 +24,25 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
  *      subscription_skill_exec receipt on ReceiptRegistry from the same
  *      tx-context (or a follow-up tx) so the two contracts stay decoupled
  *      and either can be upgraded independently.
+ *
+ *      Threat model:
+ *      - Defends against: re-entrancy on funds-claim paths via ReentrancyGuard
+ *        on every withdraw / claim entry point.
+ *      - Defends against: agent over-draining via the per-tick rate caps
+ *        (perCheckIn, perAlert). The agent CAN'T drain more than the cap
+ *        regardless of how often they call.
+ *      - Defends against: client funds-trap. If grace expires, the client
+ *        can claim remaining funds; the agent has no path to lock them.
+ *      - Does NOT defend against: agent-side AGENT_AUTO accountability
+ *            — V1 doesn't link agent identity to an attested ERC-7857
+ *            passport. SubscriptionEscrowV2 fixes this (the AGENT_AUTO
+ *            check-in cross-references the passport's authorized recorders
+ *            list).
+ *      - Does NOT defend against: client paying for fraudulent receipts.
+ *        The escrow doesn't validate receipt content; the agent's
+ *        check-in drain happens regardless of whether the off-chain work
+ *        was real. Mitigation: client reads ReceiptRegistry post-tick and
+ *        disputes on-chain via off-protocol DAO if work is missing.
  */
 contract SubscriptionEscrow is ReentrancyGuard {
     /// @notice Who decides the period between check-ins.

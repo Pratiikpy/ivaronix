@@ -6,12 +6,34 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title ReceiptRegistry
- * @notice Anchors AI Action Receipts on 0G Chain.
+ * @notice Anchors AI Action Receipts on 0G Chain. LEGACY (V1) — new anchors
+ *         land on ReceiptRegistryV2. V1 stays live forever for the existing
+ *         anchored receipts (chain history immutable).
  * @dev Spine contract for the Ivaronix 0G Agent OS. Every important AI action
  *      produces a Receipt JSON anchored here. See RECEIPTS_SPEC.md §1-4.
  *
  *      Storage packs each Receipt into a small struct (4 slots) for cheap reads.
  *      Per Provus pattern (REFERENCE_PATTERNS §2.1) — packed layout.
+ *
+ *      Threat model:
+ *      - Defends against: receipt-id forgery on chain (each Receipt is keyed
+ *        by autoincrementing nextId; ids are dense and immutable).
+ *      - Defends against: receipt-content modification once anchored (struct
+ *        fields are immutable after anchor()).
+ *      - Defends against: anchor by paused operator (Pausable gate; owner
+ *        can pause if a downstream bug is discovered).
+ *      - Does NOT defend against: agentAddress impersonation. V1 records
+ *        agentAddress = msg.sender; the operator-relayer model lets a
+ *        relayer claim an agent identity that didn't actually sign the
+ *        receipt body. ReceiptRegistryV2 hardens this with EIP-712
+ *        signature recovery so agentAddress = recovered signer, not
+ *        msg.sender. New anchors should use V2.
+ *      - Does NOT defend against: storage-evidence forgery. The evidenceRoot
+ *        bytes32 is opaque to the contract; off-chain verifiers must hash
+ *        the storage blob and compare.
+ *      - Does NOT defend against: a malicious owner pausing the contract
+ *        indefinitely. Mitigation: Ownable2Step transfer + community review
+ *        of the multisig (mainnet).
  */
 contract ReceiptRegistry is Ownable2Step, Pausable {
     /// @notice Receipt type codes per RECEIPTS_SPEC.md §1
