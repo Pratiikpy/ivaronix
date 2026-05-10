@@ -67,11 +67,11 @@
     "creatorEarningsLabel": "0.0014 OG · 26 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
-    "workspaceTotal": 26,
-    "apps": 7,
-    "typecheckClean": 23,
+    "workspaceTotal": 25,
+    "apps": 6,
+    "typecheckClean": 22,
+    "testFiles": 21,
     "appsList": [
-      "api",
       "cli",
       "mcp-server",
       "npx-cli",

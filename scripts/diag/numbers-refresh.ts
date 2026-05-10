@@ -40,7 +40,7 @@ interface NumbersFile {
     creatorEarningsOG: string;
     creatorEarningsLabel: string;
   };
-  packages: { workspaceTotal: number; apps: number; typecheckClean: number; appsList: string[] };
+  packages: { workspaceTotal: number; apps: number; typecheckClean: number; testFiles: number; appsList: string[] };
   polyglotHash: { languages: number; languageList: string[]; tests: Record<string, number>; ciWorkflow: string; queued: string[] };
   mainnet: { readinessChecklistGreen: string; deployedContractsToday: number; blockedOn: string };
 }
@@ -142,6 +142,46 @@ function countTypecheckClean(): number {
       } catch {
         // Malformed package.json — skip silently.
       }
+    }
+  }
+  return count;
+}
+
+/**
+ * Count test files across packages/ and apps/ — first-party .test.ts
+ * files that exercise our own code. Excludes:
+ *   - packages/_design (out of workspace · sweep 151)
+ *   - packages/opencode-... (upstream-bundled · not first-party)
+ *   - any dist or .next directory (compiled output)
+ * Closes the HALF_BAKED §J-8 gap where "3 unit tests in 23 packages"
+ * was a snapshot claim with no auto-refresh path.
+ */
+function countTestFiles(): number {
+  let count = 0;
+  const walk = (dir: string): void => {
+    let entries: string[] = [];
+    try { entries = readdirSync(dir); } catch { return; }
+    for (const e of entries) {
+      const full = resolve(dir, e);
+      // Skip noise directories.
+      if (e === 'node_modules' || e === 'dist' || e === '.next' || e === '.turbo') continue;
+      try {
+        const stat = readdirSync(full); // throws on non-dir; we treat that as a file
+        walk(full);
+        if (stat) {/* directory */}
+      } catch {
+        // It's a file — check extension.
+        if (/\.test\.ts$/.test(e)) count += 1;
+      }
+    }
+  };
+  for (const subdir of ['packages', 'apps']) {
+    const root = resolve(REPO_ROOT, subdir);
+    if (!existsSync(root)) continue;
+    for (const entry of readdirSync(root)) {
+      // Skip the design-only and upstream-bundled subtrees.
+      if (entry === '_design' || entry.startsWith('opencode-')) continue;
+      walk(resolve(root, entry));
     }
   }
   return count;
@@ -361,6 +401,7 @@ async function buildSnapshot(): Promise<NumbersFile> {
       workspaceTotal: packageDirs.length + apps.length,
       apps: apps.length,
       typecheckClean: countTypecheckClean(),
+      testFiles: countTestFiles(),
       appsList: apps,
     },
     polyglotHash: {
