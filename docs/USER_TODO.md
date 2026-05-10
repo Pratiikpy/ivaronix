@@ -340,16 +340,22 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 - **Post-deploy:** add address to `contracts/deployments/<network>.json` under `MemoryAccessLogV2`. Memory engine + Studio `/memory` route to V2 first via the V2-first read pattern.
 
-### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix)
-- **Source:** plan-003 §A.5.10 · code-complete today (`contracts/src/CapabilityRegistryV2.sol` + 10/10 Foundry tests pass).
-- **Why:** V1's `mapping(address => bytes32[]) public grantsByOwner` + `grantsByGrantee` auto-generated public getters; anyone could enumerate every grant ever issued for any wallet. V2 makes both reverse indexes `internal` with privacy-gated reads (caller is owner/grantee themselves OR an `authorizedReader` indexer). Closes the social-graph leak.
-- **Status:** contract + deploy script + Foundry tests (10/10 PASS) shipped. Mainnet deploy waits on operator funding (USER_TODO §A-2).
+### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix + K-22 consumeRead DoS)
+- **Source:** plan-003 §A.5.10 · code-complete today (`contracts/src/CapabilityRegistryV2.sol` + 10/10 Foundry tests pass). PLUS HALF_BAKED §K-22 — the V2 redeploy is the right vehicle for both.
+- **Why (privacy):** V1's `mapping(address => bytes32[]) public grantsByOwner` + `grantsByGrantee` auto-generated public getters; anyone could enumerate every grant ever issued for any wallet. V2 makes both reverse indexes `internal` with privacy-gated reads (caller is owner/grantee themselves OR an `authorizedReader` indexer). Closes the social-graph leak.
+- **Why (K-22 DoS — captured sweep 138):** V1's `consumeRead(grantId)` is callable by anyone, not just the grantee. An attacker scrapes grant IDs from the public `GrantIssued` event, calls `consumeRead(grantId)` from any address, and depletes the grantee's `readsRemaining` budget. The grantee's actual reads then start failing (reads remaining = 0). HALF_BAKED's "two-line patch" framing is misleading — naive `require(msg.sender == g.grantee)` breaks the off-chain memory engine which currently calls consumeRead as the operator (relayer pattern). The right shape:
+  - Add `mapping(address => bool) authorizedRelayer` (owner-set).
+  - `consumeRead`: `require(msg.sender == g.grantee || authorizedRelayer[msg.sender], "...");`
+  - Operator's signing wallet is added as `authorizedRelayer` post-deploy.
+  - Memory engine continues to work; on-chain DoS surface closed because attackers can't spoof the relayer.
+- **Status:** V1 contract + deploy script + Foundry tests (10/10 PASS for social-graph fix) shipped. K-22 fix needs a contract edit + 2 new Foundry tests (relayer can call, attacker cannot, grantee can call directly). Mainnet deploy waits on operator funding (USER_TODO §A-2). Testnet redeploy is unblocked but holding for the K-22 contract edit before single-redeploy of both fixes.
 - **Cost:** ~0.05 OG on testnet (already funded · §A-1) · ~0.05 OG on mainnet.
 - **Run (testnet):**
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<deployer-key>
+  # Canonical-first; legacy aliases also accepted by the deploy script.
+  export IVARONIX_SIGNER_KEY=<deployer-key>   # legacy: OG_PRIVATE_KEY
   forge script script/DeployCapabilityRegistryV2.s.sol:DeployCapabilityRegistryV2 \
     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
   ```
