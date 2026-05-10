@@ -40,5 +40,7 @@ if [ "${IVARONIX_SKIP_PRECOMMIT:-0}" = "1" ]; then
   exit 0
 fi
 
-echo "[pre-commit] running Studio offline regressions (17 gates)"
+echo "[pre-commit] running offline regressions (studio + cli + contracts · 23 gates)"
 pnpm --filter qa-metamask-e2e run regressions:studio
+pnpm --filter qa-metamask-e2e run regressions:cli
+pnpm --filter qa-metamask-e2e run regressions:contracts
