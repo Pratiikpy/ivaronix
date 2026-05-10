@@ -1,0 +1,62 @@
+name: Chain smoke (label-gated + nightly)
+
+# Closes planning-003 §A.1.5 (wandering thought #52). Without a CI gate,
+# K-2's correctness has no automated check before mainnet deploy. The V2
+# anchor smoke at scripts/qa/metamask-e2e/verify-v2-anchor-live.ts asserts
+# nextId advance + agent recovery + receiptRoot match + nonce advance +
+# chainscan link. Five invariants per run. Cost ~0.0005 OG per run.
+#
+# Two triggers:
+#   1. PR label `run-chain-smoke` — author opts in when their PR touches
+#      contract/anchor code; avoids burning testnet OG on every PR.
+#   2. Nightly cron — catches any silent regression on main.
+#
+# CI wallet: a scoped EVM key with 0.5 OG allocated from the operator's
+# 69 OG balance. Set as the `IVARONIX_CI_WALLET_KEY` repo secret. The
+# operator's main wallet stays out of CI logs.
+
+on:
+  pull_request:
+    types: [labeled]
+  schedule:
+    # 03:17 UTC daily — slightly off the :00 mark to avoid landing on
+    # GitHub Actions busy minutes (per cron skill convention).
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+env:
+  PNPM_VERSION: 10.32.1
+  NODE_VERSION: 20.x
+
+jobs:
+  v2-anchor-smoke:
+    # Skip on labeled-PR events unless the label is `run-chain-smoke`.
+    if: |
+      github.event_name == 'schedule' ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-chain-smoke'))
+    name: V2 anchor live smoke (Galileo)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - name: Anchor + verify a synthetic V2 receipt
+        env:
+          # Scoped CI wallet key. Set via repo secret; never the operator's
+          # main signing key. Cost per run is ~0.0005 OG; allocate 0.5 OG
+          # to this wallet for ~1000 PR/nightly runs of headroom.
+          EVM_PRIVATE_KEY: ${{ secrets.IVARONIX_CI_WALLET_KEY }}
+        working-directory: scripts/qa/metamask-e2e
+        run: pnpm exec tsx verify-v2-anchor-live.ts
+      - name: Print chainscan link on success
+        if: success()
+        run: |
+          echo "::notice::V2 anchor smoke passed. See job log for tx hash + chainscan URL."
