@@ -85,6 +85,45 @@ jobs:
             echo "no anchored receipts in repo snapshot — skipping"
           fi
 
+  unit-tests:
+    # Package-level unit tests via Node's built-in `node:test` runner
+    # (tsx --test ...). 5 packages with real test files today: core
+    # (jcs canonical-hash · 17 tests), consensus (gates + policy +
+    # tier-shape + convergence · 34 tests), receipts (builder +
+    # fee-split · 16 tests), skills (manifest schema · 9 tests),
+    # memory (encryption · 14 tests). Total ~90 tests across 5
+    # packages. Found by the cron-sweep audit on 2026-05-10 — CI
+    # had typecheck + build + regression-smokes but no actual unit
+    # gate, so a regression in (e.g.) the policy aggregator could
+    # have shipped silently.
+    name: Package unit tests
+    runs-on: ubuntu-latest
+    needs: workspace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - name: core (JCS canonical hash · 17 tests)
+        run: pnpm --filter @ivaronix/core test
+      - name: consensus (gates + policy + tier-shape + convergence · 34 tests)
+        run: pnpm --filter @ivaronix/consensus test
+      - name: receipts (builder + fee-split · 16 tests)
+        run: pnpm --filter @ivaronix/receipts test
+      - name: skills (manifest schema · 9 tests)
+        run: pnpm --filter @ivaronix/skills test
+      - name: memory (encryption · 14 tests)
+        run: pnpm --filter @ivaronix/memory test
+      - name: docs:check (numbers.json staleness + marker drift)
+        run: pnpm docs:check
+      - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)
+        run: pnpm receipt-types:check
+
   regression-smokes:
     # Source-file regression suite. Runs every offline `verify-*.ts`
     # regression that doesn't require Galileo RPC or a running Studio
