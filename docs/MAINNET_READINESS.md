@@ -95,9 +95,11 @@ tee:primary          PASS  (provider 0xa48f0128…)
 
 ### 13. `serve` HTTP API (port 4243)
 
+Sample capture · regenerate live counts via `pnpm exec ivaronix serve` then `curl http://localhost:4243/v1/skills`.
+
 ```
 GET /healthz                                       HTTP 200
-GET /v1/skills                                     HTTP 200  (155 skills, 49 KB)
+GET /v1/skills                                     HTTP 200  (~156 skills, ~50 KB on the live registry)
 GET /v1/passport/0xaa954c33810029a3eFb0bf755FEF17863E8677Ce  HTTP 200
 GET /v1/receipt/1069                               HTTP 200  state=ANCHORED
 ```
@@ -120,9 +122,8 @@ NETWORK=mainnet pnpm --filter @ivaronix/og-chain run deploy
 ```
 
 The deploy script writes `contracts/deployments/mainnet.json` (same shape
-as `contracts/deployments/testnet.json`). Studio reads `OG_NETWORK=mainnet`
-and switches
-all reads/writes accordingly.
+as `contracts/deployments/testnet.json`). Studio reads `IVARONIX_NETWORK=mainnet`
+(legacy: `OG_NETWORK`) and switches all reads/writes accordingly.
 
 ---
 
