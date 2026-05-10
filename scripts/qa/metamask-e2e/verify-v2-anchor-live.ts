@@ -3,8 +3,8 @@
  * the off-chain wiring (signTypedData → anchor((struct), sig) → recover
  * agent) works end-to-end on Galileo.
  *
- * Pre-reqs: .env has EVM_PRIVATE_KEY; deployments/testnet.json has the
- * V2 address from the earlier deploy.
+ * Pre-reqs: .env has EVM_PRIVATE_KEY; contracts/deployments/testnet.json
+ * has the V2 address from the earlier deploy.
  */
 import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
@@ -22,7 +22,7 @@ config({ path: resolve(REPO_ROOT, '.env') });
   if (!key) throw new Error('EVM_PRIVATE_KEY missing from .env');
 
   const v2Addr = getDeployedAddress('testnet', 'ReceiptRegistryV2');
-  if (!v2Addr) throw new Error('ReceiptRegistryV2 not in deployments/testnet.json');
+  if (!v2Addr) throw new Error('ReceiptRegistryV2 not in contracts/deployments/testnet.json');
   console.log(`V2 address: ${v2Addr}`);
 
   const provider = new JsonRpcProvider('https://evmrpc-testnet.0g.ai', { chainId: 16602, name: 'galileo' });

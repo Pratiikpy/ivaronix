@@ -168,7 +168,12 @@ function parseReceiptTypes(): { count: number; labels: string[] } {
  * were added (V2 migration) or removed.
  */
 function countDeployedContracts(): number {
-  const path = resolve(REPO_ROOT, 'deployments', 'testnet.json');
+  // Canonical location: contracts/deployments/<network>.json (matches docs +
+  // packages/og-chain/src/deployments.ts walk-up). Legacy fallback retained
+  // for transition; will warn if used.
+  const canonical = resolve(REPO_ROOT, 'contracts', 'deployments', 'testnet.json');
+  const legacy = resolve(REPO_ROOT, 'deployments', 'testnet.json');
+  const path = existsSync(canonical) ? canonical : legacy;
   if (!existsSync(path)) return 0;
   try {
     const json = JSON.parse(readFileSync(path, 'utf8')) as { contracts?: Record<string, unknown> };

@@ -16,12 +16,26 @@ export interface DeploymentManifest {
   contracts: Record<string, ContractDeployment>;
 }
 
-/** Walk up dirs to find oglabs/deployments/<network>.json. */
+/**
+ * Walk up dirs to find `oglabs/contracts/deployments/<network>.json`.
+ *
+ * Path moved 2026-05-10 (cron-sweep finding): legacy location was
+ * `oglabs/deployments/<network>.json`, but ~22 docs (CLAUDE.md, USER_TODO.md,
+ * planning-003.md, .claude/rules/contracts.md, every Deploy*.s.sol NatSpec)
+ * already documented the contracts/ location. Code now matches docs. Legacy
+ * `deployments/` location kept as a fallback so any external script still
+ * pointing there resolves with a one-time deprecation log.
+ */
 function findDeploymentsDir(startDir: string): string | null {
   let dir = startDir;
   for (let i = 0; i < 8; i++) {
-    const candidate = resolve(dir, 'deployments');
-    if (existsSync(candidate)) return candidate;
+    const canonical = resolve(dir, 'contracts', 'deployments');
+    if (existsSync(canonical)) return canonical;
+    const legacy = resolve(dir, 'deployments');
+    if (existsSync(legacy)) {
+      console.warn('[og-chain] deployments/ at repo root is the legacy path · move to contracts/deployments/');
+      return legacy;
+    }
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;

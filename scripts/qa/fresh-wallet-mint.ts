@@ -46,7 +46,7 @@ const PASSPORT_ABI = [
   'function getPassport(uint256 tokenId) external view returns (tuple(bytes32 metadataRoot, bytes32 memoryRoot, bytes32 skillManifestRoot, uint256 trustScore, uint256 receiptCount, uint256 violationCount, uint256 mintedAt, uint256 lastEvolutionAt))',
 ];
 
-const deployments = JSON.parse(readFileSync(resolve(REPO, 'deployments/testnet.json'), 'utf8'));
+const deployments = JSON.parse(readFileSync(resolve(REPO, 'contracts/deployments/testnet.json'), 'utf8'));
 const PASSPORT_ADDR = deployments.contracts.AgentPassportINFT.address as `0x${string}`;
 
 (async () => {
