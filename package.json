@@ -20,6 +20,7 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean && rm -rf node_modules .turbo",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "ivaronix": "pnpm --filter @ivaronix/cli exec ivaronix",

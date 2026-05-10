@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# Pre-commit gate: runs the Studio offline regression suite before every
+# commit. Catches sprint-NatSpec, bare-number drift, brand-token drift,
+# AGENTS.md alias drift, etc. before they land in commit history.
+#
+# Why this exists:
+#   Cron-sweep 49 (commit 0a0d1ba) shipped a contract NatSpec change that
+#   contained "K-2 fix" sprint shorthand — exactly what the sweep-30 gate
+#   bans. The gate caught it ONLY AFTER commit when the post-commit
+#   `pnpm --filter @ivaronix/studio test` ran. One fixup commit later
+#   (852cffd) the violation was gone, but commit history carries the
+#   round-trip. A pre-commit hook prevents the violation from landing.
+#
+# Behaviour:
+#   - On every `git commit`, runs the 17 offline regressions via
+#     `pnpm --filter qa-metamask-e2e run regressions:studio`.
+#   - Exits non-zero on any regression failure → commit is rejected.
+#   - Operator can bypass with `git commit --no-verify` if absolutely
+#     necessary (CLAUDE.md says: never bypass unless the user explicitly
+#     asks; this exists as a one-off escape hatch only).
+#
+# Setup:
+#   This hook is installed via `git config core.hooksPath .githooks` in
+#   the package.json `prepare` script — runs automatically on
+#   `pnpm install`. No husky / lefthook dep needed.
+#
+# Speed: the 17 regressions run in ~10s on a warm cache. Acceptable
+# pre-commit overhead given the bug-class coverage (sprint-NatSpec +
+# brand drift + alias ordering + bare-numbers + path canonicalization
+# + numbers-vs-deployments + receipt-types triangle + every other
+# regression in the run-source-regressions filter).
+
+set -e
+
+# Detect "skip" flag: contributors with mandatory CI bypass (rare, but
+# the user can set IVARONIX_SKIP_PRECOMMIT=1 to suppress without --no-verify).
+if [ "${IVARONIX_SKIP_PRECOMMIT:-0}" = "1" ]; then
+  echo "[pre-commit] IVARONIX_SKIP_PRECOMMIT=1 set · skipping regressions"
+  exit 0
+fi
+
+echo "[pre-commit] running Studio offline regressions (17 gates)"
+pnpm --filter qa-metamask-e2e run regressions:studio
