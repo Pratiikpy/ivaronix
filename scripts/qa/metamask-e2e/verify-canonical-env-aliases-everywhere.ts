@@ -85,7 +85,9 @@ const SKIP_PATHS = new Set([
 
 const SKIP_PREFIXES = [
   '_archive/',
-  'seed-skills/imports/', // 150+ upstream-imported skills · their env names follow upstream convention
+  // sweep 128 mass-rewrote 150+ upstream-imported skills to canonical
+  // IVARONIX_*. Skip-prefix removed so future drift in imports/* gets
+  // caught by the gate.
   'docs/planning-001.md',
   'docs/planning-002.md',
   'docs/planning-003.md',
