@@ -1,8 +1,12 @@
 import type { SkillManifest } from '@ivaronix/skills';
 
 /**
- * The 3-slot Permission Pills row per UI_UX_GUIDE §7.
- * Network / Files / Compute, each green when safe, amber when scoped, red when dangerous.
+ * The 3-slot Permission Pills row — memory access · shell access ·
+ * receipt-required. Each pill is green when safe, amber when scoped,
+ * red when dangerous. Visual contract: CLAUDE.md §10 +
+ * `brand/tokens.css`. Enum values come from `@ivaronix/skills`
+ * (MemoryAccessEnum, ShellAccessEnum) per planning-003 §A.1.1's
+ * schema-as-source-of-truth rule.
  */
 export function PermissionPills({ permissions }: { permissions: SkillManifest['og']['permissions'] }) {
   const networkTone =

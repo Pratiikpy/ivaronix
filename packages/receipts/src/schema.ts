@@ -155,6 +155,27 @@ export const ReceiptV1Schema = z.object({
       remainingRequests: z.number().nullable().optional(),
       resetRequests: z.number().nullable().optional(),
     }),
+    /**
+     * Credential rotations that happened mid-run (planning-003 §A.5.14).
+     * `Keyring.invalidate(label, reason)` distinguishes 402 (depleted),
+     * 429 (rate-limited), and 'auth' (rejected) failure modes; this
+     * field records each rotation so the receipt body explains why a
+     * given run swapped credentials. Empty array on the happy path.
+     *
+     * `fromCredential` / `toCredential` are the human label only — the
+     * secret never leaves the keyring. Studio /r/<id> renders the list
+     * as a small chip when non-empty.
+     */
+    rotations: z
+      .array(
+        z.object({
+          fromCredential: z.string(),
+          toCredential: z.string(),
+          reason: z.enum(['402', '429', 'auth']),
+          atMs: z.number().int().nonnegative(),
+        }),
+      )
+      .default([]),
   }),
 
   teeVerification: z.object({

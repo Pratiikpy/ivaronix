@@ -1,5 +1,8 @@
 /**
- * Four-Light Row — the cross-cutting visual primitive per UI_UX_GUIDE §5.
+ * Four-Light Row — the cross-cutting visual primitive. Each light is a
+ * pill that turns from pending (grey) to verified (green) or mismatch
+ * (amber). Visual contract: CLAUDE.md §10 + `brand/tokens.css`.
+ *
  * [●─Storage─][●─Compute─][●─TEE─][●─Chain─]
  *
  * Day-13 scaffold renders the Verified path. Day-14 wires per-layer state

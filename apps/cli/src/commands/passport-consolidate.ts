@@ -282,6 +282,7 @@ export function addConsolidateCommand(parent: Command): void {
           ...(zgResKey ? { zgResKey } : {}),
           x0gTrace: {},
           rateLimit: {},
+          rotations: [],
         },
         billing: {
           inputTokens: consensusBilling.totalInputTokens,

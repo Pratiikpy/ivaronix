@@ -24,10 +24,30 @@ import {
  *     credentials and cannot inject one into the keyring. If the
  *     operator's `.env` is compromised, rotation cannot help.
  */
+/**
+ * One entry on the rotation log per planning-003 §A.5.14.
+ * `fromCredential` / `toCredential` are the human label only — the
+ * secret never leaves the keyring. The pipeline copies this list onto
+ * `routerTrace.rotations` so the receipt body explains why a given
+ * run swapped credentials.
+ */
+export interface KeyringRotation {
+  fromCredential: string;
+  toCredential: string;
+  reason: '402' | '429' | 'auth';
+  atMs: number;
+}
+
 export class Keyring {
   private credentials: RouterCredential[];
   private clients: Map<string, RouterClient>;
   private depleted: Set<string>;
+  /**
+   * Append-only rotation log. Cleared at the start of each
+   * pipeline-managed run via {@link drainRotations}; otherwise grows
+   * for the lifetime of the keyring instance.
+   */
+  private rotations: KeyringRotation[] = [];
 
   constructor(credentials: RouterCredential[]) {
     if (credentials.length === 0) {
@@ -55,10 +75,42 @@ export class Keyring {
   }
 
   invalidate(label: string, reason: '402' | '429' | 'auth'): void {
+    // Record the rotation BEFORE we mutate state so the next-pick
+    // logic above sees the post-invalidate set.
+    let next: string | null = null;
+    for (const c of this.credentials) {
+      if (c.label === label) continue;
+      if (reason !== '429' && this.depleted.has(c.label)) continue;
+      next = c.label;
+      break;
+    }
+    this.rotations.push({
+      fromCredential: label,
+      toCredential: next ?? '<no available credential>',
+      reason,
+      atMs: Date.now(),
+    });
     if (reason === '402' || reason === 'auth') {
       this.depleted.add(label);
     }
     // 429 — not permanent; just rotate this turn
+  }
+
+  /**
+   * Returns and clears the rotation log. The pipeline (or any caller
+   * that wants per-run rotation transparency on the receipt) calls
+   * this at the end of a run; subsequent runs start with a clean
+   * log.
+   */
+  drainRotations(): KeyringRotation[] {
+    const drained = this.rotations;
+    this.rotations = [];
+    return drained;
+  }
+
+  /** Read-only snapshot of the current rotation log without clearing it. */
+  peekRotations(): readonly KeyringRotation[] {
+    return this.rotations.slice();
   }
 
   async chat(opts: RouterCallOptions): Promise<RouterCallResult> {

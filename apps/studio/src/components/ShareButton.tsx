@@ -6,7 +6,9 @@ type CopyState = 'idle' | 'copied' | 'fallback' | 'error';
 
 /**
  * Share button — copy URL + Twitter/X intent. Client-only because navigator
- * APIs require a browser. Per UI_UX_GUIDE: ghost button, no flash.
+ * APIs require a browser. Per CLAUDE.md §9 voice rule (terse,
+ * technical, no marketing sandwich) + the brand kit's `btn-ghost`
+ * class.
  *
  * State machine (planning-003 §A.5.13 · WT 31):
  *   - idle     → "Copy URL"

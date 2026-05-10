@@ -15,7 +15,7 @@ export const contentType = 'image/png';
 /**
  * OG image generator for /r/<id>. Editorial cream-on-black with the
  * brackets-with-i mark + headline + receipt id. Used for Twitter/X cards
- * and link unfurls. Per UI_UX_GUIDE — never AI-glossy.
+ * and link unfurls. Per CLAUDE.md §9 — never AI-glossy.
  */
 export default async function Image({ params }: { params: { id: string } }) {
   const fonts = await loadFonts().catch(() => []);

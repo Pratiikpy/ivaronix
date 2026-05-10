@@ -56,6 +56,7 @@ async function main() {
       requestId: 'hello-' + Date.now(),
       x0gTrace: {},
       rateLimit: {},
+      rotations: [],
     },
     teeVerification: {
       requested: false,

@@ -35,6 +35,7 @@ function fixtureInput(walletAddress: string) {
       requestId: 'req-test-1',
       x0gTrace: {},
       rateLimit: {},
+      rotations: [],
     },
     teeVerification: {
       requested: true,

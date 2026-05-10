@@ -1,5 +1,10 @@
 /**
- * 3-state verification chip per UI_UX_GUIDE §6 (locked).
+ * 3-state verification chip — pending (grey), verified (green),
+ * mismatch (amber). The single canonical place receipt verification
+ * status renders; every Studio surface that shows a receipt state
+ * goes through this component. Visual contract: CLAUDE.md §10 +
+ * `brand/tokens.css`.
+ *
  * - PENDING  : root computed but not yet anchored (or not found on chain)
  * - VERIFIED : anchored on chain AND signature/hash check passes
  * - MISMATCH : anchor present but signature/hash check fails

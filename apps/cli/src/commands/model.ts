@@ -226,7 +226,7 @@ modelCommand
             modelSelection: { requested: opts.model, final: opts.model },
             providerRouting: { allowFallbacks: false, finalProvider: opts.provider as `0x${string}` },
           },
-          routerTrace: { requestId: `fine-tune-${taskId}`, x0gTrace: { taskId }, rateLimit: {} },
+          routerTrace: { requestId: `fine-tune-${taskId}`, x0gTrace: { taskId }, rateLimit: {}, rotations: [] },
           teeVerification: { requested: true, routerVerified: false, independentVerified: null, providerAddress: opts.provider as `0x${string}`, verificationMethod: 'compute_sdk_process_response', verifiedAt: null, tier: 'tier-1-tee', providerKind: '0g-router' },
           billing: { inputTokens: 0, outputTokens: 0, inputCostNeuron: '0', outputCostNeuron: '0', totalCostNeuron: '0', totalCostOg: '0' },
           storage: { proofDownloadVerified: false, encryption: { enabled: false, type: 'none', headerDetected: false } },

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 
 /**
- * The §-numbered section pattern from UI_UX_GUIDE §13.
- * Provides consistent vertical rhythm across pages.
+ * The §-numbered section pattern. Visual contract lives in CLAUDE.md
+ * §10 (cream/ink palette, Outfit weights, 8/12/16/24/32/48/96 spacing
+ * scale) with `brand/tokens.css` + `brand/tokens.json` as the source of
+ * truth. Provides consistent vertical rhythm across pages.
  */
 export function Section({
   label,

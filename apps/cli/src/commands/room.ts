@@ -293,6 +293,7 @@ roomCommand
           requestId: `room.create:${roomId}`,
           x0gTrace: {},
           rateLimit: {},
+          rotations: [],
         },
         billing: (() => {
           const inputCostNeuron = '0';
@@ -516,6 +517,7 @@ roomCommand
         requestId: `room.read:${roomId}:${accessTimestamp}`,
         x0gTrace: {},
         rateLimit: {},
+        rotations: [],
       },
       billing: {
         inputTokens: 0,

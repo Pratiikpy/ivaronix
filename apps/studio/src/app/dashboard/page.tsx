@@ -1,43 +1,27 @@
-'use client';
-
 import Link from 'next/link';
-import { useAccount } from 'wagmi';
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { receiptTypeLabel } from '@/lib/receipt-labels';
+import { loadDashboard, type DashboardData } from '@/lib/dashboard';
+import { DashboardClient } from './DashboardClient';
 
-interface DashboardData {
-  network: string;
-  address: string;
-  balanceOg: string;
-  passport: {
-    tokenId: string;
-    metadataRoot: string;
-    memoryRoot: string;
-    trustScore: string;
-    receiptCount: string;
-    violationCount: string;
-    mintedAt: number;
-    lastEvolutionAt: number;
-  } | null;
-  recentReceipts: { id: string; receiptRoot: string; receiptType: number; timestamp: number }[];
-  schedules?: ScheduleSummary[];
-}
+export const dynamic = 'force-dynamic';
 
-interface ScheduleSummary {
-  scheduleId: string;
-  skillId: string;
-  cron: string;
-  inputKind: 'doc' | 'prompt';
-  inputLabel: string;
-  question: string;
-  tier: string;
-  runCount: number;
-  maxRuns: number | null;
-  lastRunAt: number | null;
-  lastReceiptId: string | null;
-  createdAt: number;
-}
+/**
+ * /dashboard — passport state + last 5 receipts + balance + schedules.
+ *
+ * Per planning-003 §A.5.16, this is a server component. When a valid
+ * `?address=` query param is present, the data load happens on the
+ * server and the page paints with content immediately (good for
+ * search engines, slow networks, link-shared agent dashboards).
+ *
+ * When no `?address=` is set, the page renders the "connect wallet"
+ * hero and mounts a small {@link DashboardClient} island that reads
+ * the connected wallet via wagmi and pushes `?address=<addr>` into
+ * the URL — which re-renders the server component with full data.
+ *
+ * One code path, two entry modes. No client-side fetch from the
+ * page itself; the API at `/api/dashboard/<addr>` still exists for
+ * external consumers and uses the same `loadDashboard()` shared lib.
+ */
 
 const TIERS: { label: string; threshold: number }[] = [
   { label: 'Newcomer', threshold: 0 },
@@ -52,63 +36,55 @@ function tierFor(trust: number): { label: string; threshold: number } {
   return pick;
 }
 
-export default function DashboardPage() {
-  const { isConnected, address: connectedAddr } = useAccount();
-  const search = useSearchParams();
-  // ?address= overrides the connected wallet — lets you view any agent's
-  // dashboard without connecting (everything shown is public chain state).
-  const queryAddr = search.get('address');
-  const isValidQuery = queryAddr && /^0x[0-9a-fA-F]{40}$/.test(queryAddr);
-  const address = isValidQuery ? (queryAddr as `0x${string}`) : connectedAddr;
-  const showing = !!address;
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+interface PageProps {
+  searchParams: Promise<{ address?: string }>;
+}
 
-  useEffect(() => {
-    if (!showing || !address) { setData(null); return; }
-    setLoading(true);
-    setError(null);
-    fetch(`/api/dashboard/${address}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((json: DashboardData) => setData(json))
-      .catch((err) => setError((err as Error).message))
-      .finally(() => setLoading(false));
-  }, [showing, address]);
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { address: queryAddr } = await searchParams;
+  const isValidQuery = queryAddr && /^0x[0-9a-fA-F]{40}$/.test(queryAddr);
+  const address = isValidQuery ? (queryAddr as `0x${string}`) : null;
+
+  let data: DashboardData | null = null;
+  let loadError: string | null = null;
+  if (address) {
+    try {
+      data = await loadDashboard(address);
+    } catch (err) {
+      loadError = (err as Error).message;
+    }
+  }
 
   return (
     <section style={{ padding: '96px 32px', maxWidth: 1200, margin: '0 auto' }}>
+      {/* Client island: when a wallet connects and ?address= is absent,
+          push the connected address into the URL so the server re-renders
+          with real data. */}
+      <DashboardClient />
+
       <div className="section-label" style={{ marginBottom: 16 }}>§ DASHBOARD</div>
       <h1 style={{ fontSize: 48, lineHeight: 1.1, margin: 0 }}>
-        {showing ? (
-          isValidQuery ? (
-            <>Agent <span className="italic-display">view</span>.</>
-          ) : (
-            <>Welcome back, <span className="italic-display">agent</span>.</>
-          )
+        {address ? (
+          <>Agent <span className="italic-display">view</span>.</>
         ) : (
           <>Connect a wallet to begin.</>
         )}
       </h1>
 
-      {!showing && (
+      {!address && (
         <p style={{ fontSize: 16, color: 'var(--color-muted)', marginTop: 16, maxWidth: 600 }}>
           Once connected, this page shows your passport state, recent receipts, scheduled runs, and live OG balance.{' '}
           You can also share a dashboard URL with <code className="mono">?address=0x…</code> to view any agent without connecting — all data is public chain state.
         </p>
       )}
 
-      {showing && address && (
+      {address && (
         <>
           <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 16 }}>
             Wallet <code className="mono">{address}</code>
           </p>
 
-          {loading && <p style={{ marginTop: 32, color: 'var(--color-muted)' }}>Loading from chain…</p>}
-          {error && <p style={{ marginTop: 32, color: 'var(--color-mismatch)' }}>Error: {error}</p>}
+          {loadError && <p style={{ marginTop: 32, color: 'var(--color-mismatch)' }}>Error: {loadError}</p>}
 
           {data && (
             <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
@@ -163,8 +139,8 @@ export default function DashboardPage() {
 
               {/* Scheduled runs (planning-01 §2C) — operator-machine schedules */}
               <div className="card" style={{ gridColumn: 'span 2' }}>
-                <div className="section-label">scheduled runs ({data.schedules?.length ?? 0})</div>
-                {!data.schedules || data.schedules.length === 0 ? (
+                <div className="section-label">scheduled runs ({data.schedules.length})</div>
+                {data.schedules.length === 0 ? (
                   <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 12 }}>
                     <span className="italic-display">No schedules yet.</span> From the operator&apos;s terminal:
                     <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>

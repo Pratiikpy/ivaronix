@@ -528,6 +528,7 @@ docCommand
         zgResKey: primaryAtt?.zgResKey ?? undefined,
         x0gTrace: {},
         rateLimit: {},
+        rotations: [],
       },
       teeVerification: {
         requested: true,

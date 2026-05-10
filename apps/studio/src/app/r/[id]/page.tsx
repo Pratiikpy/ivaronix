@@ -397,6 +397,44 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               </dd>
             </>
           )}
+          {Array.isArray((local?.routerTrace as { rotations?: unknown })?.rotations) &&
+            ((local!.routerTrace as { rotations: { fromCredential: string; toCredential: string; reason: '402' | '429' | 'auth'; atMs: number }[] }).rotations.length > 0) && (
+            <>
+              <dt style={{ color: 'var(--color-muted)' }}>router rotations</dt>
+              <dd style={{ margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {(local!.routerTrace as { rotations: { fromCredential: string; toCredential: string; reason: '402' | '429' | 'auth'; atMs: number }[] }).rotations.map((rot, i) => {
+                  const reasonLabel =
+                    rot.reason === '402' ? 'depleted'
+                    : rot.reason === '429' ? 'rate-limit'
+                    : 'auth';
+                  const reasonColor =
+                    rot.reason === '429' ? '#7a5d00' : '#a30808';
+                  const reasonBg =
+                    rot.reason === '429' ? 'var(--color-pending-bg)' : '#fde7e7';
+                  return (
+                    <span
+                      key={i}
+                      className="mono"
+                      style={{
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 4,
+                        border: `1px solid ${reasonColor}`,
+                        background: reasonBg,
+                        color: reasonColor,
+                        alignSelf: 'flex-start',
+                      }}
+                    >
+                      {rot.fromCredential} → {rot.toCredential} · {reasonLabel}
+                    </span>
+                  );
+                })}
+                <span style={{ color: 'var(--color-muted)', fontSize: 11, marginTop: 2 }}>
+                  Per planning-003 §A.5.14 — credential failover transparency on the receipt.
+                </span>
+              </dd>
+            </>
+          )}
           {local?.billing?.feeSplit && (
             <>
               <dt style={{ color: 'var(--color-muted)' }}>fee split</dt>

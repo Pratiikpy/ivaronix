@@ -4,7 +4,9 @@ import { WalletConnect } from './WalletConnect';
 import { MobileMenu } from './MobileMenu';
 
 /**
- * Sticky 64px-height header per UI_UX_GUIDE §12.
+ * Sticky 64px-height header per CLAUDE.md §10 ("Header: sticky,
+ * `backdrop-filter: blur(20px)`, 64px tall, brackets-only logo on the
+ * left, nav links on the right"). Visual contract: `brand/tokens.css`.
  * Left: logo. Right: nav links + wallet. Spacing is editorial-generous.
  */
 export function Header() {

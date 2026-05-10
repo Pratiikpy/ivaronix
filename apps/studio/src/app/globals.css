@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 /*
- * Brand tokens — copied verbatim from UI_UX_GUIDE.md §1 (locked 2026-05-08).
- * The HTML mockup at brand/Ivaronix.html is the visual source of truth.
+ * Brand tokens — source of truth lives at `brand/tokens.css` +
+ * `brand/tokens.json` (locked 2026-05-09). The HTML mockup at
+ * `brand/Ivaronix.html` is the visual reference; CLAUDE.md §10 is the
+ * operational contract.
  *
  * IMPORTANT: foreground is #0a0a0a, NOT #000 and NOT the warmer #1a1a1a.
- * Per CLAUDE.md §10 the canonical ink matches brand/Ivaronix.html.
  */
 @theme inline {
   /* Per CLAUDE.md §10: brand/Ivaronix.html is the visual source of truth.
@@ -213,7 +214,8 @@ body {
 }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────────
- * Per UI_UX_GUIDE §8. Tested at 1440x900, 1280x800, 390x844.
+ * Per CLAUDE.md §10 + §11 (mobile breakpoint 375x812 is canonical for the
+ * QA loop). Tested at 1440x900, 1280x800, 390x844.
  *
  * Breakpoint thinking (mobile-first overrides):
  *   ≤1280px → tablet: side gutters 48px, hero 64px

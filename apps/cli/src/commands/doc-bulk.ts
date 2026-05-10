@@ -227,6 +227,7 @@ export function addBulkCommand(parent: Command): void {
           requestId: `doc.bulk:${Date.now()}`,
           x0gTrace: {},
           rateLimit: {},
+          rotations: [],
         },
         billing: {
           inputTokens: 0,

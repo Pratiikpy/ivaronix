@@ -12,8 +12,10 @@ import { injected } from 'wagmi/connectors';
  * 0G Galileo Testnet (chainId 16602) — canonical reference.
  * Aristotle Mainnet (chainId 16661) — Phase B Day 23 promotion target.
  *
- * Per UI_UX_GUIDE: only one wallet connector for Day 13. Day 14+ adds
- * WalletConnect via @web3modal/wagmi for mobile.
+ * Per CLAUDE.md §10 wallet-flow rules: a single MetaMask connector keeps
+ * the onboard step free of "which wallet?" friction. Future
+ * mobile WalletConnect path lives in USER_TODO §B-V2 (queued behind
+ * mainnet promotion).
  */
 
 export const ogTestnet = defineChain({

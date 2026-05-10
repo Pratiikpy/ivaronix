@@ -261,6 +261,10 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
   const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
   const startTime = Date.now();
   let consensus: ConsensusResult;
+  // Mid-run keyring rotations captured for the receipt's routerTrace
+  // (planning-003 §A.5.14). Empty on the happy path; populated when
+  // `Keyring.invalidate()` fires during a run.
+  let routerRotations: ReturnType<NonNullable<ReturnType<typeof keyringFromEnv>>['drainRotations']> = [];
   // The model that's actually used. Receipts must record THIS, not env.defaultModel
   // (which can mislead readers into thinking a 0G model ran for an NVIDIA tx).
   // CLAUDE.md §6: Honest > flattering.
@@ -309,6 +313,11 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     // TIER 1 default — 0G Router with TEE attestation
     const keyring = keyringFromEnv();
     if (!keyring) throw new Error('Router not configured (.env: ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS)');
+    // Reset the keyring's rotation log at the start of this run so
+    // the receipt's `routerTrace.rotations` reflects only this run,
+    // not any leftover rotations from prior calls on the same
+    // long-lived keyring instance.
+    keyring.drainRotations();
     consensus = await runConsensus({
       tier,
       keyring,
@@ -321,6 +330,10 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       // the only zero-false-positive path for private-key detection.
       signerPrivateKey: env.privateKey,
     });
+    // Snapshot the rotations that happened during this run; we'll
+    // copy them onto the receipt's routerTrace below. Per
+    // planning-003 §A.5.14.
+    routerRotations = keyring.drainRotations();
   }
   const elapsedMs = Date.now() - startTime;
   log.pass(tag(`consensus complete   ${elapsedMs}ms · ${consensus.billing.totalInputTokens}+${consensus.billing.totalOutputTokens} tok · ${consensus.billing.estimatedCostOg.toFixed(8)} OG`));
@@ -370,6 +383,9 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       resolvedModel,
       ...(memoryQueryRecord ? { memoryQuery: memoryQueryRecord } : {}),
       ...(input.delegatedOwnerWallet ? { delegatedOwnerWallet: input.delegatedOwnerWallet } : {}),
+      // Per planning-003 §A.5.14: thread mid-run keyring rotations
+      // onto the receipt's routerTrace.
+      routerRotations,
     });
     receiptPath = result.path;
     receiptId = result.id;
@@ -474,10 +490,23 @@ interface AnchorArgs {
    * `agent.ownerWallet` records the user wallet and
    * `agent.signedBy = 'operator-on-behalf-of-user'`. */
   delegatedOwnerWallet?: `0x${string}`;
+  /**
+   * Router credential rotations that happened during the consensus
+   * call. Threaded from {@link runPipeline} via
+   * {@link Keyring.drainRotations}. Empty on the happy path; populated
+   * when 402 / 429 / auth failures triggered a rotation. Per
+   * planning-003 §A.5.14.
+   */
+  routerRotations?: ReadonlyArray<{
+    fromCredential: string;
+    toCredential: string;
+    reason: '402' | '429' | 'auth';
+    atMs: number;
+  }>;
 }
 
 async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
-  const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled, resolvedModel } = a;
+  const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled, resolvedModel, routerRotations } = a;
 
   if (!env.privateKey) throw new Error('No private key for receipt signing');
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
@@ -601,6 +630,10 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       zgResKey: primaryAtt?.zgResKey ?? undefined,
       x0gTrace: {},
       rateLimit: {},
+      // Per planning-003 §A.5.14: record any mid-run credential
+      // rotations so the receipt body explains why a given run
+      // swapped credentials. Empty on the happy path.
+      rotations: routerRotations ? Array.from(routerRotations) : [],
     },
     teeVerification: {
       requested: a.provider === '0g',
