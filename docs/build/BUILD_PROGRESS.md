@@ -1,6 +1,13 @@
 # Ivaronix — Build Progress
 
-> **Source of truth for "where am I in the build."** Each loop iteration reads this first. When work completes, append to this file. When blocked, document under "Blockers" and stop ONLY on that item.
+> **ARCHIVAL · 2026-05-10.** Sprint-internal build log frozen at the
+> planning-003 close. The numbers below (17/17 packages, 61/61 forge
+> tests, etc.) were accurate at the time of writing but have since grown
+> through the cron-paced sweep history (current: ~23 packages, ~168
+> forge tests per `docs/numbers.json`). For live state, run
+> `pnpm numbers:refresh && cat docs/numbers.json` or — once it ships —
+> `docs/STATUS.md` (queued at USER_TODO §B-V2-19). This doc remains as
+> historical context for the planning-003 sprint shape.
 >
 > **Scope:** Phase A (Day 1-22 testnet) + Phase B (Day 23-30 mainnet) per `BUILD.md §1`.
 >
