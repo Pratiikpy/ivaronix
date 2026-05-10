@@ -1,7 +1,14 @@
 import Link from 'next/link';
 import { unifiedNextId, getPassportClient } from '@/lib/chain';
+import numbersJson from '../../../../../docs/numbers.json';
 
 export const dynamic = 'force-dynamic';
+
+// Fallback values pulled from the canonical numbers.json so when chain
+// RPC fails (rare but real), the page still shows fresh-ish numbers
+// rather than stale prose. numbers.json itself is auto-derived from
+// chain on every `pnpm numbers:refresh` (24h staleness gate in CI).
+const FALLBACK_RECEIPTS = `${numbersJson.receipts.total.toLocaleString()}+`;
 
 async function liveNumbers(): Promise<{ receipts: number | null; passports: number | null }> {
   const passport = getPassportClient();
@@ -15,7 +22,7 @@ async function liveNumbers(): Promise<{ receipts: number | null; passports: numb
 
 export default async function ThesisPage() {
   const { receipts, passports } = await liveNumbers();
-  const receiptsLabel = receipts !== null ? receipts.toLocaleString() : '1,200+';
+  const receiptsLabel = receipts !== null ? receipts.toLocaleString() : FALLBACK_RECEIPTS;
   const passportsLabel = passports !== null ? passports.toLocaleString() : '4';
 
   return (
