@@ -65,6 +65,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-as-any-budget/, // meta · 'as any' cast budget (max 3) in first-party code (sweep 84)
       /^verify-no-tracked-but-ignored/, // meta · no tracked file matches a gitignore rule (sweep 86 · third occurrence pattern closure)
       /^verify-markdown-internal-links/, // meta · every internal markdown link in render-target docs resolves to an existing file (sweep 88)
+      /^verify-no-empty-catch/, // meta · no empty catch blocks in first-party code (sweep 91)
     ],
   },
   'studio-live': {
