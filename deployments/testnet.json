@@ -3,21 +3,50 @@
   "chainId": 16602,
   "deployer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
   "deployedAt": "2026-05-08",
+  "v2DeployedAt": "2026-05-10",
   "contracts": {
     "ReceiptRegistry": {
       "address": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "txHash": "0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+      "note": "V1; stays live for the 1,330+ existing anchored receipts (chain history immutable). New anchors land on ReceiptRegistryV2."
+    },
+    "ReceiptRegistryV2": {
+      "address": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+      "txHash": "0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+      "note": "K-2 fix · EIP-712 anchor signature recovery · agentAddress is the recovered signer (NOT msg.sender). Per-agent monotonic nonces. See HALF_BAKED.md K-2."
     },
     "Erc7857Verifier": {
       "address": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
       "txHash": "0x92eec89896daaea5f4ebe28f262bc8acb91dd0975798f603918c501debcb4b6a",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938",
+      "note": "V1 verifier reused by AgentPassportINFTV2 — see HALF_BAKED.md H-6 (TEE/ZKP-backed attestor is Phase B; current attestor signature scheme is honest documented limitation)."
     },
     "AgentPassportINFT": {
       "address": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
       "txHash": "0x40c2e67b08b60d5d4902397d6e81f84583e8e109c07e53eadace7ef20d6825da",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
+      "note": "V1; stays live for 4 minted passports (tokenIds 1-4). New mints land on AgentPassportINFTV2. Studio /agents reads V2 first; V1 rows render with a LEGACY-PASSPORT chip."
+    },
+    "AgentPassportINFTV2": {
+      "address": "0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d",
+      "txHash": "0xbdc828b0444beb2794a39ae18308d40d972755c25ce05f33744c781f3185ce36",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d",
+      "note": "K-1 + K-4 + K-6 fix · authorizedRecorders-only with ReceiptRegistryV2 cross-check + ±100 trustScoreDelta cap; per-token executorVersion bumps on transfer; mint sets passportOf before _safeMint + nonReentrant.",
+      "authorizedRecorders": {
+        "operator": {
+          "address": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+          "txHash": "0xdf079cd6018ffd0b99cf66099b5404f04b359c621f6353f299e72b09b8797ccb"
+        }
+      },
+      "constructorArgs": {
+        "name": "Ivaronix Agent Passport V2",
+        "symbol": "IVAP2",
+        "owner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+        "verifier": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
+        "receiptRegistry": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab"
+      }
     },
     "CapabilityRegistry": {
       "address": "0x3783f3c4834fCCBD553860e15c64C7E052646a8D",

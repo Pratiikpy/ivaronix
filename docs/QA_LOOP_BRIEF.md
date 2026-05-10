@@ -507,8 +507,8 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 ### N · K-20 · AES-GCM nonce → randomBytes(12) → ✅ DONE (`406b86f`)
 ### N · K-8 + K-9 · auth + rate limit on /api/run + /api/skill/save → ✅ DONE (`245e017`)
 ### N · I-2 + K-16 · Studio Burn Mode runs real AES-256-GCM encryption → ✅ DONE (`25b2266`)
-### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ CODE-COMPLETE (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
-### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ CODE-COMPLETE (`c73ee7d`) · chain deploy = operator-action A-V2-K2
+### N · K-1 + K-4 + K-6 · AgentPassportINFTV2 hardened → ✅ DEPLOYED `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d` (tx `0xbdc828b0...`) · operator authorized recorder (tx `0xdf079cd6...`) · code `3b7bdeb`
+### N · K-2 · ReceiptRegistryV2 EIP-712 anchor → ✅ DEPLOYED `0xf675d4183b34fe8d1981FA9c117065aAcff690ab` (tx `0x3070e7d3...`) · code `c73ee7d`
 ### N · L-7 · Vercel-deploy Studio → ✅ CODE-COMPLETE (`e1e69b4`) · deploy = operator-action A-V2-L7
 ### N · K-15 · RFC-8785 polyglot canonical hash → ⚙️ 3 of 4 languages shipped + cross-impl proof live (TS `39d7f29` · Python + Rust + CI `a97058b`) · Go queued (operator-action A-V2-K15-Go)
 - TS reference 17/17 · Python reference 14/14 · Rust reference 11/11 · all green.

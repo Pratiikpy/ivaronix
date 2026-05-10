@@ -911,7 +911,7 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **Documentation:** `docs/CRYPTO_NOTES.md` ships with the threat model + RFC reference + fix history. Eight other primitives also documented (canonical hash, burn mode, receipt signing, anchor sigs, reputation, capability grants, ERC-7857 attestors).
 - **Suite-wide regression:** all 14 memory-package tests pass (7 new + 7 existing engine tests).
 
-### N · K-1 · AgentPassportINFTV2 hardened (K-1 + K-4 + K-6)  ·  ✅ CODE-COMPLETE 2026-05-10 (`3b7bdeb`) · chain deploy = operator-action A-V2-K1
+### N · K-1 · AgentPassportINFTV2 hardened (K-1 + K-4 + K-6)  ·  ✅ DEPLOYED 2026-05-10 · address `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d` · tx `0xbdc828b0444beb2794a39ae18308d40d972755c25ce05f33744c781f3185ce36` · operator authorized as recorder (tx `0xdf079cd6018ffd0b99cf66099b5404f04b359c621f6353f299e72b09b8797ccb`) · code commit `3b7bdeb`
 - **Contract:** `contracts/src/AgentPassportINFTV2.sol`. Three audit findings closed in one redeploy: K-1 (recordReceipt is authorizedRecorders-only with ReceiptRegistry cross-check + ±100 trustScoreDelta cap), K-4 (per-token executorVersion bumps on transfer; old grants stop matching), K-6 (mint sets passportOf before _safeMint + nonReentrant).
 - **Foundry suite:** `contracts/test/AgentPassportINFTV2.t.sol` ships 16 tests; full repo suite **106/106 passing** (was 90/90; +16 V2). Zero V1 regressions.
 - **Deploy script:** `contracts/script/DeployPassportV2.s.sol` reads OG_PRIVATE_KEY + PASSPORT_VERIFIER_ADDR + RECEIPT_REGISTRY_ADDR. Reuses existing Erc7857Verifier + ReceiptRegistry. Cost ~0.05 OG (Galileo, already funded per A-1).
@@ -926,7 +926,7 @@ The plan shape that K-15 received, applied to every item in the committed fix ba
 - **CI:** add to the existing `forge test` suite; block merge on regression.
 - **Effort:** 4h including redeploy + Foundry suite update + Studio chip.
 
-### N · K-2 · ReceiptRegistryV2 with EIP-712 anchor signature  ·  ✅ CODE-COMPLETE 2026-05-10 (`c73ee7d`) · chain deploy = operator-action A-V2-K2
+### N · K-2 · ReceiptRegistryV2 with EIP-712 anchor signature  ·  ✅ DEPLOYED 2026-05-10 · address `0xf675d4183b34fe8d1981FA9c117065aAcff690ab` · tx `0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af` · code commit `c73ee7d`
 - **Contract:** `contracts/src/ReceiptRegistryV2.sol`. Inherits OZ `EIP712` (domain `"Ivaronix.ReceiptRegistry"`, version `"2"`) + uses `ECDSA.recover`. The signed payload binds receiptRoot + storageRoot + receiptType + attestationHash + agentAddress + per-agent nonce + deadline. `anchor((params), signature)` recovers the signer; the recovered address MUST equal the claimed `agentAddress` or the call reverts.
 - **Replay protection:** per-agent monotonic `nonces` mapping; consumed + advanced on every successful anchor. Deadline enforced.
 - **Relayer pattern:** anyone can submit; the recorded `agentAddress` is the recovered signer, NOT `msg.sender`. The event includes `relayer = msg.sender` separately for accounting.
