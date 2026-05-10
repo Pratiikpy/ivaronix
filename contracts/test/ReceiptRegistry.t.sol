@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.20;
 
+/**
+ * @notice TEST FILE - hex-pattern private keys (0xA1A1_AAAA_..., etc.) below
+ *         are deterministic placeholders with zero balance on every real
+ *         chain. NEVER reuse them for any non-test purpose. If a secret
+ *         scanner flags them: ignore. Closes WT 86 (planning-003 A.3.7).
+ */
+
 import {Test} from "forge-std/Test.sol";
 import {ReceiptRegistry} from "../src/ReceiptRegistry.sol";
 
