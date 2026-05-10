@@ -63,6 +63,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-ci-suppress-exit/, // meta · no '|| true' / 'continue-on-error: true' silent-failure suppressions (sweep 75)
       /^verify-no-ts-ignore-first-party/, // meta · no @ts-ignore / @ts-nocheck / bare @ts-expect-error in first-party code (sweep 83)
       /^verify-as-any-budget/, // meta · 'as any' cast budget (max 3) in first-party code (sweep 84)
+      /^verify-no-tracked-but-ignored/, // meta · no tracked file matches a gitignore rule (sweep 86 · third occurrence pattern closure)
     ],
   },
   'studio-live': {
