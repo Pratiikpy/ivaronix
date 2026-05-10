@@ -87,9 +87,13 @@ export async function POST(req: Request): Promise<NextResponse> {
       { status: 400 },
     );
   }
+  // fmMatch[1] is the YAML frontmatter capture; the regex has one capture
+  // group, and we only reach this line if fmMatch was non-null, so [1] is
+  // present. noUncheckedIndexedAccess (tsconfig.base.json) widens it to
+  // string|undefined; coalesce to '' so the type narrows.
   let parsedFm: unknown;
   try {
-    parsedFm = parseYaml(fmMatch[1]);
+    parsedFm = parseYaml(fmMatch[1] ?? '');
   } catch (err) {
     return NextResponse.json(
       { error: `manifest YAML parse error: ${(err as Error).message}` },

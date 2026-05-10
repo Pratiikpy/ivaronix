@@ -271,15 +271,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Why:** every closing commit carries `Closes audit <ID>`. A one-shot `git log --grep` makes the audit lifecycle queryable without scanning the file.
 - **Status:** `scripts/diag/audit-list.ts` ships with `pnpm audit:list`. Walks `git log --grep "Closes audit"` + parses IDs from each commit body. Filters: `--since 2w` · `--grep A.5` · `--json`. Uses `execFileSync` (not `execSync`) so the user-supplied filter strings can't shell-inject.
 
-### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json`
-- **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped today at repo root with canonical strict settings.
-- **Why:** today each of the 14 workspace packages has its own `tsconfig.json` that may drift on `strict`, `target`, `moduleResolution`. Without a shared base, "14 packages typecheck-clean" claims uneven type-safety guarantees across the workspace. The base file is shipped; the per-package extends migration is the follow-up.
-- **Action:**
-  1. For each `<package>/tsconfig.json`, add `"extends": "../../tsconfig.base.json"` (or correct relative path) at the top of `compilerOptions`.
-  2. Strip duplicated settings (target, module, strict, etc.) from per-package configs — they inherit from base.
-  3. Per-package overrides ONLY when the package legitimately needs them (e.g. apps/studio adds `"jsx": "preserve"` for Next.js, packages add their own `"outDir"` for build output).
-  4. Run `pnpm -r typecheck` after; any package that breaks under the canonical settings reveals a hidden type-safety gap. Fix or document.
-- **Effort:** ~1.5h including fixing newly-surfaced typecheck failures.
+### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json` · ✅ SHIPPED
+- **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped at repo root with canonical strict settings.
+- **Status (sweep 79):** ✅ All 19 workspace packages now extend `tsconfig.base.json` (15 in `packages/`, 4 in `apps/` — `apps/npx-cli` has no tsconfig because it's a bundler script). The last holdout, `apps/studio`, was migrated in sweep 79. Stricter settings inherited from base (`noUncheckedIndexedAccess: true`, `noImplicitOverride: true`) revealed exactly one type-safety gap: `apps/studio/src/app/api/skill/save/route.ts:92` accessed `fmMatch[1]` after a non-null guard on `fmMatch` itself, but the regex-capture-group access widened to `string | undefined`. Fixed via `?? ''` coalesce. `tsc --noEmit` and `next build` both clean post-migration.
+- **Why this matters:** "14 packages typecheck-clean" now means 14 packages typecheck under a UNIFORM strict contract — no per-package opt-out from `noUncheckedIndexedAccess` etc. Future contributors editing any package inherit the same rules.
 
 ### B-V2-11 · `pnpm env:check` script · ✅ SHIPPED in commit 2e49612
 - **Source:** plan-003 §A.3.4 · `envCheckReport()` exported from `packages/runtime/src/env.ts`.
