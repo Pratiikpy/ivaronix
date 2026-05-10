@@ -36,9 +36,9 @@ import {ReceiptRegistry} from "./ReceiptRegistry.sol";
  *         - Does NOT defend against: V1-registry agentAddress forgery.
  *           ReceiptRegistry V1 records agentAddress = msg.sender on
  *           anchor; a guard pointed at the V1 registry inherits that
- *           pre-K-2 weakness — any caller could anchor a receipt
- *           claiming any agent. Pass the V2 registry address (which
- *           records the EIP-712-recovered signer) for the K-2 fix.
+ *           weakness — any caller could anchor a receipt claiming any
+ *           agent. Pass the V2 registry address (which records the
+ *           EIP-712-recovered signer) for the hardened anchor path.
  *         - Does NOT defend against: receipt-content fabrication. The
  *           guard checks chain-anchor identity; receipt-body trust
  *           still rests on the off-chain TIER 1 (TEE-attested) vs
