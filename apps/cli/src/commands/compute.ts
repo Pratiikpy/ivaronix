@@ -3,6 +3,7 @@ import { JsonRpcProvider, Wallet, formatEther, parseEther } from 'ethers';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { receiptCommand } from './receipt.js';
 
 export const computeCommand = new Command('compute')
   .description('Manage 0G Compute keys, balances, and inference');
@@ -69,11 +70,18 @@ computeCommand
 computeCommand
   .command('verify-tee <receipt-id-or-path>')
   .description('Independently verify TEE attestation (alias for `ivaronix receipt verify <file> --tee-independent`)')
-  .action((id: string) => {
-    ui.title('compute verify-tee → forwarding to receipt verify');
+  .action(async (id: string) => {
+    // HALF_BAKED §I-7 closure: pre-sweep this action printed a hint and
+    // exited 0, while the description claimed it forwards to receipt
+    // verify. A judge running `ivaronix compute verify-tee 1004` saw a
+    // green "title" + hint and walked away thinking verification ran.
+    // Now we actually invoke receipt verify and propagate its exit code.
+    ui.title('compute verify-tee → receipt verify --tee-independent');
     ui.divider();
-    ui.hint(`Run: ivaronix receipt verify ${id} --tee-independent`);
-    ui.hint('The verify command auto-resolves on-chain ids, ULIDs, and file paths.');
+    await receiptCommand.parseAsync(['node', 'verify', id, '--tee-independent']);
+    // receiptCommand sets process.exitCode internally on failure; nothing
+    // further needed here. Commander's action callback's resolved promise
+    // is what the CLI binary awaits.
   });
 
 // ─── warmup (PASS 76 B-2) ────────────────────────────────────────────────────
