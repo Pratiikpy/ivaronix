@@ -30,6 +30,18 @@ await esbuild.build({
     'fsevents',
     'dotenv',
     '@0gfoundation/0g-compute-ts-sdk',
+    // Native .node bindings — esbuild can't bundle these. The npm
+    // install step on the user's machine pulls the platform-specific
+    // binary down. Pulled in as a transitive dep via the embedding /
+    // memory layers (transformers.js → onnxruntime-node).
+    'onnxruntime-node',
+    '@xenova/transformers',
+    // ink's React DevTools integration is optional (dev-mode only) but
+    // esbuild fails closed when the import isn't resolvable. Mark it
+    // external so the bundle skips it entirely; ink falls back to
+    // production rendering at runtime when react-devtools-core isn't
+    // installed.
+    'react-devtools-core',
   ],
   legalComments: 'linked',
   sourcemap: false,
