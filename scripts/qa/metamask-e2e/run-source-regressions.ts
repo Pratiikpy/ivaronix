@@ -62,6 +62,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-frozen-lockfile-bypass/, // meta · CI workflows must use strict --frozen-lockfile (sweep 74)
       /^verify-no-ci-suppress-exit/, // meta · no '|| true' / 'continue-on-error: true' silent-failure suppressions (sweep 75)
       /^verify-no-ts-ignore-first-party/, // meta · no @ts-ignore / @ts-nocheck / bare @ts-expect-error in first-party code (sweep 83)
+      /^verify-as-any-budget/, // meta · 'as any' cast budget (max 3) in first-party code (sweep 84)
     ],
   },
   'studio-live': {
