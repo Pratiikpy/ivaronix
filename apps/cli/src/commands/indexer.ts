@@ -159,12 +159,19 @@ indexerCommand
       const cursor = ctx.db.getCursor(ctx.address);
       ui.title('indexer · stats');
       ui.info(`db                   ${ctx.db.path}`);
-      ui.info(`contract             ${ctx.address}`);
+      ui.info(`contract             ${ctx.address}  (V1 only · V2 indexing queued)`);
       ui.info(`cursor (last block)  ${cursor?.lastBlock ?? '(none)'}`);
-      ui.info(`total receipts       ${s.totalReceipts}`);
+      ui.info(`total receipts       ${s.totalReceipts}  (V1 events only)`);
       ui.info(`distinct agents      ${s.distinctAgents}`);
       ui.info(`latest receipt id    ${s.latestReceiptId >= 0 ? s.latestReceiptId : '(none)'}`);
       ui.info(`latest block         ${s.latestBlock}`);
+      // V1-only caveat per sweep 64. The local SQLite indexer was
+      // built before V2 contracts existed; extending it to multi-
+      // registry is queued in USER_TODO §B-V2-INDEXER-V2. Until then,
+      // operators reading these stats need to know V2 anchors are
+      // invisible here. The chain-side `pnpm doctor` and `pnpm stats`
+      // commands DO show V1 + V2 split (sweeps 56-57).
+      ui.hint('V2 receipts are NOT indexed locally yet — see `ivaronix doctor` for live V1+V2 chain counts.');
       ui.divider();
       ui.title('by type');
       for (const [t, n] of Object.entries(s.byType).sort((a, b) => Number(a[0]) - Number(b[0]))) {

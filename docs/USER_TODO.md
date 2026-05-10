@@ -429,6 +429,17 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - ⏳ JSON-repair regression coverage still pending: the `packages/runtime/src/json-repair.ts` module referenced in the og-router threat-model JSDoc does not exist yet. Write the module first (the malform pattern is documented in the rules: 7B models malform JSON ~5-10% of the time, so a regex-based repair pass is the canonical mitigation), then write `packages/og-router/src/json-repair.test.ts` to feed malformed shapes and assert recovery.
 - **Effort remaining:** ~3h to write the json-repair module + tests. The keyring portion (~1h) is already done.
 
+### B-V2-INDEXER-V2 · Extend `apps/cli` indexer to V2 ReceiptRegistry
+- **Source:** cron-sweep 64. The `ivaronix indexer backfill / tail / stats / list` commands operate on a single contract address — `getDeployedAddress(env.network, 'ReceiptRegistry')` (V1 only). When V2 anchoring lands at scale, V2 receipts will be invisible to the local read replica. Sweep 64 added an explicit "V1 only · V2 indexing queued" tag to the stats output so operators see the gap; the actual fix is queued here.
+- **Why:** Studio's `/global` page reads from this indexer. Without V2 indexing, `/global` will under-count once V2 anchors begin (today: 0 V2 anchors so the gap is invisible). Same drift shape as the README/doctor/stats V2-blindness sweeps caught.
+- **Action:**
+  1. `apps/cli/src/commands/indexer.ts buildContext()` returns a list of `{ address, version }` entries — V1 + V2 deployments via `loadDeployments(env.network).contracts`.
+  2. `IndexerWorker` constructor accepts `contractAddress: Address[]` (was `Address`). Each worker iteration scans both contracts in the same block range; rows tagged with `registryVersion: 1 | 2`.
+  3. `IndexerDb` schema adds a `registry_version INTEGER NOT NULL DEFAULT 1` column. SQLite migration: `ALTER TABLE receipts ADD COLUMN registry_version INTEGER NOT NULL DEFAULT 1;`.
+  4. `indexer stats` displays counts split by version (matches the doctor/stats sweep-56/57 pattern).
+  5. `indexer list` filters by registry-version when `--version v1|v2` flag is passed.
+- **Effort:** ~3h. Touches indexer DB schema + worker + 4 CLI subcommands (backfill/tail/stats/list). Not blocking testnet today (V2 has 0 anchors); becomes critical the moment a V2 anchor lands.
+
 ### B-V2-WORDING-AMNESTY · Clean up the 52 wording-amnesty.json entries
 - **Source:** cron-sweep finding 2026-05-10 (wording-lint ship). PRD.md listed `pnpm wording-lint` as a CI gate item but the script never landed; sweep 34 wrote it. First run found 55 hits (52 amnestied) across 51 markdown files. Categories:
   - **24 `harness`** — most are legitimate technical jargon ("test harness", "cross-impl harness", "regression harness"). The lint should learn to allow noun-modifier-prefixed `harness` and only flag the marketing-verb pattern ("harness the power of"). The amnesty buys time to refine.
