@@ -35,29 +35,18 @@ async function loadSnapshot(): Promise<GlobalSnapshot> {
     unifiedNextId().catch(() => null),
     passport ? passport.nextTokenId().catch(() => null) : null,
     memoryAddr
-      ? (async () => {
-          const client = new MemoryAccessLogClient(memoryAddr, getProvider());
-          // listForAgent works per-address; for global we filter all events.
-          const provider = getProvider();
-          const latest = await provider.getBlockNumber();
-          const fromBlock = Math.max(0, latest - 200_000);
-          const c = (client as unknown as { contract: { queryFilter: Function; filters: { MemoryAccessed: Function } } }).contract;
-          const filter = c.filters.MemoryAccessed();
-          const events = (await c.queryFilter(filter, fromBlock, latest)) as Array<{
-            args: unknown[];
-            transactionHash: string;
-            blockNumber: number;
-          }>;
-          return events.slice(-5).reverse();
-        })().catch(() => [] as Array<{ args: unknown[]; transactionHash: string; blockNumber: number }>)
+      ? new MemoryAccessLogClient(memoryAddr, getProvider())
+          .listGlobal(200_000)
+          .then((events) => events.slice(-5).reverse())
+          .catch(() => [])
       : [],
   ]);
 
   const recentMemoryEvents = memEvents.map((ev) => ({
-    agent: ev.args[0] as string,
-    accessType: MEM_ACCESS_LABELS[Number(ev.args[3])] ?? `code ${ev.args[3]}`,
-    timestamp: Number(ev.args[4] as bigint),
-    txHash: ev.transactionHash,
+    agent: ev.agent,
+    accessType: MEM_ACCESS_LABELS[ev.accessType] ?? `code ${ev.accessType}`,
+    timestamp: Number(ev.timestamp),
+    txHash: ev.txHash,
     blockNumber: ev.blockNumber,
   }));
 
