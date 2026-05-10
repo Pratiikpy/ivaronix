@@ -1,6 +1,24 @@
 # Ivaronix · CLAUDE.md (working contract)
 
-> Operational ground rules for any agent working on this project. Updated 2026-05-08.
+> Operational ground rules for any agent working on this project. Updated 2026-05-10.
+
+## Index
+
+- §1 Hard rules (no compromise · production-ready · brutal honesty · no half-baked anything)
+- §2 Judging criteria (locked) + per-criterion strength + gap analysis
+- §3 Resource directories (read these before claiming gaps)
+- §4 PMF filter for new features
+- §5 Track positioning (Track 1 primary · Track 3 automatic-secondary)
+- §6 Receipt tier marking (TIER 1 TEE green · TIER 2 external-signed amber)
+- §7 What ships (receipts as the product)
+- §8 Failure modes you must not fall into
+- §9 Writing voice — no AI slop (banned words · capability framing · JSDoc/NatSpec rule)
+- §10 Visual contract — match `brand/Ivaronix.html`
+- §11 End-to-end testing rule (real MetaMask · real chain · §11.3a captures-as-baseline)
+- §12 Completion discipline (the "do not stop" rule)
+- §13 README / submission documentation (locked submission requirements)
+- §14 Per-package guidance (AGENTS.md + path-scoped `.claude/rules/`)
+- §15 Bookkeeping in the same commit (the "ship X → discover X" rule)
 
 ## 1. Hard rules
 

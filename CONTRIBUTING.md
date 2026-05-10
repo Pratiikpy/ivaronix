@@ -4,7 +4,7 @@
 
 ## Read first
 
-1. **`CLAUDE.md`** — operational ground rules. §1 (no compromise / production-ready option), §6 (TIER 1 vs TIER 2 honesty), §9 (writing voice / no AI slop), §10 (visual contract), §11 (end-to-end testing rule), §12 (completion discipline). Every PR is reviewed against these.
+1. **`CLAUDE.md`** — operational ground rules. §1 (no compromise / production-ready option), §6 (TIER 1 vs TIER 2 honesty), §9 (writing voice / no AI slop), §10 (visual contract), §11 (end-to-end testing rule), §12 (completion discipline), §15 (ship X → discover X bookkeeping rule). Every PR is reviewed against these.
 2. **`docs/QUALITY.md`** — the evergreen quality philosophy. Receipts > rhetoric · brutal honesty over flattering claims · CLI as gold standard.
 3. **The path-scoped rule for the package you're editing** — `.claude/rules/<package>.md`. Auto-loads when editing files under that path; lists hard rules + threat model + test command.
 4. **`<package>/AGENTS.md`** for package-specific stack + hot files + env. Six packages have these: `apps/studio`, `apps/cli`, `packages/og-router`, `packages/og-chain`, `contracts`, `seed-skills`.
