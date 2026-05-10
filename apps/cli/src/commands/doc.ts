@@ -5,7 +5,7 @@ import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
@@ -453,7 +453,13 @@ docCommand
       return;
     }
 
-    const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    // V2-first per .claude/rules/og-chain.md. New anchors land on V2;
+    // legacy V1 stays live for existing receipts. registryVersion drives
+    // the anchor branch below.
+    const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+    const registryAddr = registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -607,26 +613,51 @@ docCommand
     writeFileSync(outPath, JSON.stringify(signed, null, 2));
     ui.pass(`written              ${outPath}`);
 
-    ui.pending('anchoring on 0G Chain...');
-    const registry = new ReceiptRegistryClient(registryAddr, wallet);
+    ui.pending(`anchoring on 0G Chain (${registryVersion.toUpperCase()})...`);
     const typeCode = RECEIPT_TYPES[draft.type];
     const evidenceBytes32 = ('0x' + evidenceDigest.replace(/^sha256:/, '')) as Hash;
-    const tx = await registry.anchor(
-      signed.storage.receiptRoot as Hash,
-      evidenceBytes32,
-      typeCode,
-      ('0x' + '0'.repeat(64)) as Hash,
-    );
+    const attestationHashZero = ('0x' + '0'.repeat(64)) as Hash;
+    let tx: { hash: string };
+    let txReceipt: { blockNumber: number; gasUsed: bigint } | null;
+    let onChain: { id: bigint } | null = null;
+    if (registryVersion === 'v2') {
+      const registryV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+      const { tx: v2Tx } = await registryV2.signAndAnchor(wallet, {
+        receiptRoot: signed.storage.receiptRoot as Hash,
+        storageRoot: evidenceBytes32,
+        receiptType: typeCode,
+        attestationHash: attestationHashZero,
+      });
+      tx = { hash: v2Tx.hash };
+      const r = await v2Tx.wait();
+      txReceipt = r ? { blockNumber: r.blockNumber, gasUsed: r.gasUsed } : null;
+      try {
+        const found = await registryV2.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+        if (found) onChain = { id: found.id };
+      } catch { /* not fatal · scan-window miss isn't a verify failure */ }
+    } else {
+      const registryV1 = new ReceiptRegistryClient(registryAddr, wallet);
+      const v1Tx = await registryV1.anchor(
+        signed.storage.receiptRoot as Hash,
+        evidenceBytes32,
+        typeCode,
+        attestationHashZero,
+      );
+      tx = { hash: v1Tx.hash };
+      const r = await v1Tx.wait();
+      txReceipt = r ? { blockNumber: r.blockNumber, gasUsed: r.gasUsed } : null;
+      try {
+        const found = await registryV1.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+        if (found) onChain = { id: found.id };
+      } catch { /* not fatal · scan-window miss isn't a verify failure */ }
+    }
     ui.info(`tx hash              ${tx.hash}`);
-    const txReceipt = await tx.wait();
     if (!txReceipt) {
       ui.fail('anchor tx did not return receipt');
       return;
     }
     ui.pass(`block                ${txReceipt.blockNumber}`);
     ui.pass(`gas used             ${txReceipt.gasUsed}`);
-
-    const onChain = await registry.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
     if (onChain) ui.pass(`receipt on-chain id  ${onChain.id}`);
 
     writeFileSync(outPath, JSON.stringify({
