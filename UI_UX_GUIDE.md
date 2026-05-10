@@ -206,8 +206,8 @@ Each "light" is a chip with:
 When **Burn Mode** is active: storage's Active color flips to `#9333ea` (purple, signaling sealed); TEE's pulse rate doubles. Per `COMPONENTS.md §14`.
 
 ### File
-- `apps/studio/components/FourLightRow.tsx`
-- `packages/ui/components/FourLightRow.tsx` (shared between Studio + CLI ANSI rendering)
+- `apps/studio/src/components/FourLightRow.tsx` (Studio's React render)
+- `apps/cli/src/ui/` (CLI ANSI rendering ports the same chip set in-place; the earlier `packages/ui` shared dir was a planning placeholder, never wired)
 
 ---
 

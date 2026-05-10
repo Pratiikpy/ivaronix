@@ -19,7 +19,7 @@
 | 7 | **Telegram bot** | Mobile / chat-native users | `apps/telegram-bot` (long-poll worker) |
 | 8 | **Skill Registry browser** | Skill creators, ecosystem | `apps/studio/app/skills/*` (page in Studio, no separate app) |
 
-All surfaces are real today. There is no separate `apps/skill-store` (the registry lives inside Studio at `/skills`), no `apps/forge-daemon` (Studio talks to chain/storage/router directly via `packages/sdk` from server actions and route handlers), and no `apps/worker` (long-running jobs run via `scripts/wander-cycle/` for now and graduate to a worker app only when receipt volume justifies it).
+All surfaces are real today. There is no separate `apps/skill-store` (the registry lives inside Studio at `/skills`), no `apps/forge-daemon` (Studio talks to chain/storage/router directly via `packages/og-toolkit` + `packages/runtime` from server actions and route handlers), and no `apps/worker` (long-running jobs run via `scripts/wander-cycle/` for now and graduate to a worker app only when receipt volume justifies it). The shared SDK surface is `packages/og-toolkit` (chain/storage/router clients) + `packages/runtime` (`runPipeline`); the earlier `packages/sdk` ghost dir is gone.
 
 ---
 
@@ -216,7 +216,7 @@ Same chip set in CLI ANSI, Studio React, OG-images, Twitter cards, public Proof 
 - **Verified** — solid green
 - **Mismatch** — red with diff panel
 
-This is `packages/ui/components/FourLightRow.tsx`. **Used as a status surface, a verification surface, AND a hero animation.** One component, three uses.
+This is `apps/studio/src/components/FourLightRow.tsx` (Studio uses it directly; the CLI ANSI rendering ports the same chip set in-place). **Used as a status surface, a verification surface, AND a hero animation.** One component, three uses.
 
 **Receipt state chips** — exactly 3 states surfaced everywhere a receipt appears:
 
@@ -242,7 +242,7 @@ See `COMPONENTS.md §14`.
 ### 4.3 Component model
 - shadcn/ui primitives (Button, Card, Dialog, Tabs, Toast, Toaster).
 - Tailwind v4 with `@theme inline` for custom palette + dark mode (default).
-- `packages/ui` hosts cross-cutting components: `FourLightRow`, `ReceiptStateChip`, `PermissionPill`, `BurnLock`, `ConsensusBanner`.
+- Cross-cutting components live in `apps/studio/src/components/` (`FourLightRow`, `ReceiptStateChip`, `PermissionPills`, `MemoryNotesPanel`, `MemoryPanel`, `RunPanel`, `ShareButton`, `Section`, `Header`, `Footer`, `MobileMenu`, `WalletConnect`, `Logo`). The earlier `packages/ui` directory was an empty placeholder; consolidating into `apps/studio/src/components/` reflects current reality.
 - Drop zone: react-dropzone wrapped in shadcn Card; expands full-bleed; collapses to left-rail status pane on submit.
 - Audit report: 3-stack layout (verdict banner → badge row → per-agent card grid).
 - Public Proof URL page: print-friendly; OG-image auto-generates verdict banner.
@@ -463,7 +463,7 @@ Before any memory read by skill X for agent Y, query `CapabilityRegistry.grants(
 
 ---
 
-## 9. Lifecycle Hooks (`packages/hooks`)
+## 9. Lifecycle Hooks (`packages/skills/src/hooks/`)
 
 claude-mem-pattern hook system, defined in `.ivaronix/hooks.yml`:
 
