@@ -1,0 +1,34 @@
+# Cross-editor formatting baseline. Every editor (VSCode, JetBrains,
+# Vim, Emacs, Sublime) reads this file and applies the rules without
+# per-editor config. Keeps indentation + line endings + charset
+# consistent across contributors regardless of OS or editor.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Markdown allows trailing spaces (two spaces = line break in MD).
+[*.md]
+trim_trailing_whitespace = false
+
+# Solidity convention is 4-space indent.
+[*.sol]
+indent_size = 4
+
+# Python convention is 4-space indent.
+[*.py]
+indent_size = 4
+
+# Makefile MUST use tabs.
+[Makefile]
+indent_style = tab
+
+# Foundry config + tomls keep 2-space.
+[*.{toml,yml,yaml,json}]
+indent_size = 2
