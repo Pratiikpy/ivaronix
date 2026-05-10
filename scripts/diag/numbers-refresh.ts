@@ -16,7 +16,7 @@
  */
 import { JsonRpcProvider } from 'ethers';
 import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -115,6 +115,38 @@ function listWorkspacePackages(): string[] {
     .sort();
 }
 
+/**
+ * Count workspace projects (packages + apps) that have a real
+ * `typecheck` script in their package.json — i.e. one that runs `tsc`
+ * (or equivalent) rather than `echo skip`. Static count, no actual
+ * `tsc` invocation; deletes / additions of project dirs reflect
+ * automatically. Closes the cron-sweep gap on 2026-05-10 where
+ * `typecheckClean` was a hand-frozen value preserved across refreshes.
+ */
+function countTypecheckClean(): number {
+  let count = 0;
+  for (const subdir of ['packages', 'apps']) {
+    const root = resolve(REPO_ROOT, subdir);
+    if (!existsSync(root)) continue;
+    for (const entry of readdirSync(root)) {
+      const pkgPath = resolve(root, entry, 'package.json');
+      if (!existsSync(pkgPath)) continue;
+      try {
+        const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { scripts?: Record<string, string> };
+        const tc = pkg.scripts?.typecheck ?? '';
+        // Real typechecks invoke tsc / tsc -b / tsc --noEmit; the
+        // `echo skip` placeholders don't count. opencode-bin's typecheck
+        // currently echoes a status message about needing port work
+        // (1267 first-round tsc errors); that doesn't count either.
+        if (/\btsc\b/.test(tc)) count += 1;
+      } catch {
+        // Malformed package.json — skip silently.
+      }
+    }
+  }
+  return count;
+}
+
 function parseReceiptTypes(): { count: number; labels: string[] } {
   const tsPath = resolve(REPO_ROOT, 'packages/core/src/types.ts');
   const src = readFileSync(tsPath, 'utf8');
@@ -172,7 +204,7 @@ async function buildSnapshot(): Promise<NumbersFile> {
     packages: {
       workspaceTotal: packageDirs.length + apps.length,
       apps: apps.length,
-      typecheckClean: existing.packages.typecheckClean,
+      typecheckClean: countTypecheckClean(),
       appsList: apps,
     },
     polyglotHash: existing.polyglotHash,

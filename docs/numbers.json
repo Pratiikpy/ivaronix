@@ -67,13 +67,12 @@
     "creatorEarningsLabel": "0.0014 OG · 26 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
-    "workspaceTotal": 33,
-    "apps": 8,
-    "typecheckClean": 25,
+    "workspaceTotal": 26,
+    "apps": 7,
+    "typecheckClean": 23,
     "appsList": [
       "api",
       "cli",
-      "forge-daemon",
       "mcp-server",
       "npx-cli",
       "openclaw-skill",
