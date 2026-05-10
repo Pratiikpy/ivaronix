@@ -209,10 +209,10 @@ test('keyringFromEnv resolves the canonical IVARONIX_* names', () => {
 
 test('keyringFromEnv falls back to legacy names when canonical unset', () => {
   const k = keyringFromEnv({
-    ZG_API_SECRET: 'app-sk-test-legacy',
-    ZG_SERVICE_URL: 'https://compute.example/v1/proxy',
-    OG_COMPUTE_PROVIDER: '0x0000000000000000000000000000000000000002',
-    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000001',
+    ZG_API_SECRET: 'app-sk-test-legacy', // canonical-alias-allow:test-fixture · asserts legacy fallback
+    ZG_SERVICE_URL: 'https://compute.example/v1/proxy', // canonical-alias-allow:test-fixture
+    OG_COMPUTE_PROVIDER: '0x0000000000000000000000000000000000000002', // canonical-alias-allow:test-fixture
+    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000001', // canonical-alias-allow:test-fixture
   });
   assert.notEqual(k, null);
   const cred = k!.pickActive();
@@ -241,7 +241,7 @@ test('keyringFromEnv mixed-alias resolution: canonical key + legacy wallet', () 
     IVARONIX_ROUTER_KEY: 'canonical',
     IVARONIX_ROUTER_URL: 'https://canonical.example',
     IVARONIX_ROUTER_PROVIDER: '0x0000000000000000000000000000000000000002',
-    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000005', // legacy wallet
+    EVM_WALLET_ADDRESS: '0x0000000000000000000000000000000000000005', // canonical-alias-allow:test-fixture · legacy wallet asserted by this test
   });
   assert.notEqual(k, null);
   const cred = k!.pickActive();

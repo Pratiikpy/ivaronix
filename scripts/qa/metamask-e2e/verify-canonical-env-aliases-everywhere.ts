@@ -164,9 +164,13 @@ function scanFile(path: string): Hit[] {
       // would be a separate name).
       const re = new RegExp(`\\b${legacy}\\b`);
       if (!re.test(text)) continue;
-      // Look for canonical on same line or within 3 lines either side.
+      // Look for canonical OR the allow-marker on same line or within 3
+      // lines either side. The window-scoped allow-marker check (sweep
+      // 140) lets a single comment cover a test fixture that spans
+      // multiple lines.
       const window = lines.slice(Math.max(0, i - 3), Math.min(lines.length, i + 4)).join('\n');
       if (new RegExp(`\\b${canonical}\\b`).test(window)) continue;
+      if (ALLOW_TAG.test(window)) continue;
       hits.push({ file: path, line: i + 1, legacy, canonical, text: text.trim().slice(0, 140) });
     }
   }
