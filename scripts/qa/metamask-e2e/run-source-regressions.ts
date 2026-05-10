@@ -50,6 +50,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-sprint-natspec/, // CLAUDE.md §9 · no K-N fix / Phase / sprint in contract NatSpec
       /^verify-brand-token-drift/, // CLAUDE.md §10 · hex literals must be in brand/tokens.json (or amnesty)
       /^verify-no-bare-require-esm/, // meta · bare require() inside ESM packages throws ReferenceError at runtime
+      /^verify-deployments-path-canonical/, // §15 bookkeeping · docs reference contracts/deployments/ post-fb3db59 move
     ],
   },
   'studio-live': {

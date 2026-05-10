@@ -132,12 +132,12 @@ $ pnpm --filter @ivaronix/receipts test
   - **Address: `0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`**
   - Tx: `0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814`
   - Deployer: Wallet A `0xaa95...8677Ce`
-- [x] `deployments/testnet.json` records contract address + tx hash + explorer URL
+- [x] `contracts/deployments/testnet.json` records contract address + tx hash + explorer URL
 - [x] `packages/og-chain` adds `ReceiptRegistryClient` (typed wrapper, inline ABI) + `loadDeployments()` helper
 - [x] `apps/cli` `receipt anchor <path>` calls `ReceiptRegistry.anchor()`, waits for confirmation, writes anchor tx info back to file
 - [x] `apps/cli` `receipt verify <path>` runs CLAIMED checks + queries on-chain anchor by `receiptRoot` via `ReceiptAnchored` event; shows `→ ANCHORED ✓` when found
 - [x] `apps/cli` `receipt show <id>` reads on-chain receipt by id and prints fields
-- [x] `apps/cli` `doctor` now reads `deployments/testnet.json` and shows live `nextId()` count
+- [x] `apps/cli` `doctor` now reads `contracts/deployments/testnet.json` and shows live `nextId()` count
 - [x] `scripts/build-hello-receipt.ts` produces a signed receipt for smoke testing
 - [x] **2 testnet receipts anchored end-to-end:**
   - id=0 — first anchor (gas 141217)
@@ -674,7 +674,7 @@ Phase A is now genuinely testnet-complete. Every primitive in PRD/HLD/BUILD has 
   1. The deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` has 0 OG on mainnet 16661 (only testnet faucet OG to date).
   2. Mainnet deployment costs real money — the canonical 6-contract deploy at current gas prices is ≈1.5–2 OG end-to-end.
   3. Phase B Day 24 mints the first mainnet passport (another mainnet tx) and Day 25 re-anchors first-party skills on the mainnet `SkillRegistry` — each is a billable transaction.
-- **What an autonomous agent can do:** everything up to the deploy command. The Foundry script is identical to the testnet one (already written + tested across 6 contracts × 5 test suites × 61 tests). Switching network is a `--rpc-url https://evmrpc.0g.ai` flag change + a fresh `deployments/mainnet.json`.
+- **What an autonomous agent can do:** everything up to the deploy command. The Foundry script is identical to the testnet one (already written + tested across 6 contracts × 5 test suites × 61 tests). Switching network is a `--rpc-url https://evmrpc.0g.ai` flag change + a fresh `contracts/deployments/mainnet.json`.
 - **What requires the user:**
   1. Fund the deployer wallet on mainnet (the bridge / transfer of OG to the address).
   2. Confirm "go for mainnet" — mainnet contracts are write-once for our purposes; a deploy bug means re-deploying and burning more OG.

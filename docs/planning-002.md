@@ -123,7 +123,7 @@ A recurring cron (`b7b82b77`, every 5 min, session-only) re-reads this file and 
 
 ### 4.2 · Deploy sequence (post-funding)
 1. `forge script script/DeployAll.s.sol --rpc-url https://evmrpc.0g.ai --broadcast --private-key <deployer>` — deploys all 6 contracts.
-2. Add addresses to `deployments/mainnet.json`.
+2. Add addresses to `contracts/deployments/mainnet.json`.
 3. Deploy `IvaronixReceiptGuard.sol` (B-1).
 4. Re-run mainnet-readiness checklist (currently 13/13 green for testnet; mainnet pass needed).
 5. Update Studio header `network: mainnet` chip.

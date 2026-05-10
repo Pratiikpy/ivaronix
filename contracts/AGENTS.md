@@ -38,7 +38,7 @@ When a security finding requires a contract change:
 - Contracts: `src/<Name>.sol`
 - Tests: `test/<Name>.t.sol`
 - Deploy scripts: `script/Deploy<Name>.s.sol`
-- Address records: `deployments/{testnet,mainnet}.json`
+- Address records: `contracts/deployments/{testnet,mainnet}.json`
 - Library imports: `lib/openzeppelin-contracts/...`
 
 ## Test command

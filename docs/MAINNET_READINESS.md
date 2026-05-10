@@ -113,8 +113,9 @@ Once the deployer wallet receives mainnet OG, run:
 NETWORK=mainnet pnpm --filter @ivaronix/og-chain run deploy
 ```
 
-The deploy script writes `deployments/mainnet.json` (same shape as
-`deployments/testnet.json`). Studio reads `OG_NETWORK=mainnet` and switches
+The deploy script writes `contracts/deployments/mainnet.json` (same shape
+as `contracts/deployments/testnet.json`). Studio reads `OG_NETWORK=mainnet`
+and switches
 all reads/writes accordingly.
 
 ---

@@ -34,6 +34,15 @@ build/
 .nuxt/
 .vercel/
 
+# `build/` (above) is intentionally ignored at any depth as build-output dirs.
+# Exception: docs/build/ holds the build-progress + engineering log narratives
+# (BUILD_PROGRESS.md, ENGINEERING_DEBUG_LOG.md, TEST_REPORT.md, BUILD.md).
+# Those files ARE tracked — without this re-include, edits to them silently
+# don't stage. (Found in cron-sweep 2026-05-10 when canonicalizing the
+# deployments path across operator runbooks.)
+!docs/build/
+!docs/build/**
+
 # Foundry
 out/
 cache/
