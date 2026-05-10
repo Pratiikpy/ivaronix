@@ -36,9 +36,16 @@ function loadEnv(): Record<string, string> {
 }
 
 const env = loadEnv();
-const RPC = env.OG_RPC_URL ?? 'https://evmrpc-testnet.0g.ai';
-const FUNDED_PK = env.EVM_PRIVATE_KEY;
-if (!FUNDED_PK) { console.error('FAIL: EVM_PRIVATE_KEY missing'); process.exit(1); }
+function pickEnv(...names: string[]): string | undefined {
+  for (const n of names) if (env[n]) return env[n];
+  return undefined;
+}
+const RPC = pickEnv('IVARONIX_RPC_URL', 'OG_RPC_URL') ?? 'https://evmrpc-testnet.0g.ai';
+const FUNDED_PK = pickEnv('IVARONIX_SIGNER_KEY', 'OG_PRIVATE_KEY', 'EVM_PRIVATE_KEY');
+if (!FUNDED_PK) {
+  console.error('FAIL: IVARONIX_SIGNER_KEY missing in .env (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)');
+  process.exit(1);
+}
 
 const PASSPORT_ABI = [
   'function mint(bytes32 metadataRoot) external returns (uint256)',

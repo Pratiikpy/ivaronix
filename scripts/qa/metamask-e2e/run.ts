@@ -39,11 +39,15 @@ function loadEnv() {
 }
 
 const env = loadEnv();
-const PRIVATE_KEY = env.EVM_PRIVATE_KEY ?? '';
-const WALLET_ADDR = env.EVM_WALLET_ADDRESS ?? '';
+function pickEnv(...names: string[]): string | undefined {
+  for (const n of names) if (env[n]) return env[n];
+  return undefined;
+}
+const PRIVATE_KEY = pickEnv('IVARONIX_SIGNER_KEY', 'OG_PRIVATE_KEY', 'EVM_PRIVATE_KEY') ?? '';
+const WALLET_ADDR = pickEnv('IVARONIX_WALLET_ADDRESS', 'EVM_WALLET_ADDRESS') ?? '';
 
 if (!PRIVATE_KEY) {
-  console.error('FAIL: EVM_PRIVATE_KEY missing in .env');
+  console.error('FAIL: IVARONIX_SIGNER_KEY missing in .env (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)');
   process.exit(1);
 }
 
