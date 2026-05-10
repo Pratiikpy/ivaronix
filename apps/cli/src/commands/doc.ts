@@ -251,7 +251,7 @@ docCommand
     // ─── 3. Inference ─────────────────────────────────────────────────────
     const keyring = keyringFromEnv();
     if (!keyring) {
-      ui.fail('Router not configured', 'Set ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS in .env');
+      ui.fail('Router not configured', 'Set IVARONIX_ROUTER_KEY / IVARONIX_ROUTER_URL / IVARONIX_ROUTER_PROVIDER / IVARONIX_WALLET_ADDRESS (legacy: ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS) in .env');
       process.exitCode = 1;
       return;
     }
