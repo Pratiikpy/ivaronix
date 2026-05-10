@@ -55,6 +55,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-numbers-vs-deployments/, // numbers.json contracts.* must match contracts/deployments/testnet.json
       /^verify-env-template-completeness/, // §15 · every IVARONIX_* var in code is in at least one env template
       /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
+      /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
     ],
   },
   'studio-live': {
