@@ -74,8 +74,13 @@ function readClosures(opts: CliOpts): AuditClosure[] {
     if (parts.length < 4) continue;
     const [hash, dateIso, subject, body] = parts;
     if (!hash || !dateIso || !subject) continue;
+    // Audit-ID grammar: starts with a letter, then `[A-Za-z0-9._-]` plus
+    // an optional single space + number suffix (e.g. `WT 26`, `WT 32`).
+    // The trailing capture group is `(?:\s+\d+)?` so we accept both
+    // dashed (`A.5.9`, `B-V2-13`) and space-suffix (`WT 26`) shapes
+    // without grabbing arbitrary trailing prose.
     const ids = Array.from(new Set(
-      [...body!.matchAll(/Closes audit\s+([A-Za-z0-9._\-]+)/g)].map((m) => m[1]!),
+      [...body!.matchAll(/Closes audit\s+([A-Za-z][A-Za-z0-9._\-]*(?:\s+\d+)?)/g)].map((m) => m[1]!.trim()),
     ));
     if (ids.length === 0) continue;
     if (opts.grep && !ids.some((id) => id.includes(opts.grep!))) continue;
