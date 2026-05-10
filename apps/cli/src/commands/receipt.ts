@@ -217,32 +217,59 @@ receiptCommand
     }
 
     let onChain: OnChainReadRow | null = null;
-    // Use the receipt's known anchor block as a tight-range hint when
-    // available (cheaper RPC than a multi-million-block scan, AND
-    // works with providers that cap eth_getLogs ranges). Sweep 61
-    // caught: receipt 1004 anchored at block 32349569 returned NOT
-    // FOUND under both the original 100k lookback AND a bumped 5M
-    // lookback because the RPC rejects large eth_getLogs ranges.
-    // Anchor-block hint is one tight query that always works.
-    const anchorHint = receipt.chainAnchor?.anchorBlockNumber ?? null;
-    const lookback = anchorHint
-      ? // RPC just needs to span the actual anchor block. ±1000 covers
-        // any reorg-window or block-time variance.
-        2000
-      : 100_000; // no hint · fall back to default
     let anchoredOn: 'v1' | 'v2' | null = null;
+
+    // Three-tier chain-anchor lookup strategy (sweep 62):
+    //
+    //   1. If pathOrId is numeric, query getReceipt(id) directly on
+    //      each registry. One deterministic RPC call · doesn't depend
+    //      on event-scan block ranges. This is the cheapest+most
+    //      reliable path because the user already TOLD us the id.
+    //
+    //   2. If receipt JSON has chainAnchor.anchorBlockNumber, query
+    //      findByReceiptRootInRange around that block (±1000 blocks).
+    //      Single RPC call within the RPC's eth_getLogs cap.
+    //
+    //   3. Fallback: findByReceiptRoot with default lookback. Only
+    //      runs when neither the id NOR the block hint is available
+    //      (rare · receipt without anchor metadata that wasn't looked
+    //      up by id).
+    //
+    // Sweep 61 fixed (1)+(2) was missing entirely; sweep 62 adds
+    // (1) for cases where the local receipt JSON's chainAnchor lacks
+    // anchorBlockNumber (e.g. receipts anchored from a different
+    // machine and copied to this local cache).
+    const numericId = /^\d+$/.test(pathOrId) ? BigInt(pathOrId) : null;
+    const anchorHint = receipt.chainAnchor?.anchorBlockNumber ?? null;
+
     for (const r of registries) {
       try {
-        // Tight range around the known anchor block when hinted; otherwise
-        // the registry client uses its lookback-from-latest default.
-        const found = anchorHint
-          ? await r.client.findByReceiptRootInRange(
-              receipt.storage.receiptRoot as Hash,
-              Math.max(0, anchorHint - 1000),
-              anchorHint + 1000,
-            )
-          : await r.client.findByReceiptRoot(receipt.storage.receiptRoot as Hash, lookback);
+        let found = null;
+        if (numericId !== null) {
+          // Tier 1: direct id lookup
+          const row = await r.client.getReceipt(numericId);
+          if (row && row.receiptRoot.toLowerCase() === receipt.storage.receiptRoot.toLowerCase()) {
+            found = row;
+          }
+        }
+        if (!found && anchorHint) {
+          // Tier 2: block-hint range
+          found = await r.client.findByReceiptRootInRange(
+            receipt.storage.receiptRoot as Hash,
+            Math.max(0, anchorHint - 1000),
+            anchorHint + 1000,
+          );
+        }
+        if (!found) {
+          // Tier 3: lookback scan
+          found = await r.client.findByReceiptRoot(
+            receipt.storage.receiptRoot as Hash,
+            anchorHint ? 2000 : 100_000,
+          );
+        }
         if (found) {
+          // The id from the row is what makes this an authoritative
+          // chain-anchor confirmation; downstream code prints it.
           onChain = { ...found, registryVersion: r.version };
           anchoredOn = r.version;
           break;
