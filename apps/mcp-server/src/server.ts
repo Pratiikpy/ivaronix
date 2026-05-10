@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { JsonRpcProvider, Wallet } from 'ethers';
 import {
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   AgentPassportClient,
   SkillRegistryClient,
   getDeployedAddress,
@@ -89,12 +90,23 @@ async function handleAsk(params: z.infer<typeof AskInput>): Promise<CallToolResu
 async function handleVerifyReceipt(params: z.infer<typeof VerifyReceiptInput>): Promise<CallToolResult> {
   const env = loadEnv();
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-  const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-  if (!addr) return { content: [{ type: 'text', text: `ReceiptRegistry not deployed on ${env.network}` }], isError: true };
-  const reg = new ReceiptRegistryClient(addr, provider);
+  // V2-first read per .claude/rules/og-chain.md. New receipts anchor on
+  // V2 (K-2 EIP-712 path); legacy receipts remain readable via V1 fallback.
+  const addrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+  const addrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+  if (!addrV1 && !addrV2) {
+    return { content: [{ type: 'text', text: `ReceiptRegistry not deployed on ${env.network}` }], isError: true };
+  }
+  const regV2 = addrV2 ? new ReceiptRegistryV2Client(addrV2, provider) : null;
+  const regV1 = addrV1 ? new ReceiptRegistryClient(addrV1, provider) : null;
   let onChain;
-  if (/^\d+$/.test(params.id)) onChain = await reg.getReceipt(BigInt(params.id));
-  else if (/^0x[0-9a-f]{64}$/i.test(params.id)) onChain = await reg.findByReceiptRoot(params.id as `0x${string}`, 200_000);
+  if (/^\d+$/.test(params.id)) {
+    const id = BigInt(params.id);
+    onChain = (regV2 ? await regV2.getReceipt(id) : null) ?? (regV1 ? await regV1.getReceipt(id) : null);
+  } else if (/^0x[0-9a-f]{64}$/i.test(params.id)) {
+    const root = params.id as `0x${string}`;
+    onChain = (regV2 ? await regV2.findByReceiptRoot(root, 200_000) : null) ?? (regV1 ? await regV1.findByReceiptRoot(root, 200_000) : null);
+  }
   if (!onChain) return { content: [{ type: 'text', text: `No receipt found for ${params.id}` }] };
   const lines = [
     `id              ${onChain.id.toString()}`,
