@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { loadDeployments } from '@ivaronix/og-chain';
+import { getNetwork } from '@/lib/chain';
 
 /**
  * Editorial multi-column footer per CLAUDE.md §10.
@@ -8,16 +10,13 @@ import Link from 'next/link';
  * Network column links resolve to the 0G Galileo Testnet block explorer
  * for real on-chain verification (judging criterion: "Explorer link /
  * contract address must be provided for verification").
+ *
+ * Pre-sweep-117 the contract addresses were hardcoded constants — same
+ * footer would render stale addresses post-mainnet-redeploy or on V2
+ * additions to contracts/deployments/<network>.json. Sweep 117 reads
+ * each address fresh via getDeployedAddress() so the footer always
+ * reflects what's actually in the deployment manifest.
  */
-
-const REGISTRY = {
-  ReceiptRegistry: '0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c',
-  AgentPassportINFT: '0x08d25653638c3ed40C3b82840fA20CAe9c94563E',
-  CapabilityRegistry: '0x3783f3c4834fCCBD553860e15c64C7E052646a8D',
-  MemoryAccessLog: '0xEe1aDFe76785377C4430B1325d86E58A6eC92119',
-  SkillRegistry: '0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1',
-  Erc7857Verifier: '0xEAd66Cb90B681720f3aab52d86c289E21106d938',
-} as const;
 
 const EXPLORER = 'https://chainscan-galileo.0g.ai';
 const REPO = 'https://github.com/Pratiikpy/ivaronix';
@@ -37,7 +36,16 @@ function shortAddr(a: string): string {
 }
 
 export function Footer() {
-  const network = process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet';
+  const network = getNetwork();
+  // Read the entire contracts manifest from contracts/deployments/<network>
+  // .json and iterate every entry. Future V2/V3 deploys appear in the
+  // footer automatically without code changes.
+  const manifest = loadDeployments(network);
+  const liveRegistry: Array<{ name: string; addr: `0x${string}` }> = manifest
+    ? Object.entries(manifest.contracts)
+        .map(([name, entry]) => ({ name, addr: entry.address as `0x${string}` }))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    : [];
   return (
     <footer
       style={{
@@ -82,8 +90,8 @@ export function Footer() {
         <section>
           <div className="section-label" style={{ marginBottom: 16 }}>Network</div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <li className="mono" style={{ fontSize: 11 }}>0G Galileo · chainId 16602</li>
-            {Object.entries(REGISTRY).map(([name, addr]) => (
+            <li className="mono" style={{ fontSize: 11 }}>0G {network === 'mainnet' ? 'Aristotle · chainId 16661' : 'Galileo · chainId 16602'}</li>
+            {liveRegistry.map(({ name, addr }) => (
               <li key={name} className="mono" style={{ fontSize: 11 }}>
                 <a
                   href={`${EXPLORER}/address/${addr}`}
