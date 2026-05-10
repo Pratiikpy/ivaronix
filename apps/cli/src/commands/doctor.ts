@@ -105,31 +105,38 @@ export const doctorCommand = new Command('doctor')
     if (all || opts.chain) {
       ui.section('04 · Chain (contracts)');
       const deployments = loadDeployments(env.network);
-      const allContracts: { name: string; group: string }[] = [
-        { name: 'ReceiptRegistry', group: 'core' },
-        { name: 'Erc7857Verifier', group: 'identity' },
-        { name: 'AgentPassportINFT', group: 'identity' },
-        { name: 'CapabilityRegistry', group: 'memory' },
-        { name: 'MemoryAccessLog', group: 'memory' },
-        { name: 'SkillRegistry', group: 'marketplace' },
-      ];
-      for (const c of allContracts) {
-        const dep = deployments?.contracts[c.name];
-        if (dep) {
-          ui.pass(`${c.name.padEnd(18)} ${dep.address}`);
-          // Live read: next id (proves contract is callable)
-          if (c.name === 'ReceiptRegistry' && env.privateKey) {
-            try {
-              const chain = createChainClient({ network: env.network, privateKey: env.privateKey });
-              const registry = new ReceiptRegistryClient(dep.address, chain.provider);
-              const next = await registry.nextId();
-              ui.info(`${' '.repeat(18)}   ${next} receipts anchored`);
-            } catch {
-              /* skip live read on error */
-            }
+      // Iterate every contract in deployments.json directly. Auto-derives
+      // from the canonical source so V2 deploys (and any future Vn)
+      // surface here without hand-editing — same shape as
+      // numbers-refresh.ts countDeployedContracts() (sweep 36) and the
+      // README contracts:auto block (sweep 40).
+      const contractNames = deployments
+        ? Object.keys(deployments.contracts).sort()
+        : [];
+      if (contractNames.length === 0) {
+        ui.pending('  no deployments file found · run forge script first');
+      }
+      for (const name of contractNames) {
+        const dep = deployments!.contracts[name]!;
+        const padName = name.padEnd(20);
+        ui.pass(`${padName} ${dep.address}`);
+        // Live read for receipt-anchor count: prefer V2 if deployed
+        // (active anchor target post-sweep K-2), fall back to V1 for
+        // legacy chains. V2 anchor count + V1 anchor count are
+        // displayed separately so operators see the migration state.
+        const isReceiptRegistry = name === 'ReceiptRegistry' || name === 'ReceiptRegistryV2';
+        if (isReceiptRegistry && env.privateKey) {
+          try {
+            const chain = createChainClient({ network: env.network, privateKey: env.privateKey });
+            const registry = new ReceiptRegistryClient(dep.address, chain.provider);
+            const next = await registry.nextId();
+            // nextId is 1-indexed; anchored count = nextId - 1.
+            const anchored = next > 0n ? next - 1n : 0n;
+            const tag = name === 'ReceiptRegistryV2' ? '(V2 active)' : '(V1 legacy)';
+            ui.info(`${' '.repeat(20)}   ${anchored} receipts anchored ${tag}`);
+          } catch {
+            /* skip live read on error */
           }
-        } else {
-          ui.pending(`${c.name.padEnd(18)} not yet deployed (group: ${c.group})`);
         }
       }
     }
