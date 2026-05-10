@@ -1,7 +1,13 @@
 import { JsonRpcProvider } from 'ethers';
-import { getReceiptRegistry, explorerTxUrl, getNetwork } from '@/lib/chain';
+import {
+  unifiedGetReceipt,
+  unifiedFindByReceiptRoot,
+  explorerTxUrl,
+  getNetwork,
+  receiptTypeLabel,
+  type UnifiedReceipt,
+} from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
-import { receiptTypeLabel } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,14 +31,13 @@ export const dynamic = 'force-dynamic';
  */
 export default async function EmbedReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const reg = getReceiptRegistry();
   const network = getNetwork();
-  let onChain: Awaited<ReturnType<NonNullable<typeof reg>['getReceipt']>> | null = null;
+  let onChain: UnifiedReceipt | null = null;
   try {
-    if (reg && /^\d+$/.test(id)) {
-      onChain = await reg.getReceipt(BigInt(id));
-    } else if (reg && /^0x[0-9a-f]{64}$/i.test(id)) {
-      onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000);
+    if (/^\d+$/.test(id)) {
+      onChain = await unifiedGetReceipt(BigInt(id));
+    } else if (/^0x[0-9a-f]{64}$/i.test(id)) {
+      onChain = await unifiedFindByReceiptRoot(id as `0x${string}`);
     }
   } catch { /* fall through to not-found */ }
 

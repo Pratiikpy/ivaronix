@@ -6,7 +6,7 @@ import {
   SkillRegistryClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
-import { NETWORKS, RECEIPT_TYPES, type Network } from '@ivaronix/core';
+import { NETWORKS, RECEIPT_TYPES, type Network, type Hash, type Address } from '@ivaronix/core';
 
 /** Reverse-map a numeric receipt type code (as stored on chain) to its canonical name. */
 const RECEIPT_TYPE_LABELS: Record<number, string> = Object.fromEntries(
@@ -57,6 +57,126 @@ export interface UnifiedRegistries {
 
 export function getRegistries(): UnifiedRegistries {
   return { v2: getReceiptRegistryV2(), v1: getReceiptRegistry() };
+}
+
+/**
+ * Cross-registry receipt row. The `registryVersion` field tells the UI
+ * whether to render a `LEGACY-REGISTRY` chip alongside the receipt.
+ *
+ * Closes the V1-blindness pattern across 8 Studio surfaces (planning-003
+ * §A.1.3, wandering thoughts #19, #28, #37, #41, #45, #51).
+ */
+export interface UnifiedReceipt {
+  id: bigint;
+  receiptRoot: Hash;
+  storageRoot: Hash;
+  attestationHash: Hash;
+  agentAddress: Address;
+  timestamp: bigint;
+  receiptType: number;
+  registryVersion: 'v1' | 'v2';
+}
+
+/**
+ * Sum of next-ids across V1 + V2 registries. Studio home + /global use
+ * `total` as the headline; `v2` breakout surfaces post-K-2 activity for
+ * judges who care which registry is active.
+ */
+export async function unifiedNextId(): Promise<{ v2: bigint; v1: bigint; total: bigint }> {
+  const { v2, v1 } = getRegistries();
+  const [v2id, v1id] = await Promise.all([
+    v2 ? v2.nextId().catch(() => 0n) : Promise.resolve(0n),
+    v1 ? v1.nextId().catch(() => 0n) : Promise.resolve(0n),
+  ]);
+  return { v2: v2id, v1: v1id, total: v2id + v1id };
+}
+
+/**
+ * V2-first receipt lookup by id. Returns `null` if the id doesn't exist
+ * on either registry. Pass `preferred: 'v1'` to skip V2 (used by callers
+ * that already know the receipt is V1, e.g. printing a known legacy id).
+ */
+export async function unifiedGetReceipt(
+  id: bigint,
+  preferred?: 'v1' | 'v2',
+): Promise<UnifiedReceipt | null> {
+  const { v2, v1 } = getRegistries();
+  const order: Array<'v2' | 'v1'> = preferred === 'v1' ? ['v1', 'v2'] : ['v2', 'v1'];
+  for (const v of order) {
+    const client = v === 'v2' ? v2 : v1;
+    if (!client) continue;
+    try {
+      const r = await client.getReceipt(id);
+      if (r) return { ...r, registryVersion: v };
+    } catch {
+      // try next
+    }
+  }
+  return null;
+}
+
+/**
+ * V2-first lookup by `receiptRoot` bytes32. Used by /r/<id> when the URL
+ * carries a 0x… root and by the print page when resolving a hash-style id.
+ */
+export async function unifiedFindByReceiptRoot(
+  root: Hash,
+  lookbackBlocks = 200_000,
+): Promise<UnifiedReceipt | null> {
+  const { v2, v1 } = getRegistries();
+  if (v2) {
+    try {
+      const r = await v2.findByReceiptRoot(root, lookbackBlocks);
+      if (r) return { ...r, registryVersion: 'v2' };
+    } catch {
+      // try V1
+    }
+  }
+  if (v1) {
+    try {
+      const r = await v1.findByReceiptRoot(root, lookbackBlocks);
+      if (r) return { ...r, registryVersion: 'v1' };
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Merged `findByAgent` across V1 + V2 with version tags. Sorted by
+ * timestamp desc, sliced to `limit`. Used by /agent/[handle] and the
+ * dashboard route.
+ */
+export async function unifiedFindByAgent(
+  agent: Address,
+  limit = 25,
+  lookbackBlocks = 200_000,
+): Promise<UnifiedReceipt[]> {
+  const { v2, v1 } = getRegistries();
+  const merged: UnifiedReceipt[] = [];
+  const tasks: Promise<void>[] = [];
+  if (v2) {
+    tasks.push(
+      v2.findByAgent(agent, limit * 2, lookbackBlocks)
+        .then((events) => {
+          for (const e of events) merged.push({ ...e, registryVersion: 'v2' });
+        })
+        .catch(() => undefined),
+    );
+  }
+  if (v1) {
+    tasks.push(
+      v1.findByAgent(agent, limit * 2, lookbackBlocks)
+        .then((events) => {
+          for (const e of events) merged.push({ ...e, registryVersion: 'v1' });
+        })
+        .catch(() => undefined),
+    );
+  }
+  await Promise.all(tasks);
+  merged.sort((a, b) => Number(b.timestamp - a.timestamp));
+  return merged.slice(0, limit);
 }
 
 export function getPassportClient(): AgentPassportClient | null {

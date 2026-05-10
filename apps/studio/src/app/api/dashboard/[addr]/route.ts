@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { JsonRpcProvider, formatEther } from 'ethers';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { getPassportClient, getReceiptRegistry, getNetwork } from '@/lib/chain';
+import { getPassportClient, unifiedFindByAgent, getNetwork } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 
 interface ScheduleSummary {
@@ -120,16 +120,14 @@ export async function GET(
   const provider = new JsonRpcProvider(rpcUrl);
 
   const passportClient = getPassportClient();
-  const registry = getReceiptRegistry();
 
-  // Tighten findByAgent's lookback from 100k blocks (~30s on testnet RPC)
-  // to 5k blocks (~3-5s). Receipts older than that are still on-chain;
-  // they just don't show in the "recent 5" panel. The dashboard's purpose
-  // is recency, not completeness — recent state is the answer.
+  // Tighten findByAgent lookback to 5k blocks (~3-5s) for "recent 5" panel.
+  // V2-first union via unifiedFindByAgent so post-K-2 receipts appear
+  // alongside legacy V1 ones, with registryVersion tagged on each row.
   const [passport, balanceWei, recent] = await Promise.all([
     passportClient ? passportClient.getPassportByWallet(addr as `0x${string}`).catch(() => null) : null,
     provider.getBalance(addr).catch(() => 0n),
-    registry ? registry.findByAgent(addr as `0x${string}`, 5, 5_000).catch(() => []) : [],
+    unifiedFindByAgent(addr as `0x${string}`, 5, 5_000).catch(() => []),
   ]);
 
   const payload = {

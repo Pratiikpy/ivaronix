@@ -2,7 +2,12 @@ import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Section } from '@/components/Section';
-import { getPassportClient, getReceiptRegistry, explorerAddrUrl, receiptTypeLabel } from '@/lib/chain';
+import {
+  getPassportClient,
+  unifiedFindByAgent,
+  explorerAddrUrl,
+  receiptTypeLabel,
+} from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,9 +118,10 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
   }
 
   const passport = getPassportClient();
-  const reg = getReceiptRegistry();
   const profile = passport ? await passport.getPassportByWallet(decoded) : null;
-  const recent = reg ? await reg.findByAgent(decoded, 25).catch(() => []) : [];
+  // V2-first union of recent receipts so the agent profile shows post-K-2
+  // anchors alongside legacy V1 ones, sorted by timestamp.
+  const recent = await unifiedFindByAgent(decoded, 25).catch(() => []);
   const consolidations = loadLocalConsolidations(decoded);
 
   if (!profile) {

@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og';
-import { getReceiptRegistry, getNetwork } from '@/lib/chain';
+import { unifiedGetReceipt, unifiedFindByReceiptRoot, getNetwork } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
 
 export const runtime = 'nodejs';
@@ -19,23 +19,20 @@ export const contentType = 'image/png';
  */
 export default async function Image({ params }: { params: { id: string } }) {
   const fonts = await loadFonts().catch(() => []);
-  const reg = getReceiptRegistry();
   const network = getNetwork();
   let id = params.id;
   let headline = `Verified action receipt on 0G ${network}`;
 
-  if (reg) {
-    try {
-      let onChain;
-      if (/^\d+$/.test(params.id)) onChain = await reg.getReceipt(BigInt(params.id));
-      else if (/^0x[0-9a-f]{64}$/i.test(params.id)) onChain = await reg.findByReceiptRoot(params.id as `0x${string}`, 200_000);
-      if (onChain) {
-        id = onChain.id.toString();
-        const local = findLocalReceiptByRoot(onChain.receiptRoot);
-        if (local?.body.outputs?.wording?.headline) headline = local.body.outputs.wording.headline;
-      }
-    } catch { /* fall through to default */ }
-  }
+  try {
+    let onChain;
+    if (/^\d+$/.test(params.id)) onChain = await unifiedGetReceipt(BigInt(params.id));
+    else if (/^0x[0-9a-f]{64}$/i.test(params.id)) onChain = await unifiedFindByReceiptRoot(params.id as `0x${string}`);
+    if (onChain) {
+      id = onChain.id.toString();
+      const local = findLocalReceiptByRoot(onChain.receiptRoot);
+      if (local?.body.outputs?.wording?.headline) headline = local.body.outputs.wording.headline;
+    }
+  } catch { /* fall through to default */ }
 
   return new ImageResponse(
     (

@@ -6,7 +6,14 @@ export const dynamic = 'force-dynamic';
 
 export default function OnboardPage() {
   const net = getNetwork();
-  const passportAddr = getDeployedAddress(net, 'AgentPassportINFT');
+  // V2-first mint target so new passports land on AgentPassportINFTV2
+  // (post-K-1) and only fall back to V1 when V2 is not yet deployed on
+  // the target network. Mint signature `mint(bytes32) → uint256` is
+  // identical on both, so the OnboardClient ABI is forward-compatible.
+  // Closes WT 51 (planning-003 §A.1.3).
+  const passportAddr =
+    getDeployedAddress(net, 'AgentPassportINFTV2') ??
+    getDeployedAddress(net, 'AgentPassportINFT');
 
   return (
     <section

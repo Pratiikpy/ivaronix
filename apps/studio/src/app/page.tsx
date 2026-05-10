@@ -1,16 +1,18 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
-import { getReceiptRegistry, getPassportClient, getNetwork } from '@/lib/chain';
+import { unifiedNextId, getPassportClient, getNetwork } from '@/lib/chain';
 import { loadAllSkills } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic'; // always read live chain state
 
 async function liveReceiptCount(): Promise<bigint | null> {
-  const reg = getReceiptRegistry();
-  if (!reg) return null;
+  // Sum across V2 (post-K-2) + V1 (legacy) so the home headline tracks
+  // total network activity, not just the registry that happened to ship
+  // first (planning-003 §A.1.3).
   try {
-    return await reg.nextId();
+    const { total } = await unifiedNextId();
+    return total > 0n ? total : null;
   } catch {
     return null;
   }

@@ -1,15 +1,15 @@
 import Link from 'next/link';
-import { getReceiptRegistry, getPassportClient } from '@/lib/chain';
+import { unifiedNextId, getPassportClient } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 
 async function liveNumbers(): Promise<{ receipts: number | null; passports: number | null }> {
-  const reg = getReceiptRegistry();
   const passport = getPassportClient();
-  const [r, p] = await Promise.all([
-    reg ? reg.nextId().then(Number).catch(() => null) : Promise.resolve(null),
+  const [unified, p] = await Promise.all([
+    unifiedNextId().catch(() => null),
     passport ? passport.nextTokenId().then(Number).catch(() => null) : Promise.resolve(null),
   ]);
+  const r = unified && unified.total > 0n ? Number(unified.total) : null;
   return { receipts: r, passports: p };
 }
 

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
-import { getReceiptRegistry, getPassportClient, getProvider, getNetwork } from '@/lib/chain';
+import { unifiedNextId, getPassportClient, getProvider, getNetwork } from '@/lib/chain';
 import { loadAllLocalReceipts, totalOgSpent, topSkillsByUsage } from '@/lib/local-receipts';
 import { loadAllSkills } from '@/lib/skills';
 import { getDeployedAddress, MemoryAccessLogClient } from '@ivaronix/og-chain';
@@ -26,13 +26,13 @@ interface GlobalSnapshot {
 }
 
 async function loadSnapshot(): Promise<GlobalSnapshot> {
-  const reg = getReceiptRegistry();
   const passport = getPassportClient();
   const localReceipts = loadAllLocalReceipts(50);
   const memoryAddr = getDeployedAddress(getNetwork(), 'MemoryAccessLog');
 
-  const [nextReceipt, nextPassport, memEvents] = await Promise.all([
-    reg ? reg.nextId().catch(() => null) : null,
+  // V2-first cross-registry sum so /global counts post-K-2 anchors too.
+  const [unifiedIds, nextPassport, memEvents] = await Promise.all([
+    unifiedNextId().catch(() => null),
     passport ? passport.nextTokenId().catch(() => null) : null,
     memoryAddr
       ? (async () => {
@@ -62,7 +62,7 @@ async function loadSnapshot(): Promise<GlobalSnapshot> {
   }));
 
   return {
-    totalReceipts: nextReceipt !== null ? Number(nextReceipt) : null,
+    totalReceipts: unifiedIds ? Number(unifiedIds.total) : null,
     totalPassports: nextPassport !== null ? Math.max(0, Number(nextPassport) - 1) : null,
     totalOg: totalOgSpent(localReceipts),
     firstPartySkillCount: loadAllSkills().length,
