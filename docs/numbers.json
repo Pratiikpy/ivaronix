@@ -29,7 +29,7 @@
   },
   "contracts": {
     "deployed": 8,
-    "foundryTests": 121,
+    "foundryTests": 167,
     "list": [
       "ReceiptRegistry",
       "ReceiptRegistryV2",

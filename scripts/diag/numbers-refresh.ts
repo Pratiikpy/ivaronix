@@ -198,6 +198,33 @@ function countPolyglotTests(): { ts: number; python: number; rust: number } {
 }
 
 /**
+ * Count Foundry tests by grepping `function test_` markers across every
+ * `.t.sol` file in `contracts/test/`. Static count, no `forge test`
+ * invocation (which would 30+ seconds per refresh). Drift driver:
+ * every V2 contract migration ships its own `.t.sol` file (planning-003
+ * §A.5.9–§A.5.12 added 4×; without auto-derivation, the headline
+ * "121/121 Foundry tests" claim drifted to 167 actual tests by the time
+ * the V2 work landed).
+ *
+ * Note: this counts `function test_…()` only. Foundry also accepts
+ * `function testFuzz_` (fuzz tests) and `function invariant_`
+ * (invariant tests); our `.t.sol` files don't use those today, so the
+ * simple regex covers all current cases. If we add fuzz/invariant
+ * tests, extend the regex to `/function (test_|testFuzz_|invariant_)/`.
+ */
+function countFoundryTests(): number {
+  const dir = resolve(REPO_ROOT, 'contracts', 'test');
+  if (!existsSync(dir)) return 0;
+  const files = readdirSync(dir).filter((f) => f.endsWith('.t.sol'));
+  let count = 0;
+  for (const f of files) {
+    const src = readFileSync(resolve(dir, f), 'utf8');
+    count += (src.match(/function test_/g) ?? []).length;
+  }
+  return count;
+}
+
+/**
  * Count vendored skills under `seed-skills/imports/` (each sub-directory
  * is one community-imported skill). Drift driver: every PR that imports
  * a new skill from `awesome-claude-skills/` adds a sub-dir here. Without
@@ -289,6 +316,11 @@ async function buildSnapshot(): Promise<NumbersFile> {
       // Auto-derived from deployments/testnet.json so V2-deploy or new
       // contract additions reflect without hand-editing.
       deployed: countDeployedContracts(),
+      // Auto-derived from `function test_` markers across contracts/test/*.t.sol
+      // so V2 migration test additions reflect without invoking `forge test`.
+      // Cron-sweep finding 2026-05-10: numbers.json claimed 121, actual 167
+      // (46 new V2-contract tests landed silently).
+      foundryTests: countFoundryTests(),
     },
     skills: (() => {
       // Auto-derive vendored count from filesystem; the original

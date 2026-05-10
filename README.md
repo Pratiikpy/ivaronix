@@ -32,7 +32,7 @@ pnpm cli verify 1644 --tee-independent
 
 The wedge: this works on a stranger's clean machine, against a receipt anchored by someone else, on testnet, today.
 
-> 1,644+ receipts anchored on 0G Galileo Testnet · 121/121 Foundry tests · 8 deployed contracts (V1 + V2 active) · 25 workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
+> <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+ receipts anchored on 0G Galileo Testnet · <!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> deployed contracts (V1 + V2 active) · <!-- numbers:auto:packages.typecheckClean -->23<!-- /numbers:auto:packages.typecheckClean --> workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
 
 ## Track 1 (Agentic Infrastructure) · by the numbers
 
@@ -44,7 +44,7 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 | 0G primitives integrated | **6** | Chain · Compute · Storage · Router · AgentID · Memory KV |
 | Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->** | 6 first-party + 150 vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
 | Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` |
-| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->121<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->121<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + Guard + Capability + Skill + Subscription |
+| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + Guard + Capability + Skill + Subscription |
 | Deployed contracts | **<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed -->** | Receipt V1 + V2 · Passport V1 + V2 · Verifier · Capability · Skill · Subscription on Galileo |
 | Packages typecheck-clean | **<!-- numbers:auto:packages.typecheckClean -->23<!-- /numbers:auto:packages.typecheckClean -->** | `pnpm -r --filter "@ivaronix/*" run typecheck` green |
 | Polyglot canonical hash | **<!-- numbers:auto:polyglotHash.languages -->3<!-- /numbers:auto:polyglotHash.languages --> languages** | TS + Python + Rust byte-equal in `.github/workflows/jcs-roundtrip.yml` (29/29 vectors) |
