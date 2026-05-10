@@ -28,6 +28,8 @@
     "numbers:refresh": "tsx scripts/numbers-refresh.ts",
     "numbers:print": "tsx scripts/numbers-refresh.ts --print",
     "numbers:check": "tsx scripts/numbers-refresh.ts --check",
+    "wander:cycle": "tsx scripts/wander-cycle/cycle.ts",
+    "wander:loop": "tsx scripts/wander-cycle/loop.ts",
     "dev:kv": "tsx scripts/dev/start-local-0g-kv.ts",
     "dev:kv:stop": "docker rm -f ivaronix-kv-node"
   },
