@@ -41,7 +41,7 @@
 ### G · daemon native-host-stdio bridge honest help text (audit #6)
 - **File:** `apps/cli/src/commands/daemon.ts`.
 - **Was:** description "Internal: stdio bridge for browser native-messaging hosts" — implied a working bridge.
-- **Now:** description carries the Phase B caveat inline: "(Phase B — no extension shipped yet; verb echoes for harness pairing only)". The verb stays so an extension, when shipped, can pair against this binary without redeployment.
+- **Now:** description carries the Phase B caveat inline: "(Phase B — no extension shipped yet; verb echoes for test-harness pairing only)". The verb stays so an extension, when shipped, can pair against this binary without redeployment.
 
 ## Open · documented honestly, no UI lies
 

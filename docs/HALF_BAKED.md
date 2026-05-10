@@ -142,10 +142,10 @@ Same date (2026-05-09), four different "definitive" receipt counts:
 
 | File:line | Word | Context |
 |---|---|---|
-| `docs/QA_FULL_PRODUCT_REPORT.md:175` | "seamless" | In a summary table — replaceable with concrete pass/fail. |
-| `docs/QA_LOOP_BRIEF.md:36, 195` | "seamless", "empower" | Inside pasted external text. Fix: wrap external text in attributed `>` blockquote. |
-| `docs/reference/0G_RESOURCES.md:348` | "state-of-the-art" | Quoted from OpenAdapter without attribution. Fix: prefix with source. |
-| `seed-skills/imports/skill-share/SKILL.md:4, 107` | "seamless", "leverages" | Imported skill, upstream-owned copy. Fix: mark `source: imported` and document upstream voice. |
+| `docs/QA_FULL_PRODUCT_REPORT.md:175` | `seamless` | In a summary table — replaceable with concrete pass/fail. |
+| `docs/QA_LOOP_BRIEF.md:36, 195` | `seamless`, `empower` | Inside pasted external text. Fix: wrap external text in attributed `>` blockquote. |
+| `docs/reference/0G_RESOURCES.md:348` | `state-of-the-art` | Quoted from OpenAdapter without attribution. Fix: prefix with source. |
+| `seed-skills/imports/skill-share/SKILL.md:4, 107` | `seamless`, `leverages` | Imported skill, upstream-owned copy. Fix: mark `source: imported` and document upstream voice. |
 
 ### Missing professional sections in repo-root README (HIGH)
 
@@ -159,7 +159,7 @@ The root `README.md` has **no** License section, **no** Contributing section, **
 | `seed-skills/0g-integration-auditor/SKILL.md` | **5/10** | "Day-21 automation" in user-facing description field. |
 | `README.md` | **6/10** | 1,330+ vs 1,165 vs 1,071 vs 1,400+. Plus missing License/Contributing/Security. |
 | `docs/PITCH.md` | **6/10** | "A judge can read this in five minutes." Strip judge-addressed framing. |
-| `docs/QA_FULL_PRODUCT_REPORT.md` | **7/10** | "seamless flow" — replace with concrete evidence row. |
+| `docs/QA_FULL_PRODUCT_REPORT.md` | **7/10** | `seamless flow` — replace with concrete evidence row. |
 | `docs/QA_LOOP_BRIEF.md` | **7/10** | Banned words inherited from pasted external text — wrap in attributed blockquote. |
 | `packages/og-toolkit/README.md` | **7/10** | Install instruction `pnpm add @ivaronix/og-toolkit` references unpublished npm — broken on copy/paste. |
 | `packages/widget/README.md` | **7/10** | CDN script URL references unprovisioned domain (`ivaronix.studio`) — 404 on copy/paste. |

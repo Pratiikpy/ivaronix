@@ -182,17 +182,72 @@ const HARNESS_NOUN_MODIFIERS = new Set([
   'qa',
   'metamask',
   'mm',
+  // Sweep 76: more screenshot/visual-evidence vocabulary.
+  'screenshot',
+  'screencap',
+  'video',
 ]);
 
-/** True iff a `harness` match at [matchIdx] is preceded by a recognized
- *  technical-noun modifier ("test harness", "regression harness", etc.).
- *  Looks back up to 30 chars on the same line. */
+// Sweep 76: also recognize harness-as-subject ("the harness clicked …",
+// "harness ran the test"). When preceded by an article OR followed by a
+// past-tense QA action verb, the noun-form is intended and the marketing
+// verb-sense ("harness the power of X") doesn't apply.
+const HARNESS_SUBJECT_FOLLOWERS = new Set([
+  'clicked', 'ran', 'captured', 'asserted', 'verified', 'opened', 'closed',
+  'pressed', 'typed', 'navigated', 'expects', 'waits', 'waited', 'expected',
+  'confirmed', 'rejected', 'observed', 'logged', 'failed', 'passed',
+]);
+const NOUN_ARTICLES = new Set([
+  'the', 'a', 'this', 'our', 'every', 'each', 'one', 'every-',
+]);
+
+/** True iff a `harness` match at [matchIdx] is used as a technical
+ *  noun — either a "test harness"-style modifier precedes it, OR an
+ *  article precedes it, OR a past-tense QA action verb follows it.
+ *  Looks at up to 3 preceding word-tokens (handles "MM extension v13.30
+ *  harness" where the modifier is 2 words back) and 1 following token. */
 function isTechnicalHarness(line: string, matchIdx: number): boolean {
-  const before = line.slice(Math.max(0, matchIdx - 30), matchIdx);
-  // Last whitespace-separated word before the match.
-  const m = before.match(/([A-Za-z][A-Za-z0-9-]*)\s+$/);
-  if (!m) return false;
-  return HARNESS_NOUN_MODIFIERS.has(m[1]!.toLowerCase());
+  // Sweep 76: label form. "Harness:" or "Harness/<X>" at line start (or
+  // after only whitespace + bullet/list markers) is a structural label,
+  // not the marketing verb. Accept when followed by `:` or `/`.
+  const after = line.slice(matchIdx + 'harness'.length, matchIdx + 'harness'.length + 30);
+  if (/^\s*[:\/]/.test(after)) {
+    // Confirm this looks like a label by checking nothing-but-markup precedes.
+    const before = line.slice(0, matchIdx);
+    if (/^[\s>*\-]*$/.test(before) || /^[\s>*\-]+(\*\*\s*)?$/.test(before)) {
+      return true;
+    }
+  }
+  // Forward-look: "harness clicked" / "harness ran" / etc. — subject form.
+  const afterMatch = after.match(/^\s+([A-Za-z][A-Za-z0-9-]*)/);
+  if (afterMatch && HARNESS_SUBJECT_FOLLOWERS.has(afterMatch[1]!.toLowerCase())) {
+    return true;
+  }
+  // Backward-look: walk up to 3 preceding word-tokens.
+  return precedingTokenInSet(line, matchIdx, HARNESS_NOUN_MODIFIERS, NOUN_ARTICLES);
+}
+
+/** Look back up to 60 chars for the last 3 word-tokens. Allow if ANY of
+ *  them appears in `modifiers` (technical noun-modifier) or in
+ *  `articles` (article — implies noun usage). Tokens may include version-
+ *  number tail like "v13.30" — those don't disqualify earlier modifiers. */
+function precedingTokenInSet(
+  line: string,
+  matchIdx: number,
+  modifiers: Set<string>,
+  articles: Set<string>,
+): boolean {
+  const before = line.slice(Math.max(0, matchIdx - 60), matchIdx);
+  // Tokenise on any non-letter/digit/hyphen/dot run (whitespace, punctuation).
+  // Capture each "word" — `.` allowed inside (catches "v13.30") but not at
+  // start/end so trailing punctuation is split correctly.
+  const tokens = before.match(/[A-Za-z][A-Za-z0-9.\-]*[A-Za-z0-9]|[A-Za-z]/g) ?? [];
+  // Check the LAST 3 tokens (closest to the match).
+  const last3 = tokens.slice(-3).map((t) => t.toLowerCase());
+  for (const t of last3) {
+    if (modifiers.has(t) || articles.has(t)) return true;
+  }
+  return false;
 }
 
 // Sweep 71: same context-aware pattern for `unlock`. The CLAUDE.md §9
@@ -214,21 +269,20 @@ const UNLOCK_CONTEXT_MODIFIERS = new Set([
 ]);
 
 /** True iff an `unlock` match at [matchIdx] is preceded by recognized
- *  wallet-state or game-feature vocabulary. Looks back up to 30 chars. */
+ *  wallet-state or game-feature vocabulary. Sweep 76: walk the last 3
+ *  word-tokens (handles "MM extension v13.30 unlock" where the modifier
+ *  is 2 tokens back) — version-number tails don't disqualify earlier
+ *  technical modifiers. Also handles hyphenated prefix form. */
 function isTechnicalUnlock(line: string, matchIdx: number): boolean {
-  const before = line.slice(Math.max(0, matchIdx - 30), matchIdx);
-  // Match either a whitespace-separated word OR a hyphen-attached prefix
-  // (e.g. "milestone-unlock"). Position 0 = the immediately-preceding
-  // token whether separated by space or hyphen.
-  const wsMatch = before.match(/([A-Za-z][A-Za-z0-9-]*)\s+$/);
-  if (wsMatch && UNLOCK_CONTEXT_MODIFIERS.has(wsMatch[1]!.toLowerCase())) {
-    return true;
-  }
+  const before = line.slice(Math.max(0, matchIdx - 60), matchIdx);
+  // Hyphen-attached form: "milestone-unlock" → check if preceding word + '-' is in set.
   const hyphenMatch = before.match(/([A-Za-z][A-Za-z0-9]*)-$/);
   if (hyphenMatch && UNLOCK_CONTEXT_MODIFIERS.has(hyphenMatch[1]!.toLowerCase() + '-')) {
     return true;
   }
-  return false;
+  // Walk last 3 word-tokens. Tokens may include version-number tails
+  // (e.g. "v13.30") — those don't disqualify an earlier "extension".
+  return precedingTokenInSet(line, matchIdx, UNLOCK_CONTEXT_MODIFIERS, new Set());
 }
 
 function findHits(file: string, content: string): Hit[] {

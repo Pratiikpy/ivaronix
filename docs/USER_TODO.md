@@ -450,7 +450,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - **2 `delve`, 2 `empower`, 1 `unleash`, 1 `streamline`, 1 `robust`, 1 `revolutionize`** — banned with no legit usage; rewrite each.
   - **0 banned phrases caught today** — but they ARE in the regex, so any new <!-- wording-lint:allow:meta-discussion --> "in today's fast-paced world" lands as a fail.
 - **Why:** the gate ships today and blocks NEW drift. The amnesty buys time to clean up the 18 non-`harness` legit-marketing-token hits over time.
-- **Status (sweep 68):** ✅ harness context-awareness shipped (eliminates ~24 legitimate hits without amnesty entries). ⏳ Remaining ~18 marketing tokens still in the amnesty for sentence-level rewrites; not blocking testnet. Track-3 polish pass.
+- **Status (sweep 68):** ✅ context-awareness for `harness` shipped (eliminates ~24 legitimate hits without amnesty entries). ⏳ Remaining ~18 marketing tokens still in the amnesty for sentence-level rewrites; not blocking testnet. Track-3 polish pass.
 
 ### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.

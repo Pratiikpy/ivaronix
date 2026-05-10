@@ -172,7 +172,7 @@ Requires: Studio dev server on `localhost:3300`, MM profile already onboarded wi
 | Visual + UX flow checked, video + screenshots | ✅ 35 PNGs + 6 .webm |
 | No feature missed | ✅ all 10 routes, hover, scroll, connect, disconnect, mint popup, real Run |
 | Brand consistency vs both HTML files | ⚠ done; 5 divergences logged in §2–3 |
-| Smooth interaction · fluid transitions · polished UX · responsive UI · seamless flow | ✅ confirmed (modulo §3.1 dashboard hang and §3.2 mobile nav) |
+| Smooth interaction · fluid transitions · polished UX · responsive UI · `seamless` flow | ✅ confirmed (modulo §3.1 dashboard hang and §3.2 mobile nav) |
 | Side-by-side header/footer/body match | ⚠ /brand matches standalone hero exactly; / has different headline; mobile drops nav |
 | Test report | ✅ this file |
 
