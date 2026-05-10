@@ -195,6 +195,42 @@ function isTechnicalHarness(line: string, matchIdx: number): boolean {
   return HARNESS_NOUN_MODIFIERS.has(m[1]!.toLowerCase());
 }
 
+// Sweep 71: same context-aware pattern for `unlock`. The CLAUDE.md §9
+// ban targets the marketing-verb form ("unlock the power of X"). The
+// technical-noun form is wallet-state vocabulary (MetaMask unlock,
+// extension unlock) and game-feature vocabulary (milestone unlock,
+// feature unlock).
+const UNLOCK_CONTEXT_MODIFIERS = new Set([
+  'metamask',
+  'mm',
+  'wallet',
+  'extension',
+  'milestone',
+  'milestone-',  // covers "milestone-unlock" hyphenated form
+  'feature',
+  'achievement',
+  'keystore',
+  'session',
+]);
+
+/** True iff an `unlock` match at [matchIdx] is preceded by recognized
+ *  wallet-state or game-feature vocabulary. Looks back up to 30 chars. */
+function isTechnicalUnlock(line: string, matchIdx: number): boolean {
+  const before = line.slice(Math.max(0, matchIdx - 30), matchIdx);
+  // Match either a whitespace-separated word OR a hyphen-attached prefix
+  // (e.g. "milestone-unlock"). Position 0 = the immediately-preceding
+  // token whether separated by space or hyphen.
+  const wsMatch = before.match(/([A-Za-z][A-Za-z0-9-]*)\s+$/);
+  if (wsMatch && UNLOCK_CONTEXT_MODIFIERS.has(wsMatch[1]!.toLowerCase())) {
+    return true;
+  }
+  const hyphenMatch = before.match(/([A-Za-z][A-Za-z0-9]*)-$/);
+  if (hyphenMatch && UNLOCK_CONTEXT_MODIFIERS.has(hyphenMatch[1]!.toLowerCase() + '-')) {
+    return true;
+  }
+  return false;
+}
+
 function findHits(file: string, content: string): Hit[] {
   const stripped = stripCode(content);
   const hits: Hit[] = [];
@@ -212,6 +248,13 @@ function findHits(file: string, content: string): Hit[] {
       // Context-aware: 'harness' preceded by a technical-noun modifier
       // is allowed (engineering jargon, not marketing verb).
       if (token === 'harness' && isTechnicalHarness(line, matchIdx)) {
+        continue;
+      }
+      // Same shape for 'unlock' (sweep 71). Wallet-state vocabulary
+      // ('MetaMask unlock', 'wallet unlock') + game-feature vocabulary
+      // ('milestone-unlock', 'feature unlock') are allowed; the
+      // marketing-verb form ('unlock the power of X') still trips.
+      if (token === 'unlock' && isTechnicalUnlock(line, matchIdx)) {
         continue;
       }
       hits.push({

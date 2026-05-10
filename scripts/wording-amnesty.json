@@ -1,7 +1,6 @@
 [
   "BRAND.md:37:leverage",
   "CHANGELOG.md:90:leverage",
-  "COMPONENTS.md:181:unlock",
   "QA_TEST_PROGRESS.md:156:harness",
   "QA_TEST_PROGRESS.md:156:unlock",
   "QA_TEST_PROGRESS.md:157:harness",
@@ -13,9 +12,6 @@
   "docs/HALF_BAKED.md:603:harness",
   "docs/PASS77_F1h_impact_analysis.md:32:leverage",
   "docs/PHASE_B_DISCLOSURES.md:44:harness",
-  "docs/PLAN_pass77_cli.md:63:delve",
-  "docs/PLAN_pass77_cli.md:63:harness",
-  "docs/PLAN_pass77_cli.md:63:unlock",
   "docs/QA_FULL_PRODUCT_REPORT.md:111:harness",
   "docs/QA_FULL_PRODUCT_REPORT.md:152:unlock",
   "docs/QA_FULL_PRODUCT_REPORT.md:175:seamless",

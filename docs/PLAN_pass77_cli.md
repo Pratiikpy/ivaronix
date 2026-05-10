@@ -60,7 +60,7 @@ The fork must look indistinguishable from a from-scratch Ivaronix CLI. Tokens lo
 - **Default model:** `qwen/qwen-2.5-7b-instruct` (CLAUDE.md / BUILD.md §11.4) on 0G Compute broker. Drop their default.
 - **Splash / first-run:** "Ivaronix · 0G Agent OS · receipts on every action" — not OpenCode marketing.
 - **Slash command set:** keep the verbs, swap the names where they conflict with our model. Our 19 chat-v2 commands stay; OpenCode's commands get renamed/aliased into our nomenclature.
-- **Editorial tone:** CLAUDE.md §9 voice contract. No "delve / unlock / harness." Our messaging gets re-written wherever the fork has prose.
+- **Editorial tone:** CLAUDE.md §9 voice contract. No "delve / unlock / harness." Our messaging gets re-written wherever the fork has prose. <!-- wording-lint:allow:meta-list-of-banned-tokens -->
 
 ## 3. The 0G layer (built as a plugin, not a fork modification)
 
