@@ -51,22 +51,38 @@ export const statsCommand = new Command('stats')
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
 
     const recAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!recAddr) {
-      ui.fail(`No ReceiptRegistry deployed on ${env.network}`);
+    const recV2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    if (!recAddr && !recV2Addr) {
+      ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
 
-    // 1. On-chain authoritative counter
-    let onchainNextId = 0n;
-    try {
-      const client = new ReceiptRegistryClient(recAddr as Address, provider);
-      onchainNextId = await client.nextId();
-    } catch (err) {
-      ui.fail('on-chain nextId() read failed', (err as Error).message);
-      process.exitCode = 1;
-      return;
+    // 1. On-chain authoritative counters · V1 + V2 split. Total
+    //    anchored receipts = (v1.nextId - 1) + (v2.nextId - 1) since
+    //    both are 1-indexed. Sweep 56 caught the V2-blindness in
+    //    doctor; stats had the same drift class.
+    let v1NextId = 0n;
+    let v2NextId = 0n;
+    if (recAddr) {
+      try {
+        const c = new ReceiptRegistryClient(recAddr as Address, provider);
+        v1NextId = await c.nextId();
+      } catch (err) {
+        ui.fail('on-chain V1 nextId() read failed', (err as Error).message);
+      }
     }
+    if (recV2Addr) {
+      try {
+        const c = new ReceiptRegistryClient(recV2Addr as Address, provider);
+        v2NextId = await c.nextId();
+      } catch (err) {
+        ui.fail('on-chain V2 nextId() read failed', (err as Error).message);
+      }
+    }
+    const v1Anchored = v1NextId > 0n ? v1NextId - 1n : 0n;
+    const v2Anchored = v2NextId > 0n ? v2NextId - 1n : 0n;
+    const onchainNextId = v1Anchored + v2Anchored; // semantically: total anchored across V1 + V2
 
     // 2. Local indexer stats
     let local: ReturnType<IndexerDb['stats']> | null = null;
@@ -161,8 +177,9 @@ export const statsCommand = new Command('stats')
     ui.divider();
 
     ui.section('01 · On-chain');
-    ui.pass(`ReceiptRegistry      ${recAddr}`);
-    ui.pass(`total receipts       ${onchainNextId}`);
+    if (recAddr) ui.pass(`ReceiptRegistry      ${recAddr}  (V1 legacy)`);
+    if (recV2Addr) ui.pass(`ReceiptRegistryV2    ${recV2Addr}  (V2 active)`);
+    ui.pass(`total receipts       ${onchainNextId}  (V1: ${v1Anchored} + V2: ${v2Anchored})`);
     ui.info(`chain head           ${head}`);
 
     if (env.walletAddress) {
