@@ -58,15 +58,23 @@ Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates f
 
 | ID | Item | Status |
 |---|---|---|
-| A.4.1 | Autonomous wander-cycle agent on TESTNET | queued (4h) |
-| A.4.2 | Path-scoped `.claude/rules/*.md` (7 files) | this batch |
-| A.4.3 | CHANGELOG.md + commit-trailer convention | this commit |
+| A.4.1 | Autonomous wander-cycle agent on TESTNET | shipped (`scripts/wander-cycle/`) — operator daemonising via §A-V2 next |
+| A.4.2 | Path-scoped `.claude/rules/*.md` (7 files) | shipped |
+| A.4.3 | CHANGELOG.md + commit-trailer convention | shipped |
 | A.4.4 | zer0Gig Efficiency Game adoption | queued (6h) |
-| A.4.5 | `docs/MARKETPLACE_DESIGN.md` | (architecture-docs commit) |
-| A.4.6 | `docs/SOLIDITY_CHOICES.md` | (architecture-docs commit) |
-| A.4.7 | `docs/SKILL_PUBLISHING.md` | (architecture-docs commit) |
+| A.4.5 | `docs/MARKETPLACE_DESIGN.md` | shipped |
+| A.4.6 | `docs/SOLIDITY_CHOICES.md` | shipped |
+| A.4.7 | `docs/SKILL_PUBLISHING.md` | shipped |
 | A.4.8 | MemoryEngine fourth product surface (CLI + Studio) | queued (3-4h) |
-| A.4.9 | Convergence Jaccard → embeddings | queued (2h) |
+| A.4.9 | Convergence Jaccard → embeddings | shipped (`packages/consensus/src/convergence.ts` async path) |
+
+### Phase 5 · Polish + ghost-surface deletion (in progress · 2026-05-10)
+
+| ID | Item | File / Was / Now | Status |
+|---|---|---|---|
+| A.5.7 | og-toolkit honest-stub disclosure | `packages/og-kv/src/index.ts`: `StubKvClient` advertised the same interface as the production client; third parties calling `og.kv.set(...)` got a Map silently. **Now:** renamed `InMemoryKvClient` (alias kept), prints one-time `console.warn` on first use, `createKvClient({ requireDurable: true })` returns `null` so callers can short-circuit instead of writing to a Map. | shipped |
+| A.5.13 | ShareButton silent clipboard-failure feedback | `apps/studio/src/components/ShareButton.tsx`: on clipboard failure the catch silently opened a tab while the button kept saying "Copy URL". **Now:** four-state machine (`idle | copied | fallback | error`) with explicit per-state labels; the `error` branch slices the URL into the button so the user can copy from the button itself when popups are blocked too. | shipped |
+| A.5.18 | forge-daemon ghost-surface deletion + HLD architectural-drift fix | `apps/forge-daemon/` was an empty directory; HLD.md §1 surface table referenced 7 surfaces, three of which (`forge-daemon`, `skill-store`, `worker`) didn't exist; the architecture diagram drew arrows into a non-existent local Hono daemon. **Now:** empty `apps/forge-daemon/` deleted; HLD §1 table rewritten to list the 7 real apps (studio, cli, api, mcp-server, npx-cli, openclaw-skill, telegram-bot); explicit "this does not exist; here's what we use instead" callouts added; arch diagram updated to show `packages/sdk + packages/runtime` as the in-process orchestrator. | shipped |
 
 ## Phase B — pre-K-1/K-2 cleanup (closed 2026-05-09)
 

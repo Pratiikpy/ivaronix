@@ -12,13 +12,14 @@
 |---|---|---|---|
 | 1 | **Studio** (web app, primary) | Users, teams, judges | `apps/studio` (Next.js 15 on Vercel) |
 | 2 | **Forge CLI** | Developers, power users | `apps/cli` (Node 20 + TypeScript binary) |
-| 3 | **API + MCP server** | Builders, integrators | `apps/api`, `apps/mcp-server` |
-| 4 | **Skill Registry web** | Skill creators, ecosystem | `apps/skill-store` (Next.js page in Studio domain) |
-| 5 | **OpenClaw skill** | OpenClaw users | `apps/openclaw-skill` |
-| (i) | Forge daemon | Internal — Studio + CLI clients | `apps/forge-daemon` (Hono, local HTTP) |
-| (ii) | Worker queue | Internal — async jobs | `apps/worker` (Phase 2) |
+| 3 | **HTTP API** | Builders, integrators | `apps/api` (Next.js / Vercel) |
+| 4 | **MCP server** | Claude Desktop, Cursor, OpenCode users | `apps/mcp-server` (stdio-mode tools) |
+| 5 | **npx CLI shim** | One-shot reviewers, judges | `apps/npx-cli` (`npx @ivaronix/run`) |
+| 6 | **OpenClaw skill** | OpenClaw users | `apps/openclaw-skill` (manifest + scripts) |
+| 7 | **Telegram bot** | Mobile / chat-native users | `apps/telegram-bot` (long-poll worker) |
+| 8 | **Skill Registry browser** | Skill creators, ecosystem | `apps/studio/app/skills/*` (page in Studio, no separate app) |
 
-The first 5 are external surfaces (PRD §3). The last 2 are internal infrastructure.
+All surfaces are real today. There is no separate `apps/skill-store` (the registry lives inside Studio at `/skills`), no `apps/forge-daemon` (Studio talks to chain/storage/router directly via `packages/sdk` from server actions and route handlers), and no `apps/worker` (long-running jobs run via `scripts/wander-cycle/` for now and graduate to a worker app only when receipt volume justifies it).
 
 ---
 
@@ -32,19 +33,19 @@ The first 5 are external surfaces (PRD §3). The last 2 are internal infrastruct
           │                                     │
           ▼                                     ▼
 ┌────────────────────┐  ┌─────────────────┐ ┌────────────────┐
-│  Studio (Next.js)  │  │   Forge CLI     │ │  OpenClaw      │
-│  - drop zone       │  │   - 7 modes     │ │  skill / MCP   │
-│  - skill browser   │  │   - TUI shell   │ │  server        │
-│  - report viewer   │  │   - daemon hook │ │                │
+│  Studio (Next.js)  │  │   Forge CLI     │ │  OpenClaw +    │
+│  - drop zone       │  │   - 7 modes     │ │  MCP server +  │
+│  - skill browser   │  │   - TUI shell   │ │  Telegram +    │
+│  - report viewer   │  │   - SDK in-proc │ │  npx CLI       │
 │  - proof URLs      │  │                 │ │                │
 │  - passport pages  │  │                 │ │                │
 └─────────┬──────────┘  └────────┬────────┘ └────────┬───────┘
           │                      │                   │
-          │ HTTP (Hono)          │ stdin/IPC         │ HTTP
-          │                      │                   │
+          │ in-proc (server      │ in-proc           │ HTTP / stdio
+          │ actions + SDK)       │                   │
           ▼                      ▼                   ▼
        ┌──────────────────────────────────────────────────┐
-       │             Forge Daemon (local)                 │
+       │     packages/sdk + packages/runtime              │
        │  - skill runtime + sandbox                       │
        │  - policy engine + safety guard                  │
        │  - lifecycle hooks dispatcher                    │
@@ -78,10 +79,10 @@ The first 5 are external surfaces (PRD §3). The last 2 are internal infrastruct
 ```
 
 **Key invariants:**
-- **Daemon never holds wallet keys.** Wallet signs in user's environment (Studio: WalletConnect/wagmi; CLI: keystore). Daemon orchestrates; user's wallet attests.
-- **Router API key stays server-side** (in daemon's env). Studio NEVER receives Router credentials directly — the daemon (or a backend proxy on Vercel for Studio) brokers all Router calls.
+- **The runtime never holds wallet keys.** Wallet signs in user's environment (Studio: WalletConnect/wagmi; CLI: keystore). The runtime orchestrates; the user's wallet attests.
+- **Router API key stays server-side** (in `apps/api` / Studio server actions). Studio NEVER ships Router credentials to the browser — every Router call goes through a server route handler that holds the key.
 - **Storage uploads & chain anchors are deterministic side-effects of receipt creation.** User issues one action → all artifacts produced.
-- **Hub pages read from chain + storage**, never from daemon. Means Hub keeps working forever even if daemon is offline. SEO-friendly.
+- **Hub pages read from chain + storage**, never from a daemon. The /r/<id>, /@<handle>, /skill/<id>, /global pages each call `packages/og-chain` + `packages/og-storage` from server components. They keep working forever as long as the chain is up. SEO-friendly.
 - **Studio and CLI share `packages/sdk`** so behavior is identical across surfaces.
 
 ---
@@ -102,12 +103,11 @@ ivaronix/
 │   │   │   └── MemoryPermissionCenter.tsx
 │   │   └── lib/                      # uses packages/sdk
 │   ├── cli/                          # `ivaronix` binary (Node 20 + TypeScript)
-│   ├── forge-daemon/                 # local HTTP API (Hono); shared by Studio + CLI
 │   ├── api/                          # public OpenAI-compatible HTTP API + Nexus extensions
-│   ├── mcp-server/                   # MCP tools (5+ tools)
-│   ├── skill-store/                  # /skills marketplace within Studio
+│   ├── mcp-server/                   # MCP tools (5+ tools, stdio mode)
+│   ├── npx-cli/                      # `npx @ivaronix/run` one-shot shim
 │   ├── openclaw-skill/               # `openclaw skills install ivaronix` package
-│   └── worker/                       # background queue (Phase 2)
+│   └── telegram-bot/                 # long-poll Telegram bot worker
 ├── packages/
 │   ├── core/                         # shared types, ULID, canonicalization
 │   ├── og-chain/                     # 0G Chain client (ethers v6)
@@ -250,7 +250,7 @@ See `COMPONENTS.md §14`.
 ### 4.4 State + auth
 - WalletConnect (wagmi + viem) for wallet auth. SIWE for backend session.
 - Server actions for all mutations (Next.js 15 native).
-- Studio talks to forge-daemon (local) for power users + apps/api (remote) for cloud users.
+- Studio runs all chain/storage/router calls inside its own server actions and route handlers using `packages/sdk` directly. Power users hit the same code path through the CLI; cloud users hit it through Studio + `apps/api` route handlers. There is no separate forge-daemon process.
 - 0G KV pointer (`passport:{wallet}:latest`) is the source of truth for passport state — Studio reads chain + KV directly without daemon dependency.
 
 ### 4.5 Onboarding flow (visual specification)
