@@ -12,7 +12,7 @@ Closes audit <ID>
 
 Where `<ID>` is the audit code from `docs/HALF_BAKED.md` or `docs/planning-003.md` (e.g. `S-1`, `K-2`, `A.1.3`, `WT 43`). Multiple closures: comma-separated.
 
-`pnpm audit:list` (queued · USER_TODO §B-V2-13) runs `git log --grep "Closes audit"` to print the rolling audit roll-up. Until that ships, run the grep manually.
+`pnpm audit:list` walks `git log --grep "Closes audit"` and prints a table grouped by audit ID. Shipped in commit 2e49612. Filters: `--since 2w` · `--grep A.5` · `--json`.
 
 CLAUDE.md §1: NO `Co-Authored-By` trailers. Conventional-commit subject + body only.
 

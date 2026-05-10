@@ -249,11 +249,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** in every `contracts/script/Deploy*.s.sol`, replace `vm.envString("OG_PRIVATE_KEY")` with `vm.envOr("IVARONIX_SIGNER_KEY", vm.envString("OG_PRIVATE_KEY"))` so the canonical name is preferred but the legacy alias still works.
 - **Effort:** ~30min · 8 scripts · zero functional change.
 
-### B-V2-13 · `pnpm audit:list` script
-- **Source:** plan-003 §A.4.3 · CHANGELOG.md + commit-trailer convention shipped today.
+### B-V2-13 · `pnpm audit:list` script · ✅ SHIPPED in commit 2e49612
+- **Source:** plan-003 §A.4.3 · CHANGELOG.md + commit-trailer convention.
 - **Why:** every closing commit carries `Closes audit <ID>`. A one-shot `git log --grep` makes the audit lifecycle queryable without scanning the file.
-- **Action:** add `pnpm audit:list` to root package.json scripts. Implementation: `tsx scripts/audit-list.ts` (new, ~30 lines) — runs `git log --grep "Closes audit" --pretty=format:"%h %s"`, parses out the IDs from each commit body, prints a table grouped by ID with the closing commit hash + date.
-- **Effort:** ~30min.
+- **Status:** `scripts/diag/audit-list.ts` ships with `pnpm audit:list`. Walks `git log --grep "Closes audit"` + parses IDs from each commit body. Filters: `--since 2w` · `--grep A.5` · `--json`. Uses `execFileSync` (not `execSync`) so the user-supplied filter strings can't shell-inject.
 
 ### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json`
 - **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped today at repo root with canonical strict settings.
@@ -265,10 +264,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   4. Run `pnpm -r typecheck` after; any package that breaks under the canonical settings reveals a hidden type-safety gap. Fix or document.
 - **Effort:** ~1.5h including fixing newly-surfaced typecheck failures.
 
-### B-V2-11 · `pnpm env:check` script
+### B-V2-11 · `pnpm env:check` script · ✅ SHIPPED in commit 2e49612
 - **Source:** plan-003 §A.3.4 · `envCheckReport()` exported from `packages/runtime/src/env.ts`.
 - **Why:** operators copy-paste `.env` files and hit "missing env var" errors. A one-shot diagnostic prints which canonical name resolved to which alias.
-- **Action:** add `pnpm env:check` script that calls `envCheckReport()` and prints a table: canonical name | used alias | value-set status. Highlight legacy aliases in yellow.
+- **Status:** `scripts/diag/env-check.ts` ships with `pnpm env:check`. Color-coded table (green canonical · yellow legacy alias · red unset). Never prints actual values — only their lengths — so the diagnostic is safe to paste into a chat. Exits non-zero on any UNSET, so CI gates on env completeness can use it as a precondition.
 - **Effort:** ~15min.
 
 ### B-V2-14 · Daemonise the wander-cycle agent on the CI wallet
@@ -347,14 +346,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Run (mainnet · post-§A-2):** swap RPC URL to `https://evmrpc.0g.ai`.
 - **Post-deploy:** add the address to `contracts/deployments/<network>.json` under `CapabilityRegistryV2`. Leave V1 entry untouched (legacy grants stay readable). Studio + CLI grant-management surfaces query V2 first via the V2-first read pattern (planning-003 §A.1.3).
 
-### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
-- **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
-- **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
-- **Action:**
-  1. Add `<!-- numbers:auto:KEY -->` markers to README + PITCH.md + JUDGE_GUIDE.md + MAINNET_READINESS.md wherever a numeric claim appears (e.g. `<!-- numbers:auto:receipts.total --> 1,644+`).
-  2. Write `pnpm docs:render` script that reads `docs/numbers.json` + does the substitution in-place.
-  3. Add a CI gate via `pnpm numbers:check` that fails if `docs/numbers.json` is more than 24h older than the latest receipt anchored on chain (= the docs are demonstrably stale).
-- **Effort:** ~1.5h. Useful but not blocking; the manual-refresh pattern works for the submission window.
+### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution · ✅ SHIPPED
+- **Source:** plan-003 §A.2.7. First cut (`docs/numbers.json` + `pnpm numbers:refresh`) landed earlier; render-time substitution + 24h staleness gate landed in the A.2.7 (final) commit.
+- **Status:** `scripts/diag/docs-render.ts` ships with `pnpm docs:render` (in-place) + `pnpm docs:check` (CI gate · exits 1 on drift OR >24h-stale numbers.json). README has 7 `<!-- numbers:auto:KEY -->` markers covering receiptTypes.count, skills.catalogTotal, receipts.total, contracts.foundryTests, contracts.deployed, packages.typecheckClean, polyglotHash.languages. Dotted-path lookup so future markers like `polyglotHash.tests.ts` walk the JSON structure. Regression: `verify-a27-docs-render.ts` (in studio offline filter, 6/6 pass).
+- **Operator action remaining (post-mainnet):** add markers to PITCH.md + JUDGE_GUIDE.md + MAINNET_READINESS.md as those docs get re-edited. The pipeline is wired; it's a one-line marker insert per claim.
 
 ### B-V2-23 · Refresh README screenshot grid via `pnpm screenshots:refresh`
 - **Source:** plan-003 §A.2.2. The capture pipeline + the README 2×3 grid markup are shipped (`scripts/qa/metamask-e2e/capture-readme-shots.ts`, README "Visual tour" section). The 6 PNGs at `screenshots/readme/` are operator-action — they need a live Studio dev server + (for receipt-tier1) at least one real anchored receipt.

@@ -91,8 +91,9 @@ export function loadEnv(): Env {
 
 /**
  * Walks every alias chain and prints which canonical / alias is set.
- * Used by `pnpm env:check` (queued · USER_TODO §B-V2-11) so operators see
+ * Powers `pnpm env:check` (`scripts/diag/env-check.ts`) — operators see
  * exactly what their `.env` resolves to before running deploy commands.
+ * Closed B-V2-11 in commit 2e49612.
  */
 export function envCheckReport(): Array<{ canonical: string; usedAlias: string | null; value: string | null }> {
   const groups: Array<readonly string[]> = [
