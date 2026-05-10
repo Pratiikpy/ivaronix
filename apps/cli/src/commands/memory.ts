@@ -14,6 +14,7 @@ import { memoryStreamId, MEMORY_STREAM_NAMESPACE } from '@ivaronix/og-storage';
 import { NETWORKS, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { confirmAction } from '../lib/confirm.js';
 
 /** Parse a TTL like "7d" / "12h" / "300" into seconds. */
 function parseTtlSeconds(input: string): number {
@@ -246,8 +247,23 @@ memoryCommand
 // ─── forget ──────────────────────────────────────────────────────────────────
 memoryCommand
   .command('forget <id>')
-  .description('Permanently delete an observation by id')
-  .action(async (id: string) => {
+  .description('Permanently delete an observation by id. Confirms interactively unless --yes is passed.')
+  .option('-y, --yes', 'skip interactive confirmation (CI / scripted use)', false)
+  .action(async (id: string, opts: { yes: boolean }) => {
+    // HALF_BAKED §I-19 closure (sweep 170): forget is destructive both
+    // locally (note removed from the SQLite store) and on-chain (the
+    // MemoryAccessLog anchor records the forget event with gas). A
+    // mistyped id with no confirm spends gas to log a forget for an
+    // observation that didn't need forgetting.
+    if (!opts.yes) {
+      const proceed = await confirmAction(
+        `This will permanently delete memory observation "${id}" and anchor a forget event on chain. Proceed?`,
+      );
+      if (!proceed) {
+        ui.info('aborted (nothing deleted)');
+        return;
+      }
+    }
     const engine = buildEngine();
     if (!engine) {
       process.exitCode = 1;
