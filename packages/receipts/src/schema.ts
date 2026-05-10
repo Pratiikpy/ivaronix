@@ -72,7 +72,12 @@ export const ReceiptV1Schema = z.object({
   parentReceiptId: z.string().nullable().optional(),
 
   agent: z.object({
-    passportId: z.string(),
+    // J-6 tightening (sweep 152): empty passportId would canonical-hash
+    // and anchor as a "valid" receipt with no signing identity. Real
+    // shape today is `did:0g:passport:0x<40hex>:<tokenId>`; .min(1)
+    // catches the empty-string bug without locking in the DID format,
+    // which may evolve (e.g. ENS-style names in a future passport release).
+    passportId: z.string().min(1),
     ownerWallet: HexAddress,
     trustScoreAtTime: z.number().int(),
     /**
@@ -88,8 +93,11 @@ export const ReceiptV1Schema = z.object({
   }),
 
   request: z.object({
-    skillId: z.string(),
-    skillVersion: z.string(),
+    // J-6 tightening (sweep 152): empty skillId/skillVersion gets
+    // canonical-hashed + anchored. .min(1) at minimum; max bounds match
+    // the SkillManifestSchema constraints (skillId ≤ 80, version ≤ 40).
+    skillId: z.string().min(1).max(80),
+    skillVersion: z.string().min(1).max(40),
     skillManifestHash: Sha256Hex,
     userPromptHash: Sha256Hex,
     inputArtifacts: z.array(InputArtifact),
