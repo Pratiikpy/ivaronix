@@ -14,7 +14,7 @@ import {MemoryAccessLogV2} from "../src/MemoryAccessLogV2.sol";
  *
  * Run on Galileo testnet:
  *   cd contracts
- *   export OG_PRIVATE_KEY=<deployer-key>
+ *   export IVARONIX_SIGNER_KEY=<deployer-key>   # or legacy OG_PRIVATE_KEY
  *   export CAPABILITY_REGISTRY_ADDR=0x...           # CapabilityRegistryV2 preferred, V1 acceptable
  *   forge script script/DeployMemoryAccessLogV2.s.sol:DeployMemoryAccessLogV2 \
  *     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy

@@ -7,7 +7,7 @@ import {Erc7857Verifier} from "../src/Erc7857Verifier.sol";
 
 contract DeployPassport is Script {
     function run() external returns (Erc7857Verifier verifier, AgentPassportINFT passport) {
-        uint256 deployerKey = vm.envUint("OG_PRIVATE_KEY");
+        uint256 deployerKey = vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"));
         address deployer = vm.addr(deployerKey);
 
         console2.log("Deployer:", deployer);

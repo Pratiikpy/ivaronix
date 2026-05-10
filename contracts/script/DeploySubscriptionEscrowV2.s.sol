@@ -17,7 +17,7 @@ import {SubscriptionEscrowV2} from "../src/SubscriptionEscrowV2.sol";
  *
  * Run on Galileo testnet:
  *   cd contracts
- *   export OG_PRIVATE_KEY=<deployer-key>
+ *   export IVARONIX_SIGNER_KEY=<deployer-key>   # or legacy OG_PRIVATE_KEY
  *   export RECEIPT_REGISTRY_ADDR=0x...    # ReceiptRegistryV2 preferred, V1 acceptable
  *   forge script script/DeploySubscriptionEscrowV2.s.sol:DeploySubscriptionEscrowV2 \
  *     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy

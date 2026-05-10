@@ -7,7 +7,7 @@ import {ReceiptRegistryV2} from "../src/ReceiptRegistryV2.sol";
 /**
  * @title DeployReceiptRegistryV2
  * @notice Deploys the V2 ReceiptRegistry. Operator must set:
- *         - OG_PRIVATE_KEY : deployer key (~0.05 OG required)
+ *         - IVARONIX_SIGNER_KEY (or legacy OG_PRIVATE_KEY) : deployer key (~0.05 OG required)
  *
  * Run with:
  *   forge script script/DeployReceiptRegistryV2.s.sol:DeployReceiptRegistryV2 \
@@ -26,7 +26,7 @@ import {ReceiptRegistryV2} from "../src/ReceiptRegistryV2.sol";
  */
 contract DeployReceiptRegistryV2 is Script {
     function run() external returns (ReceiptRegistryV2 registry) {
-        uint256 deployerKey = vm.envUint("OG_PRIVATE_KEY");
+        uint256 deployerKey = vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"));
         address deployer = vm.addr(deployerKey);
 
         console2.log("Deployer:", deployer);

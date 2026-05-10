@@ -20,7 +20,7 @@ import {SkillRegistryV2} from "../src/SkillRegistryV2.sol";
  *
  * Run on Galileo testnet:
  *   cd contracts
- *   export OG_PRIVATE_KEY=<deployer-key>
+ *   export IVARONIX_SIGNER_KEY=<deployer-key>   # or legacy OG_PRIVATE_KEY
  *   forge script script/DeploySkillRegistryV2.s.sol:DeploySkillRegistryV2 \
  *     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
  *

@@ -6,7 +6,7 @@ import {ReceiptRegistry} from "../src/ReceiptRegistry.sol";
 
 contract DeployReceiptRegistry is Script {
     function run() external returns (ReceiptRegistry registry) {
-        uint256 deployerKey = vm.envUint("OG_PRIVATE_KEY");
+        uint256 deployerKey = vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"));
         address deployer = vm.addr(deployerKey);
 
         console2.log("Deployer:", deployer);

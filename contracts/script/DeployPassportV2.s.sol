@@ -8,7 +8,7 @@ import {AgentPassportINFTV2} from "../src/AgentPassportINFTV2.sol";
  * @title DeployPassportV2
  * @notice Deploys the V2 passport against an existing Erc7857Verifier and
  *         ReceiptRegistry. Operator must set:
- *         - OG_PRIVATE_KEY            : deployer key (~0.05 OG required)
+ *         - IVARONIX_SIGNER_KEY (or legacy OG_PRIVATE_KEY) : deployer key (~0.05 OG required)
  *         - PASSPORT_VERIFIER_ADDR    : the existing Erc7857Verifier address
  *         - RECEIPT_REGISTRY_ADDR     : the existing ReceiptRegistry address
  *
@@ -21,7 +21,7 @@ import {AgentPassportINFTV2} from "../src/AgentPassportINFTV2.sol";
  */
 contract DeployPassportV2 is Script {
     function run() external returns (AgentPassportINFTV2 passportV2) {
-        uint256 deployerKey = vm.envUint("OG_PRIVATE_KEY");
+        uint256 deployerKey = vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"));
         address deployer = vm.addr(deployerKey);
         address verifierAddr = vm.envAddress("PASSPORT_VERIFIER_ADDR");
         address registryAddr = vm.envAddress("RECEIPT_REGISTRY_ADDR");

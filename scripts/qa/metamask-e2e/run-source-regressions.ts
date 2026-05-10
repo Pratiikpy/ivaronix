@@ -107,6 +107,7 @@ const FILTERS: Record<string, Filter> = {
     patterns: [
       /^verify-k1-passport-v2/,
       /^verify-k2-registry-v2/,
+      /^verify-deploy-scripts-canonical-key/, // §15 · Foundry deploy scripts use IVARONIX_SIGNER_KEY alias chain (sweep 80)
     ],
   },
 };

@@ -11,7 +11,7 @@ import {CapabilityRegistryV2} from "../src/CapabilityRegistryV2.sol";
  *
  * Run on Galileo testnet:
  *   cd contracts
- *   export OG_PRIVATE_KEY=<deployer-key>            # or IVARONIX_SIGNER_KEY
+ *   export IVARONIX_SIGNER_KEY=<deployer-key>       # or legacy OG_PRIVATE_KEY
  *   forge script script/DeployCapabilityRegistryV2.s.sol:DeployCapabilityRegistryV2 \
  *     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
  *
@@ -24,7 +24,7 @@ import {CapabilityRegistryV2} from "../src/CapabilityRegistryV2.sol";
  *      under a new "CapabilityRegistryV2" key. Leave V1 entry untouched.
  *   2. (Optional) Authorize an indexer:
  *        cast send <V2-addr> "addAuthorizedReader(address)" <indexer-addr> \
- *          --rpc-url <rpc> --private-key $OG_PRIVATE_KEY --legacy
+ *          --rpc-url <rpc> --private-key $IVARONIX_SIGNER_KEY --legacy
  *   3. Studio + CLI grant-management surfaces query V2 first via the
  *      V2-first read pattern (planning-003 §A.1.3).
  */

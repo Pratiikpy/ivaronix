@@ -260,11 +260,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action (mainnet · post-testnet):** decide which palette is canonical, refactor the loser (probably globals.css) to match, take screenshots at 1440×900 + 375×812 of every Studio route to verify no regressions per CLAUDE.md §10. Drop the alt-tokens once globals.css mirrors tokens.css value-for-value.
 - **Effort (residual):** 1-2h to reconcile + ~30min of side-by-side screenshot review.
 
-### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY`
+### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY` · ✅ SHIPPED
 - **Source:** plan-003 §A.3.4 follow-up · `packages/runtime/src/env.ts` already supports the canonical name with legacy aliases.
-- **Why:** today every `forge script script/Deploy*.s.sol` reads `OG_PRIVATE_KEY` directly via `vm.envString("OG_PRIVATE_KEY")`. Operators bridging from CLI (which now prefers `IVARONIX_SIGNER_KEY`) hit a "missing OG_PRIVATE_KEY" error mid-deploy.
-- **Action:** in every `contracts/script/Deploy*.s.sol`, replace `vm.envString("OG_PRIVATE_KEY")` with `vm.envOr("IVARONIX_SIGNER_KEY", vm.envString("OG_PRIVATE_KEY"))` so the canonical name is preferred but the legacy alias still works.
-- **Effort:** ~30min · 8 scripts · zero functional change.
+- **Status (sweep 80):** ✅ All 8 `contracts/script/Deploy*.s.sol` scripts now read the canonical alias chain `vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"))`. Pre-sweep-80, four scripts (`DeployReceiptRegistry`, `DeployReceiptRegistryV2`, `DeployPassport`, `DeployPassportV2`) still read `OG_PRIVATE_KEY` directly — operators who set only the canonical name hit "missing OG_PRIVATE_KEY" mid-deploy. Migration also updated all JSDoc env-var references to lead with the canonical name (legacy noted as fallback). `forge build` clean post-migration.
+- **Regression:** `verify-deploy-scripts-canonical-key.ts` shipped same sweep · gates against re-introducing the bare legacy form OR new Deploy scripts that omit the alias chain entirely. Wired into the contracts filter (3 contract regressions now).
 
 ### B-V2-13 · `pnpm audit:list` script · ✅ SHIPPED in commit 2e49612
 - **Source:** plan-003 §A.4.3 · CHANGELOG.md + commit-trailer convention.
