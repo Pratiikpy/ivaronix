@@ -26,8 +26,19 @@
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix
 cd ivaronix && pnpm install
-pnpm cli verify 1644 --tee-independent
-# → FULLY VERIFIED ✓ (chain anchor + canonical hash + TEE re-attestation)
+pnpm cli verify 1644
+# → ANCHORED ✓ (chain anchor + canonical hash + signature recovery)
+```
+
+For TEE re-attestation, add `--tee-independent` against a recent receipt:
+
+```bash
+pnpm cli verify <id> --tee-independent
+# → FULLY VERIFIED ✓ (also re-runs broker.processResponse against the
+#                    original 0G Compute provider — works on receipts
+#                    anchored within the last ~30 days; older receipts
+#                    stop at ANCHORED because the provider rotates
+#                    attestation history)
 ```
 
 The wedge: this works on a stranger's clean machine, against a receipt anchored by someone else, on testnet, today.
