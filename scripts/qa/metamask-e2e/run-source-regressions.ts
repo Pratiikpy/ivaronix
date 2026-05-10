@@ -47,6 +47,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-a43/, // audit:list regex (cron-sweep finding · accepts WT 26 shape)
       /^verify-a44/, // Efficiency-Game UI (planning-003 §A.4.4)
       /^verify-a48/, // memory routes (planning-003 §A.4.8)
+      /^verify-no-sprint-natspec/, // CLAUDE.md §9 · no K-N fix / Phase / sprint in contract NatSpec
     ],
   },
   'studio-live': {

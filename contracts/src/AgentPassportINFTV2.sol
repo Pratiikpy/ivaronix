@@ -85,9 +85,11 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
 
     mapping(uint256 => AgentData) public agents;
 
-    /// @notice Per-token executor-authorization version counter (K-4 fix).
+    /// @notice Per-token executor-authorization version counter.
     ///         Bumped on every transfer; old grants compare against the prior
-    ///         version and are silently invalidated.
+    ///         version and are silently invalidated. This defends against a
+    ///         seller granting an executor pre-transfer and that grant
+    ///         remaining valid against the new owner's passport.
     mapping(uint256 => uint64) public executorVersion;
 
     /// @notice tokenId => version => executor => expiry timestamp.
@@ -95,7 +97,10 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
 
     uint256 public nextTokenId = 1;
 
-    /// @notice Hard cap on per-call trustScore delta (K-1 fix). Either sign.
+    /// @notice Hard cap on per-call trustScore delta. Either sign.
+    ///         Bounds the maximum reputation impact an authorized recorder
+    ///         can apply per receipt so a compromised recorder cannot fast-
+    ///         elevate (or fast-burn) any passport in a single call.
     int128 public constant MAX_TRUST_DELTA = 100;
 
     // ─── Events ──────────────────────────────────────────────────────────
@@ -130,15 +135,18 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
         receiptRegistry = IReceiptRegistryView(receiptRegistryAddress);
     }
 
-    // ─── Mint (K-6 reentrancy fix) ──────────────────────────────────────
+    // ─── Mint (CEI ordering · re-entry safe) ─────────────────────────────
     function mint(bytes32 metadataRoot) external whenNotPaused nonReentrant returns (uint256 tokenId) {
         require(passportOf[msg.sender] == 0, "AgentPassportINFTV2: wallet already has a passport");
         require(metadataRoot != bytes32(0), "AgentPassportINFTV2: empty metadataRoot");
 
         tokenId = nextTokenId++;
 
-        // K-6 fix: write passportOf BEFORE _safeMint so a re-entering
-        // recipient cannot pass the `passportOf[to] == 0` check twice.
+        // CEI ordering: write passportOf BEFORE _safeMint so a re-entering
+        // recipient cannot pass the `passportOf[to] == 0` check twice. The
+        // nonReentrant modifier alone is not sufficient — _safeMint can call
+        // out via onERC721Received before any state effects we'd otherwise
+        // place after it.
         passportOf[msg.sender] = tokenId;
 
         agents[tokenId] = AgentData({
@@ -159,7 +167,7 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
         emit PassportMinted(tokenId, msg.sender, metadataRoot);
     }
 
-    // ─── Reputation (K-1 fix) ────────────────────────────────────────────
+    // ─── Reputation (bounded delta + receipt cross-check) ───────────────
     /**
      * @notice Record an Action Receipt against the passport. Authorized
      *         recorders only. Cross-checks the receipt id on the configured
@@ -252,7 +260,7 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
         emit MetadataRotated(tokenId, oldRoot, newRoot);
     }
 
-    // ─── Authorized executors (K-4 fix) ──────────────────────────────────
+    // ─── Authorized executors (per-version slot · transfer-invalidates) ─
     function authorizeExecutor(uint256 tokenId, address executor, uint64 ttlSeconds) external {
         require(msg.sender == _ownerOf(tokenId), "AgentPassportINFTV2: not owner");
         require(executor != address(0), "AgentPassportINFTV2: zero executor");
@@ -280,7 +288,7 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
         return expiresAt != 0 && expiresAt > block.timestamp;
     }
 
-    // ─── ERC-7857 secure transfer (K-4 fix bumps version) ────────────────
+    // ─── ERC-7857 secure transfer (also bumps executor version via _update)
     function iTransferFrom(
         address from,
         address to,
@@ -338,8 +346,11 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
     // ─── ERC-721 internal hook ───────────────────────────────────────────
     /**
      * @dev Bumps `executorVersion` on every owner-changing transfer so prior
-     *      owners' grants stop matching (K-4). Also keeps `passportOf` in
-     *      sync without breaking the K-6 mint ordering.
+     *      owners' grants stop matching. Also keeps `passportOf` in sync
+     *      without breaking the mint-time CEI ordering invariant (the mint
+     *      path writes passportOf BEFORE _safeMint to defeat re-entry; this
+     *      hook only fires on real transfers, never on mint, because mint
+     *      passes `from == address(0)`).
      */
     function _update(address to, uint256 tokenId, address auth) internal override returns (address from) {
         from = super._update(to, tokenId, auth);
@@ -347,7 +358,8 @@ contract AgentPassportINFTV2 is ERC721, Ownable2Step, Pausable, ReentrancyGuard 
             require(passportOf[to] == 0, "AgentPassportINFTV2: recipient already has a passport");
             delete passportOf[from];
             passportOf[to] = tokenId;
-            // K-4: bump version on every real owner change.
+            // Bump executor-authorization version on every real owner change
+            // so prior owners' grants stop matching the current version slot.
             executorVersion[tokenId] += 1;
             emit ExecutorVersionBumped(tokenId, executorVersion[tokenId]);
         }
