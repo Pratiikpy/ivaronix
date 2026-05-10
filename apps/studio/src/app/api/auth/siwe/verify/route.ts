@@ -15,6 +15,7 @@ import {
   NONCE_COOKIE_NAME,
   SESSION_COOKIE_NAME,
 } from '@/lib/siwe-session';
+import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,18 @@ interface VerifyBody {
 }
 
 export async function POST(req: Request) {
+  // Per-IP cap on the 'siwe-handshake' bucket — verify is the CPU-heavy
+  // side (SIWE message parse + ECDSA recover). Without the gate an
+  // anonymous flood can pin a single instance's CPU on bogus signatures.
+  const clientIp = readClientIp(req.headers);
+  const ipLimit = checkRateLimit('siwe-handshake', clientIp);
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `siwe handshake rate limit exceeded · retry after ${Math.ceil((ipLimit.resetMs - Date.now()) / 1000)}s` },
+      { status: 429, headers: rateLimitHeaders(ipLimit) },
+    );
+  }
+
   let body: VerifyBody;
   try {
     body = (await req.json()) as VerifyBody;
