@@ -216,7 +216,7 @@ const pageStyle: React.CSSProperties = {
   maxWidth: 720,
   margin: '0 auto',
   padding: '32px 32px 48px',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+  fontFamily: 'var(--font-sans, "Outfit", -apple-system, BlinkMacSystemFont, system-ui, sans-serif)',
   color: '#0a0a0a',
   background: 'white',
   minHeight: '100vh',

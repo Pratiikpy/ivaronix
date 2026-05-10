@@ -151,7 +151,7 @@ const containerStyle: React.CSSProperties = {
   margin: 0,
   padding: 12,
   background: 'transparent',
-  fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+  fontFamily: 'var(--font-sans, "Outfit", -apple-system, BlinkMacSystemFont, system-ui, sans-serif)',
   color: '#0a0a0a',
 };
 
