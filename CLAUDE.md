@@ -179,6 +179,17 @@ The canonical user intent for what counts as a passing E2E test lives in `docs/Q
 - Video recording of the full flow whenever the smoothness of transitions, loading states, or interaction feel matters. The judge cares how it feels, not only that it worked.
 - Side-by-side check against `brand/Ivaronix.html` at both viewports per §10. If Studio looks less designed, fix Studio first.
 
+### 11.3a · Screenshots and screen recording are BASELINE, not proof
+
+**Captures are documentation, not verification.** A passing E2E test produces both: (1) the artefact set above (screenshots + video + chainscan links) AND (2) a real on-chain side effect a stranger can replay. Capturing pretty UI states without driving the underlying flow is a §1-rule failure in disguise — the artefacts look impressive, the system isn't actually proven.
+
+Concretely:
+- A screenshot of `/r/<id>` rendering FULLY VERIFIED ✓ proves nothing on its own. A judge needs to be able to open the same URL on their machine and see the same chip — that requires a real chain anchor, real signature recovery, real TEE attestation upstream of the screenshot.
+- A 30-second tour video walking 6 surfaces is a viewing-aid, not a test. The test is the receipt that anchored on-chain in the same week the video was captured.
+- The CLI's `--tee-independent` flag is the gold-standard verification path because it re-runs the broker's `processResponse` against the actual 0G Compute provider on a different machine. THAT's the proof. The captures are how the operator demonstrates that proof to a viewer who can't run the flow themselves.
+
+For full-flow tests that involve wallet state, multi-party grants, or chain writes, the §11.1 + §11.2 rules apply: real MetaMask, real wallets (one per role), real chain side effects. Screenshots and video supplement; they don't substitute. If the only artefacts a feature produces are captures — no chain tx, no receipt URL, no replay path — the feature is not tested, regardless of how good the captures look.
+
 ### 11.4 · Cover every shipped feature, not only the headline
 - "If even one thing is missed, you are not done" (verbatim from QA_LOOP_BRIEF.md). Sweep every page, every CLI command, every receipt type, every contract write path. The brief's punch list pattern is the right shape.
 - Edge cases count: tampered receiptRoot must fail closed, empty input must be gated before Router spend, bogus on-chain id must produce an honest error. Silent failures are a test bug.
