@@ -69,6 +69,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-stale-port-3000/, // meta · stale-port-3000-allow:meta-wiring · no `:3000` references (Studio runs on :3300) (sweep 92)
       /^verify-no-stale-numeric-snapshots/, // meta · operational surfaces (NatSpec, JSDoc, comments, spec docs) don't hardcode numbers.json values without unit-word context (sweep 94)
       /^verify-no-ghost-surfaces/, // meta · every HLD §1 surface row maps to a real apps/<name>/ with tracked files (sweep 100)
+      /^verify-seed-skill-manifests/, // .claude/rules/skills.md · every first-party SKILL.md parses against the canonical schema (sweep 103)
     ],
   },
   'studio-live': {
