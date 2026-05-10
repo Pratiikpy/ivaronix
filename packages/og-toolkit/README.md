@@ -18,7 +18,8 @@ import { createOg } from '@ivaronix/og-toolkit';
 
 const og = createOg({
   network: 'testnet',
-  privateKey: process.env.OG_PRIVATE_KEY,
+  // Canonical-first; legacy alias OG_PRIVATE_KEY also accepted by the runtime env loader.
+  privateKey: process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY,
 });
 
 // 1. Raw 0G primitives — same surface as the official SDKs

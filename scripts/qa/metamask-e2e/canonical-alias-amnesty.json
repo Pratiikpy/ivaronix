@@ -71,7 +71,6 @@
   "packages/og-router/src/keyring.test.ts:214:OG_COMPUTE_PROVIDER",
   "packages/og-router/src/keyring.test.ts:215:EVM_WALLET_ADDRESS",
   "packages/og-router/src/keyring.test.ts:244:EVM_WALLET_ADDRESS",
-  "packages/og-toolkit/README.md:21:OG_PRIVATE_KEY",
   "scripts/dev/start-local-0g-kv.ts:202:OG_NETWORK",
   "scripts/diag/env-check.ts:58:EVM_PRIVATE_KEY",
   "scripts/diag/env-check.ts:58:OG_NETWORK",
