@@ -49,7 +49,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Post-deploy:**
   1. Add the new `AgentPassportINFTV2` address to `contracts/deployments/testnet.json` under a new `AgentPassportINFTV2` key. Leave the V1 `AgentPassportINFT` entry untouched — the four existing minted passports stay readable on V1.
   2. Authorize the operator wallet as a recorder (so future receipt anchors can write reputation):
-     `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $OG_PRIVATE_KEY --legacy`
+     `cast send <V2-addr> "addAuthorizedRecorder(address)" <operator-wallet> --rpc-url https://evmrpc-testnet.0g.ai --private-key $IVARONIX_SIGNER_KEY --legacy`
   3. Studio `/agents` will need a follow-up to read V2 first and fall back to V1 with a `LEGACY-PASSPORT` chip — already documented in HALF_BAKED.md K-1; agent picks it up post-deploy.
 
 ### A-V2-K15-Go · Install Go so the cron loop can ship the Go reference verifier

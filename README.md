@@ -166,7 +166,7 @@ ivaronix memory recall "asymmetric notice clauses" --top-k 5
 ivaronix memory grant 0xPartner --scope "memory:work" --expires 1735689600
 
 # See on-chain access events for your wallet
-ivaronix memory log --agent $EVM_WALLET_ADDRESS --limit 10
+ivaronix memory log --agent $IVARONIX_WALLET_ADDRESS --limit 10
 ```
 
 10 sub-commands total: `remember`, `recall`, `forget`, `grant`, `revoke`, `list`, `log`, `log-emit`, `stream-id`, `snapshot`. The `stream-id` command derives a deterministic 0G KV stream-ID from any wallet so memory is portable across machines without a server-side index. Studio `/memory` page mirrors the surface: SIWE-gated, real-time event feed from `MemoryAccessLog`, grant management UI for `CapabilityRegistry`.

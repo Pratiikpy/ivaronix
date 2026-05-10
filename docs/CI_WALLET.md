@@ -54,7 +54,7 @@ The smoke spends ~0.0005 OG per run. With 0.5 OG allocated, the wallet handles ~
 ```bash
 cast send 0x<NEW_CI_ADDRESS> --value 500000000000000000 \
   --rpc-url https://evmrpc-testnet.0g.ai \
-  --private-key $EVM_PRIVATE_KEY --legacy
+  --private-key $IVARONIX_SIGNER_KEY --legacy
 ```
 
 Monitor balance via `cast balance 0x<NEW_CI_ADDRESS> --rpc-url https://evmrpc-testnet.0g.ai`.

@@ -1,6 +1,5 @@
 [
   ".claude/rules/og-storage.md:9:READ_PROXY_PRIVATE_KEY",
-  "README.md:169:EVM_WALLET_ADDRESS",
   "README.md:230:EVM_PRIVATE_KEY",
   "README.md:230:EVM_WALLET_ADDRESS",
   "README.md:230:ZG_API_SECRET",
@@ -41,7 +40,6 @@
   "apps/mcp-server/src/server.ts:133:EVM_WALLET_ADDRESS",
   "apps/studio/src/app/0g/page.tsx:70:ZG_SERVICE_URL",
   "apps/studio/src/app/test-wallet/page.tsx:3:EVM_PRIVATE_KEY",
-  "docs/CI_WALLET.md:57:EVM_PRIVATE_KEY",
   "docs/CI_WALLET.md:7:EVM_PRIVATE_KEY",
   "docs/HALF_BAKED.md:44:EVM_PRIVATE_KEY",
   "docs/HALF_BAKED.md:570:EVM_PRIVATE_KEY",
@@ -69,7 +67,6 @@
   "docs/USER_TODO.md:335:OG_PRIVATE_KEY",
   "docs/USER_TODO.md:352:OG_PRIVATE_KEY",
   "docs/USER_TODO.md:39:OG_PRIVATE_KEY",
-  "docs/USER_TODO.md:52:OG_PRIVATE_KEY",
   "docs/build/BUILD.md:307:OG_NETWORK",
   "docs/build/BUILD.md:308:OG_CHAIN_ID",
   "docs/build/BUILD.md:309:OG_RPC_URL",
