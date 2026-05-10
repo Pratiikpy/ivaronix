@@ -27,7 +27,7 @@
 
 ## Tests
 
-No unit tests yet. `pnpm --filter @ivaronix/og-storage test` is `echo skip` today; queued in `docs/USER_TODO.md §B-V2-OG-STORAGE-TESTS`. When tests land, follow the convention: Node's built-in `node:test` runner via `tsx --test src/**/*.test.ts` (matches `packages/{core,consensus,skills,memory,receipts,og-chain}`). High-value targets: Burn Mode AES-GCM round-trip (encrypt → decrypt → original plaintext), nonce uniqueness across 10k randomBytes(12) draws (K-20 regression coverage), keyFingerprint capture happens BEFORE buffer zeroing.
+`packages/og-storage/src/*.test.ts` — Node's built-in `node:test` runner via `tsx --test`. Run via `pnpm --filter @ivaronix/og-storage test`. Suite: `burn.test.ts` (15 tests · self-contained blob layout, K-20 nonce regression sentinel, keyFingerprint-before-zero ordering via `sha256(zeros(32))` constant, GCM tampering rejection, 1000-nonce uniqueness draw). The 1000-nonce loop runs in ~350ms total, well within the test budget. Indexer + storage SDK paths still uncovered (they need a live indexer endpoint); queued for live-smoke harnesses under `scripts/qa/`.
 
 ## File location reference
 

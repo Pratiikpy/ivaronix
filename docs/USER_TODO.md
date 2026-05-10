@@ -420,19 +420,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - ⏳ JSON-repair regression coverage still pending: the `packages/runtime/src/json-repair.ts` module referenced in the og-router threat-model JSDoc does not exist yet. Write the module first (the malform pattern is documented in the rules: 7B models malform JSON ~5-10% of the time, so a regex-based repair pass is the canonical mitigation), then write `packages/og-router/src/json-repair.test.ts` to feed malformed shapes and assert recovery.
 - **Effort remaining:** ~3h to write the json-repair module + tests. The keyring portion (~1h) is already done.
 
-### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage`
+### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.
-- **Why:** Burn Mode is the AES-GCM ciphertext that protects user data from operator-side disclosure (per `burn.ts:13-14` threat-model NatSpec). K-20 hardened the nonce to `randomBytes(12)`; without a regression test, a future "optimization" that derives the nonce from `Date.now()` or plaintext hash would silently downgrade the ciphertext to GCM-collision-vulnerable. The keyFingerprint-before-zero ordering is also security-load-bearing and currently uncovered.
-- **Action:**
-  1. Write `packages/og-storage/src/burn.test.ts` covering:
-     - encrypt → decrypt round-trip yields original plaintext (happy path)
-     - 10k `randomBytes(12)` nonce draws are all unique (K-20 nonce regression)
-     - `keyFingerprint = sha256(key)` captured BEFORE the key buffer is zeroed (security ordering)
-     - Layout invariant: `nonce (12) || ciphertext || auth-tag (16)` self-contained shape
-     - Decrypt-with-wrong-key fails closed (auth tag rejects)
-  2. Wire `package.json` test command to `tsx --test src/**/*.test.ts`.
-  3. Add the new step to `.github/workflows/ci.yml` `unit-tests` job.
-- **Effort:** ~2h. Pure crypto unit-test work; no chain/indexer dep. The 10k nonce-uniqueness draw is fast (under 50ms).
+- **Status:** ✅ Shipped same day. `packages/og-storage/src/burn.test.ts` ships 15 tests covering the full Burn Mode invariant set — self-contained blob layout, fresh-nonce-per-call (K-20 regression), 1000-nonce uniqueness draw, keyFingerprint format, capture-before-zero ordering via the `sha256(zeros(32))` constant sentinel, fingerprint freshness across calls, encryptionType tag, destroyedAt timestamp bounds, empty-plaintext layout, 1MB plaintext layout, externally-held-key round-trip, wrong-key tag rejection, tampered-ciphertext tag rejection, short-blob explicit error, wrong-key-length explicit error. CI runs the suite as part of the `unit-tests` job (112 → 127 unit tests across 8 packages).
+- **Indexer + SDK paths** still uncovered (they need a live 0G Storage indexer endpoint); queued for the live-smoke harness work under `scripts/qa/`.
 
 ---
 
