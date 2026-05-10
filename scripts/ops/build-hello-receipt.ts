@@ -13,11 +13,12 @@ import { getDeployedAddress } from '@ivaronix/og-chain';
 dotenvConfig();
 
 const outPath = process.argv[2] ?? 'tmp/hello-receipt.json';
-const network = (process.env.OG_NETWORK ?? 'testnet') as 'testnet' | 'mainnet';
+// Resolve via canonical → legacy alias chain (matches packages/runtime/src/env.ts).
+const network = (process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'testnet') as 'testnet' | 'mainnet';
 
 async function main() {
-  const pk = process.env.EVM_PRIVATE_KEY ?? process.env.OG_PRIVATE_KEY;
-  if (!pk) throw new Error('Set EVM_PRIVATE_KEY in .env');
+  const pk = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
+  if (!pk) throw new Error('Set IVARONIX_SIGNER_KEY in .env (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY still resolve)');
 
   const cfg = NETWORKS[network];
   const provider = new JsonRpcProvider(cfg.rpcUrl, { chainId: cfg.chainId, name: cfg.name });

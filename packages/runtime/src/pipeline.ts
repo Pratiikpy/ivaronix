@@ -326,7 +326,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
   } else {
     // TIER 1 default — 0G Router with TEE attestation
     const keyring = keyringFromEnv();
-    if (!keyring) throw new Error('Router not configured (.env: ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS)');
+    if (!keyring) throw new Error('Router not configured (.env: IVARONIX_ROUTER_KEY / IVARONIX_ROUTER_URL / IVARONIX_ROUTER_PROVIDER / IVARONIX_WALLET_ADDRESS · legacy ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS still resolve)');
     // Reset the keyring's rotation log at the start of this run so
     // the receipt's `routerTrace.rotations` reflects only this run,
     // not any leftover rotations from prior calls on the same

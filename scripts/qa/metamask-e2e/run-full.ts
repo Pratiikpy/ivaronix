@@ -4,7 +4,7 @@
  * Picks up from the persisted profile (must already be onboarded with the
  * hardhat seed via run.ts at least once). Then:
  *   1. Unlock
- *   2. Import EVM_PRIVATE_KEY as a second account
+ *   2. Import IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY) as a second account
  *   3. Switch to imported account
  *   4. Open Studio /onboard, click Connect (handle popup if it appears)
  *   5. Type handle → Continue → mint → handle MM signing popup → wait for confirm
@@ -39,9 +39,10 @@ function loadEnv(): Record<string, string> {
 }
 
 const env = loadEnv();
-const PRIVATE_KEY = (env.EVM_PRIVATE_KEY ?? '').replace(/^0x/, '');
-const WALLET_ADDR = env.EVM_WALLET_ADDRESS ?? '';
-if (!PRIVATE_KEY) { console.error('FAIL: EVM_PRIVATE_KEY missing'); process.exit(1); }
+// Resolve via canonical → legacy alias chain (matches packages/runtime/src/env.ts).
+const PRIVATE_KEY = (env.IVARONIX_SIGNER_KEY ?? env.OG_PRIVATE_KEY ?? env.EVM_PRIVATE_KEY ?? '').replace(/^0x/, '');
+const WALLET_ADDR = env.IVARONIX_WALLET_ADDRESS ?? env.EVM_WALLET_ADDRESS ?? '';
+if (!PRIVATE_KEY) { console.error('FAIL: IVARONIX_SIGNER_KEY missing (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)'); process.exit(1); }
 
 const PASSWORD = 'TestPass123!QA';
 const HANDLE = 'qa-' + Math.random().toString(36).slice(2, 8);
