@@ -249,6 +249,12 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** in every `contracts/script/Deploy*.s.sol`, replace `vm.envString("OG_PRIVATE_KEY")` with `vm.envOr("IVARONIX_SIGNER_KEY", vm.envString("OG_PRIVATE_KEY"))` so the canonical name is preferred but the legacy alias still works.
 - **Effort:** ~30min · 8 scripts · zero functional change.
 
+### B-V2-13 · `pnpm audit:list` script
+- **Source:** plan-003 §A.4.3 · CHANGELOG.md + commit-trailer convention shipped today.
+- **Why:** every closing commit carries `Closes audit <ID>`. A one-shot `git log --grep` makes the audit lifecycle queryable without scanning the file.
+- **Action:** add `pnpm audit:list` to root package.json scripts. Implementation: `tsx scripts/audit-list.ts` (new, ~30 lines) — runs `git log --grep "Closes audit" --pretty=format:"%h %s"`, parses out the IDs from each commit body, prints a table grouped by ID with the closing commit hash + date.
+- **Effort:** ~30min.
+
 ### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json`
 - **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped today at repo root with canonical strict settings.
 - **Why:** today each of the 14 workspace packages has its own `tsconfig.json` that may drift on `strict`, `target`, `moduleResolution`. Without a shared base, "14 packages typecheck-clean" claims uneven type-safety guarantees across the workspace. The base file is shipped; the per-package extends migration is the follow-up.

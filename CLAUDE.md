@@ -95,6 +95,12 @@ UI promotion rule:
 - **Don't add features that need a stack of dependencies to verify.** A feature you can't run in one command is a feature you can't ship.
 - **Don't write commits with AI attribution.** Bare conventional commits.
 
+No half-baked anything:
+- No half-baked build, feature, UI/UX, testing, polish, docs, demo flow, receipts, proof links, wallet flow, mobile view, error states, loading states, empty states, permissions, security checks, marketplace logic, multi-wallet testing, mainnet readiness, competitor comparison, or submission package.
+- No fake green status. No "works on my path." No connect-only testing. No screenshot-only proof. No selector-only QA. No lazy blocked items.
+- No feature without PMF. No UI button without real use. No claim without receipt/proof.
+- Function, proof, UX, and testing must land together. If users see it, it must work and feel finished.
+
 ## 9. Writing voice — no AI slop
 
 When you write **anything that ships** (READMEs, docs, marketing copy, PR descriptions, code comments, commit bodies, blog posts, tweets, judge-facing copy):
@@ -136,6 +142,12 @@ MetaMask and user-flow verification:
 - Drive the UI like a user would: click buttons, handle MetaMask popups, wait for visible state changes, open the resulting proof page, and confirm the chain/receipt evidence shown to the user.
 - Capture screenshots or video for the full flow, not only the final page. The proof must show what a judge would see and feel: transitions, loading states, connected state, error handling, and final result.
 - Check every affected page at desktop and mobile sizes. If a page is user-facing, it must be visually inspected, not only asserted through selectors.
+
+Test topology first:
+- Before claiming any feature is fully tested, ask what the correct real-world test shape is. Identify the actors, wallets, roles, permissions, UI surfaces, chain writes, receipts, state transitions, failure states, and proof artifacts needed to honestly say "this works end-to-end."
+- Pick the strongest practical topology, not the smallest shortcut. Example: a marketplace flow needs at least a creator wallet and buyer wallet; serious E2E should use creator + buyer + treasury/admin so listing, purchase/run, payout, protocol fee, receipt, reputation, and UI state can all be verified.
+- A feature is not fully done until every expected state change is observed from the user's point of view and from the system's proof layer: UI update, wallet/chain result, receipt/proof URL, API/CLI visibility if relevant, and any updated dashboard/list/history.
+- If a feature has multiple roles or surfaces, test the whole path across those roles and surfaces. Do not test only the happy button click. Test what should happen before, during, after, and on failure.
 
 What "match" means:
 - **Same** colour palette tokens, identical hex values.
