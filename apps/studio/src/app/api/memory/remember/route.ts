@@ -1,10 +1,21 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { rememberNote } from '@/lib/studio-memory';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+/**
+ * Runtime body validation per HALF_BAKED §J-2 (sweep 148). Caps:
+ *   text   1–16 KiB (single note; > 16 KB belongs in a doc upload)
+ *   scope  ≤ 64 chars (tag-like)
+ */
+const RememberBodySchema = z.object({
+  text: z.string().min(1).max(16 * 1024),
+  scope: z.string().max(64).optional(),
+});
 
 /**
  * POST /api/memory/remember
@@ -47,16 +58,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  let body: { text?: string; scope?: string };
+  let rawBody: unknown;
   try {
-    body = (await req.json()) as { text?: string; scope?: string };
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
-
-  if (!body.text || typeof body.text !== 'string') {
-    return NextResponse.json({ error: 'text required' }, { status: 400 });
+  const parsed = RememberBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: 'invalid body',
+        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      },
+      { status: 400 },
+    );
   }
+  const body = parsed.data;
 
   try {
     const note = rememberNote({
