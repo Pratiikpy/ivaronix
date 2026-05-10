@@ -72,8 +72,26 @@ export class ReceiptRegistryClient {
     const latest = await provider.getBlockNumber();
     const fromBlock = Math.max(0, latest - lookbackBlocks);
 
+    return this.findByReceiptRootInRange(receiptRoot, fromBlock, latest);
+  }
+
+  /**
+   * Tight-range variant: query exactly between fromBlock and toBlock
+   * inclusive. Used by the verifier when the receipt's chainAnchor
+   * carries an anchorBlockNumber hint (sweep 61) — RPC providers
+   * routinely cap eth_getLogs ranges, so a known-block tight query is
+   * both faster and more compatible than the latest-N-blocks lookback.
+   */
+  async findByReceiptRootInRange(
+    receiptRoot: Hash,
+    fromBlock: number,
+    toBlock: number,
+  ): Promise<OnChainReceipt | null> {
+    const provider = this.contract.runner?.provider;
+    if (!provider) throw new Error('ReceiptRegistryClient: no provider attached to runner');
+
     const filter = this.contract.filters.ReceiptAnchored!(undefined, receiptRoot);
-    const events = await this.contract.queryFilter(filter, fromBlock, latest);
+    const events = await this.contract.queryFilter(filter, fromBlock, toBlock);
     if (events.length === 0) return null;
 
     const ev = events[events.length - 1]!;

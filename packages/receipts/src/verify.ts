@@ -43,10 +43,29 @@ export function verifyClaimed(receiptJson: unknown): VerificationResult {
 
   const receipt = schemaResult.data;
 
-  // 2. Hash — recompute receiptRoot from canonical content
-  const draftForHash: Partial<ReceiptV1> = {
-    ...receipt,
-    storage: { ...receipt.storage, receiptRoot: '0x' + '0'.repeat(64) },
+  // 2. Hash — recompute receiptRoot from canonical content.
+  //
+  // CRITICAL: hash the ORIGINAL JSON (receiptJson, the function arg),
+  // not the Zod-parsed `receipt`. Zod's `safeParse` fills in default
+  // values for any field with a .default() declaration that's missing
+  // from the input. Hashing the parsed version produces a different
+  // canonical string than the builder produced when the receipt was
+  // created — every schema evolution that adds a default-valued field
+  // would silently break hash verification on every previously-anchored
+  // receipt. Sweep 61 caught this on receipt 1644 when the README's
+  // headline `verify 1644` reported INVALID despite the receipt being
+  // chain-anchored and signed correctly.
+  //
+  // Approach: cast receiptJson to a record-shaped object, swap
+  // storage.receiptRoot for the all-zeros placeholder (matching the
+  // builder's pre-hash state), then canonicalize. The schema check
+  // above already validated structural correctness; this hash check
+  // re-derives the deterministic content fingerprint.
+  const originalJson = receiptJson as Record<string, unknown>;
+  const originalStorage = (originalJson.storage as Record<string, unknown>) ?? {};
+  const draftForHash: Record<string, unknown> = {
+    ...originalJson,
+    storage: { ...originalStorage, receiptRoot: '0x' + '0'.repeat(64) },
   };
   const computedRoot = canonicalHash(draftForHash, HASH_EXCLUDE);
   if (computedRoot.toLowerCase() !== receipt.storage.receiptRoot.toLowerCase()) {

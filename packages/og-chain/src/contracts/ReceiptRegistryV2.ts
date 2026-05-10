@@ -157,13 +157,32 @@ export class ReceiptRegistryV2Client {
     };
   }
 
-  async findByReceiptRoot(receiptRoot: Hash, lookbackBlocks = 100_000): Promise<OnChainReceiptV2 | null> {
+  // lookbackBlocks default raised to 5_000_000 in sweep 61 to cover
+  // most testnet history at 3s block time (~150 days). The previous
+  // 100_000 default missed receipts older than ~3 days. Same fix
+  // applied to ReceiptRegistry V1 for consistency.
+  async findByReceiptRoot(receiptRoot: Hash, lookbackBlocks = 5_000_000): Promise<OnChainReceiptV2 | null> {
     const provider = this.contract.runner?.provider;
     if (!provider) throw new Error('ReceiptRegistryV2Client: no provider attached to runner');
     const latest = await provider.getBlockNumber();
     const fromBlock = Math.max(0, latest - lookbackBlocks);
+    return this.findByReceiptRootInRange(receiptRoot, fromBlock, latest);
+  }
+
+  /**
+   * Tight-range variant: same shape as ReceiptRegistry V1's helper.
+   * Used by the verifier when the receipt's chainAnchor carries an
+   * anchorBlockNumber hint (sweep 61).
+   */
+  async findByReceiptRootInRange(
+    receiptRoot: Hash,
+    fromBlock: number,
+    toBlock: number,
+  ): Promise<OnChainReceiptV2 | null> {
+    const provider = this.contract.runner?.provider;
+    if (!provider) throw new Error('ReceiptRegistryV2Client: no provider attached to runner');
     const filter = this.contract.filters.ReceiptAnchored!(undefined, receiptRoot);
-    const events = await this.contract.queryFilter(filter, fromBlock, latest);
+    const events = await this.contract.queryFilter(filter, fromBlock, toBlock);
     if (events.length === 0) return null;
     const ev = events[events.length - 1]!;
     const args = (ev as { args: unknown[] }).args;

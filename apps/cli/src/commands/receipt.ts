@@ -217,10 +217,31 @@ receiptCommand
     }
 
     let onChain: OnChainReadRow | null = null;
+    // Use the receipt's known anchor block as a tight-range hint when
+    // available (cheaper RPC than a multi-million-block scan, AND
+    // works with providers that cap eth_getLogs ranges). Sweep 61
+    // caught: receipt 1004 anchored at block 32349569 returned NOT
+    // FOUND under both the original 100k lookback AND a bumped 5M
+    // lookback because the RPC rejects large eth_getLogs ranges.
+    // Anchor-block hint is one tight query that always works.
+    const anchorHint = receipt.chainAnchor?.anchorBlockNumber ?? null;
+    const lookback = anchorHint
+      ? // RPC just needs to span the actual anchor block. ±1000 covers
+        // any reorg-window or block-time variance.
+        2000
+      : 100_000; // no hint · fall back to default
     let anchoredOn: 'v1' | 'v2' | null = null;
     for (const r of registries) {
       try {
-        const found = await r.client.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
+        // Tight range around the known anchor block when hinted; otherwise
+        // the registry client uses its lookback-from-latest default.
+        const found = anchorHint
+          ? await r.client.findByReceiptRootInRange(
+              receipt.storage.receiptRoot as Hash,
+              Math.max(0, anchorHint - 1000),
+              anchorHint + 1000,
+            )
+          : await r.client.findByReceiptRoot(receipt.storage.receiptRoot as Hash, lookback);
         if (found) {
           onChain = { ...found, registryVersion: r.version };
           anchoredOn = r.version;
