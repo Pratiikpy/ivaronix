@@ -124,9 +124,9 @@ No half-baked anything:
 When you write **anything that ships** (READMEs, docs, marketing copy, PR descriptions, code comments, commit bodies, blog posts, tweets, judge-facing copy):
 
 - **No em-dash slurries.** One clause per sentence. If you reach for `—`, rewrite.
-- **No "delve / unlock / unleash / robust / leverage / empower / seamless / harness / streamline / cutting-edge / state-of-the-art / revolutionize."** Banned words. They mark a paragraph as machine-written on sight.
+- **No "delve / unlock / unleash / robust / leverage / empower / seamless / harness / streamline / cutting-edge / state-of-the-art / revolutionize."** Banned words. They mark a paragraph as machine-written on sight. <!-- wording-lint:allow:meta-list-of-banned-tokens -->
 - **No three-adjective stacks** ("powerful, scalable, secure"). Pick the one that's true and prove it with a number.
-- **No "in today's fast-paced world" / "in the realm of" / "in the world of"** openers. Start with the noun that matters.
+- **No "in today's fast-paced world" / "in the realm of" / "in the world of"** openers. Start with the noun that matters. <!-- wording-lint:allow:meta-list-of-banned-phrases -->
 - **No symmetric bulleted slop** (every bullet starts with the same verb, every bullet has the same length). If a bullet only exists to balance the list, kill it.
 - **No marketing sandwich** (claim → flowery elaboration → restated claim). Make the claim once.
 - **No invented quotes, fake stats, or hallucinated user testimonials.**

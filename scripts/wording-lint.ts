@@ -176,6 +176,12 @@ const HARNESS_NOUN_MODIFIERS = new Set([
   'integration',
   'live',
   'unit',
+  'backend',
+  'frontend',
+  'browser',
+  'qa',
+  'metamask',
+  'mm',
 ]);
 
 /** True iff a `harness` match at [matchIdx] is preceded by a recognized
