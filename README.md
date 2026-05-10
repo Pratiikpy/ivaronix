@@ -129,10 +129,16 @@ No other project in the 0G APAC field ships a polyglot canonical hash with byte-
 - [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) · RFC-8785 canonical receipt hash spec
 - [docs/CRYPTO_NOTES.md](docs/CRYPTO_NOTES.md) · threat models for every primitive (memory AES-GCM, Burn Mode, receipt signing, anchor sigs, capability grants, ERC-7857 attestors)
 - [docs/PHASE_B_DISCLOSURES.md](docs/PHASE_B_DISCLOSURES.md) · half-baked surfaces, what we shipped, what's left
-- [docs/HALF_BAKED.md](docs/HALF_BAKED.md) · audit ledger from 5 parallel subagents
+- [docs/HALF_BAKED.md](docs/HALF_BAKED.md) · audit ledger from 5 parallel subagents (snapshot frozen 2026-05-09; closures live in `CHANGELOG.md` + `pnpm audit:list`)
 - [docs/USER_TODO.md](docs/USER_TODO.md) · operator action list (mainnet redeploy, Vercel deploy, npm publish, etc.)
 - [docs/CI_WALLET.md](docs/CI_WALLET.md) · runbook for the chain-smoke CI wallet
 - [docs/planning-003.md](docs/planning-003.md) · no-compromise plan with full coverage map
+- [docs/PRIVACY_NOTES.md](docs/PRIVACY_NOTES.md) · operator-as-proxy threat model + read-proxy-key mitigation
+- [docs/QUALITY.md](docs/QUALITY.md) · evergreen quality philosophy (CLI as gold standard, TIER 1 vs TIER 2 honesty, stop condition)
+- [SECURITY.md](SECURITY.md) · what the receipt system defends + what it does NOT (8 specific threats + 5 honest non-defenses · file:line citations)
+- [CONTRIBUTING.md](CONTRIBUTING.md) · pre-PR command list, commit conventions, audit-trailer convention, NatSpec discipline
+- [BRAND.md](BRAND.md) · brand-asset license (separate from MIT code grant); rules for forks + attribution + widget embedding
+- [CHANGELOG.md](CHANGELOG.md) · audit-fix ledger with `Closes audit <ID>` commit trailers (queryable via `pnpm audit:list`)
 
 ## Memory primitive · counters SealedMind on a single command
 
