@@ -21,7 +21,7 @@
 Copy `.env.production.template` (or `.env.local.template`) and fill:
 - `IVARONIX_SIGNER_KEY` — server-side signer for receipt anchoring.
 - `IVARONIX_NETWORK=testnet|mainnet`.
-- `ZG_API_SECRET` + `ZG_SERVICE_URL` + `OG_COMPUTE_PROVIDER` + `EVM_WALLET_ADDRESS` — Router credentials.
+- `IVARONIX_ROUTER_KEY` + `IVARONIX_ROUTER_URL` + `IVARONIX_ROUTER_PROVIDER` + `IVARONIX_WALLET_ADDRESS` — Router credentials. Legacy aliases (`ZG_API_SECRET`, `ZG_SERVICE_URL`, `OG_COMPUTE_PROVIDER`, `EVM_WALLET_ADDRESS`) still resolve via `packages/runtime/src/env.ts`; deprecation warning fires when used.
 - `IVARONIX_READ_PROXY_KEY` — optional read-only proxy key for storage indexer (planning-003 §A.5.3 / `docs/PRIVACY_NOTES.md`).
 - `IVARONIX_STUDIO_BASE` — public origin for OG image URLs and link unfurls.
 
