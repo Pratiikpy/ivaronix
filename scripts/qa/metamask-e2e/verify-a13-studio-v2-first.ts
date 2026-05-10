@@ -65,8 +65,19 @@ const SURFACES: SurfaceCheck[] = [
     forbidV1Direct: [/\bgetReceiptRegistry\b/, /\breg\.findByAgent\(/],
   },
   {
-    path: 'apps/studio/src/app/api/dashboard/[addr]/route.ts',
+    // Per planning-003 §A.5.16, the dashboard data load lives in the
+    // shared `loadDashboard` lib; the route delegates to it. The lib is
+    // where the V2-first helper actually lives, so we check that path
+    // and just assert the route delegates without re-introducing a
+    // direct V1 call.
+    path: 'apps/studio/src/lib/dashboard.ts',
     expectV2Helper: /\bunifiedFindByAgent\b/,
+    forbidV1Direct: [/\bgetReceiptRegistry\b/, /\bregistry\.findByAgent\(/],
+  },
+  {
+    path: 'apps/studio/src/app/api/dashboard/[addr]/route.ts',
+    // Delegates to `loadDashboard`; just assert the import + no direct V1.
+    expectV2Helper: /\bloadDashboard\b/,
     forbidV1Direct: [/\bgetReceiptRegistry\b/, /\bregistry\.findByAgent\(/],
   },
 ];

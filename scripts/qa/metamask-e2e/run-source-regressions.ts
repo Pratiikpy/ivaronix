@@ -42,6 +42,7 @@ const FILTERS: Record<string, Filter> = {
     patterns: [
       /^verify-a11/, // form/schema enum
       /^verify-a13/, // Studio V2-first
+      /^verify-a48/, // memory routes (planning-003 §A.4.8)
     ],
   },
   'studio-live': {

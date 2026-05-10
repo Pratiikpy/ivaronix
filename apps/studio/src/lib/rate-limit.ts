@@ -26,11 +26,12 @@ export interface RateLimitResult {
   windowSec: number;
 }
 
-export type RateKind = 'ip' | 'wallet' | 'skill-save';
+export type RateKind = 'ip' | 'wallet' | 'skill-save' | 'memory-write';
 
 /**
  * Slide a bucket and check whether one more hit fits.
- * Default limits per HALF_BAKED N · K-8 / N · K-9.
+ * Default limits per HALF_BAKED N · K-8 / N · K-9 + planning-003 §A.4.8
+ * (memory-write per-wallet bucket).
  */
 export function checkRateLimit(
   kind: RateKind,
@@ -41,6 +42,7 @@ export function checkRateLimit(
     ip: { limit: 10, windowSec: 60 }, // 10 anonymous /api/run hits per minute per IP
     wallet: { limit: 50, windowSec: 3_600 }, // 50 authenticated runs per hour per wallet
     'skill-save': { limit: 5, windowSec: 3_600 }, // 5 manifest saves per hour per wallet
+    'memory-write': { limit: 60, windowSec: 3_600 }, // 60 memory writes per hour per wallet (~1/min)
   };
   const limit = opts?.limit ?? limits[kind].limit;
   const windowSec = opts?.windowSec ?? limits[kind].windowSec;

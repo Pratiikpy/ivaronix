@@ -19,7 +19,13 @@ tests:
 
 og:
   permissions:
-    memory_access: project_only
+    # planning-003 §A.4.8: doc-review queries the user's prior memory for
+    # related context (e.g. "I reviewed a similar lease 3 months ago and
+    # flagged the same auto-renew clause"). The encrypted MemoryEngine
+    # gates by-grant via CapabilityRegistry, so 'all' is the breadth this
+    # skill needs at the manifest layer; the actual capability check
+    # happens at runtime against the caller's scope.
+    memory_access: all
     network_access: ["router-api-testnet.integratenetwork.work", "router-api.0g.ai"]
     wallet_access: false
     writes_files: false

@@ -44,10 +44,12 @@ const shellEnum = ShellAccessEnum.options;
 const tierEnum = ConsensusTierEnum.options;
 check('schema memory_access enum', JSON.stringify(memoryEnum) === JSON.stringify(['none', 'project_only', 'all']), `got ${JSON.stringify(memoryEnum)}`);
 check('schema shell_access enum', JSON.stringify(shellEnum) === JSON.stringify(['none', 'sandbox-only', 'full']), `got ${JSON.stringify(shellEnum)}`);
-check('schema consensus tier enum', JSON.stringify(tierEnum) === JSON.stringify(['quick', 'standard', 'high-stakes']), `got ${JSON.stringify(tierEnum)}`);
+// Per planning-003 §A.5.20 the audit tier landed; the canonical 4-value
+// list is now ['quick','standard','high-stakes','audit'].
+check('schema consensus tier enum', JSON.stringify(tierEnum) === JSON.stringify(['quick', 'standard', 'high-stakes', 'audit']), `got ${JSON.stringify(tierEnum)}`);
 check('schema memory_access has 3 values', memoryEnum.length === 3);
 check('schema shell_access has 3 values', shellEnum.length === 3);
-check('schema consensus tier has 3 values', tierEnum.length === 3);
+check('schema consensus tier has 4 values', tierEnum.length === 4);
 
 // 2. Form file derives options from schema.
 check('form file exists', existsSync(FORM_PATH), FORM_PATH);
