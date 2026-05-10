@@ -132,11 +132,24 @@ function listMarkdownFiles(): string[] {
 // Strip fenced code blocks + inline code spans from a markdown string.
 // We replace them with whitespace of equal length so line numbers and
 // column offsets stay aligned for accurate violation reports.
+//
+// Critical: PRESERVE NEWLINES inside fenced blocks. A naive
+// ' '.repeat(m.length) collapses multi-line code blocks into a single
+// space-line, which shifts every subsequent line number by N. The
+// reported line numbers in the failure messages then point at lines
+// that don't even contain the banned word — hours of debugging-the-
+// regression for any contributor who hits a real wording-lint hit.
+// Caught in cron-sweep 46 against docs/USER_TODO.md (reported line
+// 371 contained no banned word; the actual hit was at line 434).
 function stripCode(content: string): string {
+  // Helper: replace each char with a space EXCEPT '\n' / '\r' which
+  // we preserve so line offsets stay accurate.
+  const blank = (s: string): string =>
+    s.replace(/[^\r\n]/g, ' ');
   // Fenced blocks (``` ... ```), with optional language tag.
-  let stripped = content.replace(/```[\s\S]*?```/g, (m) => ' '.repeat(m.length));
-  // Inline code spans (single backticks).
-  stripped = stripped.replace(/`[^`\n]*`/g, (m) => ' '.repeat(m.length));
+  let stripped = content.replace(/```[\s\S]*?```/g, (m) => blank(m));
+  // Inline code spans (single backticks · same line by construction).
+  stripped = stripped.replace(/`[^`\n]*`/g, (m) => blank(m));
   return stripped;
 }
 
