@@ -2,11 +2,30 @@ import { NextResponse } from 'next/server';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { parse as parseYaml } from 'yaml';
+import { z } from 'zod';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+/**
+ * Runtime body validation per HALF_BAKED §J-2 (sweep 146).
+ * Pre-Zod, the body was a TS cast + ad-hoc checks. Now the structural
+ * shape is enforced once, returning a clean 400 with `issues[]` on
+ * malformed input. Caps:
+ *   skillId  matches /^[a-z0-9][a-z0-9-]*[a-z0-9]$/ (no path traversal,
+ *            no leading/trailing dash)
+ *   manifest ≤ 64 KiB (operator-paid disk write + YAML parse budget)
+ */
+const SaveBodySchema = z.object({
+  skillId: z
+    .string()
+    .min(3)
+    .max(80)
+    .regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/),
+  manifest: z.string().min(20).max(64_000),
+});
 
 /**
  * POST /api/skill/save
@@ -57,26 +76,23 @@ export async function POST(req: Request): Promise<NextResponse> {
     );
   }
 
-  let body: { skillId?: string; manifest?: string };
+  let rawBody: unknown;
   try {
-    body = (await req.json()) as { skillId?: string; manifest?: string };
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
-
-  const { skillId, manifest } = body;
-  if (!skillId || !manifest) {
-    return NextResponse.json({ error: 'skillId and manifest required' }, { status: 400 });
-  }
-  if (!/^[a-z0-9][a-z0-9-]*[a-z0-9]$/.test(skillId)) {
+  const parsed = SaveBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
     return NextResponse.json(
-      { error: 'skillId must match /^[a-z0-9][a-z0-9-]*[a-z0-9]$/ (no slashes, no dots, no leading/trailing dash)' },
+      {
+        error: 'invalid body',
+        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      },
       { status: 400 },
     );
   }
-  if (manifest.length > 64_000) {
-    return NextResponse.json({ error: 'manifest too large (limit 64 KiB)' }, { status: 413 });
-  }
+  const { skillId, manifest } = parsed.data;
 
   // K-9: parse + validate manifest YAML. Reject any hook path that escapes
   // the per-wallet sandbox or contains shell-injection characters.
