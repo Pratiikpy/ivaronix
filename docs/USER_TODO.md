@@ -429,6 +429,18 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - ⏳ JSON-repair regression coverage still pending: the `packages/runtime/src/json-repair.ts` module referenced in the og-router threat-model JSDoc does not exist yet. Write the module first (the malform pattern is documented in the rules: 7B models malform JSON ~5-10% of the time, so a regex-based repair pass is the canonical mitigation), then write `packages/og-router/src/json-repair.test.ts` to feed malformed shapes and assert recovery.
 - **Effort remaining:** ~3h to write the json-repair module + tests. The keyring portion (~1h) is already done.
 
+### B-V2-WORDING-AMNESTY · Clean up the 52 wording-amnesty.json entries
+- **Source:** cron-sweep finding 2026-05-10 (wording-lint ship). PRD.md listed `pnpm wording-lint` as a CI gate item but the script never landed; sweep 34 wrote it. First run found 55 hits (52 amnestied) across 51 markdown files. Categories:
+  - **24 `harness`** — most are legitimate technical jargon ("test harness", "cross-impl harness", "regression harness"). The lint should learn to allow noun-modifier-prefixed `harness` and only flag the marketing-verb pattern ("harness the power of"). The amnesty buys time to refine.
+  - **6 `unlock`** — generic marketing language. Replace with concrete verbs ("enables", "ships", "lets you").
+  - **6 `seamless`** — show the integration with a number, not the adjective.
+  - **6 `leverage`** — use "use" or describe what's actually used.
+  - **2 `delve`, 2 `empower`, 1 `unleash`, 1 `streamline`, 1 `robust`, 1 `revolutionize`** — banned with no legit usage; rewrite each.
+  - **0 banned phrases caught today** — but they ARE in the regex, so any new "in today's fast-paced world" lands as a fail.
+- **Why:** the gate ships today and blocks NEW drift. The 52 amnestied hits are documented technical debt that judges may notice on close read of long-form docs (PRD, planning-003, HALF_BAKED).
+- **Action:** sweep file-by-file, choose between (a) rewrite the sentence (preferred), (b) `wording-lint:allow:reason` for genuine technical-jargon (most "harness" hits), or (c) refine the lint to be context-aware on `harness` (`(test|cross-impl|smoke|regression|playwright|e2e|mock)\s+harness` allowed). Re-run `pnpm wording-lint -- --update` after each batch.
+- **Effort:** 1–2h for the lint refinement on `harness` + ~30min per remaining file for the genuine drift words.
+
 ### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.
 - **Status:** ✅ Shipped same day. `packages/og-storage/src/burn.test.ts` ships 15 tests covering the full Burn Mode invariant set — self-contained blob layout, fresh-nonce-per-call (K-20 regression), 1000-nonce uniqueness draw, keyFingerprint format, capture-before-zero ordering via the `sha256(zeros(32))` constant sentinel, fingerprint freshness across calls, encryptionType tag, destroyedAt timestamp bounds, empty-plaintext layout, 1MB plaintext layout, externally-held-key round-trip, wrong-key tag rejection, tampered-ciphertext tag rejection, short-blob explicit error, wrong-key-length explicit error. CI runs the suite as part of the `unit-tests` job (112 → 127 unit tests across 8 packages).

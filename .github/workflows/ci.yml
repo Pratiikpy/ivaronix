@@ -137,6 +137,8 @@ jobs:
         run: pnpm docs:check
       - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)
         run: pnpm receipt-types:check
+      - name: wording-lint (CLAUDE.md §9 banned words/phrases · gates new drift)
+        run: pnpm wording-lint
 
   regression-smokes:
     # Source-file regression suite. Runs every offline `verify-*.ts`
