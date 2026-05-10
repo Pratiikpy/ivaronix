@@ -57,6 +57,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
+      /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
     ],
   },
   'studio-live': {
@@ -71,6 +72,22 @@ const FILTERS: Record<string, Filter> = {
       /^verify-i1/, // VERIFIED chip
       /^verify-i2-k16/, // Burn Mode
       /^verify-k8-k9/, // SIWE auth on /api/run + /api/skill/save
+      /^verify-hero/, // hero band live render (requires dev server)
+      /^verify-room/, // data-room flow (requires dev server + wallet)
+      /^verify-all-surfaces/, // full E2E sweep across all routes (live)
+      /^verify-2[abcd]/, // wallet/onboard flow regressions (live · phase 2 · includes 2a-and-audit + 2a-pages)
+      /^verify-3[bd]/, // chain-write regressions (live · phase 3 · MetaMask popup)
+      /^verify-4[ac]/, // post-anchor UI regressions (live · phase 4)
+      /^verify-w-batch/, // bulk-flow regression (live · doc bulk audit)
+    ],
+  },
+  'live-chain': {
+    // Regressions that require a funded wallet + live RPC. Used by
+    // .github/workflows/chain-smoke.yml on PR label `run-chain-smoke`
+    // and by the nightly cron. NOT run in pre-commit or normal CI.
+    label: 'Chain-write live regressions (requires RPC + funded wallet)',
+    patterns: [
+      /^verify-v2-anchor-live/, // synthetic V2 receipt anchor smoke
     ],
   },
   cli: {
