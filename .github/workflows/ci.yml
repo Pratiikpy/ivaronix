@@ -125,6 +125,8 @@ jobs:
         run: pnpm --filter @ivaronix/og-router test
       - name: og-storage (Burn Mode AES-GCM + nonce regression · 15 tests)
         run: pnpm --filter @ivaronix/og-storage test
+      - name: trust-layer (policy evaluator semantics · 17 tests)
+        run: pnpm --filter @ivaronix/trust-layer test
       - name: docs:check (numbers.json staleness + marker drift)
         run: pnpm docs:check
       - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)
