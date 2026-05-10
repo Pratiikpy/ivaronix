@@ -59,6 +59,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
       /^verify-no-hardcoded-contract-lists/, // meta · 3+ contract names in one array literal · iterate loadDeployments instead
+      /^verify-no-frozen-lockfile-bypass/, // meta · CI workflows must use strict --frozen-lockfile (sweep 74)
     ],
   },
   'studio-live': {

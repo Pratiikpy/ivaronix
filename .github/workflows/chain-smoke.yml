@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - name: Anchor + verify a synthetic V2 receipt
         env:
           # Scoped CI wallet key. Set via repo secret; never the operator's

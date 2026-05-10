@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - name: Typecheck all workspace packages
         # Vendored opencode-* packages own their own typecheck shape
         # (txt module declarations etc.). Excluded here to keep the
@@ -102,7 +102,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - name: Verify a representative committed receipt
         # If at least one anchored receipt JSON exists in the repo's snapshot
         # under .ivaronix/receipts/anchored/, run schema + hash + signature
@@ -140,7 +140,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - name: core (JCS + canonical V1/V2 + sha256 + ULID · 52 tests)
         run: pnpm --filter @ivaronix/core test
       - name: consensus (gates + policy + tier-shape + convergence · 34 tests)
@@ -189,7 +189,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - name: Studio source-file regressions
         run: pnpm --filter qa-metamask-e2e run regressions:studio
       - name: CLI source-file regressions
