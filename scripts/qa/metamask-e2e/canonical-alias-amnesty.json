@@ -76,13 +76,5 @@
   "scripts/dev/start-local-0g-kv.ts:202:OG_NETWORK",
   "scripts/diag/env-check.ts:58:EVM_PRIVATE_KEY",
   "scripts/diag/env-check.ts:58:OG_NETWORK",
-  "scripts/diag/env-check.ts:58:OG_PRIVATE_KEY",
-  "scripts/diag/fresh-wallet-onboard.ts:7:EVM_PRIVATE_KEY",
-  "scripts/migrations/migrate-openclaw-metadata.ts:29:EVM_PRIVATE_KEY",
-  "scripts/migrations/migrate-openclaw-metadata.ts:29:EVM_WALLET_ADDRESS",
-  "scripts/migrations/migrate-openclaw-metadata.ts:29:ZG_API_SECRET",
-  "scripts/migrations/port-awesome-claude-skills.ts:161:EVM_PRIVATE_KEY",
-  "scripts/migrations/port-awesome-claude-skills.ts:161:EVM_WALLET_ADDRESS",
-  "scripts/migrations/port-awesome-claude-skills.ts:161:ZG_API_SECRET",
-  "scripts/qa/metamask-e2e/verify-v2-anchor-live.ts:6:EVM_PRIVATE_KEY"
+  "scripts/diag/env-check.ts:58:OG_PRIVATE_KEY"
 ]

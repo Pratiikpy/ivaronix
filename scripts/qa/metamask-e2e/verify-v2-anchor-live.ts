@@ -3,8 +3,9 @@
  * the off-chain wiring (signTypedData → anchor((struct), sig) → recover
  * agent) works end-to-end on Galileo.
  *
- * Pre-reqs: .env has EVM_PRIVATE_KEY; contracts/deployments/testnet.json
- * has the V2 address from the earlier deploy.
+ * Pre-reqs: .env has IVARONIX_SIGNER_KEY (legacy aliases OG_PRIVATE_KEY,
+ * EVM_PRIVATE_KEY also accepted); contracts/deployments/testnet.json has
+ * the V2 address from the earlier deploy.
  */
 import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
