@@ -1,12 +1,70 @@
 import { Command } from 'commander';
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { Wallet, JsonRpcProvider } from 'ethers';
+import { Wallet, JsonRpcProvider, type ContractRunner } from 'ethers';
 import { verifyClaimed, ReceiptV1Schema, type ReceiptV1 } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
+import {
+  ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
+  getDeployedAddress,
+} from '@ivaronix/og-chain';
 import { NETWORKS, RECEIPT_TYPES, type Hash, type ReceiptType } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+
+/**
+ * Read-side registry resolution. Returns the deployed registries in V2-first
+ * priority order, so every read path (verify, show, list, resolve-by-id)
+ * queries V2 before falling back to V1.
+ *
+ * Closes the V1-blindness regression (planning-003 §A.1.2, WT 88) that would
+ * have broken the gold-standard `ivaronix receipt verify <id>` command for
+ * every V2 receipt anchored after the K-2 mainnet redeploy.
+ */
+type RegistryEntry =
+  | { client: ReceiptRegistryV2Client; version: 'v2'; address: string }
+  | { client: ReceiptRegistryClient; version: 'v1'; address: string };
+
+interface OnChainReadRow {
+  id: bigint;
+  receiptRoot: Hash;
+  storageRoot: Hash;
+  attestationHash: Hash;
+  agentAddress: string;
+  timestamp: bigint;
+  receiptType: number;
+  registryVersion: 'v1' | 'v2';
+}
+
+function buildReadRegistries(
+  network: 'testnet' | 'mainnet',
+  runner: ContractRunner,
+): RegistryEntry[] {
+  const v2Addr = getDeployedAddress(network, 'ReceiptRegistryV2') as
+    | `0x${string}`
+    | null
+    | undefined;
+  const v1Addr = getDeployedAddress(network, 'ReceiptRegistry') as
+    | `0x${string}`
+    | null
+    | undefined;
+  const out: RegistryEntry[] = [];
+  if (v2Addr) {
+    out.push({
+      client: new ReceiptRegistryV2Client(v2Addr, runner),
+      version: 'v2',
+      address: v2Addr,
+    });
+  }
+  if (v1Addr) {
+    out.push({
+      client: new ReceiptRegistryClient(v1Addr, runner),
+      version: 'v1',
+      address: v1Addr,
+    });
+  }
+  return out;
+}
 
 /** Walk up + canonical sibling locations for `.ivaronix/receipts/anchored/`. */
 function findAnchoredDirs(): string[] {
@@ -62,19 +120,24 @@ async function resolveReceiptInput(
   const isRoot = /^0x[0-9a-fA-F]{64}$/.test(input);
   let targetRoot: string | null = isRoot ? input.toLowerCase() : null;
 
-  // 4. Numeric on-chain id — resolve to receiptRoot via ReceiptRegistry
+  // 4. Numeric on-chain id — resolve to receiptRoot via ReceiptRegistryV2
+  //    (preferred, post K-2) or fall back to V1 (legacy receipts).
   if (!targetRoot && /^\d+$/.test(input)) {
-    const registryAddr = getDeployedAddress(network, 'ReceiptRegistry');
-    if (!registryAddr) return null;
     const provider = new JsonRpcProvider(rpcUrl);
-    const reg = new ReceiptRegistryClient(registryAddr, provider);
-    try {
-      const onChain = await reg.getReceipt(BigInt(input));
-      if (!onChain) return null;
-      targetRoot = onChain.receiptRoot.toLowerCase();
-    } catch {
-      return null;
+    const registries = buildReadRegistries(network, provider);
+    if (registries.length === 0) return null;
+    for (const r of registries) {
+      try {
+        const onChain = await r.client.getReceipt(BigInt(input));
+        if (onChain) {
+          targetRoot = onChain.receiptRoot.toLowerCase();
+          break;
+        }
+      } catch {
+        // try next registry
+      }
     }
+    if (!targetRoot) return null;
   }
 
   if (!targetRoot) return null;
@@ -144,33 +207,43 @@ receiptCommand
 
     const receipt = json as ReceiptV1;
 
-    // ─── 2. ANCHORED check (on-chain via ReceiptRegistry) ─────────────────
-    const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!registryAddr) {
+    // ─── 2. ANCHORED check · V2-first, V1 fallback ────────────────────────
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const registries = buildReadRegistries(env.network, provider);
+    if (registries.length === 0) {
       ui.divider();
       ui.banner(true, `→ CLAIMED (chain anchor lookup skipped — no ReceiptRegistry deployment for ${env.network})`);
       return;
     }
 
-    let onChain: Awaited<ReturnType<ReceiptRegistryClient['findByReceiptRoot']>> = null;
-    try {
-      const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-      const registry = new ReceiptRegistryClient(registryAddr, provider);
-      onChain = await registry.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
-    } catch (err) {
-      ui.fail('chain anchor lookup error', (err as Error).message);
-      ui.banner('pending', '→ CLAIMED (anchor check failed — not verified)');
-      return;
+    let onChain: OnChainReadRow | null = null;
+    let anchoredOn: 'v1' | 'v2' | null = null;
+    for (const r of registries) {
+      try {
+        const found = await r.client.findByReceiptRoot(receipt.storage.receiptRoot as Hash);
+        if (found) {
+          onChain = { ...found, registryVersion: r.version };
+          anchoredOn = r.version;
+          break;
+        }
+      } catch (err) {
+        ui.fail(`chain anchor lookup error on ${r.version.toUpperCase()}`, (err as Error).message);
+      }
     }
 
     if (!onChain) {
-      ui.fail('chain anchor          NOT FOUND  (receipt was never anchored, or different network)');
+      ui.fail(
+        `chain anchor          NOT FOUND on ${registries.map((r) => r.version.toUpperCase()).join(' or ')} (receipt was never anchored, or different network)`,
+      );
       ui.divider();
       ui.banner('pending', '→ CLAIMED (not yet anchored — not verified)');
       return;
     }
 
-    ui.pass(`chain anchor          PASS  (id=${onChain.id} block≈${onChain.timestamp})`);
+    const versionTag = anchoredOn === 'v2' ? 'V2' : 'V1 LEGACY';
+    ui.pass(
+      `chain anchor          PASS  (id=${onChain.id} block≈${onChain.timestamp}) · ${versionTag}`,
+    );
     ui.pass(`                    → ANCHORED`);
 
     // ─── 3. FULLY VERIFIED — independent TEE verify ───────────────────────
@@ -205,7 +278,7 @@ receiptCommand
         };
       }>;
     };
-    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    // `provider` is in scope from the ANCHORED block above. Reuse it.
     const wallet = new Wallet(env.privateKey, provider);
 
     let broker: Awaited<ReturnType<typeof sdk.createZGComputeNetworkBroker>>;
@@ -404,47 +477,69 @@ receiptCommand
 // ─── show ───────────────────────────────────────────────────────────────────
 receiptCommand
   .command('show <id>')
-  .description('Show full receipt by on-chain id')
+  .description('Show full receipt by on-chain id (V2-first, V1 fallback)')
   .action(async (id: string) => {
     const env = loadEnv();
-    const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!registryAddr) {
-      ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
-      return;
-    }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const registry = new ReceiptRegistryClient(registryAddr, provider);
-    const r = await registry.getReceipt(BigInt(id));
-    if (!r) {
-      ui.fail(`No receipt with id ${id}`);
+    const registries = buildReadRegistries(env.network, provider);
+    if (registries.length === 0) {
+      ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
       return;
     }
-    ui.title(`Receipt ${r.id}`);
-    ui.info(`receiptRoot          ${r.receiptRoot}`);
-    ui.info(`storageRoot          ${r.storageRoot}`);
-    ui.info(`attestationHash      ${r.attestationHash}`);
-    ui.info(`agent                ${r.agentAddress}`);
-    ui.info(`timestamp            ${r.timestamp}  (${new Date(Number(r.timestamp) * 1000).toISOString()})`);
-    ui.info(`type                 ${r.receiptType}`);
+
+    let row: OnChainReadRow | null = null;
+    let foundOn: 'v1' | 'v2' | null = null;
+    for (const r of registries) {
+      try {
+        const found = await r.client.getReceipt(BigInt(id));
+        if (found) {
+          row = { ...found, registryVersion: r.version };
+          foundOn = r.version;
+          break;
+        }
+      } catch (err) {
+        ui.fail(
+          `lookup failed on ${r.version.toUpperCase()} (${r.address})`,
+          (err as Error).message,
+        );
+      }
+    }
+
+    if (!row) {
+      ui.fail(
+        `No receipt with id ${id} on ${registries.map((r) => r.version.toUpperCase()).join(' or ')}`,
+      );
+      return;
+    }
+
+    const versionTag = foundOn === 'v2' ? 'V2' : 'V1 LEGACY';
+    ui.title(`Receipt ${row.id} · ${versionTag}`);
+    ui.info(`receiptRoot          ${row.receiptRoot}`);
+    ui.info(`storageRoot          ${row.storageRoot}`);
+    ui.info(`attestationHash      ${row.attestationHash}`);
+    ui.info(`agent                ${row.agentAddress}`);
+    ui.info(`timestamp            ${row.timestamp}  (${new Date(Number(row.timestamp) * 1000).toISOString()})`);
+    ui.info(`type                 ${row.receiptType}`);
+    ui.info(`registry             ${versionTag}`);
   });
 
 // ─── list ───────────────────────────────────────────────────────────────────
 receiptCommand
   .command('list')
-  .description('List recent receipts from ReceiptRegistry events')
+  .description('List recent receipts from V1 + V2 ReceiptRegistry events (merged + sorted)')
   .option('--agent <addr>', 'filter to receipts anchored by this wallet (default: configured wallet)')
   .option('--since <date>', 'only show receipts after this ISO date (YYYY-MM-DD)')
   .option('--limit <n>', 'max rows to print', '20')
   .action(async (opts: { agent?: string; since?: string; limit: string }) => {
     const env = loadEnv();
-    const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-    if (!addr) {
-      ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
+    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+    const registries = buildReadRegistries(env.network, provider);
+    if (registries.length === 0) {
+      ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
-    const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const reg = new ReceiptRegistryClient(addr, provider);
+
     const agent = (opts.agent ?? env.walletAddress) as `0x${string}` | undefined;
     if (!agent) {
       ui.fail('No agent address — pass --agent or set EVM_WALLET_ADDRESS');
@@ -455,8 +550,27 @@ receiptCommand
     const sinceTs = opts.since ? Math.floor(new Date(opts.since).getTime() / 1000) : 0;
 
     ui.title(`receipts by ${agent.slice(0, 10)}…${agent.slice(-4)} on ${env.network}`);
-    const events = await reg.findByAgent(agent, limit, 200_000);
-    const filtered = sinceTs > 0 ? events.filter((e) => Number(e.timestamp) >= sinceTs) : events;
+
+    // Merge findByAgent results from V1 + V2 (when both deployed). Tag each
+    // row with its registry version, sort by timestamp desc, slice to limit.
+    const merged: OnChainReadRow[] = [];
+    for (const r of registries) {
+      try {
+        const events = await r.client.findByAgent(agent, limit * 2, 200_000);
+        for (const e of events) {
+          merged.push({ ...e, registryVersion: r.version });
+        }
+      } catch (err) {
+        ui.fail(
+          `findByAgent failed on ${r.version.toUpperCase()}`,
+          (err as Error).message,
+        );
+      }
+    }
+
+    merged.sort((a, b) => Number(b.timestamp - a.timestamp));
+    const filtered = (sinceTs > 0 ? merged.filter((e) => Number(e.timestamp) >= sinceTs) : merged).slice(0, limit);
+
     if (filtered.length === 0) {
       ui.hint(`no receipts found${opts.since ? ` since ${opts.since}` : ''}`);
       return;
@@ -464,8 +578,11 @@ receiptCommand
     ui.divider();
     for (const r of filtered) {
       const iso = new Date(Number(r.timestamp) * 1000).toISOString().replace('T', ' ').slice(0, 19);
-      ui.pass(`#${r.id.toString().padStart(3, ' ')}  type=${r.receiptType}  ${iso}  ${r.receiptRoot.slice(0, 10)}…${r.receiptRoot.slice(-6)}`);
+      const tag = r.registryVersion === 'v2' ? 'V2' : 'V1';
+      ui.pass(
+        `#${r.id.toString().padStart(3, ' ')}  ${tag}  type=${r.receiptType}  ${iso}  ${r.receiptRoot.slice(0, 10)}…${r.receiptRoot.slice(-6)}`,
+      );
     }
     ui.divider();
-    ui.hint(`${filtered.length} row${filtered.length === 1 ? '' : 's'}`);
+    ui.hint(`${filtered.length} row${filtered.length === 1 ? '' : 's'} · merged from ${registries.length} registr${registries.length === 1 ? 'y' : 'ies'}`);
   });
