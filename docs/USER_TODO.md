@@ -249,6 +249,16 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** in every `contracts/script/Deploy*.s.sol`, replace `vm.envString("OG_PRIVATE_KEY")` with `vm.envOr("IVARONIX_SIGNER_KEY", vm.envString("OG_PRIVATE_KEY"))` so the canonical name is preferred but the legacy alias still works.
 - **Effort:** ~30min · 8 scripts · zero functional change.
 
+### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json`
+- **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped today at repo root with canonical strict settings.
+- **Why:** today each of the 14 workspace packages has its own `tsconfig.json` that may drift on `strict`, `target`, `moduleResolution`. Without a shared base, "14 packages typecheck-clean" claims uneven type-safety guarantees across the workspace. The base file is shipped; the per-package extends migration is the follow-up.
+- **Action:**
+  1. For each `<package>/tsconfig.json`, add `"extends": "../../tsconfig.base.json"` (or correct relative path) at the top of `compilerOptions`.
+  2. Strip duplicated settings (target, module, strict, etc.) from per-package configs — they inherit from base.
+  3. Per-package overrides ONLY when the package legitimately needs them (e.g. apps/studio adds `"jsx": "preserve"` for Next.js, packages add their own `"outDir"` for build output).
+  4. Run `pnpm -r typecheck` after; any package that breaks under the canonical settings reveals a hidden type-safety gap. Fix or document.
+- **Effort:** ~1.5h including fixing newly-surfaced typecheck failures.
+
 ### B-V2-11 · `pnpm env:check` script
 - **Source:** plan-003 §A.3.4 · `envCheckReport()` exported from `packages/runtime/src/env.ts`.
 - **Why:** operators copy-paste `.env` files and hit "missing env var" errors. A one-shot diagnostic prints which canonical name resolved to which alias.
