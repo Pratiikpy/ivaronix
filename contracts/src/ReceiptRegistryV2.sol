@@ -22,6 +22,35 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * chain history is immutable. V2 is a fresh deployment for new anchors.
  * Off-chain verifiers branch on `chainAnchor.registryAddress` to know
  * which contract to query.
+ *
+ * Threat model:
+ *   - Defends against: forged agent-identity claims on anchors. The
+ *     recorded agentAddress is the EIP-712-recovered signer, NOT
+ *     msg.sender. A relayer can submit anchors on behalf of a signer
+ *     (intended use case for fee abstraction) but cannot impersonate.
+ *   - Defends against: signature replay. Per-agent monotonic nonces
+ *     consume on every successful anchor; a previously-valid signature
+ *     bound to nonce N becomes invalid after the first use.
+ *   - Defends against: cross-domain replay. The EIP-712 domain pins
+ *     verifyingContract = address(this) and chainId, so a signature
+ *     valid on testnet cannot anchor on mainnet and vice versa.
+ *   - Defends against: deadline-grinding. signTypedData payloads carry
+ *     a deadline timestamp; expired signatures revert.
+ *   - Does NOT defend against: signer wallet compromise. If the agent's
+ *     private key leaks, the attacker can anchor receipts as that
+ *     agent with valid signatures. Receipt-content trust then falls
+ *     back to attestationHash + storageRoot integrity (independent
+ *     verification path via 0G Compute broker.processResponse).
+ *   - Does NOT defend against: receipt-content fabrication BEFORE
+ *     signing. The contract verifies signature integrity but cannot
+ *     audit what was signed. The TIER 1 vs TIER 2 distinction at the
+ *     off-chain layer (TEE-attested vs external-signed) is the
+ *     content-trust gate; the contract is the chain-anchor gate.
+ *   - Assumed attacker capabilities: holds zero valid agent private
+ *     keys; may submit arbitrary anchor() calls as msg.sender. May try
+ *     to replay captured signatures, anchor on the wrong domain, or
+ *     submit expired payloads. None pass signature recovery + nonce
+ *     check + deadline check + domain separator.
  */
 contract ReceiptRegistryV2 is Ownable2Step, Pausable, EIP712 {
     /// @notice Receipt type codes (kept identical to V1 for off-chain
