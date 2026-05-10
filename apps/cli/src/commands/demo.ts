@@ -58,13 +58,13 @@ export const demoCommand = new Command('demo')
     ui.info(`network              ${env.network} · chainId ${env.chainId}`);
     const keyring = keyringFromEnv();
     if (!keyring) {
-      ui.fail('Router not configured', 'Set ZG_API_SECRET / ZG_SERVICE_URL / OG_COMPUTE_PROVIDER / EVM_WALLET_ADDRESS in .env');
+      ui.fail('Router not configured', 'Set IVARONIX_ROUTER_KEY / IVARONIX_ROUTER_URL / IVARONIX_ROUTER_PROVIDER / IVARONIX_WALLET_ADDRESS in .env (legacy aliases ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS still resolve)');
       process.exitCode = 1;
       return;
     }
     ui.pass('router               configured');
     if (!env.privateKey || !env.walletAddress) {
-      ui.fail('No EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+      ui.fail('No IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
       process.exitCode = 1;
       return;
     }

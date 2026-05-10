@@ -29,7 +29,7 @@ import { ui } from '../lib/ui.js';
  * Honest scope:
  *  - The consolidation IS itself a receipt — counted in the agent's
  *    receiptCount, increases their trustScore.
- *  - When 0G Compute is configured (ZG_API_SECRET present), the prose
+ *  - When 0G Compute is configured (IVARONIX_ROUTER_KEY present, legacy ZG_API_SECRET also works), the prose
  *    summary is signed by the agent's wallet *after* a real TEE
  *    inference run on a remote provider. `verificationMethod` is
  *    `'router_flag'` and `--tee-independent` re-verifies via
@@ -124,7 +124,7 @@ export function addConsolidateCommand(parent: Command): void {
     .action(async (opts: { day?: boolean; month?: boolean; year?: boolean; compute: boolean; outDir: string }) => {
       const env = loadEnv();
       if (!env.privateKey || !env.walletAddress) {
-        ui.fail('passport consolidate requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+        ui.fail('passport consolidate requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
         process.exitCode = 1;
         return;
       }
@@ -202,7 +202,7 @@ export function addConsolidateCommand(parent: Command): void {
         ui.pending('running 0G Compute (quick tier, 1 role) for TEE-attested summary...');
         try {
           const keyring = await keyringFromEnv();
-          if (!keyring) throw new Error('keyringFromEnv returned null — ZG_API_SECRET / ZG_SERVICE_URL incomplete');
+          if (!keyring) throw new Error('keyringFromEnv returned null — set IVARONIX_ROUTER_KEY + IVARONIX_ROUTER_URL (legacy: ZG_API_SECRET + ZG_SERVICE_URL)');
           const result = await runConsensus({
             tier: 'quick',
             keyring,
@@ -230,7 +230,7 @@ export function addConsolidateCommand(parent: Command): void {
       } else if (!opts.compute) {
         ui.info(`--no-compute: using local deterministic synthesis`);
       } else {
-        ui.info(`ZG_API_SECRET not set: using local deterministic synthesis`);
+        ui.info(`IVARONIX_ROUTER_KEY not set (legacy alias ZG_API_SECRET also works): using local deterministic synthesis`);
       }
 
       if (!summaryText) {

@@ -64,7 +64,7 @@ function memoryDbPath(): string {
 function buildEngine(): MemoryEngine | null {
   const env = loadEnv();
   if (!env.privateKey || !env.walletAddress) {
-    ui.fail('Memory engine requires EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS in .env');
+    ui.fail('Memory engine requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
     return null;
   }
   const dbPath = memoryDbPath();
@@ -198,7 +198,7 @@ memoryCommand
     const env = loadEnv();
     const target = address ?? env.walletAddress;
     if (!target) {
-      ui.fail('No address. Pass one as argument or set EVM_WALLET_ADDRESS in .env.');
+      ui.fail('No address. Pass one as argument or set IVARONIX_WALLET_ADDRESS in .env (legacy: EVM_WALLET_ADDRESS).');
       process.exitCode = 1;
       return;
     }
@@ -370,7 +370,7 @@ memoryCommand
 
     const target = (opts.to ?? opts.by ?? env.walletAddress) as Address | undefined;
     if (!target) {
-      ui.fail('No target wallet — pass --by/--to or set EVM_WALLET_ADDRESS');
+      ui.fail('No target wallet — pass --by/--to or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
       return;
     }
 
@@ -420,7 +420,7 @@ memoryCommand
 
     const target = (opts.agent ?? env.walletAddress) as Address | undefined;
     if (!target) {
-      ui.fail('No target agent — pass --agent or set EVM_WALLET_ADDRESS');
+      ui.fail('No target agent — pass --agent or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
       return;
     }
 

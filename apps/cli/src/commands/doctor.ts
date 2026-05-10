@@ -53,7 +53,7 @@ export const doctorCommand = new Command('doctor')
       ui.section('02 · Router');
       const keyring = keyringFromEnv();
       if (!keyring) {
-        ui.pending('router               not configured (set ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS)');
+        ui.pending('router               not configured (set IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_URL, IVARONIX_ROUTER_PROVIDER, IVARONIX_WALLET_ADDRESS · legacy aliases ZG_API_SECRET, ZG_SERVICE_URL, OG_COMPUTE_PROVIDER, EVM_WALLET_ADDRESS still resolve)');
       } else {
         const list = keyring.list();
         for (const k of list) {
@@ -68,7 +68,7 @@ export const doctorCommand = new Command('doctor')
       ui.section('03 · Storage');
       try {
         if (!env.privateKey) {
-          ui.fail('storage              no private key in .env (set OG_PRIVATE_KEY or EVM_PRIVATE_KEY)');
+          ui.fail('storage              no private key in .env (set IVARONIX_SIGNER_KEY · legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY still resolve)');
           allOk = false;
         } else {
           const storage = createStorageClient({ network: env.network, privateKey: env.privateKey });
