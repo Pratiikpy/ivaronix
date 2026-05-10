@@ -356,6 +356,18 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   3. Add a CI gate via `pnpm numbers:check` that fails if `docs/numbers.json` is more than 24h older than the latest receipt anchored on chain (= the docs are demonstrably stale).
 - **Effort:** ~1.5h. Useful but not blocking; the manual-refresh pattern works for the submission window.
 
+### B-V2-22 · 0G DA live disperse + retrieve capture for the README "judges can replay" headline
+- **Source:** plan-003 §A.5.21 scaffolding shipped: `docker-compose.yml` + `da.env.example` + `ivaronix da preflight` now points operators at the compose stack instead of a raw `docker run`. The remaining piece is the *captured artefact* — a real `request_id` + `storage_root` from a live disperse + retrieve roundtrip — that the README + JUDGE_GUIDE can quote so a judge knows the integration isn't theoretical.
+- **Why:** AIsphere / Provus / Aishi all *diagram* 0G DA but none *retrieve* a live blob. A captured request_id + storage_root in the README is the field-unique flex (planning-003 §2.1). Without it, "wired in code" reads as paper-thin.
+- **Action:**
+  1. Fund a fresh DA wallet (~0.005 OG): generate via the `node -e` line in `da.env.example`, send 0.005 OG from the operator's 69 OG testnet balance.
+  2. Fill `da.env` with the funded key + the actual `DA_ENTRANCE_CONTRACT` address (currently unset placeholder; check `oglabs resources/0g-da-rust-sdk/README.md` for the live address — it changes per 0G DA release).
+  3. `docker compose up -d da-client && pnpm --filter @ivaronix/cli exec ivaronix da preflight` — expect "endpoint reachable localhost:51001".
+  4. Disperse a small test blob: `pnpm --filter @ivaronix/cli exec ivaronix da disperse README.md`. Capture stdout's `request_id` and `storage_root`.
+  5. Retrieve to confirm: `pnpm --filter @ivaronix/cli exec ivaronix da retrieve <storage_root>`. Should round-trip identical bytes.
+  6. Pin the captured `(request_id, storage_root)` pair into README.md "Built on 0G" + JUDGE_GUIDE.md so the integration is replay-able by anyone with the docker stack.
+- **Effort:** ~30min once the DA entrance contract address is locatable. Defer until 0G publishes the testnet DA entrance address (or run on mainnet post-redeploy).
+
 ### B-V2-19 · Auto-generated `docs/STATUS.md` from chain reads
 - **Source:** plan-003 §A.5.4. SESSION_FINAL.md was archived at the doc top with a "live state lives here →" pointer; the long-lived replacement (`docs/STATUS.md`, auto-generated) is queued.
 - **Why:** a judge reading the repo for the first time should land on a one-page status doc with live numbers (receipt count, contract addresses, agent count, last anchor tx), not a 2026-05-08 snapshot. SESSION_FINAL.md fossilises the moment it's written; STATUS.md regenerates on every chain-smoke run.

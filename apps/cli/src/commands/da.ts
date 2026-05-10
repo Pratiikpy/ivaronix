@@ -35,9 +35,12 @@ daCommand
         ui.fail('endpoint unreachable', r.reason);
         ui.divider();
         ui.hint('No public testnet endpoint exists for 0G DA. To run a local client:');
-        ui.hint('  docker run -d --name 0g-da-client -p 51001:51001 \\');
-        ui.hint('    --env-file envfile.env -v ./run:/runtime ghcr.io/0glabs/0g-da-client combined');
-        ui.hint('See `oglabs resources/0g-da-rust-sdk/README.md` for envfile.env shape.');
+        ui.hint('');
+        ui.hint('  cp da.env.example da.env   # then fill in DA_PRIVATE_KEY (fund ~0.005 OG)');
+        ui.hint('  docker compose up -d da-client');
+        ui.hint('');
+        ui.hint('Then re-run `ivaronix da preflight`. See `da.env.example` for the env');
+        ui.hint('shape and `docker-compose.yml` for the container config (planning-003 §A.5.21).');
         process.exitCode = 1;
       }
     } finally {

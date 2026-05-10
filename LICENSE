@@ -26,3 +26,29 @@ Vendored portions:
   packages/opencode-{plugin, sdk, core}/  — copied from sst/opencode v1.14.40
   (MIT-licensed, see packages/opencode-{plugin,sdk,core}/LICENSE.upstream.md
   for the original copyright notice as required by the MIT terms).
+
+---
+
+## Brand assets (separate license · planning-003 §A.5.8)
+
+The brand assets at `brand/` — including but not limited to the bracketed
+"i" mark, `Ivaronix.html`, `tokens.css`, `tokens.json`, the wordmark in
+all weights, the favicon set, the OG image templates, and any future
+logo variant — are NOT covered by the MIT grant above.
+
+These assets are reserved trademarks of the Ivaronix project. They may
+be used only under nominative-fair-use rules:
+
+  - Citing or reviewing Ivaronix (e.g. blog posts, talks, comparative
+    benchmarks) — permitted, with attribution and without implying
+    endorsement.
+  - Building software ON TOP OF Ivaronix's open-source code — permitted;
+    use a different mark for your distribution.
+  - Forking the codebase to ship a competing product at a confusable
+    domain (`ivaronix-x.app`, `ivaronix.studio`, `myivaronix.app` etc.)
+    with the brand assets attached — NOT permitted.
+  - Embedding the receipt-verifier widget on your site — permitted,
+    with the existing widget chrome.
+
+In short: the code is yours under MIT. The brand is the project's.
+See `BRAND.md` at repo root for the operative rule.

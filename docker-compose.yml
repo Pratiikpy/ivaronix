@@ -1,0 +1,49 @@
+# Ivaronix · 0G DA local-disperser stack (planning-003 §A.5.21)
+#
+# 0G DA has no public testnet HTTP endpoint. Operators run a
+# `0g-da-client` Docker container locally that exposes a gRPC port
+# (51001 by convention). This compose brings that container up with the
+# minimum env Ivaronix's `ivaronix da preflight` / `disperse` /
+# `retrieve` commands need.
+#
+# Usage:
+#
+#   1. Copy `da.env.example` → `da.env`. Fill in:
+#        - DA_PRIVATE_KEY      (a fresh key, ≥0.005 OG to pay disperser)
+#        - DA_RPC_URL          (Galileo or mainnet RPC)
+#        - DA_ENTRANCE_CONTRACT (testnet/mainnet DA entrance address)
+#
+#   2. `docker compose up -d da-client`
+#
+#   3. `pnpm --filter @ivaronix/cli exec ivaronix da preflight`
+#      → expect "endpoint reachable localhost:51001"
+#
+# Threat model:
+#   - The DA client signs disperse requests with `DA_PRIVATE_KEY`. Use
+#     a fresh wallet, NOT the operator's signer key (planning-003 §A.5.3).
+#   - The container has access to the local filesystem at /runtime; it
+#     writes intermediate state there (encoded shards, request logs).
+#     Treat this dir like any other unencrypted state on the operator
+#     machine.
+#   - Port 51001 is bound to localhost only by default. If you flip
+#     `0.0.0.0:51001` on a remote host, anyone with network access can
+#     issue disperse requests against the operator's funded wallet.
+
+services:
+  da-client:
+    image: ghcr.io/0glabs/0g-da-client:latest
+    container_name: ivaronix-0g-da-client
+    restart: unless-stopped
+    ports:
+      # Bind to loopback only — see threat-model note above.
+      - "127.0.0.1:51001:51001"
+    env_file:
+      - da.env
+    volumes:
+      - ./.0g-da-runtime:/runtime
+    command: combined
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 51001 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

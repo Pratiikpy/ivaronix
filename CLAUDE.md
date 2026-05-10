@@ -250,3 +250,16 @@ The 0G APAC Hackathon submission must include a project README — in English or
 6. **Test account details, faucet instructions, reviewer notes** — testnet faucet link, a pre-funded reviewer wallet address (or instructions to fund a fresh one), the chainscan URL pattern, and any rate-limit caveats.
 
 The README is owned by the submission lead, lives at `README.md` in repo root, and is reviewed against this checklist before submission. Anything missing is treated as a §1-rule failure ("ship it or push back"), not a polish item.
+
+## 14. Per-package guidance
+
+For package-specific conventions, env vars, hot files, and test commands, see the per-package `AGENTS.md` files (planning-003 §A.5.2):
+
+- `apps/studio/AGENTS.md` — Next.js 15 / wagmi / SIWE / brand contract.
+- `apps/cli/AGENTS.md` — Commander.js binary, default tier resolution.
+- `packages/og-router/AGENTS.md` — Keyring rotation, processResponse 3-arg rule.
+- `packages/og-chain/AGENTS.md` — V2-first read pattern, EIP-712 anchor flow.
+- `contracts/AGENTS.md` — Foundry, V1→V2 migration pattern, threat-model NatSpec.
+- `seed-skills/AGENTS.md` — manifest skeleton, three publishing paths.
+
+Path-scoped rules at `.claude/rules/<package>.md` auto-load when editing files under `<package>/**`. Treat the AGENTS.md files as the human-readable index and the rules files as the operational contract.

@@ -11,6 +11,21 @@ export interface Env {
   routerServiceUrl?: string;
   routerProvider?: string;
   defaultModel: string;
+  /**
+   * Optional read-only proxy private key for storage-indexer auth on
+   * public-fetch paths (planning-003 §A.5.3 · WT 46).
+   *
+   * The 0G Storage indexer requires a signer for every fetch. If we
+   * use the operator wallet for both writes AND reads, the operator
+   * sees every public manifest fetch — including data-room reads it's
+   * not a party to. The fix is a separate zero-balance key that signs
+   * read-only indexer requests. Operator wallet is only used for
+   * writes (uploads, anchors).
+   *
+   * When unset, public reads fall back to `privateKey` (operator) and
+   * the privacy boundary is leakier. See `docs/PRIVACY_NOTES.md`.
+   */
+  readProxyPrivateKey?: string;
 }
 
 /**
@@ -24,6 +39,7 @@ export interface Env {
  * migration is the operator-action follow-up (USER_TODO §B-V2-10).
  */
 const SIGNER_KEY_ALIASES = ['IVARONIX_SIGNER_KEY', 'OG_PRIVATE_KEY', 'EVM_PRIVATE_KEY'] as const;
+const READ_PROXY_KEY_ALIASES = ['IVARONIX_READ_PROXY_KEY', 'READ_PROXY_PRIVATE_KEY'] as const;
 const RPC_URL_ALIASES = ['IVARONIX_RPC_URL', 'OG_RPC_URL'] as const;
 const NETWORK_ALIASES = ['IVARONIX_NETWORK', 'OG_NETWORK'] as const;
 const CHAIN_ID_ALIASES = ['IVARONIX_CHAIN_ID', 'OG_CHAIN_ID'] as const;
@@ -64,6 +80,7 @@ export function loadEnv(): Env {
       readWithDeprecation(RPC_URL_ALIASES) ??
       (network === 'mainnet' ? 'https://evmrpc.0g.ai' : 'https://evmrpc-testnet.0g.ai'),
     privateKey: readWithDeprecation(SIGNER_KEY_ALIASES),
+    readProxyPrivateKey: readWithDeprecation(READ_PROXY_KEY_ALIASES),
     walletAddress: readWithDeprecation(WALLET_ADDR_ALIASES),
     routerApiKey: readWithDeprecation(ROUTER_KEY_ALIASES),
     routerServiceUrl: readWithDeprecation(ROUTER_URL_ALIASES),
@@ -80,6 +97,7 @@ export function loadEnv(): Env {
 export function envCheckReport(): Array<{ canonical: string; usedAlias: string | null; value: string | null }> {
   const groups: Array<readonly string[]> = [
     SIGNER_KEY_ALIASES,
+    READ_PROXY_KEY_ALIASES,
     RPC_URL_ALIASES,
     NETWORK_ALIASES,
     CHAIN_ID_ALIASES,
