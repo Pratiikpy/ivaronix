@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { sha256HexAsync, NETWORKS, type Hash, type Address } from '@ivaronix/core';
 import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { createStorageClient } from '@ivaronix/og-storage';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { addConsolidateCommand } from './passport-consolidate.js';
@@ -13,6 +14,14 @@ interface LocalPassportFile {
   tokenId: string;
   ownerWallet: Address;
   metadataRoot: Hash;
+  /**
+   * How metadataRoot was computed · HALF_BAKED §I-11 closure (sweep 164):
+   *   - '0g-storage'   → retrievable preimage via 0G Storage indexer
+   *   - 'local-sha256' → fallback when 0G Storage was unreachable;
+   *                      the chain holds a hash with no retrievable preimage
+   * Optional for backward compat with passports minted before sweep 164.
+   */
+  metadataRootMethod?: '0g-storage' | 'local-sha256';
   metadata: {
     name: string;
     handle: string;
@@ -75,7 +84,17 @@ passportCommand
     ui.info(`handle               ${opts.handle}`);
     ui.divider();
 
-    // Build the metadata blob (encrypted-on-Storage in future once B-1 is fixed)
+    // Build the metadata blob. HALF_BAKED §I-11 closure (sweep 164):
+    // pre-sweep, this wrote `sha256(plaintext)` directly to chain — the
+    // chain held a hash with no retrievable preimage. Now we upload the
+    // metadata to 0G Storage and use the returned Merkle root as the
+    // chain-anchored metadataRoot, so a third party with the root can
+    // resolve the actual passport metadata via 0G Storage.
+    //
+    // Fallback to sha256 only when 0G Storage is unreachable (testnet
+    // indexer flake); we tag the receipt prose with which method was
+    // used so the operator can see the trust gradient honestly. Matches
+    // /api/onboard/metadata's behavior from sweep 119/147.
     const metadata = {
       name: opts.name,
       handle: opts.handle,
@@ -87,9 +106,20 @@ passportCommand
       createdAt: Date.now(),
     };
     const metadataBytes = new TextEncoder().encode(JSON.stringify(metadata));
-    const sha = sha256HexAsync(metadataBytes); // sha256:<hex>
-    const metadataRoot = ('0x' + sha.replace(/^sha256:/, '')) as Hash;
-    ui.info(`metadataRoot         ${metadataRoot}`);
+    let metadataRoot: Hash;
+    let metadataRootMethod: '0g-storage' | 'local-sha256';
+    try {
+      const sc = createStorageClient({ network: env.network as 'testnet' | 'mainnet', privateKey: env.privateKey });
+      const upload = await sc.upload(metadataBytes);
+      metadataRoot = upload.rootHash as Hash;
+      metadataRootMethod = '0g-storage';
+      ui.info(`metadataRoot         ${metadataRoot}  (0G Storage root)`);
+    } catch (err) {
+      const sha = sha256HexAsync(metadataBytes); // sha256:<hex>
+      metadataRoot = ('0x' + sha.replace(/^sha256:/, '')) as Hash;
+      metadataRootMethod = 'local-sha256';
+      ui.info(`metadataRoot         ${metadataRoot}  (sha256 fallback · 0G Storage: ${(err as Error).message.split('\n')[0]})`);
+    }
 
     ui.pending('submitting mint tx...');
     let tokenId: bigint;
@@ -120,6 +150,7 @@ passportCommand
       tokenId: tokenId.toString(),
       ownerWallet: wallet.address as Address,
       metadataRoot,
+      metadataRootMethod,
       metadata: {
         name: metadata.name,
         handle: metadata.handle,
