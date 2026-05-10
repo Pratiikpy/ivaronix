@@ -616,7 +616,16 @@ docCommand
     ui.pending(`anchoring on 0G Chain (${registryVersion.toUpperCase()})...`);
     const typeCode = RECEIPT_TYPES[draft.type];
     const evidenceBytes32 = ('0x' + evidenceDigest.replace(/^sha256:/, '')) as Hash;
-    const attestationHashZero = ('0x' + '0'.repeat(64)) as Hash;
+    // HALF_BAKED §I-8 closure (sweep 162): the on-chain attestationHash
+    // was hardcoded to zero. The off-chain receipt body already computes
+    // keccak256(zgResKey) per role (line 520). For the on-chain anchor
+    // we use the PRIMARY role's attestation hash — the receipt's
+    // headline trust binding. TIER 2 / no-zgResKey paths still anchor
+    // with zero (preserves the existing fall-through for non-TEE runs);
+    // TIER 1 runs now carry a real attestation commitment to chain.
+    const anchorAttestationHash: Hash = primaryAtt?.zgResKey
+      ? (keccak256(toUtf8Bytes(primaryAtt.zgResKey)) as Hash)
+      : (('0x' + '0'.repeat(64)) as Hash);
     let tx: { hash: string };
     let txReceipt: { blockNumber: number; gasUsed: bigint } | null;
     let onChain: { id: bigint } | null = null;
@@ -626,7 +635,7 @@ docCommand
         receiptRoot: signed.storage.receiptRoot as Hash,
         storageRoot: evidenceBytes32,
         receiptType: typeCode,
-        attestationHash: attestationHashZero,
+        attestationHash: anchorAttestationHash,
       });
       tx = { hash: v2Tx.hash };
       const r = await v2Tx.wait();
@@ -641,7 +650,7 @@ docCommand
         signed.storage.receiptRoot as Hash,
         evidenceBytes32,
         typeCode,
-        attestationHashZero,
+        anchorAttestationHash,
       );
       tx = { hash: v1Tx.hash };
       const r = await v1Tx.wait();
