@@ -12,22 +12,35 @@
 
 ---
 
-## 1. Brand Tokens (canonical hex values)
+## 1. Brand Tokens
 
-Extracted directly from the static SVG thumbnail + inline CSS in `brand/Ivaronix.html`. These are the only colors the design uses.
+> **Canonical color + font + radius tokens live in `brand/tokens.css` (CSS) and `brand/tokens.json` (non-CSS consumers). UI_UX_GUIDE.md owns the LAYOUT contract; brand/tokens.* owns the COLOR / FONT / RADIUS contract. Closes WT 6 + 24 (planning-003 §A.3.3) by ending the historical CLAUDE.md vs UI_UX_GUIDE hex disagreement.**
+
+The canonical palette is cream-on-black editorial. Pulled from CLAUDE.md §10:
+- `--color-paper: #FAFAF7` (background)
+- `--color-ink: #0A0A0A` (body text)
+- `--color-ink-soft: #111111` (display headings)
+- `--color-muted: #6B6B66` (secondary text)
+- `--color-accent: #16A34A` (CTA only, used sparingly)
+- `--color-hairline: rgba(10, 10, 10, 0.08)` (card borders)
+
+Typography: **Outfit** (sans, body + headings, weights 500/600/700) + **Instrument Serif italic** (display accents) + **JetBrains Mono** (hashes/code). Load via `next/font/google` per CLAUDE.md §10.
+
+Radii: `10px` / `14px` / `16px` / `20px`. Sharper radii (`4-8px`) read as draft-quality.
+
+For the full token set + spacing scale + motion easings, see [`brand/tokens.css`](./brand/tokens.css).
+
+> The earlier inline `@theme` block in this file used historical values (cream `#faf9f6`, ink `#1a1a1a`, Times New Roman) that no longer match Studio's render. Those values are deprecated — Studio + the brand HTML follow `brand/tokens.css`. `pnpm brand:check` (queued · USER_TODO §B-V2-9) will lint for hex drift across docs.
 
 ```css
-/* Tailwind v4 @theme inline definition */
+/* Legacy reference · the old @theme block. Kept temporarily so existing
+ * Studio components that import these specific names still resolve. New
+ * components MUST import from brand/tokens.css. Removal happens after
+ * the Studio migration to the canonical tokens lands. */
 @theme inline {
-  /* Surface colors */
-  --color-bg: #faf9f6;            /* cream / off-white — the whole-page background */
-  --color-fg: #1a1a1a;            /* near-black — primary text + thick logo strokes (NOT pure #000) */
-  --color-muted: #6b6b66;         /* warm gray — wordmarks, captions, secondary text */
-  --color-soft: #999999;          /* lighter gray — placeholders, disabled */
-
-  /* Accent */
-  --color-accent: #16a34a;        /* Tailwind green-600 — the only color besides black/cream */
-  --color-accent-soft: #dcfce7;   /* derived light green — hover/active backgrounds */
+  /* Surface colors (legacy aliases pointing at canonical tokens) */
+  --color-bg: var(--color-paper);
+  --color-fg: var(--color-ink);
 
   /* Status (used sparingly, only in receipt verify states) */
   --color-pending: #d97706;       /* amber-600 — Pending state chips */
@@ -35,12 +48,7 @@ Extracted directly from the static SVG thumbnail + inline CSS in `brand/Ivaronix
   --color-mismatch: #dc2626;      /* red-600 — Mismatch state */
   --color-mismatch-bg: #2a1215;   /* dark red — error banner background */
 
-  /* Typography */
-  --font-display: "Times New Roman", "Georgia", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
-
-  /* Radii */
+  /* Radii (legacy · canonical scale lives in brand/tokens.css) */
   --radius-sm: 4px;
   --radius-md: 6px;               /* default for chips, small buttons */
   --radius-lg: 8px;               /* default for cards, surfaces */

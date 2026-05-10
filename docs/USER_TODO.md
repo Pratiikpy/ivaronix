@@ -237,6 +237,12 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1 week.
 - **Decision:** post-hackathon. Not on critical path for judging.
 
+### B-V2-9 · Brand-token drift lint (`pnpm brand:check`)
+- **Source:** plan-003 §A.3.3 follow-up · `brand/tokens.css` + `brand/tokens.json` shipped today.
+- **Why:** the canonical palette is now in `brand/tokens.*`. Without a lint, future PRs can re-introduce hardcoded hex values that drift from the canonical set.
+- **Action:** ship `pnpm brand:check` script that greps `apps/studio/src/**/*.{ts,tsx,css}` + `UI_UX_GUIDE.md` + `CLAUDE.md` for hex literals NOT present in `brand/tokens.json`. Fail CI on any drift.
+- **Effort:** ~30min.
+
 ### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
 - **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
 - **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
