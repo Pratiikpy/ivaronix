@@ -131,6 +131,8 @@ jobs:
         run: pnpm --filter @ivaronix/og-kv test
       - name: og-da (DaClient surface + size-guard boundary · 14 tests)
         run: pnpm --filter @ivaronix/og-da test
+      - name: indexer (SQLite read-replica · CRUD + filters + stats · 19 tests)
+        run: pnpm --filter @ivaronix/indexer test
       - name: docs:check (numbers.json staleness + marker drift)
         run: pnpm docs:check
       - name: receipt-types:check (RECEIPTS_SPEC §1 vs source enum)
