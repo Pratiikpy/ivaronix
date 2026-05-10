@@ -83,6 +83,8 @@ export function Footer() {
             <li>{ext('0G platform docs ↗', OG_DOCS)}</li>
             <li>{ext('0G ecosystem ↗', OG_HOME)}</li>
             <li><Link href="/r/1004" style={{ color: 'inherit', textDecoration: 'none' }}>Sample receipt</Link></li>
+            <li><Link href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</Link></li>
+            <li><Link href="/terms" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</Link></li>
             <li><span className="mono" style={{ fontSize: 11 }}>ivaronix receipt verify --tee-independent</span></li>
           </ul>
         </section>

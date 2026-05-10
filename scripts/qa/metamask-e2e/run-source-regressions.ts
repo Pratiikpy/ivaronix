@@ -74,6 +74,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-direct-legacy-env-reads/, // §15 · no process.env.<LEGACY> read without canonical fallback (sweep 114 · locks 10 amnesty-mined bugs)
       /^verify-api-route-rate-limit/, // K-8 family · every operator-write Studio API route gates on checkRateLimit (sweep 119 · /api/onboard/metadata gap fix)
       /^verify-studio-security-headers/, // HALF_BAKED §G Tier-A item 6 · X-Frame-Options + nosniff + Referrer-Policy + HSTS (sweep 130)
+      /^verify-privacy-terms-routes/, // HALF_BAKED §G Tier-A item 7 · /privacy + /terms routes + footer links (sweep 131)
     ],
   },
   'studio-live': {
