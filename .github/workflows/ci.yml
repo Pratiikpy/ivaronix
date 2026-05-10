@@ -50,11 +50,25 @@ jobs:
       - run: pnpm install --frozen-lockfile=false
       - name: Typecheck all workspace packages
         run: pnpm -r --filter "@ivaronix/*" run typecheck
-      - name: Build packages and apps
+      - name: Build workspace packages (strict)
+        # Strict: workspace package builds (tsc -b) MUST pass. Catches
+        # the bundle-break class — sweep 53 found apps/npx-cli's
+        # esbuild step had been silently broken because external: was
+        # missing onnxruntime-node + react-devtools-core. The previous
+        # CI flag `continue-on-error: true` masked that for weeks.
         run: pnpm -r --filter "@ivaronix/*" run build
-        # Don't fail the build on optional Studio next-build if it has
-        # platform-specific issues (font preload bug on macOS-arm runners).
-        # Workspace typecheck above is the source of truth.
+      - name: Build npx-cli bundle (strict)
+        # Bare-name `ivaronix` package isn't matched by @ivaronix/* filter.
+        # Bundle is the npm-publish artifact + the README's Quick Start
+        # `npx ivaronix` workflow target — must succeed.
+        run: pnpm --filter ivaronix run build
+      - name: Build Studio (best-effort)
+        # Next.js build can flake on macOS-arm runners (font preload
+        # platform issue) and on linux-CI without the full env. Workspace
+        # typecheck above is the source-of-truth for code correctness;
+        # a failing Studio next-build is a deploy concern, not a code-
+        # correctness concern. Continue-on-error keeps it advisory.
+        run: pnpm --filter @ivaronix/studio run build
         continue-on-error: true
 
   receipt-roundtrip:
