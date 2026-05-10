@@ -3,3 +3,4 @@ export * from './logger.js';
 export * from './pipeline.js';
 export * from './memory-client.js';
 export * from './json-repair.js';
+export * from './risk.js';

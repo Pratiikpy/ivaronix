@@ -14,6 +14,7 @@ import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { addBulkCommand } from './doc-bulk.js';
+import { deriveRiskLevel } from '@ivaronix/runtime';
 
 /** Walk up directories to find seed-skills + .ivaronix/skills */
 function skillSearchDirs(): string[] {
@@ -593,7 +594,9 @@ docCommand
       outputs: {
         outputHash,
         citations: [],
-        riskLevel: 'low',
+        // HALF_BAKED §I-13 closure (sweep 165): derive from finalOutput
+        // instead of hardcoding 'low'. See packages/runtime/src/risk.ts.
+        riskLevel: deriveRiskLevel(finalOutput),
         wording: {
           headline: finalOutput.slice(0, 200).replace(/\n+/g, ' '),
           doNotSay: ['truth score', 'verified by AI', 'guaranteed safe'],

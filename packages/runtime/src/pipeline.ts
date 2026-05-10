@@ -39,6 +39,7 @@ import {
 import { loadEnv, type Env } from './env.js';
 import { noopLogger, type PipelineLogger } from './logger.js';
 import { MemoryClient, buildMemoryContextBlock, type MemorySearchMethod } from './memory-client.js';
+import { deriveRiskLevel } from './risk.js';
 
 /**
  * Shared run-skill pipeline. Used by:
@@ -764,7 +765,11 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     outputs: {
       outputHash,
       citations: [],
-      riskLevel: 'low',
+      // HALF_BAKED §I-13 closure (sweep 165): derive from finalText
+      // instead of hardcoding 'low'. Heuristic, not authoritative —
+      // the outputHash above binds the canonical text so a judge can
+      // re-read and disagree. Breaks the "always low" trust theater.
+      riskLevel: deriveRiskLevel(finalText),
       wording: {
         headline: finalText.slice(0, 200).replace(/\n+/g, ' '),
         doNotSay: ['truth score', 'verified by AI', 'guaranteed safe'],
