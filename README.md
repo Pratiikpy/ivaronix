@@ -1,7 +1,95 @@
-# Ivaronix — The 0G Agent Operating System
+# Ivaronix
 
-> **Verify any AI inference, on any machine, in one command.**
-> 1,330+ receipts anchored on 0G Galileo Testnet · 90/90 Foundry tests · 6 deployed contracts · 14 packages typecheck-clean.
+> **Catch the risks. Keep the receipts.** AI review for documents you can't paste into ChatGPT — every audit anchored as a verifiable receipt on 0G Chain, re-runnable from any machine in any language.
+>
+> 1,330+ receipts anchored on 0G Galileo Testnet · 121/121 Foundry tests · 8 deployed contracts (V1 + V2 active) · 25 workspace packages typecheck-clean.
+
+## Track 1 (Agentic Infrastructure) · by the numbers
+
+The metrics this product is optimised for. Receipts as the unit of trust, primitives integrated end-to-end, persona-locked use case.
+
+| Metric | Value | Where to look |
+|---|---|---|
+| Receipt types | **13** | `packages/core/src/types.ts` enum |
+| 0G primitives integrated | **6** | Chain · Compute · Storage · Router · AgentID · Memory KV |
+| Skills in catalog | **156** | 6 first-party + 150 vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
+| Receipts anchored on chain | **1,330+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` |
+| Foundry tests | **121/121** | full suite green; V1 + V2 + Guard + Capability + Skill + Subscription |
+| Deployed contracts | **8** | Receipt V1 + V2 · Passport V1 + V2 · Verifier · Capability · Skill · Subscription on Galileo |
+| Packages typecheck-clean | **25** | `pnpm -r --filter "@ivaronix/*" run typecheck` green |
+| Polyglot canonical hash | **3 languages** | TS + Python + Rust byte-equal in `.github/workflows/jcs-roundtrip.yml` (29/29 vectors) |
+
+> Track positioning: Ivaronix targets **Track 1 (Agentic Infrastructure)** as primary and **Track 3 (Agentic Economy)** as automatic-secondary. We do not compete on Track 2 (Verifiable Finance) production-rigor metrics — Aegis Vault holds that bar with 235 Hardhat tests + sealed strategies on mainnet. Track 1 rewards the metric set above.
+
+## Track 3 (Agentic Economy) · by the numbers
+
+Receipt-gated fee splits, on-chain creator wallet, marketplace primitive on every action.
+
+| Primitive | Where it ships | Verify on chain |
+|---|---|---|
+| `SkillRegistry` (skill catalog + creator + fee-split) | `0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1` | [chainscan-galileo](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
+| `og.creator.fee_split` per skill manifest | `seed-skills/<skill>/SKILL.md` frontmatter | `private-doc-review` 90/10 · `content-pitch-review` 70/30 (per-skill economic policy) |
+| Paid creator runs of `private-doc-review` | **26** | `ivaronix skill earn-history --skill private-doc-review` returns chain numbers |
+| Creator earnings (testnet) | **0.0014 OG** | exact 90/10 split per receipt, settled on anchor |
+
+Why receipt-gated splits, not a static registry? A creator only earns when:
+1. The run completes inside a TEE-attested 0G Compute provider, AND
+2. The receipt's signature recovers to an `AgentPassport`-resolvable wallet, AND
+3. The receipt anchors on `ReceiptRegistryV2` with the correct fee-split block.
+
+No receipt → no payment. No TEE → no green badge. Trustless monetisation, not a self-claimed leaderboard.
+
+## Honest tier disclosure
+
+Every Ivaronix receipt is **TIER 1** (TEE-attested on 0G Compute, rendered green) or **TIER 2** (external provider — NVIDIA NIM / Gemini / OpenAI / Ollama — signed and chain-anchored, rendered amber). We refuse to render an external-provider receipt as if it were TEE-attested.
+
+| Tier | Compute | Storage proof | Chain anchor | Re-verify command |
+|---|---|---|---|---|
+| **TIER 1** | TEE-attested 0G Compute | `evidenceRoot` on 0G Storage | `ReceiptRegistry` / V2 | `ivaronix receipt verify <id> --tee-independent` returns FULLY VERIFIED ✓ |
+| **TIER 2** | External (NIM / Gemini / etc.) | optional | yes | `ivaronix receipt verify <id>` returns ANCHORED (not FULLY VERIFIED) |
+
+Some competitors (e.g. AlphaTrace) market external-provider receipts as "verifiable" without distinguishing storage-integrity from compute-integrity. We don't. The `/r/<id>` proof page renders an explicit "verifies storage integrity ✓ verifies compute integrity ⚠ external provider" line on TIER 2 — honesty per CLAUDE.md §6.
+
+## How Ivaronix compares
+
+| Axis | OpenClaw | 0GClaw | Trapezohe Ghast | AlphaTrace | **Ivaronix** |
+|---|---|---|---|---|---|
+| Where compute runs | Your laptop | 0G infra (cron + x402) | Git-only registry | Gemini (no TEE) | **TEE-attested 0G Compute** |
+| Verifiable compute | No | Storage proof only | No | Storage only (NOT compute) | **TIER 1 TEE + chain anchor + 3rd-party re-verify** |
+| Receipt-gated payment | No | x402 USDC | No | No | **`og.creator.fee_split` per skill** |
+| Re-runnable on stranger's machine | No | No | No | No | **Yes — `ivaronix receipt verify <id> --tee-independent`** |
+| Polyglot canonical hash | No | No | No | No | **TS + Python + Rust byte-equal in CI on every PR** |
+| Honest TIER 1 vs TIER 2 disclosure | n/a | n/a | n/a | No (conflates) | **Yes** |
+
+The wedge: Ivaronix is the only project where a judge re-runs verification on a stranger's clean machine and arrives at FULLY VERIFIED ✓ without an account.
+
+## Polyglot canonical hash · the only Criterion-1 moat in the field
+
+Three reference implementations of the receipt's canonical hash, byte-equal across all three on every PR:
+
+- **TS reference** · `packages/core/src/jcs.ts` · 17 self-tests
+- **Python reference** · `scripts/verifier-py/` · 14 self-tests
+- **Rust reference** · `ivaronix-verifier-rs/` · 11 self-tests · `cargo install ivaronix-verifier`
+
+Cross-impl proof runs in `.github/workflows/jcs-roundtrip.yml` on every push: each language hashes the same 29 vectors, `scripts/verifier-py/cross_check.py` asserts byte-equality across all three. The CI workflow blocks merge on any divergence. Go support queued ([USER_TODO §A-V2-K15-Go](docs/USER_TODO.md)).
+
+No other project in the 0G APAC field ships a polyglot canonical hash with byte-equality CI. RFC-8785 (JSON Canonicalisation Scheme) is the spec — `docs/HASH_FUNCTION.md` is the design doc.
+
+## Documentation
+
+> Every depth artifact a careful reviewer would look for. None hidden behind a build step.
+
+- [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) · five minutes, three commands, three URLs — the demo path
+- [docs/PITCH.md](docs/PITCH.md) · what · who · why now (3-page pitch)
+- [docs/MAINNET_READINESS.md](docs/MAINNET_READINESS.md) · 13/13 mainnet-readiness checklist
+- [docs/RECEIPT_SCHEMA.md](docs/RECEIPT_SCHEMA.md) · receipt field-level reference
+- [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) · RFC-8785 canonical receipt hash spec
+- [docs/CRYPTO_NOTES.md](docs/CRYPTO_NOTES.md) · threat models for every primitive (memory AES-GCM, Burn Mode, receipt signing, anchor sigs, capability grants, ERC-7857 attestors)
+- [docs/PHASE_B_DISCLOSURES.md](docs/PHASE_B_DISCLOSURES.md) · half-baked surfaces, what we shipped, what's left
+- [docs/HALF_BAKED.md](docs/HALF_BAKED.md) · audit ledger from 5 parallel subagents
+- [docs/USER_TODO.md](docs/USER_TODO.md) · operator action list (mainnet redeploy, Vercel deploy, npm publish, etc.)
+- [docs/CI_WALLET.md](docs/CI_WALLET.md) · runbook for the chain-smoke CI wallet
+- [docs/planning-003.md](docs/planning-003.md) · no-compromise plan with full coverage map
 
 ## Verify a real receipt right now
 
