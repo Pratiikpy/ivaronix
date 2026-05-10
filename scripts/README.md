@@ -32,9 +32,13 @@ scripts/
 │   ├── og-toolkit-smoke.ts              # @ivaronix/og-toolkit happy path
 │   └── smoke-storage.ts                 # 0G Storage upload + burn-mode encryption
 ├── diag/
+│   ├── audit-list.ts                    # walk `git log --grep "Closes audit"` (B-V2-13)
 │   ├── debug-router.ts                  # router credential rotation/balance probe
+│   ├── docs-render.ts                   # render `<!-- numbers:auto:KEY -->` markers (A.2.7)
+│   ├── env-check.ts                     # canonical/legacy env-var diagnostic (B-V2-11)
 │   ├── fresh-wallet-onboard.ts          # generate fresh wallet + run onboarding
-│   └── numbers-refresh.ts               # refresh docs/numbers.json from chain
+│   ├── numbers-refresh.ts               # refresh docs/numbers.json from chain
+│   └── render-receipt-types.ts          # RECEIPTS_SPEC §1 type table from RECEIPT_TYPES enum
 ├── dev/
 │   ├── Dockerfile.kv-node               # local 0G KV node
 │   └── start-local-0g-kv.ts             # bring it up
@@ -44,6 +48,9 @@ scripts/
 │   ├── mcp-e2e-test.ts
 │   ├── telegram-backend-test.ts
 │   └── metamask-e2e/                    # Playwright + verify-*.ts source-file regressions
+│       ├── capture-readme-shots.ts      # 6 README PNG stills (A.2.2)
+│       ├── capture-readme-tour.ts       # 30s README .webm tour (A.2.2)
+│       └── verify-a*.ts                 # 6 offline regressions (a11/a13/a22/a27/a44/a48)
 ├── verifier-py/                         # Python RFC-8785 cross-language receipt verifier
 └── wander-cycle/                        # autonomous receipt-anchoring agent
     ├── README.md
@@ -54,7 +61,23 @@ scripts/
 
 ## Running
 
-Most scripts are pnpm-script-shimmed. The two paths that changed in the §A.5.6 reorg are now:
+Most scripts are pnpm-script-shimmed. Diag aliases at the workspace root:
+
+```bash
+pnpm numbers:refresh         # refresh docs/numbers.json from chain
+pnpm numbers:check           # CI gate · exit 1 if numbers.json >24h old
+pnpm receipt-types:render    # regenerate RECEIPTS_SPEC §1 from source enum
+pnpm receipt-types:check     # CI gate · exit 1 if doc out of sync
+pnpm docs:render             # substitute `<!-- numbers:auto:KEY -->` markers
+pnpm docs:check              # CI gate · drift OR >24h-stale numbers.json
+pnpm audit:list              # rolling audit-closure ledger from git log
+pnpm audit:list --grep A.5   # filter by audit ID substring
+pnpm env:check               # canonical/legacy env-var diagnostic
+pnpm screenshots:refresh     # capture 6 README PNGs (needs Studio dev)
+pnpm tour:refresh            # capture 30s README tour video (needs Studio dev)
+```
+
+Path migration note (planning-003 §A.5.6): the two scripts that moved from `scripts/*.ts` → `scripts/diag/*.ts` keep their workspace-root aliases unchanged:
 
 ```bash
 pnpm numbers:refresh   # was scripts/numbers-refresh.ts → now scripts/diag/numbers-refresh.ts
