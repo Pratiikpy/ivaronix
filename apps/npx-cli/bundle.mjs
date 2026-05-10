@@ -39,8 +39,10 @@ await esbuild.build({
 chmodSync(OUT, 0o755);
 console.log(`bundled to ${OUT}`);
 
-writeFileSync(
-  resolve(OUT_DIR, '..', 'README.md'),
-  '# ivaronix\n\n> The 0G Agent Operating System.\n>\n> Catch the risks. Keep the receipts.\n\n```bash\nnpx ivaronix doctor --network\nnpx ivaronix doc ask contract.pdf "find risky clauses" --skill private-doc-review --consensus\n```\n\nFull docs: https://ivaronix.app\n',
-);
-console.log('wrote README.md');
+// Per planning-003 §A.5.22 the npx-cli README is now hand-curated
+// source (~30 lines: tagline + install + verify-output transcript +
+// command bullets + setup + license). The bundle script used to
+// overwrite it with a 7-line stub on every build, which silently
+// erased the curated copy. The README is committed alongside this
+// script and ships in the npm package via `files: ["dist", "README.md", "LICENSE"]`
+// in package.json — no regeneration needed.

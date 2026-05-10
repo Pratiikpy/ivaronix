@@ -55,7 +55,7 @@ const program = new Command();
 
 program
   .name('ivaronix')
-  .description('The 0G Agent Operating System — Catch the risks. Keep the receipts.')
+  .description('Catch the risks. Keep the receipts. — AI review for documents you can\'t paste into ChatGPT, anchored on 0G Chain.')
   .version('0.0.1');
 
 // Init

@@ -1,7 +1,37 @@
 # Ivaronix
 
-> **Catch the risks. Keep the receipts.** AI review for documents you can't paste into ChatGPT — every audit anchored as a verifiable receipt on 0G Chain, re-runnable from any machine in any language.
+> Catch the risks. Keep the receipts.
+
+```text
+[ Drop a document ]  ──▶  [ 0G Compute TEE ]  ──▶  [ 0G Chain anchor ]  ──▶  [ Public Proof URL ]
+   contract.pdf            specialist runs           receipt signed +          /r/<id> renders
+   never leaves            inside attested           hash anchored on          evidence anyone
+   unencrypted             hardware enclave          ReceiptRegistryV2         can re-verify
+```
+
+## How it works
+
+1. **Drop a document.** Studio's drop-zone or `ivaronix doc ask <file>`.
+2. **The specialist runs in a 0G Compute TEE.** Plaintext is invisible outside the run — the Router sees the request, but the inference output never leaves the TEE unencrypted.
+3. **A receipt is signed and hashed.** Every claim ties back to verifiable evidence; the receipt's canonical hash is byte-equal across TS / Python / Rust reference implementations.
+4. **The receipt anchors on `ReceiptRegistryV2`.** Chain confirms the signer, the hash, and the exact moment the audit happened.
+5. **Anyone replays the verification.** From any machine, in any of three languages, without an account.
+
+> AI review for documents you can't paste into ChatGPT. Burn-Mode encrypts; the session key dies after the run. Every audit anchors a verifiable receipt on 0G Chain. Anyone can re-verify it from any machine, in any language.
 >
+> **Verifiability over volume.**
+
+## Quick start (60 seconds, no wallet)
+
+```bash
+git clone https://github.com/Pratiikpy/ivaronix
+cd ivaronix && pnpm install
+pnpm cli verify 1644 --tee-independent
+# → FULLY VERIFIED ✓ (chain anchor + canonical hash + TEE re-attestation)
+```
+
+The wedge: this works on a stranger's clean machine, against a receipt anchored by someone else, on testnet, today.
+
 > 1,644+ receipts anchored on 0G Galileo Testnet · 121/121 Foundry tests · 8 deployed contracts (V1 + V2 active) · 25 workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
 
 ## Track 1 (Agentic Infrastructure) · by the numbers
@@ -232,7 +262,9 @@ pnpm --filter @ivaronix/mcp-server dev
 
 > **Catch the risks. Keep the receipts.**
 
-The **0G Agent Operating System** — five surfaces (Studio, Forge CLI, API+MCP, Skill Registry, Trust Layer) sharing one spine: the **AI Action Receipt** anchored on 0G Chain (mainnet 16661), with encrypted artifacts on 0G Storage, independent TEE verification via 0G Compute, and an ERC-7857 Agent Passport that follows your wallet.
+AI review for documents you can't paste into ChatGPT. The persona is the deal lawyer scanning a contract before signing, the founder reviewing a vendor agreement, the analyst sweeping a private data room — anyone whose work demands an AI second opinion *and* an audit trail other people can verify. Every Ivaronix action ends in an **AI Action Receipt** anchored on 0G Chain (testnet 16602 today, mainnet 16661 post-redeploy), with encrypted artifacts on 0G Storage, independent TEE verification via 0G Compute, and an ERC-7857 Agent Passport that follows your wallet.
+
+Five surfaces share that spine: Studio (web), Forge CLI, API + MCP server, the Skill Registry, and the Trust Layer schema. The receipt is the unit; the surfaces are how you reach it.
 
 Plus `@ivaronix/og-toolkit` — clean DX wrappers around `@0gfoundation/0g-storage-ts-sdk` + `@0gfoundation/0g-compute-ts-sdk` + `@0glabs/0g-serving-broker`. New 0G builders will adopt it because it's nicer than raw SDKs *and* it defaults to producing receipts. Quiet long-term moat.
 
@@ -386,7 +418,7 @@ When in doubt, **link, don't duplicate.**
 
 ## TL;DR Strategy
 
-**Wedge:** AI Action Receipts on 0G — but framed as the **0G Agent Operating System** because the receipt is the spine, not the whole product.
+**Wedge:** AI Action Receipts on 0G. The receipt is the unit of trust; every surface (web, CLI, MCP, marketplace, trust-layer schema) is plumbing that makes the receipt real.
 
 **Five surfaces:** Studio (primary, web app) · Forge CLI · API+MCP · Skill Registry · Trust Layer (Phase 3).
 

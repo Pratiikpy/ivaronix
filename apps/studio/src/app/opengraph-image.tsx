@@ -47,7 +47,7 @@ export default async function Image() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <span style={{ fontSize: 16, color: '#6b6b66', letterSpacing: 2, textTransform: 'uppercase' }}>
-            § The 0G Agent Operating System
+            § AI review · Verifiable receipts · 0G
           </span>
           <span style={{ fontSize: 76, lineHeight: 1.0, fontWeight: 600, letterSpacing: -2, maxWidth: 1040 }}>
             Catch the risks.
