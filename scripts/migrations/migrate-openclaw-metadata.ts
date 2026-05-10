@@ -26,7 +26,7 @@ const OPENCLAW_BLOCK = `metadata:
         os: ["linux", "darwin", "win32"]
         label: "Install Ivaronix CLI to run this skill"
     requires:
-      env: ["EVM_PRIVATE_KEY", "EVM_WALLET_ADDRESS", "ZG_API_SECRET"]
+      env: ["IVARONIX_SIGNER_KEY", "IVARONIX_WALLET_ADDRESS", "IVARONIX_ROUTER_KEY"]
 `;
 
 let touched = 0;

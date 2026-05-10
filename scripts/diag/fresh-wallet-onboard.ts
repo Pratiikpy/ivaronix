@@ -4,7 +4,7 @@
  *
  * Steps the script drives:
  *   1. Generate a fresh EOA + private key
- *   2. Fund it 0.05 OG from EVM_PRIVATE_KEY (the existing dev wallet)
+ *   2. Fund it 0.05 OG from IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY · the existing dev wallet)
  *   3. POST /api/onboard/metadata for the new address → real 0G Storage upload
  *   4. Call AgentPassportINFT.mint(rootHash) signed by the new wallet
  *   5. Read passportOf(newAddress) to confirm tokenId

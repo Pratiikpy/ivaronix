@@ -91,17 +91,5 @@
   "scripts/qa/metamask-e2e/run.ts:42:EVM_PRIVATE_KEY",
   "scripts/qa/metamask-e2e/run.ts:43:EVM_WALLET_ADDRESS",
   "scripts/qa/metamask-e2e/run.ts:46:EVM_PRIVATE_KEY",
-  "scripts/qa/metamask-e2e/verify-v2-anchor-live.ts:6:EVM_PRIVATE_KEY",
-  "seed-skills/0g-integration-auditor/SKILL.md:15:EVM_PRIVATE_KEY",
-  "seed-skills/0g-integration-auditor/SKILL.md:15:EVM_WALLET_ADDRESS",
-  "seed-skills/0g-integration-auditor/SKILL.md:15:ZG_API_SECRET",
-  "seed-skills/code-edit/SKILL.md:15:EVM_PRIVATE_KEY",
-  "seed-skills/code-edit/SKILL.md:15:EVM_WALLET_ADDRESS",
-  "seed-skills/code-edit/SKILL.md:15:ZG_API_SECRET",
-  "seed-skills/content-pitch-review/SKILL.md:15:EVM_PRIVATE_KEY",
-  "seed-skills/content-pitch-review/SKILL.md:15:EVM_WALLET_ADDRESS",
-  "seed-skills/content-pitch-review/SKILL.md:15:ZG_API_SECRET",
-  "seed-skills/github-audit/SKILL.md:15:EVM_PRIVATE_KEY",
-  "seed-skills/github-audit/SKILL.md:15:EVM_WALLET_ADDRESS",
-  "seed-skills/github-audit/SKILL.md:15:ZG_API_SECRET"
+  "scripts/qa/metamask-e2e/verify-v2-anchor-live.ts:6:EVM_PRIVATE_KEY"
 ]
