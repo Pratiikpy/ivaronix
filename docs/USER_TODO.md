@@ -280,6 +280,23 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action (mainnet · post-A-V2):** set `IVARONIX_NETWORK=mainnet` in the wander-cycle env. CLI's V2-first read pattern routes anchors to `ReceiptRegistryV2` mainnet automatically.
 - **Effort:** ~30min daemon setup · ~3 months runtime to hit headline.
 
+### B-V2-16 · Deploy MemoryAccessLogV2 (log-spoofing fix)
+- **Source:** plan-003 §A.5.12 · code-complete today (`contracts/src/MemoryAccessLogV2.sol` + 10/10 Foundry tests pass).
+- **Why:** V1's `MemoryAccessLog` admits in NatSpec that anyone can call `logAccess(agent=victim, grantId=anything, ...)` for ~$0.001 of gas, polluting the victim's audit trail. V2 enforces `msg.sender == agent` for self-logs OR a valid `CapabilityRegistry.isValid(grantId, msg.sender, scopeHash)` cross-check for grant-backed logs. Random wallets revert.
+- **Status:** contract + deploy script + Foundry tests (10/10 PASS) shipped. Mainnet deploy waits on §A-2 funding + B-V2-15 (V2 needs the registry address pinned at construction).
+- **Cost:** ~0.05 OG each network.
+- **Run (testnet · after B-V2-15):**
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<deployer-key>
+  export CAPABILITY_REGISTRY_ADDR=<V2-addr-from-B-V2-15>
+  forge script script/DeployMemoryAccessLogV2.s.sol:DeployMemoryAccessLogV2 \
+    --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
+  ```
+
+- **Post-deploy:** add address to `contracts/deployments/<network>.json` under `MemoryAccessLogV2`. Memory engine + Studio `/memory` route to V2 first via the V2-first read pattern.
+
 ### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix)
 - **Source:** plan-003 §A.5.10 · code-complete today (`contracts/src/CapabilityRegistryV2.sol` + 10/10 Foundry tests pass).
 - **Why:** V1's `mapping(address => bytes32[]) public grantsByOwner` + `grantsByGrantee` auto-generated public getters; anyone could enumerate every grant ever issued for any wallet. V2 makes both reverse indexes `internal` with privacy-gated reads (caller is owner/grantee themselves OR an `authorizedReader` indexer). Closes the social-graph leak.
