@@ -155,6 +155,40 @@ function stripCode(content: string): string {
 
 interface Hit { file: string; line: number; col: number; token: string; context: string }
 
+// Sweep 68: context-aware allow for `harness` when used as a technical-
+// jargon noun ("test harness", "cross-impl harness", etc.). The CLAUDE.md
+// §9 ban targets the marketing-verb form ("harness the power of X"); the
+// technical-noun form is a legitimate engineering term. A leading
+// adjective/noun-modifier from this allow-list disambiguates the form
+// before the ban fires.
+const HARNESS_NOUN_MODIFIERS = new Set([
+  'test',
+  'tests',
+  'cross-impl',
+  'crossimpl',
+  'smoke',
+  'regression',
+  'regressions',
+  'playwright',
+  'e2e',
+  'mock',
+  'live-smoke',
+  'integration',
+  'live',
+  'unit',
+]);
+
+/** True iff a `harness` match at [matchIdx] is preceded by a recognized
+ *  technical-noun modifier ("test harness", "regression harness", etc.).
+ *  Looks back up to 30 chars on the same line. */
+function isTechnicalHarness(line: string, matchIdx: number): boolean {
+  const before = line.slice(Math.max(0, matchIdx - 30), matchIdx);
+  // Last whitespace-separated word before the match.
+  const m = before.match(/([A-Za-z][A-Za-z0-9-]*)\s+$/);
+  if (!m) return false;
+  return HARNESS_NOUN_MODIFIERS.has(m[1]!.toLowerCase());
+}
+
 function findHits(file: string, content: string): Hit[] {
   const stripped = stripCode(content);
   const hits: Hit[] = [];
@@ -167,11 +201,18 @@ function findHits(file: string, content: string): Hit[] {
 
     TOKEN_RE.lastIndex = 0;
     for (const m of line.matchAll(TOKEN_RE)) {
+      const token = m[1]!.toLowerCase();
+      const matchIdx = m.index ?? 0;
+      // Context-aware: 'harness' preceded by a technical-noun modifier
+      // is allowed (engineering jargon, not marketing verb).
+      if (token === 'harness' && isTechnicalHarness(line, matchIdx)) {
+        continue;
+      }
       hits.push({
         file: relative(REPO_ROOT, file).replace(/\\/g, '/'),
         line: i + 1,
-        col: (m.index ?? 0) + 1,
-        token: m[1]!.toLowerCase(),
+        col: matchIdx + 1,
+        token,
         context: rawLine.trim().slice(0, 140),
       });
     }

@@ -441,17 +441,16 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `indexer list` filters by registry-version when `--version v1|v2` flag is passed.
 - **Effort:** ~3h. Touches indexer DB schema + worker + 4 CLI subcommands (backfill/tail/stats/list). Not blocking testnet today (V2 has 0 anchors); becomes critical the moment a V2 anchor lands.
 
-### B-V2-WORDING-AMNESTY · Clean up the 52 wording-amnesty.json entries
+### B-V2-WORDING-AMNESTY · Clean up the 52 wording-amnesty.json entries · ⚠ partially shipped sweep 68
 - **Source:** cron-sweep finding 2026-05-10 (wording-lint ship). PRD.md listed `pnpm wording-lint` as a CI gate item but the script never landed; sweep 34 wrote it. First run found 55 hits (52 amnestied) across 51 markdown files. Categories:
-  - **24 `harness`** — most are legitimate technical jargon ("test harness", "cross-impl harness", "regression harness"). The lint should learn to allow noun-modifier-prefixed `harness` and only flag the marketing-verb pattern ("harness the power of"). The amnesty buys time to refine.
+  - **24 `harness`** — most are legitimate technical jargon ("test harness" etc.). <!-- wording-lint:allow:meta-discussion-of-banned-words --> Sweep 68 added context-aware allow for the technical-noun form: any `harness` preceded by `test / cross-impl / smoke / regression / playwright / e2e / mock / unit / integration / live / live-smoke` is auto-allowed. Real marketing-verb form ("harness the power of") still trips the gate.
   - **6 `unlock`** — generic marketing language. Replace with concrete verbs ("enables", "ships", "lets you").
   - **6 `seamless`** — show the integration with a number, not the adjective.
   - **6 `leverage`** — use "use" or describe what's actually used.
   - **2 `delve`, 2 `empower`, 1 `unleash`, 1 `streamline`, 1 `robust`, 1 `revolutionize`** — banned with no legit usage; rewrite each.
-  - **0 banned phrases caught today** — but they ARE in the regex, so any new "in today's fast-paced world" lands as a fail.
-- **Why:** the gate ships today and blocks NEW drift. The 52 amnestied hits are documented technical debt that judges may notice on close read of long-form docs (PRD, planning-003, HALF_BAKED).
-- **Action:** sweep file-by-file, choose between (a) rewrite the sentence (preferred), (b) `wording-lint:allow:reason` for genuine technical-jargon (most "harness" hits), or (c) refine the lint to be context-aware on `harness` (`(test|cross-impl|smoke|regression|playwright|e2e|mock)\s+harness` allowed). Re-run `pnpm wording-lint -- --update` after each batch.
-- **Effort:** 1–2h for the lint refinement on `harness` + ~30min per remaining file for the genuine drift words.
+  - **0 banned phrases caught today** — but they ARE in the regex, so any new <!-- wording-lint:allow:meta-discussion --> "in today's fast-paced world" lands as a fail.
+- **Why:** the gate ships today and blocks NEW drift. The amnesty buys time to clean up the 18 non-`harness` legit-marketing-token hits over time.
+- **Status (sweep 68):** ✅ harness context-awareness shipped (eliminates ~24 legitimate hits without amnesty entries). ⏳ Remaining ~18 marketing tokens still in the amnesty for sentence-level rewrites; not blocking testnet. Track-3 polish pass.
 
 ### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.
