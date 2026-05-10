@@ -100,16 +100,22 @@ const allFiles: string[] = [];
 for (const t of TARGETS) allFiles.push(...listTsFiles(t));
 ok(`scanning ${allFiles.length} TS/TSX files under apps/{cli,studio,mcp-server,telegram-bot} + packages/runtime`);
 
-// Detect 3+ contract names within a single array literal. We use a
-// regex that matches `[...]` non-greedy and counts contract-name
-// strings inside.
+// Detect 3+ contract names within a single array OR object literal.
 //
-// The regex captures any single-quote OR double-quote contract-name
-// literal, deduplicated per array. We slide through the file looking
-// for `[` then collecting contract names until matching `]`. Bracket-
-// nesting awareness is overkill here — the false-positive surface
-// (object literals nested in arrays containing names as keys) is
-// negligible in practice.
+// Pre-sweep-118 the gate only checked `[...]` array literals. Sweep
+// 117 caught a hardcoded-addresses bug in apps/studio/src/components/
+// Footer.tsx where the registry was a `{ ReceiptRegistry: '0x...',
+// AgentPassportINFT: '0x...', ... }` OBJECT literal — same drift
+// class but different syntactic shape. Sweep 118 extends the scan to
+// catch both `[` and `{` literals that contain 3+ contract names
+// either as string-literals (array form) OR as object KEYS (registry
+// form).
+//
+// We slide through the file looking for `[` or `{` then collecting
+// contract names until matching `]` or `}`. Bracket-nesting awareness
+// is overkill here — the false-positive surface (object literals
+// nested in arrays containing names as keys) is negligible in
+// practice.
 interface Hit { file: string; line: number; matchedNames: string[]; context: string }
 const hits: Hit[] = [];
 
@@ -125,21 +131,33 @@ for (const file of allFiles) {
     const line = lines[i]!;
     if (line.includes('hardcoded-contracts:allow:')) continue;
 
-    // Find every `[` start. For each, extend up to 5 lines and count
-    // contract-name occurrences before the corresponding `]`.
-    let bracketIdx = line.indexOf('[');
-    while (bracketIdx >= 0) {
-      let scan = line.slice(bracketIdx);
+    // Find every `[` OR `{` start. For each, extend up to 7 lines (object
+    // literals tend to be longer than arrays · 6 contract entries fit) and
+    // count contract-name occurrences before the matching close-bracket.
+    let scanFrom = 0;
+    while (true) {
+      const arrIdx = line.indexOf('[', scanFrom);
+      const objIdx = line.indexOf('{', scanFrom);
+      // Pick the nearest open-bracket on this line; bail if neither.
+      let openIdx: number;
+      let openCh: '[' | '{';
+      let closeCh: ']' | '}';
+      if (arrIdx === -1 && objIdx === -1) break;
+      if (arrIdx === -1) { openIdx = objIdx; openCh = '{'; closeCh = '}'; }
+      else if (objIdx === -1) { openIdx = arrIdx; openCh = '['; closeCh = ']'; }
+      else if (arrIdx < objIdx) { openIdx = arrIdx; openCh = '['; closeCh = ']'; }
+      else { openIdx = objIdx; openCh = '{'; closeCh = '}'; }
+
+      let scan = line.slice(openIdx);
       let extraLines = 0;
-      // Stop at the first `]` (best-effort · doesn't track nested
-      // arrays but those are rare in this code).
-      while (!scan.includes(']') && i + extraLines < lines.length - 1 && extraLines < 5) {
+      const maxLookahead = openCh === '{' ? 12 : 5;
+      while (!scan.includes(closeCh) && i + extraLines < lines.length - 1 && extraLines < maxLookahead) {
         extraLines++;
         scan += '\n' + lines[i + extraLines];
       }
-      const closeIdx = scan.indexOf(']');
-      const arrayContent = closeIdx >= 0 ? scan.slice(0, closeIdx + 1) : scan;
-      // Skip if the array spans an allow marker on any of its lines.
+      const closeIdx = scan.indexOf(closeCh);
+      const literalContent = closeIdx >= 0 ? scan.slice(0, closeIdx + 1) : scan;
+      // Skip if the literal spans an allow marker on any of its lines.
       let allowed = false;
       for (let j = i; j <= i + extraLines && j < lines.length; j++) {
         if (lines[j]!.includes('hardcoded-contracts:allow:')) {
@@ -148,12 +166,19 @@ for (const file of allFiles) {
         }
       }
       if (allowed) {
-        bracketIdx = line.indexOf('[', bracketIdx + 1);
+        scanFrom = openIdx + 1;
         continue;
       }
-      const stringLiteralRe = /['"]([A-Za-z][A-Za-z0-9_]+)['"]/g;
+      // Match contract names as either:
+      //   array form: `'ReceiptRegistry'` or `"ReceiptRegistry"`
+      //   object form: `ReceiptRegistry:` (bare identifier followed by `:`)
       const matched = new Set<string>();
-      for (const m of arrayContent.matchAll(stringLiteralRe)) {
+      const stringLiteralRe = /['"]([A-Za-z][A-Za-z0-9_]+)['"]/g;
+      for (const m of literalContent.matchAll(stringLiteralRe)) {
+        if (CONTRACT_NAME_SET.has(m[1]!)) matched.add(m[1]!);
+      }
+      const objKeyRe = /(?:^|[\s,{])([A-Z][A-Za-z0-9_]+)\s*:/g;
+      for (const m of literalContent.matchAll(objKeyRe)) {
         if (CONTRACT_NAME_SET.has(m[1]!)) matched.add(m[1]!);
       }
       if (matched.size >= 3) {
@@ -165,7 +190,7 @@ for (const file of allFiles) {
         });
         break; // one hit per starting line is enough
       }
-      bracketIdx = line.indexOf('[', bracketIdx + 1);
+      scanFrom = openIdx + 1;
     }
   }
 }
