@@ -73,16 +73,16 @@ program.addCommand(passportCommand);
 // Compute / Models / Router
 program.addCommand(computeCommand);
 
-// Doc-ask (the killer demo)
+// Doc-ask · audit a private document and produce an Action Receipt.
 program.addCommand(docCommand);
 
-// Memory permissions
+// Memory permissions · grant/revoke capability scopes per agent.
 program.addCommand(memoryCommand);
 
-// Confidential Data Room — Track 5 headline (Burn-Mode-encrypted blob + per-party capability grants)
+// Confidential Data Room · multi-party encrypted document workspace with per-read receipts.
 program.addCommand(roomCommand);
 
-// TEE-Bound Delegated AI Agent — Phase A (delegate has its own AgentPassport + wallet, user grants/revokes via CapabilityRegistry)
+// Delegate · operator-side delegated agent with per-skill capability grants.
 program.addCommand(delegateCommand);
 
 // Skills (browse/inspect installed skills)

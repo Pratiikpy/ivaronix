@@ -31,7 +31,7 @@ function skillSearchDirs(): string[] {
 }
 
 export const docCommand = new Command('doc')
-  .description('Private document Q&A — the killer demo');
+  .description('Private document Q&A · audit a contract / vendor agreement / data room and produce an Action Receipt');
 
 docCommand
   .command('ask <file> <question>')

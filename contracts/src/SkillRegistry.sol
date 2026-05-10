@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 /**
  * @title SkillRegistry
- * @notice On-chain anchoring of Ivaronix skill manifests (Day 10).
+ * @notice On-chain anchoring of Ivaronix skill manifests.
  * @dev Each skill is identified by `skillId = keccak256("skill:<lowercase-name>")` and may
  *      have many immutable versions. The first wallet to publish a `skillId` becomes its
  *      creator — subsequent versions must be published from the same wallet (or the

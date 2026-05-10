@@ -5,10 +5,10 @@ pragma solidity 0.8.20;
  * @title MemoryAccessLog
  * @notice Append-only on-chain audit trail for memory access events (SealedMind pattern).
  * @dev Stores no state — pure event emitter. The on-chain log itself is the audit trail.
- *      Indexers (Day 11+ Hub or Goldsky) read the events to render per-wallet history.
+ *      Indexers read the events to render per-wallet history.
  *
  *      Authorized loggers: each owner (memory holder) controls their own log entries by
- *      calling logAccess(). The memory engine (Day 8) calls this on every read/write/delete
+ *      calling logAccess(). The memory engine calls this on every read/write/delete
  *      after consumeRead() succeeds on CapabilityRegistry.
  *
  *      Anyone can call logAccess() — the event records who logged what; indexers filter by

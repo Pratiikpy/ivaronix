@@ -8,8 +8,9 @@ pragma solidity 0.8.20;
  *      (other agents, apps, or wallets). Grants live on chain so any party can audit who
  *      has access, when it expires, and how many reads remain. Revocation is on-chain too.
  *
- *      Day 7 ships the contract + events; Day 8 hybrid memory engine queries this on every
- *      memory read to enforce the grant.
+ *      The hybrid memory engine queries this on every memory read to enforce
+ *      the grant. Off-chain readers can also query directly to audit who has
+ *      access to a given owner's memory.
  */
 contract CapabilityRegistry {
     struct Grant {

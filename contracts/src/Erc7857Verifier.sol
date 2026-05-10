@@ -6,11 +6,12 @@ import {Ownable2Step, Ownable} from "@openzeppelin/contracts/access/Ownable2Step
 /**
  * @title Erc7857Verifier
  * @notice Verifies sealed-data integrity for Ivaronix Agent Passports per ERC-7857.
- * @dev Day 6 MVP ships an attestor-signed verifier: an oracle (the deployer for now)
- *      signs metadataHash + recipient + nonce attestations off-chain. On transfer,
+ * @dev Attestor-signed verifier: an oracle (the deployer for now) signs
+ *      metadataHash + recipient + nonce attestations off-chain. On transfer,
  *      AgentPassportINFT calls verifyDataIntegrity() to confirm the new sealed-data
- *      blob matches the attestation. Future work (Phase B+) will swap this attestor
- *      for a TEE-backed remote attestation or ZKP verifier per ERC-7857 §integration.
+ *      blob matches the attestation. Roadmap: swap the attestor for a TEE-backed
+ *      remote attestation or ZKP verifier per ERC-7857 §integration when one
+ *      lands in production. The attestor surface is intentionally swappable.
  */
 contract Erc7857Verifier is Ownable2Step {
     /// @notice Authorized attestors that may sign integrity attestations.
