@@ -97,11 +97,38 @@ function delegateKeyPath(delegateId: string): string {
   return resolve(delegatesDir(), delegateId, 'key.json');
 }
 
+/**
+ * Lightweight shape guard for DelegateManifest · HALF_BAKED §J-3
+ * (sweep 159 · same pattern as parseConversationFile in
+ * apps/cli/src/lib/conversation.ts). Stale delegate files (e.g.
+ * missing capabilityGrants array from an older format) returned
+ * partial manifests via the unchecked cast; callers then crashed at
+ * `m.capabilityGrants.length`. Now we return null for malformed shapes
+ * (same as for missing/unreadable files — caller sees a uniform
+ * "delegate not found" signal).
+ */
+function isWellFormedDelegateManifest(json: unknown): json is DelegateManifest {
+  if (!json || typeof json !== 'object') return false;
+  const j = json as Record<string, unknown>;
+  return (
+    typeof j.delegateId === 'string' &&
+    typeof j.name === 'string' &&
+    typeof j.ownerUserWallet === 'string' &&
+    typeof j.delegateAddress === 'string' &&
+    Array.isArray(j.skillsAuthorized) &&
+    Array.isArray(j.capabilityGrants) &&
+    typeof j.createdAt === 'number' &&
+    typeof j.network === 'string'
+  );
+}
+
 function loadManifest(delegateId: string): DelegateManifest | null {
   const path = delegatePath(delegateId);
   if (!existsSync(path)) return null;
   try {
-    return JSON.parse(readFileSync(path, 'utf8')) as DelegateManifest;
+    const json: unknown = JSON.parse(readFileSync(path, 'utf8'));
+    if (!isWellFormedDelegateManifest(json)) return null;
+    return json;
   } catch { return null; }
 }
 
@@ -115,8 +142,11 @@ function loadDelegateKey(delegateId: string): string | null {
   const path = delegateKeyPath(delegateId);
   if (!existsSync(path)) return null;
   try {
-    const data = JSON.parse(readFileSync(path, 'utf8')) as { privateKey: string };
-    return data.privateKey;
+    const data: unknown = JSON.parse(readFileSync(path, 'utf8'));
+    if (!data || typeof data !== 'object') return null;
+    const pk = (data as Record<string, unknown>).privateKey;
+    if (typeof pk !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(pk)) return null;
+    return pk;
   } catch { return null; }
 }
 
