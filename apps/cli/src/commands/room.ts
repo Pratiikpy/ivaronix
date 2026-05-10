@@ -5,6 +5,7 @@ import { resolve, dirname } from 'node:path';
 import {
   CapabilityRegistryClient,
   ReceiptRegistryClient,
+  ReceiptRegistryV2Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { createStorageClient, burnEncrypt } from '@ivaronix/og-storage';
@@ -250,11 +251,13 @@ roomCommand
       ui.fail('manifest 0G Storage upload failed (manifest still saved locally)', ((err as Error).message.split('\n')[0] ?? '').slice(0, 120));
     }
 
-    // 6. Anchor a doc_room_create receipt
+    // 6. Anchor a doc_room_create receipt — V2-first per .claude/rules/og-chain.md
     try {
-      const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+      const registryAddr = registryAddrV2 ?? registryAddrV1;
+      const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
       if (!registryAddr) throw new Error('ReceiptRegistry not deployed');
-      const reg = new ReceiptRegistryClient(registryAddr, wallet);
 
       const userPromptHash = await sha256HexAsync(new TextEncoder().encode(`room.create:${roomId}:${partyList.length}`));
       const outputHash = manifestHash as Hash;
@@ -342,7 +345,7 @@ roomCommand
       mkdirSync(outDir, { recursive: true });
       writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(signed, null, 2));
 
-      ui.pending('anchoring doc_room_create receipt on chain...');
+      ui.pending(`anchoring doc_room_create receipt on chain (${registryVersion.toUpperCase()})...`);
       // The deployed ReceiptRegistry contract has an allow-list at types
       // 0-9. Until we redeploy with slot 10 (doc_room_create), we anchor
       // semantically equivalent type 5 (skill_exec) — the room creation
@@ -353,9 +356,27 @@ roomCommand
       const storageRoot = (blobStorageRoot.startsWith('0x') && blobStorageRoot.length === 66
         ? blobStorageRoot
         : ZERO_HASH) as Hash;
-      const tx = await reg.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
-      const rcpt = await tx.wait();
-      ui.pass(`receipt              ${signed.id}  tx ${tx.hash.slice(0, 18)}…  block ${rcpt?.blockNumber ?? '?'}`);
+      let txHash: string;
+      let blockNumber: number | null;
+      if (registryVersion === 'v2') {
+        const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+        const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
+          receiptRoot: signed.storage!.receiptRoot as Hash,
+          storageRoot,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v2Tx.hash;
+        const r = await v2Tx.wait();
+        blockNumber = r?.blockNumber ?? null;
+      } else {
+        const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
+        const v1Tx = await regV1.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
+        txHash = v1Tx.hash;
+        const r = await v1Tx.wait();
+        blockNumber = r?.blockNumber ?? null;
+      }
+      ui.pass(`receipt              ${signed.id}  tx ${txHash.slice(0, 18)}…  block ${blockNumber ?? '?'}`);
     } catch (err) {
       ui.info(`receipt anchor (best-effort) failed: ${(err as Error).message.split('\n')[0] ?? ''.slice(0, 120)}`);
     }
@@ -470,14 +491,16 @@ roomCommand
       ui.pass(`grant valid          ${expectedGrantId.slice(0, 18)}…`);
     }
 
-    // Anchor a doc_room_read receipt
-    const registryAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
+    // Anchor a doc_room_read receipt — V2-first per .claude/rules/og-chain.md
+    const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+    const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
+    const registryAddr = registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
-    const reg = new ReceiptRegistryClient(registryAddr, wallet);
 
     const accessTimestamp = Date.now();
     const userPromptHash = await sha256HexAsync(new TextEncoder().encode(`room.read:${roomId}:${env.walletAddress}:${accessTimestamp}`));
@@ -554,7 +577,7 @@ roomCommand
     mkdirSync(outDir, { recursive: true });
     writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(signed, null, 2));
 
-    ui.pending('anchoring doc_room_read receipt on chain...');
+    ui.pending(`anchoring doc_room_read receipt on chain (${registryVersion.toUpperCase()})...`);
     // Until ReceiptRegistry is redeployed with slot 11, use semantically
     // equivalent type 4 (memory_access) — reading a confidential blob *is*
     // an authorized memory access against a CapabilityRegistry grant.
@@ -564,11 +587,29 @@ roomCommand
     const storageRoot = (manifest.blobStorageRoot.startsWith('0x') && manifest.blobStorageRoot.length === 66
       ? manifest.blobStorageRoot
       : ZERO_HASH) as Hash;
-    const tx = await reg.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
-    const rcpt = await tx.wait();
+    let txHash: string;
+    let blockNumber: number | null;
+    if (registryVersion === 'v2') {
+      const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
+      const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
+        receiptRoot: signed.storage!.receiptRoot as Hash,
+        storageRoot,
+        receiptType: RECEIPT_TYPE_CODE,
+        attestationHash: ZERO_HASH,
+      });
+      txHash = v2Tx.hash;
+      const r = await v2Tx.wait();
+      blockNumber = r?.blockNumber ?? null;
+    } else {
+      const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
+      const v1Tx = await regV1.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
+      txHash = v1Tx.hash;
+      const r = await v1Tx.wait();
+      blockNumber = r?.blockNumber ?? null;
+    }
     ui.pass(`receipt              ${signed.id}`);
-    ui.pass(`tx                   ${tx.hash}`);
-    ui.pass(`block                ${rcpt?.blockNumber ?? '?'}`);
+    ui.pass(`tx                   ${txHash}`);
+    ui.pass(`block                ${blockNumber ?? '?'}`);
     ui.divider();
     ui.hint(`Public proof: http://localhost:3300/r/<onchain-id>  (use \`ivaronix indexer backfill\` to resolve the on-chain id)`);
   });
