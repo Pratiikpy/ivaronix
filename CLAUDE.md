@@ -130,7 +130,7 @@ When you write **anything that ships** (READMEs, docs, marketing copy, PR descri
 - **No symmetric bulleted slop** (every bullet starts with the same verb, every bullet has the same length). If a bullet only exists to balance the list, kill it.
 - **No marketing sandwich** (claim → flowery elaboration → restated claim). Make the claim once.
 - **No invented quotes, fake stats, or hallucinated user testimonials.**
-- **Show, don't adjective.** "200ms p95" not "blazingly fast." "61/61 tests" not "extensively tested." A real number is worth ten adjectives.
+- **Show, don't adjective.** "200ms p95" not "blazingly fast." "every Foundry test green" not "extensively tested." A real number is worth ten adjectives.
 - **Cut every word the sentence still works without.** Read it aloud — if you're embarrassed, rewrite.
 - **Match Ivaronix's voice**: terse, technical, blunt. Editorial cream-on-black. Receipts > rhetoric.
 - **JSDoc and NatSpec describe WHAT the code does, not WHEN it was written.** No `Day-N`, `Phase A/B/C`, `K-N fix`, `MVP`, `killer demo`, `Track N headline`, `sprint`. Use capability-statement framing ("this writes the receipt anchor"), threat-model framing ("defends against operator-side disclosure"), or roadmap framing ("queued in USER_TODO §B-V2"). Sprint references fossilize — in NatSpec they compile into permanent contract metadata. The exception is explicit traceability links (`planning-003 §A.5.X`, `WT 31`) that map a comment to a specific audit closure; those are intentional and stay.
