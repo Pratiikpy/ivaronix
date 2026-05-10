@@ -525,6 +525,18 @@ function ResultCard({ result }: { result: RunResponse }) {
     >
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
         <div className="section-label" style={{ marginRight: 8 }}>§ AUDIT REPORT</div>
+        {/*
+          HALF_BAKED §I-15 closure (sweep 166): tier chip on the
+          /api/run response itself, so a judge sees TIER 1 vs TIER 2
+          without clicking through to /r/[id]. Reads result.teeRouterVerified
+          (added in sweep 157):
+            true  → TIER 1 · TEE     (all roles routerVerified on 0G Compute)
+            false → TIER 2 · EXTERNAL (NIM / external-signed at least one role)
+            null  → ANCHORED          (no TEE check requested · still chain-anchored)
+        */}
+        {result.teeRouterVerified === true && <span className="chip-verified">TIER 1 · TEE</span>}
+        {result.teeRouterVerified === false && <span className="chip-pending" style={{ color: 'var(--color-warn, #7a5d00)' }}>TIER 2 · EXTERNAL</span>}
+        {result.teeRouterVerified === null && result.receiptTxHash && <span className="chip-pending">ANCHORED</span>}
         {result.scan?.matches && <span className="chip-verified">REGISTRY MATCH</span>}
         {result.scan?.registered === false && <span className="chip-pending">LOCAL ONLY</span>}
       </div>
