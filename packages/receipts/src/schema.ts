@@ -142,9 +142,65 @@ export const ReceiptV1Schema = z.object({
         agreementSummary: z.string(),
         disagreementSummary: z.string(),
         individualAttestations: z.array(ConsensusRoleAttestation),
+        /**
+         * The aggregation policy that was applied to the reviewer outputs
+         * (planning-003 §A.4.4 · zer0Gig Efficiency Game). Optional so
+         * older receipts (pre-policy) parse unchanged. When present,
+         * verifiers can re-run the policy against `individualAttestations`
+         * to confirm the recorded `decision` matches what the policy
+         * would have produced. Defaults: 'majority' for tiers ≥2 reviewers,
+         * meaningless for `quick` (1 reviewer).
+         */
+        policyApplied: z
+          .enum(['unanimous', 'majority', 'first-objection', 'weighted'])
+          .optional(),
+        /**
+         * How many reviewers dissented from the final decision under the
+         * applied policy. Zero on a clean unanimous run; equal to
+         * `roles.length - 1` worst-case under `first-objection` if every
+         * reviewer flagged a different concern.
+         */
+        dissents: z.number().int().min(0).optional(),
       })
       .optional(),
   }),
+
+  /**
+   * Per-run outcome record (planning-003 §A.4.4 · zer0Gig Efficiency Game).
+   *
+   * `attempts` = how many model retries the run consumed. 1 = first-pass
+   * success; 2+ = the model output failed validation and was re-prompted.
+   * `firstAttemptScore` is the reviewer-convergence score on the first
+   * attempt (filled when `attempts > 1` so the receipt records what the
+   * first try produced before the retry overrode it).
+   *
+   * `finalScore` is the score that gates the fee split. TIER 1 first-attempt
+   * with finalScore ≥ 0.85 settles at 95% creator share; TIER 1 retry at
+   * 85%; TIER 2 (any) at 70%; a `failed` outcome routes 100% to treasury.
+   *
+   * `retryReason` names what triggered the retry — `'json-malformed'`,
+   * `'gate-rejected'`, `'consensus-low-convergence'`, `'tee-attestation-failed'`.
+   * Surfaces on /r/<id> as a small chip when present so a reviewer can
+   * see why a run cost more than a clean first-pass.
+   */
+  outcome: z
+    .object({
+      attempts: z.number().int().min(1).default(1),
+      firstAttemptScore: z.number().min(0).max(1).optional(),
+      finalScore: z.number().min(0).max(1).optional(),
+      retryReason: z
+        .enum([
+          'json-malformed',
+          'gate-rejected',
+          'consensus-low-convergence',
+          'tee-attestation-failed',
+          'router-rotation',
+          'other',
+        ])
+        .optional(),
+      status: z.enum(['ok', 'failed', 'partial']).default('ok'),
+    })
+    .optional(),
 
   routerTrace: z.object({
     requestId: z.string(),

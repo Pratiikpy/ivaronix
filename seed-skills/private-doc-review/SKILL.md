@@ -40,6 +40,10 @@ og:
   consensus:
     required: false
     default_tier: standard
+    # planning-003 §A.4.4 zer0Gig Efficiency Game: legal-review is the
+    # canonical "any reject blocks" surface. Studio Run panel can still
+    # override this per-run via the "How strict?" dropdown.
+    policy: first-objection
   burn:
     auto_enable: true
   hooks:
@@ -54,6 +58,12 @@ og:
     fee_split:
       creator: 9000
       treasury: 1000
+    # planning-003 §A.4.4: opt into the efficiency-game policy so a
+    # clean first-pass earns the full creator share (95% of declared)
+    # while a retry-heavy run is settled at 85%, and a failed run
+    # routes 100% to treasury. Inverts the incentive — skills get
+    # paid for being right the first time.
+    fee_split_policy: efficiency-game
 ---
 
 # Private Document Review

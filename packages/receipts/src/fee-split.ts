@@ -3,12 +3,19 @@
  * and the receipt's `totalCostNeuron`, compute the per-actor allocation as
  * BigInt-precise neuron strings.
  *
- * **Tier multiplier (planning-002 W5 — Efficiency Game).** Receipts that
- * passed independent TEE verification (TIER 1) earn 100% of the declared
- * creator share. Receipts signed by an external (non-TEE-attested) provider
- * (TIER 2) earn 85% — the 15% delta routes to the treasury as a soak buffer.
- * This turns the TIER 1 / TIER 2 receipt label from a honesty marker into
- * a market signal: skills run with TEE attestation pay creators more.
+ * Two settlement policies:
+ *
+ *   **`flat`** (default; pre-A.4.4 behaviour): the declared creator
+ *   share is conditioned on the TIER 1 vs TIER 2 multiplier only.
+ *   TIER 1 = 100%, TIER 2 = 85%. Matches the `planning-002 W5` baseline.
+ *
+ *   **`efficiency-game`** (planning-003 §A.4.4): the creator share is
+ *   conditioned on outcome:
+ *     - TIER 1 first-attempt (attempts == 1)  → 95% multiplier
+ *     - TIER 1 retry (attempts > 1)           → 85% multiplier
+ *     - TIER 2 (any attempts)                 → 70% multiplier
+ *     - failed (status == 'failed')           → 0% (treasury collects gas)
+ *   Skills opt in via `og.creator.fee_split_policy: 'efficiency-game'`.
  *
  * Why BigInt: token costs can run to 1e15 neuron (≈0.001 OG); JS Number
  * loses precision at 2^53. We do the math in BigInt and serialise as
@@ -20,12 +27,28 @@
 
 export type ReceiptTier = 'TIER_1' | 'TIER_2';
 
-/** Multiplier in basis points applied to the declared creator share before
- * the actual neuron allocation is computed. The complement routes to
- * treasury. */
+export type FeeSplitPolicy = 'flat' | 'efficiency-game';
+
+export type RunOutcomeStatus = 'ok' | 'partial' | 'failed';
+
+/**
+ * Multiplier in basis points applied to the declared creator share for
+ * the `flat` policy. The complement routes to treasury.
+ */
 export const TIER_MULTIPLIER_BPS: Record<ReceiptTier, number> = {
   TIER_1: 10000, // 100% — TEE-attested via 0G Compute (router_flag / compute_sdk_process_response)
   TIER_2: 8500,  // 85% — external-signed (NVIDIA NIM, OpenAI, etc.); 15% delta to treasury
+};
+
+/**
+ * Efficiency-game multiplier table per planning-003 §A.4.4. Indexed by
+ * `[tier][attempts == 1 ? 'first' : 'retry']`. Values are basis points
+ * applied to the declared creator share. A `failed` outcome short-circuits
+ * to 0 regardless of tier (handled in `allocateFeeSplit` directly).
+ */
+export const EFFICIENCY_GAME_MULTIPLIER_BPS: Record<ReceiptTier, { first: number; retry: number }> = {
+  TIER_1: { first: 9500, retry: 8500 },
+  TIER_2: { first: 7000, retry: 7000 },
 };
 
 export interface FeeSplitInput {
@@ -41,6 +64,20 @@ export interface FeeSplitInput {
    * the lower payout.
    */
   tier?: ReceiptTier;
+  /**
+   * Settlement policy (planning-003 §A.4.4). Default `'flat'` matches
+   * the pre-A.4.4 behaviour exactly. `'efficiency-game'` conditions the
+   * creator share on `outcome.attempts` + `outcome.status` per the
+   * `EFFICIENCY_GAME_MULTIPLIER_BPS` table.
+   */
+  policy?: FeeSplitPolicy;
+  /**
+   * Run outcome — only consulted when `policy === 'efficiency-game'`.
+   * Defaults to `{ attempts: 1, status: 'ok' }` so a caller that opts
+   * into the policy without providing outcome details gets the
+   * first-attempt rate.
+   */
+  outcome?: { attempts: number; status: RunOutcomeStatus };
 }
 
 export interface FeeSplitAllocation {
@@ -50,7 +87,7 @@ export interface FeeSplitAllocation {
   declaredTreasuryBps: number;
   /** Receipt tier the multiplier was applied for. */
   tier: ReceiptTier;
-  /** Multiplier in bps (10000 = 100%, 8500 = 85%). */
+  /** Multiplier in bps (10000 = 100%, 8500 = 85%, etc.). */
   tierMultiplierBps: number;
   /** Effective creator bps after multiplier (= declaredCreatorBps * tierMultiplierBps / 10000). */
   creatorBps: number;
@@ -59,6 +96,10 @@ export interface FeeSplitAllocation {
   creatorNeuron: string;
   treasuryNeuron: string;
   creatorPassport?: string;
+  /** Settlement policy that was applied. */
+  policyApplied: FeeSplitPolicy;
+  /** Outcome record (efficiency-game only). */
+  outcomeApplied?: { attempts: number; status: RunOutcomeStatus };
 }
 
 export function allocateFeeSplit(input: FeeSplitInput): FeeSplitAllocation {
@@ -74,10 +115,26 @@ export function allocateFeeSplit(input: FeeSplitInput): FeeSplitAllocation {
   if (total < 0n) throw new Error('totalCostNeuron cannot be negative');
 
   const tier: ReceiptTier = input.tier ?? 'TIER_2';
-  const multiplierBps = TIER_MULTIPLIER_BPS[tier];
+  const policy: FeeSplitPolicy = input.policy ?? 'flat';
+  const outcome = input.outcome ?? { attempts: 1, status: 'ok' as const };
 
-  // Effective creator bps after tier multiplier — round down to the nearest
-  // bps to keep the bps-denominator clean (no fractional bps).
+  // Resolve the multiplier based on the policy.
+  let multiplierBps: number;
+  if (policy === 'efficiency-game') {
+    if (outcome.status === 'failed') {
+      // Failed runs route 100% to treasury; gas is still spent. Per
+      // planning-003 §A.4.4 ("failed = no creator payout").
+      multiplierBps = 0;
+    } else {
+      const slot = outcome.attempts <= 1 ? 'first' : 'retry';
+      multiplierBps = EFFICIENCY_GAME_MULTIPLIER_BPS[tier][slot];
+    }
+  } else {
+    multiplierBps = TIER_MULTIPLIER_BPS[tier];
+  }
+
+  // Effective creator bps after policy multiplier — round down to the
+  // nearest bps to keep the bps-denominator clean (no fractional bps).
   const effectiveCreatorBps = Math.floor((input.creatorBps * multiplierBps) / 10000);
   const effectiveTreasuryBps = 10000 - effectiveCreatorBps;
 
@@ -94,6 +151,8 @@ export function allocateFeeSplit(input: FeeSplitInput): FeeSplitAllocation {
     creatorNeuron: creatorAlloc.toString(),
     treasuryNeuron: treasuryAlloc.toString(),
     creatorPassport: input.creatorPassport,
+    policyApplied: policy,
+    outcomeApplied: policy === 'efficiency-game' ? outcome : undefined,
   };
 }
 

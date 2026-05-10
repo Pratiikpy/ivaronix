@@ -75,10 +75,63 @@ export const ConsensusTierEnum = z.enum(['quick', 'standard', 'high-stakes', 'au
 
 export type ConsensusTier = z.infer<typeof ConsensusTierEnum>;
 
+/**
+ * Aggregation policy applied to reviewer outputs (planning-003 §A.4.4 ·
+ * zer0Gig Efficiency Game). The policy decides what counts as "consensus
+ * reached" given a set of role outputs:
+ *
+ *   - `unanimous`: every reviewer must agree; one objection blocks.
+ *   - `majority`: ≥ ceil(N/2) reviewers must agree (default).
+ *   - `first-objection`: any single reviewer flagging a hard concern
+ *     short-circuits the run; the receipt records the objector's role
+ *     + the dissent text. Useful for high-stakes legal review.
+ *   - `weighted`: reviewers carry per-role weight from the skill manifest
+ *     (e.g. evidence-checker > critic > analyst); decision is the
+ *     weighted-majority sentiment.
+ *
+ * Studio Run panel exposes this as a "How strict?" dropdown:
+ *   - STRICT   = unanimous
+ *   - BALANCED = majority (skill default)
+ *   - LENIENT  = first-objection inverted (passes unless every reviewer
+ *               objects)
+ */
+export const ConsensusPolicyEnum = z.enum([
+  'unanimous',
+  'majority',
+  'first-objection',
+  'weighted',
+]);
+
+export type ConsensusPolicy = z.infer<typeof ConsensusPolicyEnum>;
+
 const Consensus = z.object({
   required: z.boolean().default(false),
   default_tier: ConsensusTierEnum.default('quick'),
+  /**
+   * Default aggregation policy. Optional + defaulted so older manifests
+   * keep their canonical hash. `majority` is the default because it's
+   * what `runConsensus` has implicitly applied since the receipt format
+   * shipped.
+   */
+  policy: ConsensusPolicyEnum.default('majority'),
 });
+
+/**
+ * Fee-split policy for receipts produced by this skill (planning-003
+ * §A.4.4 · zer0Gig Efficiency Game).
+ *
+ *   - `flat`: creator share is fixed (per the skill's `creator.fee_split`).
+ *     The default; matches the pre-A.4.4 behaviour exactly.
+ *   - `efficiency-game`: creator share is conditioned on outcome:
+ *       * TIER 1 first-attempt   → 95% of declared bps
+ *       * TIER 1 retry           → 85% of declared bps
+ *       * TIER 2 (any)           → 70% of declared bps
+ *       * failed (status = 'failed')  → 0%; treasury collects gas only
+ *     The skill opts in via this field; the runtime branches on it.
+ */
+export const FeeSplitPolicyEnum = z.enum(['flat', 'efficiency-game']);
+
+export type FeeSplitPolicy = z.infer<typeof FeeSplitPolicyEnum>;
 
 const Burn = z.object({
   auto_enable: z.boolean().default(false),
@@ -188,6 +241,15 @@ const OgBlock = z.object({
           message: 'creator + treasury must sum to 10000 basis points (100%)',
         })
         .optional(),
+      /**
+       * Fee-split policy for receipts produced by this skill
+       * (planning-003 §A.4.4). `flat` (default) routes the declared bps
+       * unconditionally. `efficiency-game` conditions the bps on outcome
+       * tier × attempts so a clean first-pass earns the full creator
+       * share while a retry-heavy run is settled at a discount. See
+       * `FeeSplitPolicyEnum` JSDoc for the bps schedule.
+       */
+      fee_split_policy: FeeSplitPolicyEnum.default('flat'),
     })
     .optional(),
   scanner: z

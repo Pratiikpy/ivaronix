@@ -61,7 +61,7 @@ Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates f
 | A.4.1 | Autonomous wander-cycle agent on TESTNET | shipped (`scripts/wander-cycle/`) — operator daemonising via §A-V2 next |
 | A.4.2 | Path-scoped `.claude/rules/*.md` (7 files) | shipped |
 | A.4.3 | CHANGELOG.md + commit-trailer convention | shipped |
-| A.4.4 | zer0Gig Efficiency Game adoption | queued (6h) |
+| A.4.4 | zer0Gig Efficiency Game adoption · schema + policy + fee-split + tests | Schema layer complete: receipt body's `outcome` block (`{attempts, firstAttemptScore?, finalScore?, retryReason?, status}`), skill manifest's `og.consensus.policy` (unanimous/majority/first-objection/weighted) + `og.creator.fee_split_policy` (flat/efficiency-game). Aggregation policy implemented in new `packages/consensus/src/policy.ts` with sentiment classifier (approve/reject/risk/neutral) + 4 policy shapes; wired through `runConsensus` so every receipt records `policyDecision: { decision, dissents, agreementBucket }`. Fee-split allocator extended with `EFFICIENCY_GAME_MULTIPLIER_BPS` table: TIER 1 first-attempt 95% / TIER 1 retry 85% / TIER 2 (any) 70% / failed → 0% (100% to treasury). 27 new tests (11 policy + 16 fee-split) pass; consensus suite 34/34, receipts suite 16/16. `private-doc-review` opts into `policy: first-objection` + `fee_split_policy: efficiency-game` as the canonical legal-review surface. **Deferred to next batch:** Studio Run-panel "How strict?" dropdown + `/r/[id]` EFFICIENCY% chip (UI layer · queued for batch 9). | partial · schema + logic + tests shipped, UI queued |
 | A.4.5 | `docs/MARKETPLACE_DESIGN.md` | shipped |
 | A.4.6 | `docs/SOLIDITY_CHOICES.md` | shipped |
 | A.4.7 | `docs/SKILL_PUBLISHING.md` | shipped |

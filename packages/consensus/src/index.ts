@@ -4,10 +4,12 @@ import type { Keyring, RouterCallResult } from '@ivaronix/og-router';
 import { ROLE_PROMPTS, type RoleId } from './prompts.js';
 import { computeConvergence, type ConvergenceResult } from './convergence.js';
 import { runGates, type GateInput, type GateResult } from './gates.js';
+import { applyPolicy, type ConsensusPolicy, type PolicyDecision } from './policy.js';
 
 export * from './prompts.js';
 export * from './convergence.js';
 export * from './gates.js';
+export * from './policy.js';
 
 export interface ConsensusInput {
   tier: ConsensusTier;
@@ -26,6 +28,19 @@ export interface ConsensusInput {
    * only zero-false-positive path for detecting an accidental key paste.
    */
   signerPrivateKey?: string;
+  /**
+   * Aggregation policy for the run (planning-003 §A.4.4 · zer0Gig
+   * Efficiency Game). Defaults to `'majority'` when unset, matching the
+   * pre-A.4.4 behaviour. Skill manifests can declare a per-skill default
+   * via `og.consensus.policy`; the Studio Run panel exposes a "How
+   * strict?" override (STRICT/BALANCED/LENIENT/WEIGHTED) that lands here.
+   */
+  policy?: ConsensusPolicy;
+  /**
+   * Optional per-role weights for `policy: 'weighted'`. Map of `RoleId`
+   * → numeric weight. Reviewers without an entry default to weight 1.
+   */
+  weights?: Record<string, number>;
 }
 
 export interface RoleAttestation {
@@ -59,6 +74,13 @@ export interface ConsensusResult {
   };
   /** Gate result captured pre-flight. */
   gateResult: GateResult;
+  /**
+   * Aggregation-policy decision (planning-003 §A.4.4). Records what
+   * policy actually ran + whether the reviewers' aggregate stance
+   * passed or blocked. `null` for tiers with fewer than 2 reviewers
+   * (the policy layer is meaningless on a single-reviewer run).
+   */
+  policyDecision: PolicyDecision | null;
 }
 
 /**
@@ -171,6 +193,20 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
   // Per 0G_TESTNET_NOTES.md: 0.05 OG / 1M input + 0.10 OG / 1M output
   const estimatedCostOg = (totalInputTokens * 0.05 + totalOutputTokens * 0.10) / 1_000_000;
 
+  // Policy decision (planning-003 §A.4.4 · zer0Gig Efficiency Game).
+  // Single-reviewer tiers (`quick`) have no meaningful policy layer; the
+  // judge synthesis IS the decision in that case. For 2+ reviewers, run
+  // the configured policy and record what it produced so verifiers can
+  // re-run it offline.
+  const policyDecision: PolicyDecision | null =
+    reviewerOutputs.length >= 2
+      ? applyPolicy({
+          reviewerOutputs,
+          policy: input.policy ?? 'majority',
+          ...(input.weights ? { weights: input.weights } : {}),
+        })
+      : null;
+
   return {
     tier,
     roles: roleIds,
@@ -180,6 +216,7 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
     attestations,
     billing: { totalInputTokens, totalOutputTokens, estimatedCostOg },
     gateResult,
+    policyDecision,
   };
 }
 

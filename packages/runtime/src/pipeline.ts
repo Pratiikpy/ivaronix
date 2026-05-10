@@ -310,6 +310,10 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
         estimatedCostOg: 0,
       },
       gateResult: { pass: true, warnings: [] },
+      // Single-reviewer (TIER 2 NVIDIA) runs have no policy layer — the
+      // judge synthesis IS the decision. Per planning-003 §A.4.4 the
+      // policyDecision field is null for these.
+      policyDecision: null,
     };
   } else {
     // TIER 1 default — 0G Router with TEE attestation
