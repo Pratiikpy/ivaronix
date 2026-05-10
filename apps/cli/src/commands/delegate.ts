@@ -9,6 +9,7 @@ import {
 import { ulid, studioUrl, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { confirmAction } from '../lib/confirm.js';
 import { docCommand } from './doc.js';
 
 /**
@@ -401,9 +402,10 @@ delegateCommand
 // ─── delegate revoke ─────────────────────────────────────────────────────
 delegateCommand
   .command('revoke <delegateId>')
-  .description('Revoke the most recent active capability grant for this delegate (revokeGrant on chain)')
+  .description('Revoke the most recent active capability grant for this delegate (revokeGrant on chain). Confirms interactively unless --yes is passed.')
   .option('--skill <id>', 'revoke a specific skill grant (default: most recent active)', '')
-  .action(async (rawId: string, opts: { skill: string }) => {
+  .option('-y, --yes', 'skip interactive confirmation (CI / scripted use)', false)
+  .action(async (rawId: string, opts: { skill: string; yes: boolean }) => {
     const env = loadEnv();
     if (!env.privateKey) { ui.fail('need IVARONIX_SIGNER_KEY (legacy alias EVM_PRIVATE_KEY still resolves)'); process.exitCode = 1; return; }
 
@@ -432,6 +434,17 @@ delegateCommand
     const cap = new CapabilityRegistryClient(capAddr, userWallet);
 
     ui.title(`Revoking grant ${target.grantId.slice(0, 18)}… for skill ${target.skillId}`);
+    // HALF_BAKED §I-19 closure (sweep 169): destructive on-chain tx
+    // confirms before submission unless --yes flag was passed.
+    if (!opts.yes) {
+      const proceed = await confirmAction(
+        `This will spend gas to revoke grant ${target.grantId.slice(0, 18)}… on chain. Proceed?`,
+      );
+      if (!proceed) {
+        ui.info('aborted (no tx submitted)');
+        return;
+      }
+    }
     ui.pending('submitting revoke tx...');
     const tx = await cap.revokeGrant(target.grantId as Hash);
     const receipt = await tx.wait();

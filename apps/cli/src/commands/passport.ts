@@ -7,6 +7,7 @@ import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { createStorageClient } from '@ivaronix/og-storage';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { confirmAction } from '../lib/confirm.js';
 import { addConsolidateCommand } from './passport-consolidate.js';
 
 interface LocalPassportFile {
@@ -355,8 +356,9 @@ passportCommand
 // ─── revoke ──────────────────────────────────────────────────────────────────
 passportCommand
   .command('revoke <executor>')
-  .description('Revoke an executor address')
-  .action(async (executor: string) => {
+  .description('Revoke an executor address. Confirms interactively unless --yes is passed.')
+  .option('-y, --yes', 'skip interactive confirmation (CI / scripted use)', false)
+  .action(async (executor: string, opts: { yes: boolean }) => {
     const env = loadEnv();
     if (!env.privateKey) {
       ui.fail('No IVARONIX_SIGNER_KEY (legacy: EVM_PRIVATE_KEY) in .env');
@@ -380,6 +382,17 @@ passportCommand
     }
     ui.title(`revoking executor ${executor}`);
     ui.divider();
+    // HALF_BAKED §I-19 closure (sweep 169): destructive on-chain tx
+    // confirms before submission unless --yes flag was passed.
+    if (!opts.yes) {
+      const proceed = await confirmAction(
+        `This will spend gas to revoke executor ${executor} from passport tokenId ${tokenId} on chain. Proceed?`,
+      );
+      if (!proceed) {
+        ui.info('aborted (no tx submitted)');
+        return;
+      }
+    }
     const tx = await client.revokeExecutor(tokenId, executor as Address);
     ui.pending(`tx ${tx.hash}`);
     const receipt = await tx.wait();
