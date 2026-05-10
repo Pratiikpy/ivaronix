@@ -1,6 +1,7 @@
 # Ivaronix · Half-Baked Punch List
 
-> Brutal-honest audit assembled by 5 parallel subagents on 2026-05-09.
+> Brutal-honest audit assembled by 5 parallel subagents on 2026-05-09. Frozen as the audit-snapshot reference; **closures since 2026-05-10 live in `CHANGELOG.md` (audit-fix ledger) and are queryable via `pnpm audit:list`**. Items below may already be shipped — read this doc to understand the audit *call*, then cross-reference for the *closure*. The Section A high-severity items in particular have all closed (S-1 through S-5 in commits before the `Closes audit` trailer convention shipped, then K-1/K-2/K-8/K-9/K-15/K-20/L-7/H-1/H-2/H-4/I-1/I-2 across the V2 contract migration commits).
+>
 > Standard: this should look like Linear, Stripe, Vercel — not a hackathon submission.
 > Scope: full codebase, not just planning docs. Findings outside `planning-01.md` and `planning-002.md`.
 >
