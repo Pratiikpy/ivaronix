@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { createStorageClient } from '@ivaronix/og-storage';
 import { ensureEnv } from '@/lib/boot-env';
 import { getNetwork } from '@/lib/chain';
+import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,9 +24,27 @@ interface OnboardMetadataBody {
  * If 0G Storage upload fails (transient testnet issues), we fall back to a
  * sha256 of the canonical JSON as the metadataRoot so onboarding still
  * completes; the receipt model treats this as TIER 2 evidence.
+ *
+ * SIWE is intentionally NOT required here — the user is about to mint
+ * their first AgentPassport, so they have no session to bind to.
+ * Operator-wallet drain defense is per-IP throttle: each call burns
+ * operator gas on a 0G Storage upload, so the 'onboard' rate-limit bucket
+ * caps a single IP at 5 mint attempts per 15 minutes. Legit retries fit
+ * comfortably; bot drains hit the ceiling on the second IP rotation.
  */
 export async function POST(req: Request) {
   await ensureEnv();
+
+  // Per-IP onboard cap. Operator pays storage gas every call; without this,
+  // an anonymous loop drains the operator wallet's 0G balance.
+  const clientIp = readClientIp(req.headers);
+  const ipLimit = checkRateLimit('onboard', clientIp);
+  if (!ipLimit.ok) {
+    return NextResponse.json(
+      { error: `onboard rate limit exceeded · retry after ${Math.ceil((ipLimit.resetMs - Date.now()) / 1000)}s` },
+      { status: 429, headers: rateLimitHeaders(ipLimit) },
+    );
+  }
 
   let body: OnboardMetadataBody;
   try {

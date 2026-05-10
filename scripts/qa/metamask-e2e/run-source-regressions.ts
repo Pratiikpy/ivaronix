@@ -72,6 +72,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-seed-skill-manifests/, // .claude/rules/skills.md · every first-party SKILL.md parses against the canonical schema (sweep 103)
       /^verify-canonical-env-aliases-everywhere/, // §15 · every legacy env-var alias has canonical IVARONIX_* counterpart adjacent (sweep 107 · amnesty pattern)
       /^verify-no-direct-legacy-env-reads/, // §15 · no process.env.<LEGACY> read without canonical fallback (sweep 114 · locks 10 amnesty-mined bugs)
+      /^verify-api-route-rate-limit/, // K-8 family · every operator-write Studio API route gates on checkRateLimit (sweep 119 · /api/onboard/metadata gap fix)
     ],
   },
   'studio-live': {

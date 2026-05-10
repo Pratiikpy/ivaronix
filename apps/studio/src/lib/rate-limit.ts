@@ -26,7 +26,7 @@ export interface RateLimitResult {
   windowSec: number;
 }
 
-export type RateKind = 'ip' | 'wallet' | 'skill-save' | 'memory-write';
+export type RateKind = 'ip' | 'wallet' | 'skill-save' | 'memory-write' | 'onboard';
 
 /**
  * Slide a bucket and check whether one more hit fits.
@@ -43,6 +43,7 @@ export function checkRateLimit(
     wallet: { limit: 50, windowSec: 3_600 }, // 50 authenticated runs per hour per wallet
     'skill-save': { limit: 5, windowSec: 3_600 }, // 5 manifest saves per hour per wallet
     'memory-write': { limit: 60, windowSec: 3_600 }, // 60 memory writes per hour per wallet (~1/min)
+    onboard: { limit: 5, windowSec: 900 }, // 5 onboard-metadata uploads per 15 min per IP (operator pays gas; tight ceiling, legit retry budget)
   };
   const limit = opts?.limit ?? limits[kind].limit;
   const windowSec = opts?.windowSec ?? limits[kind].windowSec;
