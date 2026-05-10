@@ -1,6 +1,4 @@
 [
-  "BRAND.md:37:leverage",
-  "CHANGELOG.md:90:leverage",
   "QA_TEST_PROGRESS.md:156:harness",
   "QA_TEST_PROGRESS.md:156:unlock",
   "QA_TEST_PROGRESS.md:157:harness",
@@ -10,7 +8,6 @@
   "docs/HALF_BAKED.md:148:seamless",
   "docs/HALF_BAKED.md:162:seamless",
   "docs/HALF_BAKED.md:603:harness",
-  "docs/PASS77_F1h_impact_analysis.md:32:leverage",
   "docs/PHASE_B_DISCLOSURES.md:44:harness",
   "docs/QA_FULL_PRODUCT_REPORT.md:111:harness",
   "docs/QA_FULL_PRODUCT_REPORT.md:152:unlock",
@@ -22,7 +19,5 @@
   "docs/USER_TODO.md:453:harness",
   "docs/planning-003.md:391:harness",
   "docs/planning-01.md:65:in today's fast-paced world",
-  "wanderingthoughts.md:11:leverage",
-  "wanderingthoughts.md:21:leverage",
   "wanderingthoughts.md:663:in today's fast-paced world"
 ]

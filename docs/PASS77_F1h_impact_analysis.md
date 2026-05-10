@@ -29,7 +29,7 @@ After F-1a..F-1g landed (499 TS files vendored across 6 OpenCode packages — `o
 OpenCode is built on **Effect 4.0-beta.59**, an FP-runtime library in the spirit of fp-ts/cats. 256 of the 499 vendored files import `effect` or `@effect/...`. This is not a casual dependency — it shapes how OpenCode does *everything*: error handling, async flow, dependency injection, retries.
 
 **Port options:**
-- **(a) Pin effect@4.0.0-beta.59 + transitive deps** — works for compile-time, but our existing code doesn't use effect, so we'd be running an FP runtime no other Ivaronix code touches. Bundle bloat without leverage.
+- **(a) Pin effect@4.0.0-beta.59 + transitive deps** — works for compile-time, but our existing code doesn't use effect, so we'd be running an FP runtime no other Ivaronix code touches. Bundle bloat without payoff.
 - **(b) Replace effect with our existing patterns** — would require rewriting all 256 files. Effectively re-implementing OpenCode's flow control. Multi-week effort just to undo a design choice.
 - **(c) Quarantine** — keep effect inside `opencode-*` packages, never let it leak into our existing code. Requires strict export discipline + lint rules.
 

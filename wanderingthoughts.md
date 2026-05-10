@@ -8,7 +8,7 @@
 
 ---
 
-## TL;DR · The 12 highest-leverage fixes from 92 wander-thoughts
+## TL;DR · The 12 highest-impact fixes from 92 wander-thoughts
 
 > Generated 2026-05-10 after the loop hit its stop condition (30 sessions + 92 thoughts + 55 angles). Ranked by ratio of (Criterion-impact × code-truth) ÷ (effort). Read these first; everything else expands on a slice.
 
@@ -18,7 +18,7 @@
 2. **#88 · CLI receipt verify is V1-only.** `apps/cli/src/commands/receipt.ts:5` imports V1 client. After K-2 mainnet redeploy, `ivaronix receipt verify <id>` (the gold-standard command) returns "not found" for V2 receipts. **Fix BEFORE mainnet redeploy.** ~1hr.
 3. **#37 + #41 + #45 + #51 · Studio V1-blindness across 5 surfaces.** `/`, `/agents`, `/skills`, `/global`, `/embed/r/[id]` all read V1 only. Plus `/onboard` mints to V1 (#51). Pattern fix: V2-first-V1-fallback in `getReceiptRegistry()` + `getDeployedAddress()`. ~1hr.
 
-**High-leverage docs (zero engineering)**
+**High-impact docs (zero engineering)**
 
 4. **#55 · Doc discoverability gap.** `PHASE_B_DISCLOSURES.md`, `CRYPTO_NOTES.md`, `HASH_FUNCTION.md` are graduate-level depth artifacts unlinked from README/PITCH/JUDGE_GUIDE. Add a "Documentation" section to README. ~30min. Direct Criterion 5 lift.
 5. **#56 · README has zero images; Aishi packs 8.** Capture 6 product screenshots via existing E2E harness; add 2×3 markdown table to README. ~75min. Closes Criterion 4 visual-density gap.

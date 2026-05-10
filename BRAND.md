@@ -34,7 +34,7 @@ Not legal advice. Not a registered trademark filing. Not a substitute for an act
 
 ## Why this exists
 
-The `LICENSE` file's MIT grant covers the code in this repo — generously, intentionally. But MIT doesn't carve out brand. By default that means a hostile fork could ship at a confusable domain with the same logo and the same wordmark, and the project would have no leverage. That outcome would erode trust in every receipt anchored under the Ivaronix mark — including receipts already on chain.
+The `LICENSE` file's MIT grant covers the code in this repo — generously, intentionally. But MIT doesn't carve out brand. By default that means a hostile fork could ship at a confusable domain with the same logo and the same wordmark, and the project would have no recourse. That outcome would erode trust in every receipt anchored under the Ivaronix mark — including receipts already on chain.
 
 This doc puts the brand rule in writing so a fork's choice to use it anyway is an explicit step, not an oversight.
 
