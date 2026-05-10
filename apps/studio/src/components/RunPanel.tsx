@@ -77,6 +77,11 @@ interface RunResponse {
   receiptOnchainId?: string | null;
   scan?: { matches: boolean; registered: boolean; revoked: boolean; creator: string | null; onchainManifestHash: string | null } | null;
   skill?: { id: string; version: string };
+  // HALF_BAKED §I-4 (sweep 157): TEE attestation aggregate. true = all roles
+  // attested on 0G Compute; false = TIER 2 / external-signed; null = no
+  // TEE check requested. Gates the TEE chip on real attestation, not
+  // on scan.matches.
+  teeRouterVerified?: boolean | null;
   // Storage evidence — populated when /api/run uploads to 0G Storage. Until
   // HALF_BAKED H-3 ships real Studio-side upload, evidenceRoot is null and
   // the Storage light stays pending honestly.
@@ -205,7 +210,12 @@ export function RunPanel(props: RunPanelProps = {}) {
           // pending — honest about what actually happened.
           Storage: data.storage?.evidenceRoot ? 'verified' : 'pending',
           Compute: 'verified',
-          TEE: data.scan?.matches ? 'verified' : 'pending',
+          // HALF_BAKED §I-4 closure: gate TEE light on real attestation,
+          // not on scan.matches (which is a skill-registry hash check).
+          // teeRouterVerified === true means all consensus roles ran on
+          // 0G Compute and the router flagged them attested.
+          // false → TIER 2 / external-signed; null → no TEE check requested.
+          TEE: data.teeRouterVerified === true ? 'verified' : 'pending',
           Chain: data.receiptTxHash ? 'verified' : 'pending',
         });
       } else {

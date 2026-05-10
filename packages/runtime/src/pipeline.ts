@@ -115,6 +115,15 @@ export interface PipelineOutput {
   receiptOnchainId: bigint | null;
   scan: ScanResult | undefined;
   /**
+   * Aggregate TEE attestation per HALF_BAKED §I-4 (sweep 157).
+   *   true   → every consensus role ran on 0G Compute and routerVerified=true
+   *   false  → at least one role is TIER 2 / external-signed (e.g. nvidia-nim)
+   *   null   → no TEE check requested (empty attestations array)
+   * /api/run forwards this so RunPanel can gate the TEE light on real
+   * attestation status instead of a skill-registry hash match.
+   */
+  teeRouterVerified: boolean | null;
+  /**
    * 0G Storage Merkle root for the run's evidence blob, when the pipeline
    * uploaded one. `null` when no upload happened (the runtime path today
    * does not upload — see HALF_BAKED.md H-3). Surfaced so /api/run can
@@ -470,6 +479,16 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     for (const lg of r.logs) log.info(tag(`hook                 ${lg}`));
   }
 
+  // Aggregate TEE attestation per HALF_BAKED §I-4 (sweep 157). All roles
+  // must be routerVerified for the receipt-level TIER 1 claim to hold;
+  // a TIER 2 (nvidia/external-signed) run reports false. Returned
+  // alongside the consensus result so RunPanel can gate the TEE light
+  // on real attestation status instead of skill-registry match.
+  const teeRouterVerified: boolean | null =
+    consensus.attestations.length > 0
+      ? consensus.attestations.every((a) => a.routerVerified === true)
+      : null;
+
   return {
     skill,
     finalText,
@@ -480,6 +499,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptTxHash,
     receiptOnchainId,
     scan,
+    teeRouterVerified,
     // No 0G Storage upload happens in the Studio runtime path today (see
     // HALF_BAKED.md H-3). When H-3 lands, the upload result's Merkle root
     // populates this field; until then `null` is the honest answer and

@@ -164,6 +164,10 @@ export async function POST(req: Request) {
           }
         : null,
       skill: { id: result.skill.id, version: result.skill.manifest.version },
+      // Real TEE attestation aggregate per HALF_BAKED §I-4. RunPanel
+      // gates its TEE light on this, NOT on scan.matches (which is a
+      // skill-registry hash check, unrelated to TEE).
+      teeRouterVerified: result.teeRouterVerified,
       // Storage evidence root (S-3 + future H-3): populated when /api/run
       // uploads the encrypted blob to 0G Storage. Today the Studio path does
       // not upload — RunPanel correctly leaves the Storage light pending when
