@@ -18,7 +18,7 @@ import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
  * per-agent monotonic nonces — every anchor consumes one and they cannot
  * be reused.
  *
- * Migration: V1 stays live for the existing 1,330+ anchored receipts —
+ * Migration: V1 stays live for the existing anchored receipts —
  * chain history is immutable. V2 is a fresh deployment for new anchors.
  * Off-chain verifiers branch on `chainAnchor.registryAddress` to know
  * which contract to query.

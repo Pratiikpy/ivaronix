@@ -528,7 +528,7 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 - `contracts/test/ReceiptRegistryV2.t.sol` — 15 tests covering happy path, forged-agent rejection, replay rejection, deadline enforcement, zero-field rejections, tampered-field recovery failure, monotonic nonces, pause control. Full repo Foundry suite 121/121 (was 106/106).
 - `contracts/script/DeployReceiptRegistryV2.s.sol` shipped; ~0.05 OG on Galileo (funded).
 - `docs/USER_TODO.md` §A-V2-K2 has the exact `forge script` runbook + TS-client + Studio follow-up notes.
-- V1 stays live for the 1,330+ existing anchored receipts (chain history immutable); V2 is a fresh anchor target. Off-chain TS clients + Studio receipt-loader need follow-up to branch on `chainAnchor.registryAddress`.
+- V1 stays live for the existing anchored receipts (chain history immutable); V2 is a fresh anchor target. Off-chain TS clients + Studio receipt-loader need follow-up to branch on `chainAnchor.registryAddress`.
 - `contracts/src/AgentPassportINFTV2.sol` — `recordReceipt` is authorizedRecorders-only, cross-checks receiptId on `ReceiptRegistry` (root + type + agentAddress), caps trustScoreDelta to ±100. K-4: per-token `executorVersion` bumps on transfer; old grants stop matching. K-6: mint writes `passportOf` before `_safeMint` + `nonReentrant`.
 - `contracts/test/AgentPassportINFTV2.t.sol` — 16 tests; full Foundry suite 106/106 (was 90/90).
 - `contracts/script/DeployPassportV2.s.sol` shipped; ~0.05 OG on Galileo (funded, A-1).

@@ -30,7 +30,7 @@ async function loadReceipt(idOrRoot: string): Promise<ResolvedReceipt | null> {
   if (!isId && !isRoot) return null;
 
   // Try V2 first (K-2 fix is the active path); fall back to V1 (legacy
-  // 1,330+ receipts). Receipt id namespaces don't collide because V2
+  // receipts). Receipt id namespaces don't collide because V2
   // starts at 0 with a fresh deploy; the same id can resolve in both
   // contracts but V2 is the newer authority for fresh anchors.
   const tries: Array<{ version: 'v1' | 'v2'; load: () => Promise<OnChainReceipt | null> }> = [];
@@ -251,7 +251,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
                 border: '1px dashed var(--color-hairline, #d4d4d4)',
                 borderRadius: 999,
               }}
-              title="Anchored on the V1 ReceiptRegistry. New receipts use V2 (EIP-712 agent recovery, K-2 fix). V1 stays live for the existing 1,330+ receipts."
+              title="Anchored on the V1 ReceiptRegistry. New receipts use V2 (EIP-712 agent recovery, K-2 fix). V1 stays live for the existing legacy receipts."
             >
               LEGACY-REGISTRY
             </span>

@@ -9,7 +9,7 @@
       "address": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "txHash": "0xb85786794d267ffd1851eccfb90e27e19019ce7c763e3384306630288ecf1814",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
-      "note": "V1; stays live for the 1,330+ existing anchored receipts (chain history immutable). New anchors land on ReceiptRegistryV2."
+      "note": "V1; stays live for the existing anchored receipts (chain history immutable; current count auto-derived in docs/numbers.json). New anchors land on ReceiptRegistryV2."
     },
     "ReceiptRegistryV2": {
       "address": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",

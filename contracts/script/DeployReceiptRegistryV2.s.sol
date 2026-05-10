@@ -15,7 +15,7 @@ import {ReceiptRegistryV2} from "../src/ReceiptRegistryV2.sol";
  *
  * After deploy: add the new address to `contracts/deployments/testnet.json`
  * under a `ReceiptRegistryV2` key (leave V1 entry untouched — the existing
- * 1,330+ anchored receipts stay readable on V1; V2 is a fresh anchor target
+ * anchored receipts stay readable on V1; V2 is a fresh anchor target
  * for new receipts going forward).
  *
  * Off-chain TS clients (`packages/og-chain/src/contracts/ReceiptRegistry.ts`,

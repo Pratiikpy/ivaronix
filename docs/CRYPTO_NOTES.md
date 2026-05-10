@@ -54,7 +54,7 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Source.** `packages/core/src/canonical.ts`.
 
-**Known limitation (K-15, planned).** The current canonicalization uses Node's `JSON.stringify` directly on values — Number formatting follows ECMAScript semantics. A Rust or Go verifier cannot reproduce the same hash without replicating JS-specific behavior. The fix in flight: adopt RFC-8785 (JCS) strictly + ship Rust + Go + Python reference verifiers. Forward-only via `schemaVersion: '1.0' | '2.0'` so existing 1,330+ receipts remain byte-identical on chain.
+**Known limitation (K-15, planned).** The current canonicalization uses Node's `JSON.stringify` directly on values — Number formatting follows ECMAScript semantics. A Rust or Go verifier cannot reproduce the same hash without replicating JS-specific behavior. The fix in flight: adopt RFC-8785 (JCS) strictly + ship Rust + Go + Python reference verifiers. Forward-only via `schemaVersion: '1.0' | '2.0'` so existing receipts remain byte-identical on chain.
 
 ---
 
@@ -92,7 +92,7 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Threat model.** Any wallet can anchor any `receiptRoot` claiming any agent identity. Chain-only verifiers see the lie. The off-chain receipt body's signature is the only honest agent attribution today.
 
-**Fix in flight (K-2).** `ReceiptRegistryV2` recovers `agentAddress` from an EIP-712 typed-data signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)`. Replay protection via per-agent nonces. Verifier branches on `chainAnchor.registryAddress` so 1,330+ legacy receipts remain valid on V1.
+**Fix in flight (K-2).** `ReceiptRegistryV2` recovers `agentAddress` from an EIP-712 typed-data signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)`. Replay protection via per-agent nonces. Verifier branches on `chainAnchor.registryAddress` so legacy receipts remain valid on V1.
 
 ---
 

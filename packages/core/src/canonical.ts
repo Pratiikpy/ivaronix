@@ -35,7 +35,7 @@ export function canonicalHash(value: unknown, excludeKeys?: ReadonlySet<string>)
  * receipts schemaVersion 2.0+. Use this once the polyglot reference
  * verifiers (Rust + Go + Python) have shipped — until then, new receipts
  * MUST keep using `canonicalHash` for compatibility with the existing
- * 1,330+ anchored receipts. K-15 in HALF_BAKED.md tracks the full
+ * anchored receipts. K-15 in HALF_BAKED.md tracks the full
  * migration; the verifier branches on `schemaVersion` so v1 + v2
  * receipts coexist forever.
  */

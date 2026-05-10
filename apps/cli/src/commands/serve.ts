@@ -153,7 +153,7 @@ export const serveCommand = new Command('serve')
           const id = receiptMatch[1]!;
           // V2-first read pattern (per .claude/rules/og-chain.md): try V2,
           // fall back to V1. New anchors land on V2; V1 holds the legacy
-          // 1,330+ receipts. Either path can resolve depending on which
+          // receipts. Either path can resolve depending on which
           // registry the receipt was anchored to.
           let onChain;
           if (v2Addr) {

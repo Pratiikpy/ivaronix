@@ -550,7 +550,7 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   const wallet = new Wallet(env.privateKey, provider);
 
   // Prefer V2 registry when deployed (HALF_BAKED K-2 fix). V1 stays live
-  // forever for the existing 1,330+ anchored receipts; new anchors land
+  // forever for the existing anchored receipts; new anchors land
   // on V2 if present so the agentAddress on chain is the recovered
   // EIP-712 signer instead of `msg.sender`.
   const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');

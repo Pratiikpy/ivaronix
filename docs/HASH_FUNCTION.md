@@ -80,7 +80,7 @@ When a polyglot verifier ships, it must include the same vectors as a hard CI ga
 
 ## 4 · `schemaVersion` migration
 
-Receipts produced before 2026-05-10 use the V1 canonical hash (Node-`JSON.stringify`-based). Bumping every existing receipt would invalidate 1,330+ on-chain `receiptRoot` values. The migration is **forward-only via a `schemaVersion` field at the receipt root**:
+Receipts produced before 2026-05-10 use the V1 canonical hash (Node-`JSON.stringify`-based). Bumping every existing receipt would invalidate every on-chain `receiptRoot` value already anchored (current count auto-derived in `docs/numbers.json` · `receipts.total`). The migration is **forward-only via a `schemaVersion` field at the receipt root**:
 
 - **`schemaVersion: '1.0'` (or absent)** → use `canonicalHash(...)` from `packages/core/src/canonical.ts`.
 - **`schemaVersion: '2.0'`** → use `canonicalHashV2(...)` from `packages/core/src/canonical.ts` (which is `keccak256(jcs(strip(value)))`).

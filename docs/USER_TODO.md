@@ -122,7 +122,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   ```
 
 - **Post-deploy:**
-  1. Add the new `ReceiptRegistryV2` address to `contracts/deployments/testnet.json` under a new `ReceiptRegistryV2` key. Leave the V1 `ReceiptRegistry` entry untouched — the existing 1,330+ anchored receipts stay readable on V1.
+  1. Add the new `ReceiptRegistryV2` address to `contracts/deployments/testnet.json` under a new `ReceiptRegistryV2` key. Leave the V1 `ReceiptRegistry` entry untouched — the existing anchored receipts stay readable on V1.
   2. The TS clients (`packages/og-chain/src/contracts/ReceiptRegistry.ts`, `packages/runtime/src/pipeline.ts`) need a follow-up to sign the V2 EIP-712 typed data + call the new `anchor((root, storageRoot, type, attestationHash, agent, deadline), signature)` shape. Agent picks this up after the deploy lands.
   3. Studio receipt-loader follow-up: branch on `chainAnchor.registryAddress` so `/r/<id>` queries V2 first and falls back to V1; existing receipts get a `LEGACY-REGISTRY` chip.
 
