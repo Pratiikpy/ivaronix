@@ -78,18 +78,17 @@ const SHOTS: Shot[] = [
       await page.goto(`${STUDIO_BASE}/`, { waitUntil: 'networkidle' });
     },
     setup: async (page) => {
-      // Click "Use sample contract" to populate the input, then click
-      // Run to trigger the four-light sequence. Capture mid-flight.
+      // Click "Use sample contract" to populate the input. We DELIBERATELY
+      // do not click Run — without real Router credentials the run would
+      // fail with a "Provider proxy" toast, which is honest but bad for
+      // the README's first-scroll impression. Pre-Run "ready" state shows
+      // the sample-contract loaded + four lights pending + question
+      // populated, which is the actual demoable state for an offline reader.
       const sampleBtn = page.getByRole('button', { name: /sample contract/i });
       if (await sampleBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
         await sampleBtn.click();
       }
-      const runBtn = page.getByRole('button', { name: /^run\b/i });
-      if (await runBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await runBtn.click();
-        // Allow the four-light row to enter `Compute: active` state.
-        await page.waitForTimeout(1500);
-      }
+      await page.waitForTimeout(500);
     },
   },
   {
@@ -105,15 +104,22 @@ const SHOTS: Shot[] = [
   },
   {
     name: 'burn-mode',
-    path: `${STUDIO_BASE}/`,
+    path: `${STUDIO_BASE}/r/${RECEIPT_ID}`,
     navigate: async (page) => {
-      await page.goto(`${STUDIO_BASE}/`, { waitUntil: 'networkidle' });
+      // Burn Mode visualisation lives on the receipt page (the home
+      // page has no burn dialog). The receipt body's `burn` block
+      // renders the AES-256-GCM key fingerprint, the destroyed-at
+      // timestamp, and the cleanup status.
+      await page.goto(`${STUDIO_BASE}/r/${RECEIPT_ID}`, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(500);
     },
     setup: async (page) => {
-      // Click the Burn Mode info link/dialog if available.
-      const burnLink = page.getByText(/burn mode/i).first();
-      if (await burnLink.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await burnLink.hover();
+      // The "burn mode · evidence proof" section header lives mid-page;
+      // its block carries the AES-256-GCM key fingerprint, the destroyed-at
+      // timestamp, and the cleanup status. Center it in the viewport.
+      const burnSection = page.getByText(/burn mode · evidence proof/i).first();
+      if (await burnSection.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await burnSection.evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' as ScrollBehavior }));
         await page.waitForTimeout(500);
       }
     },

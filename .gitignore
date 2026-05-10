@@ -71,8 +71,15 @@ coverage/
 playwright-report/
 .playwright-mcp/
 
-# Visual evidence — kept locally, organized by round / surface; not pushed
-screenshots/
+# Visual evidence — kept locally, organized by round / surface; not pushed.
+# Exception: screenshots/readme/ holds the 6 README "Visual tour" PNGs
+# committed for GitHub render (planning-003 §A.2.2). Refresh via
+# `pnpm screenshots:refresh` against a live Studio dev server.
+# (Use `screenshots/*` not `screenshots/` so the unignore on the
+# subdirectory below actually takes effect — git won't traverse into a
+# fully-ignored parent dir.)
+screenshots/*
+!screenshots/readme/
 
 # MetaMask Playwright profile dirs (runtime artefacts, not code)
 scripts/qa/metamask-e2e/mm/
