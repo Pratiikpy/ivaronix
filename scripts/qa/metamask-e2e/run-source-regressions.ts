@@ -71,6 +71,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-ghost-surfaces/, // meta · every HLD §1 surface row maps to a real apps/<name>/ with tracked files (sweep 100)
       /^verify-seed-skill-manifests/, // .claude/rules/skills.md · every first-party SKILL.md parses against the canonical schema (sweep 103)
       /^verify-canonical-env-aliases-everywhere/, // §15 · every legacy env-var alias has canonical IVARONIX_* counterpart adjacent (sweep 107 · amnesty pattern)
+      /^verify-no-direct-legacy-env-reads/, // §15 · no process.env.<LEGACY> read without canonical fallback (sweep 114 · locks 10 amnesty-mined bugs)
     ],
   },
   'studio-live': {

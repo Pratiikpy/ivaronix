@@ -113,8 +113,8 @@ async function main(): Promise<void> {
   console.log('   ✓ all 5 expected tools present');
 
   console.log('\n=== 3. tools/call ivaronix_passport_show (real chain read) ===');
-  const wallet = process.env.EVM_WALLET_ADDRESS;
-  if (!wallet) throw new Error('EVM_WALLET_ADDRESS missing in env');
+  const wallet = process.env.IVARONIX_WALLET_ADDRESS ?? process.env.EVM_WALLET_ADDRESS;
+  if (!wallet) throw new Error('IVARONIX_WALLET_ADDRESS missing in env (legacy alias EVM_WALLET_ADDRESS still resolves)');
   const call = await send({
     jsonrpc: '2.0', id: 3, method: 'tools/call',
     params: { name: 'ivaronix_passport_show', arguments: { wallet } },

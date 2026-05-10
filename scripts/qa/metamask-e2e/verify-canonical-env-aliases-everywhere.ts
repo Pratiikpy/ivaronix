@@ -80,6 +80,7 @@ const SKIP_PATHS = new Set([
   'scripts/qa/metamask-e2e/verify-agents-md-canonical-aliases.ts',
   'scripts/qa/metamask-e2e/verify-canonical-env-aliases-everywhere.ts',
   'scripts/qa/metamask-e2e/canonical-alias-amnesty.json', // this gate's own amnesty data
+  'scripts/qa/metamask-e2e/verify-no-direct-legacy-env-reads.ts', // sister gate · docstring shows ❌ counter-examples
 ]);
 
 const SKIP_PREFIXES = [

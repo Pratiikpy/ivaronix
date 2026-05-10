@@ -8,8 +8,8 @@ import { createStorageClient, burnEncrypt } from '@ivaronix/og-storage';
 dotenvConfig();
 
 async function main() {
-  const pk = process.env.EVM_PRIVATE_KEY ?? process.env.OG_PRIVATE_KEY;
-  if (!pk) throw new Error('Set EVM_PRIVATE_KEY in .env');
+  const pk = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
+  if (!pk) throw new Error('Set IVARONIX_SIGNER_KEY in .env (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)');
 
   const storage = createStorageClient({ network: 'testnet', privateKey: pk });
 

@@ -26,7 +26,7 @@ import { createOg } from '@ivaronix/og-toolkit';
 async function main() {
   const og = createOg({
     network: 'testnet',
-    privateKey: process.env.EVM_PRIVATE_KEY ?? process.env.OG_PRIVATE_KEY,
+    privateKey: process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY,
   });
 
   console.log(`og-toolkit consumer test — network=${og.network}, signer=${await og.chain.getSignerAddress()}`);

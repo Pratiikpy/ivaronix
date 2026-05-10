@@ -18,8 +18,8 @@ const REPO_ROOT = resolve(HERE, '..', '..', '..');
 config({ path: resolve(REPO_ROOT, '.env') });
 
 (async () => {
-  const key = process.env.EVM_PRIVATE_KEY;
-  if (!key) throw new Error('EVM_PRIVATE_KEY missing from .env');
+  const key = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
+  if (!key) throw new Error('IVARONIX_SIGNER_KEY missing from .env (legacy aliases OG_PRIVATE_KEY, EVM_PRIVATE_KEY also accepted)');
 
   const v2Addr = getDeployedAddress('testnet', 'ReceiptRegistryV2');
   if (!v2Addr) throw new Error('ReceiptRegistryV2 not in contracts/deployments/testnet.json');
