@@ -168,8 +168,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                             </div>
                             <div style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 4, display: 'flex', justifyContent: 'space-between', gap: 12 }}>
                               <span>
-                                {s.inputKind === 'doc' ? 'doc · ' : 'prompt · '}
-                                <code className="mono">{s.inputLabel}</code>
+                                {s.inputKind === 'doc' ? 'doc input' : 'prompt input'}
+                                <span style={{ color: 'var(--color-muted)', marginLeft: 6 }}>· (content not shown · run <code className="mono">ivaronix skill schedule list</code> for full text)</span>
                               </span>
                               {s.lastReceiptId ? (
                                 <Link href={`/r/${s.lastReceiptId.replace(/^rcpt_/, '')}`} className="btn-ghost" style={{ fontSize: 11, padding: '2px 6px' }}>

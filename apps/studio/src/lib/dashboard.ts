@@ -23,8 +23,16 @@ export interface DashboardSchedule {
   skillId: string;
   cron: string;
   inputKind: 'doc' | 'prompt';
-  inputLabel: string;
-  question: string;
+  /**
+   * Operationally-relevant fields are exposed to anyone fetching
+   * /api/dashboard/<addr> (the public dashboard read). Sensitive
+   * content (the actual question text the user typed, the original
+   * doc filename) is REDACTED in this public payload — sweep 177
+   * closure for the "public dashboard leaks operator local-file
+   * contents" privacy bug. Owners read full schedule data via
+   * `ivaronix skill schedule list` on their own machine; the public
+   * dashboard is intentionally status-only.
+   */
   tier: string;
   runCount: number;
   maxRuns: number | null;
@@ -77,18 +85,18 @@ export function loadSchedulesForOwner(owner: string): DashboardSchedule[] {
             const s = JSON.parse(raw) as Record<string, unknown>;
             const sw = (s.ownerWallet as string | undefined)?.toLowerCase();
             if (!sw || sw !== norm) continue;
-            const inputValue = s.inputValue as string;
             const inputKind = (s.inputKind as 'doc' | 'prompt') ?? 'doc';
-            const inputLabel = inputKind === 'doc'
-              ? inputValue.split(/[\\/]/).pop() ?? inputValue
-              : inputValue.length > 60 ? inputValue.slice(0, 60) + '…' : inputValue;
+            // Sweep 177: inputLabel + question REDACTED from the public
+            // dashboard payload. Pre-sweep this exposed the user's actual
+            // prompt text + doc filename to any caller of
+            // /api/dashboard/<addr>. The route has no SIWE gate (it's a
+            // public read of operational state), so anyone could query
+            // someone else's wallet and harvest schedule contents.
             out.push({
               scheduleId: s.scheduleId as string,
               skillId: s.skillId as string,
               cron: s.cron as string,
               inputKind,
-              inputLabel,
-              question: s.question as string,
               tier: s.tier as string,
               runCount: Number(s.runCount ?? 0),
               maxRuns: (s.maxRuns as number | null) ?? null,
