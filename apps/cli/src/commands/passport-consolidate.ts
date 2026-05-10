@@ -328,7 +328,7 @@ export function addConsolidateCommand(parent: Command): void {
       const localPath = resolve(outDir, `${signed.id}.json`);
       writeFileSync(localPath, JSON.stringify(signed, null, 2));
       ui.pass(`receipt              ${signed.id}`);
-      ui.pass(`receiptRoot          ${signed.storage!.receiptRoot}`);
+      ui.pass(`receiptRoot          ${signed.storage.receiptRoot}`);
       ui.pass(`written              ${localPath}`);
 
       // 5. Anchor on chain
@@ -349,7 +349,7 @@ export function addConsolidateCommand(parent: Command): void {
       if (writeVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(writeAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
-          receiptRoot: signed.storage!.receiptRoot as Hash,
+          receiptRoot: signed.storage.receiptRoot as Hash,
           storageRoot: sourceIdsHashBytes32,
           receiptType: RECEIPT_TYPE_CODE,
           attestationHash: ZERO_HASH,
@@ -361,7 +361,7 @@ export function addConsolidateCommand(parent: Command): void {
         onChainId = (nextId - 1n).toString();
       } else {
         const tx = await reg.anchor(
-          signed.storage!.receiptRoot as Hash,
+          signed.storage.receiptRoot as Hash,
           sourceIdsHashBytes32,
           RECEIPT_TYPE_CODE,
           ZERO_HASH,
@@ -400,7 +400,7 @@ export function addConsolidateCommand(parent: Command): void {
             ui.pending(`recording consolidation against passport tokenId=${tokenId}...`);
             const ptx = await passport.recordReceipt(
               tokenId,
-              signed.storage!.receiptRoot as Hash,
+              signed.storage.receiptRoot as Hash,
               RECEIPT_TYPE_CODE,
               1,
             );

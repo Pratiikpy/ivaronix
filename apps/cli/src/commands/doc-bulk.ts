@@ -266,7 +266,7 @@ export function addBulkCommand(parent: Command): void {
       const localPath = resolve(outDir, `${signed.id}.json`);
       writeFileSync(localPath, JSON.stringify(signed, null, 2));
       ui.pass(`aggregate receipt    ${signed.id}`);
-      ui.pass(`receiptRoot          ${signed.storage!.receiptRoot}`);
+      ui.pass(`receiptRoot          ${signed.storage.receiptRoot}`);
       ui.pass(`written              ${localPath}`);
 
       // Anchor on chain (slot 4 = memory_access; matches the constraint
@@ -280,7 +280,7 @@ export function addBulkCommand(parent: Command): void {
       if (registryVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
-          receiptRoot: signed.storage!.receiptRoot as Hash,
+          receiptRoot: signed.storage.receiptRoot as Hash,
           storageRoot: childIdsBytes32,
           receiptType: RECEIPT_TYPE_CODE,
           attestationHash: ZERO_HASH,
@@ -293,7 +293,7 @@ export function addBulkCommand(parent: Command): void {
       } else {
         const reg = new ReceiptRegistryClient(registryAddr, wallet);
         const tx = await reg.anchor(
-          signed.storage!.receiptRoot as Hash,
+          signed.storage.receiptRoot as Hash,
           childIdsBytes32,
           RECEIPT_TYPE_CODE,
           ZERO_HASH,
@@ -329,7 +329,7 @@ export function addBulkCommand(parent: Command): void {
           const tokenId = await passport.passportOf(env.walletAddress as Address);
           if (tokenId !== 0n) {
             ui.pending(`recording aggregate against passport tokenId=${tokenId}...`);
-            const ptx = await passport.recordReceipt(tokenId, signed.storage!.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
+            const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
             await ptx.wait();
             const refreshed = await passport.getPassport(tokenId);
             if (refreshed) {

@@ -361,7 +361,7 @@ roomCommand
       if (registryVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
-          receiptRoot: signed.storage!.receiptRoot as Hash,
+          receiptRoot: signed.storage.receiptRoot as Hash,
           storageRoot,
           receiptType: RECEIPT_TYPE_CODE,
           attestationHash: ZERO_HASH,
@@ -371,7 +371,7 @@ roomCommand
         blockNumber = r?.blockNumber ?? null;
       } else {
         const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
-        const v1Tx = await regV1.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
+        const v1Tx = await regV1.anchor(signed.storage.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
         txHash = v1Tx.hash;
         const r = await v1Tx.wait();
         blockNumber = r?.blockNumber ?? null;
@@ -592,7 +592,7 @@ roomCommand
     if (registryVersion === 'v2') {
       const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
       const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
-        receiptRoot: signed.storage!.receiptRoot as Hash,
+        receiptRoot: signed.storage.receiptRoot as Hash,
         storageRoot,
         receiptType: RECEIPT_TYPE_CODE,
         attestationHash: ZERO_HASH,
@@ -602,7 +602,7 @@ roomCommand
       blockNumber = r?.blockNumber ?? null;
     } else {
       const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
-      const v1Tx = await regV1.anchor(signed.storage!.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
+      const v1Tx = await regV1.anchor(signed.storage.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
       txHash = v1Tx.hash;
       const r = await v1Tx.wait();
       blockNumber = r?.blockNumber ?? null;
