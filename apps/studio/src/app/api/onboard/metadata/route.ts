@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'node:crypto';
+import { z } from 'zod';
 import { createStorageClient } from '@ivaronix/og-storage';
 import { ensureEnv } from '@/lib/boot-env';
 import { getNetwork } from '@/lib/chain';
@@ -9,10 +10,23 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-interface OnboardMetadataBody {
-  handle: string;
-  ownerWallet: string;
-}
+/**
+ * Runtime body validation per HALF_BAKED §J-2 (sweep 147).
+ * Closes the unvalidated-cast bug on this operator-paid endpoint. Caps:
+ *   handle       2–32 chars (matches the canonical agent-handle window
+ *                used by /onboard UI)
+ *   ownerWallet  strict 0x + 40 hex lowercase regex (the chain anchor
+ *                expects lowercase; uppercase variants would mint a
+ *                second passport for the same wallet)
+ */
+const OnboardBodySchema = z.object({
+  handle: z.string().trim().min(2).max(32),
+  ownerWallet: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(/^0x[0-9a-f]{40}$/),
+});
 
 /**
  * Upload onboarding metadata (handle, ownerWallet, mintedAt) to 0G Storage
@@ -46,21 +60,23 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: OnboardMetadataBody;
+  let rawBody: unknown;
   try {
-    body = (await req.json()) as OnboardMetadataBody;
+    rawBody = await req.json();
   } catch {
     return NextResponse.json({ error: 'invalid JSON body' }, { status: 400 });
   }
-
-  const handle = (body.handle ?? '').trim();
-  const ownerWallet = (body.ownerWallet ?? '').trim().toLowerCase();
-  if (!handle || handle.length < 2 || handle.length > 32) {
-    return NextResponse.json({ error: 'handle must be 2–32 chars' }, { status: 400 });
+  const parsed = OnboardBodySchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      {
+        error: 'invalid body',
+        issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      },
+      { status: 400 },
+    );
   }
-  if (!/^0x[0-9a-fA-F]{40}$/.test(ownerWallet)) {
-    return NextResponse.json({ error: 'ownerWallet must be 0x + 40 hex' }, { status: 400 });
-  }
+  const { handle, ownerWallet } = parsed.data;
 
   // Canonical → legacy alias chain (matches packages/runtime/src/env.ts).
   const pk = process.env.IVARONIX_SIGNER_KEY ?? process.env.OG_PRIVATE_KEY ?? process.env.EVM_PRIVATE_KEY;
