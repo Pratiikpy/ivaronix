@@ -65,6 +65,5 @@
   "docs/reference/REFERENCE_PATTERNS.md:277:OG_RPC_URL",
   "docs/reference/REFERENCE_PATTERNS.md:29:OG_NETWORK",
   "docs/reference/REFERENCE_PATTERNS.md:30:OG_CHAIN_ID",
-  "docs/reference/REFERENCE_PATTERNS.md:31:OG_RPC_URL",
-  "scripts/dev/start-local-0g-kv.ts:202:OG_NETWORK"
+  "docs/reference/REFERENCE_PATTERNS.md:31:OG_RPC_URL"
 ]

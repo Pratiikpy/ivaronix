@@ -198,11 +198,15 @@ async function pollRpc(timeoutMs: number): Promise<boolean> {
 }
 
 async function main(): Promise<void> {
-  // Resolve via canonical → legacy alias chain. Pre-sweep-111 read only
-  // EVM_WALLET_ADDRESS / OG_NETWORK; canonical-only operators got null
-  // wallet and the script failed with "EVM_WALLET_ADDRESS missing"
-  // even when IVARONIX_WALLET_ADDRESS was set. Same correctness-bug
-  // class as sweeps 108-109's amnesty-mining finds.
+  // Resolve via canonical → legacy alias chain.
+  // canonical-alias-allow:forensic-comment · the lines below describe
+  // the PRE-sweep-111 bug shape; legacy names are the historical
+  // evidence, not drift.
+  // Pre-sweep-111 read only EVM_WALLET_ADDRESS / OG_NETWORK;
+  // canonical-only operators got null wallet and the script failed
+  // with "EVM_WALLET_ADDRESS missing" even when IVARONIX_WALLET_ADDRESS
+  // was set. Same correctness-bug class as sweeps 108-109's
+  // amnesty-mining finds.
   const wallet = process.env.IVARONIX_WALLET_ADDRESS ?? process.env.EVM_WALLET_ADDRESS;
   const network = (process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'testnet') as Network;
   if (!wallet) {
