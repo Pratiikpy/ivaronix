@@ -3,7 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx run.ts"
+    "test": "tsx run.ts",
+    "regressions": "tsx run-source-regressions.ts",
+    "regressions:studio": "tsx run-source-regressions.ts --filter studio",
+    "regressions:studio-live": "tsx run-source-regressions.ts --filter studio-live",
+    "regressions:cli": "tsx run-source-regressions.ts --filter cli",
+    "regressions:contracts": "tsx run-source-regressions.ts --filter contracts"
   },
   "dependencies": {
     "playwright": "^1.49.0",

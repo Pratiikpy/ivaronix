@@ -84,3 +84,28 @@ jobs:
           else
             echo "no anchored receipts in repo snapshot — skipping"
           fi
+
+  regression-smokes:
+    # Source-file regression suite. Runs every offline `verify-*.ts`
+    # regression that doesn't require Galileo RPC or a running Studio
+    # dev server. Closes the silent QA gap (planning-003 §A.1.4) where
+    # `pnpm -r test` returned green doing nothing useful.
+    name: Source-file regression smokes
+    runs-on: ubuntu-latest
+    needs: workspace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - name: Studio source-file regressions
+        run: pnpm --filter qa-metamask-e2e run regressions:studio
+      - name: CLI source-file regressions
+        run: pnpm --filter qa-metamask-e2e run regressions:cli
+      - name: Contract source-file regressions
+        run: pnpm --filter qa-metamask-e2e run regressions:contracts

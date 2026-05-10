@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start --port 3300",
     "lint": "echo skip",
-    "test": "echo skip",
+    "test": "pnpm --filter qa-metamask-e2e run regressions:studio",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .turbo"
   },
