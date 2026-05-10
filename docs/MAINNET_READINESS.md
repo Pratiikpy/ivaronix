@@ -12,11 +12,11 @@
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| 1 | Contracts deployed (6/6) | ✓ | bytecode size > 1 KB on every contract |
+| 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
 | 2 | Env vars (9/9 required) | ✓ | OG_NETWORK, RPC, EVM_PRIVATE_KEY, ZG_API_SECRET, OG_COMPUTE_PROVIDER, NVIDIA_API_KEY, … all set |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
-| 5 | Receipt anchoring | ✓ | 1071 receipts on `ReceiptRegistry.nextId()` |
+| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry.nextId()` (V1) + `ReceiptRegistryV2.nextId()` |
 | 6 | Proof Explorer (`/r/<id>`) | ✓ | HTTP 200 on #994, #1004, #1014, #1056, #1069 |
 | 7 | Passport state | ✓ | tokenId 1, trust 1053, receipts 1053, violations 0 |
 | 8 | Memory grant/revoke lifecycle | ✓ | 5 grants on chain; ACTIVE → REVOKED proven via Studio + chain |
@@ -32,22 +32,28 @@
 
 ### 1. Contracts deployed on Galileo (chainId 16602)
 
-| Contract | Address | Bytecode size |
-|---|---|---|
-| `ReceiptRegistry` | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) | 4392 chars |
-| `AgentPassportINFT` | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) | 20816 chars |
-| `CapabilityRegistry` | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) | 6172 chars |
-| `MemoryAccessLog` | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) | 1022 chars |
-| `SkillRegistry` | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) | 5362 chars |
-| `Erc7857Verifier` | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) | 4784 chars |
+All <!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> contracts (table auto-rendered from `contracts/deployments/testnet.json` via `pnpm docs:render` — original byte-size column dropped as the canonical record doesn't track it; run `forge inspect <name> bytecode --hex | wc -c` if you need it):
 
-Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08.
+<!-- contracts:auto:start -->
+| Contract              | Address                                                                                                                                            |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AgentPassportINFT`    | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) — stays live for 4 minted passports (tokenIds 1-4) |
+| `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) — K-1 + K-4 + K-6 fix |
+| `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) |
+| `Erc7857Verifier`      | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) — V1 verifier reused by AgentPassportINFTV2 |
+| `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) |
+| `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the 1,330+ existing anchored receipts (cha… |
+| `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) — K-2 fix |
+| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
+<!-- contracts:auto:end -->
+
+Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08 (V1) + 2026-05-10 (V2).
 
 ### 5. Receipt anchoring
 
 ```
 ivaronix debug chain
-  receipts anchored    1071  (ReceiptRegistry.nextId())
+  receipts anchored    <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->  (ReceiptRegistry V1 + V2 .nextId() · live)
 ```
 
 ### 9. Burn-mode receipt #1069
@@ -102,9 +108,9 @@ GET /v1/receipt/1069                               HTTP 200  state=ANCHORED
 
 CLAUDE.md §1 ("The only blocker is money") — mainnet promotion requires the
 deployer wallet to be funded on chainId 16661 with enough OG to redeploy all
-six contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
+<!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
 script is the same `forge script` used on testnet, with `--rpc-url
-https://evmrpc.0g.ai` and the same artefacts already verified by 61/61
+https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->
 Foundry tests.
 
 Once the deployer wallet receives mainnet OG, run:
