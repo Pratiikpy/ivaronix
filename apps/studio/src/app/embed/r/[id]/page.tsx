@@ -8,6 +8,7 @@ import {
   type UnifiedReceipt,
 } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
+import { verifyClaimed } from '@ivaronix/receipts';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,26 @@ export default async function EmbedReceiptPage({ params }: { params: Promise<{ i
   const local = findLocalReceiptByRoot(onChain.receiptRoot)?.body ?? null;
   const headline = local?.outputs?.wording?.headline ?? `Receipt #${onChain.id} on 0G ${network}`;
   const tee = local?.teeVerification;
-  const isFullyVerified = tee?.routerVerified === true && tee?.independentVerified === true;
+
+  // Sweep 175: mirror /r/[id]'s I-1 gate on the embed surface. Pre-sweep,
+  // the FULLY VERIFIED chip read tee.routerVerified + tee.independentVerified
+  // straight off the local body — both flags are tamper-editable on a
+  // local JSON file. A malicious operator could flip both to true and
+  // the embed iframe would lie green to any third-party host page.
+  //
+  // The fix mirrors apps/studio/src/app/r/[id]/page.tsx:178-185: call
+  // verifyClaimed() on the local body and require it returns CLAIMED
+  // before honoring the tee flags. Tampered body → CLAIMED check fails
+  // (signature mismatch or canonical-hash mismatch) → chip falls back
+  // to ANCHORED (on-chain anchor still real) instead of FULLY VERIFIED.
+  let localValid = false;
+  if (local) {
+    try {
+      const r = verifyClaimed(local);
+      localValid = r.state === 'CLAIMED';
+    } catch { localValid = false; }
+  }
+  const isFullyVerified = localValid && tee?.routerVerified === true && tee?.independentVerified === true;
   const isAnchored = !!onChain;
   const tierLabel: 'TIER 1 · TEE' | 'TIER 2 · EXTERNAL' | 'ANCHORED' =
     tee?.verificationMethod === 'router_flag' || tee?.verificationMethod === 'compute_sdk_process_response'
