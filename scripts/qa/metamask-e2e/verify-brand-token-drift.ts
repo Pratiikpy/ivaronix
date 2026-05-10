@@ -164,6 +164,11 @@ for (const file of sourceFiles) {
       // Filter: must be a plausible CSS hex color shape (3, 4, 6, 8 digits).
       const body = hex.length - 1;
       if (body !== 3 && body !== 4 && body !== 6 && body !== 8) continue;
+      // Sweep 77: skip 4-char purely-numeric (`#1004`, `#9999`) — these
+      // are receipt IDs ("See receipt #1004") or issue numbers, never
+      // valid CSS shorthand in this codebase. Letter-containing 4-chars
+      // (`#FF00`) stay flagged.
+      if (body === 4 && /^#\d{4}$/.test(hex)) continue;
       const normalized = normalizeHex(hex);
       if (canonical.has(normalized)) continue;
       const relPath = relative(REPO_ROOT, file).replace(/\\/g, '/');
@@ -207,6 +212,7 @@ if (updateAmnesty) {
         const hex = m[2]!;
         const body = hex.length - 1;
         if (body !== 3 && body !== 4 && body !== 6 && body !== 8) continue;
+        if (body === 4 && /^#\d{4}$/.test(hex)) continue;
         const normalized = normalizeHex(hex);
         if (canonical.has(normalized)) continue;
         const relPath = relative(REPO_ROOT, file).replace(/\\/g, '/');
@@ -229,6 +235,7 @@ if (updateAmnesty) {
         const hex = m[2]!;
         const body = hex.length - 1;
         if (body !== 3 && body !== 4 && body !== 6 && body !== 8) continue;
+        if (body === 4 && /^#\d{4}$/.test(hex)) continue;
         const normalized = normalizeHex(hex);
         if (canonical.has(normalized)) continue;
         const relPath = relative(REPO_ROOT, file).replace(/\\/g, '/');

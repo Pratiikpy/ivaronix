@@ -35,11 +35,32 @@
   /* State colors · receipt four-light row */
   --color-pending: #6B6B66;        /* idle / pending */
   --color-verified: #166534;       /* green check + chip background */
+  --color-verified-dark: #0E6428;  /* deeper verified ink */
+  --color-verified-bright: #26C050;/* bright verified accent */
+  --color-verified-bg-soft: #DCFCE7;   /* verified chip bg */
+  --color-verified-bg-softer: #E6F9EC; /* verified chip bg, even softer */
   --color-mismatch: #B91C1C;       /* red fail + chip background */
+  --color-mismatch-ink: #991B1B;   /* deeper mismatch ink */
+  --color-mismatch-bg: #FEE2E2;    /* mismatch chip bg */
+  --color-warning: #7A5D00;        /* warning ink (e.g. "Trusted" tier) */
+  --color-warning-bg: #FFF7D6;     /* warning chip bg */
+  --color-warning-accent: #E8C800; /* warning border / accent */
+  --color-warning-dark: #92400E;   /* deeper warning ink */
+  --color-warning-bg-soft: #FEF3C7;/* alt warning chip bg */
+  --color-warning-accent-deep: #D97706; /* deeper warning accent */
   --color-storage: #2563EB;        /* blue · 0G Storage layer */
   --color-compute: #9333EA;        /* purple · 0G Compute layer */
   --color-tee: #16A34A;            /* green · TEE attestation layer */
   --color-chain: #EA580C;          /* orange · 0G Chain anchor layer */
+
+  /* Neutrals (additional shades — borders + mid-grays) */
+  --color-neutral-border: #D4D4D4;
+  --color-neutral-border-soft: #DDDDDD;
+  --color-neutral-border-softer: #E6E6E6;
+  --color-neutral-ink-mid-low: #444444;
+  --color-neutral-ink-mid-high: #666666;
+  --color-neutral-ink-low: #BBBBBB;
+  --color-muted-lower: #6B6B6B;    /* lowercase variant of #6B6B66 muted */
 
   /* ─── Typography ─────────────────────────────────────────────────── */
 
