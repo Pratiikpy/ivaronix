@@ -271,6 +271,15 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** add `pnpm env:check` script that calls `envCheckReport()` and prints a table: canonical name | used alias | value-set status. Highlight legacy aliases in yellow.
 - **Effort:** ~15min.
 
+### B-V2-14 · Daemonise the wander-cycle agent on the CI wallet
+- **Source:** plan-003 §A.4.1 · `scripts/wander-cycle/` shipped with `pnpm wander:cycle` (one iteration) + `pnpm wander:loop` (continuous).
+- **Why:** the autonomous cycle is the path to "30K+ mainnet TXs" parity with Provus. Script is shipped + dry-run-verified. Daemonising produces ~8,640 receipts/month testnet, ~26K over 90 days mainnet.
+- **Cost on testnet:** 0.86 OG/month from CI wallet (USER_TODO §B-V2-7, 1 OG covers ~1.1 months).
+- **Cost on mainnet:** ~3 OG / 90 days estimated. Allocate after mainnet promotion (USER_TODO §A-V2-K1 + §A-V2-K2).
+- **Action (testnet · run today):** follow `scripts/wander-cycle/README.md` for systemd / Docker / Windows Task Scheduler. Default cadence 5 min via `pnpm wander:loop`.
+- **Action (mainnet · post-A-V2):** set `IVARONIX_NETWORK=mainnet` in the wander-cycle env. CLI's V2-first read pattern routes anchors to `ReceiptRegistryV2` mainnet automatically.
+- **Effort:** ~30min daemon setup · ~3 months runtime to hit headline.
+
 ### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
 - **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
 - **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
