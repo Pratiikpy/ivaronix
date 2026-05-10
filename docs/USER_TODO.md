@@ -280,6 +280,23 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action (mainnet · post-A-V2):** set `IVARONIX_NETWORK=mainnet` in the wander-cycle env. CLI's V2-first read pattern routes anchors to `ReceiptRegistryV2` mainnet automatically.
 - **Effort:** ~30min daemon setup · ~3 months runtime to hit headline.
 
+### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix)
+- **Source:** plan-003 §A.5.10 · code-complete today (`contracts/src/CapabilityRegistryV2.sol` + 10/10 Foundry tests pass).
+- **Why:** V1's `mapping(address => bytes32[]) public grantsByOwner` + `grantsByGrantee` auto-generated public getters; anyone could enumerate every grant ever issued for any wallet. V2 makes both reverse indexes `internal` with privacy-gated reads (caller is owner/grantee themselves OR an `authorizedReader` indexer). Closes the social-graph leak.
+- **Status:** contract + deploy script + Foundry tests (10/10 PASS) shipped. Mainnet deploy waits on operator funding (USER_TODO §A-2).
+- **Cost:** ~0.05 OG on testnet (already funded · §A-1) · ~0.05 OG on mainnet.
+- **Run (testnet):**
+
+  ```bash
+  cd contracts
+  export OG_PRIVATE_KEY=<deployer-key>
+  forge script script/DeployCapabilityRegistryV2.s.sol:DeployCapabilityRegistryV2 \
+    --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
+  ```
+
+- **Run (mainnet · post-§A-2):** swap RPC URL to `https://evmrpc.0g.ai`.
+- **Post-deploy:** add the address to `contracts/deployments/<network>.json` under `CapabilityRegistryV2`. Leave V1 entry untouched (legacy grants stay readable). Studio + CLI grant-management surfaces query V2 first via the V2-first read pattern (planning-003 §A.1.3).
+
 ### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution
 - **Source:** plan-003 §A.2.7 first cut shipped (`docs/numbers.json` + `pnpm numbers:refresh` against live chain). The render-time substitution + CI 24h-staleness gate are still queued.
 - **Why:** today every numeric claim in README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md is hand-typed against `docs/numbers.json`. As receipts/skills/contracts change, those numbers drift. The auto-render fixes this permanently.
