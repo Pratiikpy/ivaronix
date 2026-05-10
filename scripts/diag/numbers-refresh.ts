@@ -197,6 +197,64 @@ function countPolyglotTests(): { ts: number; python: number; rust: number } {
   return { ts, python, rust };
 }
 
+/**
+ * Count vendored skills under `seed-skills/imports/` (each sub-directory
+ * is one community-imported skill). Drift driver: every PR that imports
+ * a new skill from `awesome-claude-skills/` adds a sub-dir here. Without
+ * auto-derivation, the headline "156 skills in catalog" claim drifts the
+ * moment a new import lands.
+ */
+function countVendoredSkills(): number {
+  const dir = resolve(REPO_ROOT, 'seed-skills', 'imports');
+  if (!existsSync(dir)) return 0;
+  return readdirSync(dir).filter((entry) => {
+    try {
+      return statSync(resolve(dir, entry)).isDirectory();
+    } catch {
+      return false;
+    }
+  }).length;
+}
+
+/**
+ * Count entries in the `VECTORS: list = [...]` block in
+ * `scripts/verifier-py/cross_check.py`. Each entry is one byte-equality
+ * test vector across TS / Python / Rust. The count drifts when test
+ * vectors are added (e.g. a new edge case found by an audit) — without
+ * auto-derivation, the README's "29/29 byte-equal" claim goes stale.
+ *
+ * Python list bodies can contain nested objects, so we walk character-
+ * by-character with a depth counter and split on commas at depth 0.
+ */
+function countCrossImplVectors(): number {
+  const path = resolve(REPO_ROOT, 'scripts', 'verifier-py', 'cross_check.py');
+  if (!existsSync(path)) return 0;
+  const src = readFileSync(path, 'utf8');
+  const match = src.match(/VECTORS\s*:\s*list\s*=\s*\[([\s\S]*?)\n\]/);
+  if (!match) return 0;
+  const body = match[1] ?? '';
+  let depth = 0;
+  let entries = 0;
+  let started = false;
+  for (const ch of body) {
+    if (ch === '[' || ch === '{' || ch === '(') {
+      depth++;
+      started = true;
+    } else if (ch === ']' || ch === '}' || ch === ')') {
+      depth--;
+    } else if (ch === ',' && depth === 0) {
+      if (started) {
+        entries++;
+        started = false;
+      }
+    } else if (!/\s/.test(ch)) {
+      started = true;
+    }
+  }
+  if (started) entries++;
+  return entries;
+}
+
 async function buildSnapshot(): Promise<NumbersFile> {
   const [receipts] = await Promise.all([fetchReceiptCounts()]);
   const firstPartySkills = listFirstPartySkills();
@@ -232,14 +290,20 @@ async function buildSnapshot(): Promise<NumbersFile> {
       // contract additions reflect without hand-editing.
       deployed: countDeployedContracts(),
     },
-    skills: {
-      firstParty: firstPartySkills.length,
-      firstPartyList: firstPartySkills,
-      vendored: existing.skills.vendored,
-      catalogTotal: firstPartySkills.length + existing.skills.vendored,
-      creatorEarningsOG: existing.skills.creatorEarningsOG,
-      creatorEarningsLabel: existing.skills.creatorEarningsLabel,
-    },
+    skills: (() => {
+      // Auto-derive vendored count from filesystem; the original
+      // hand-frozen value drifted whenever a new import landed without
+      // a matching numbers.json edit (cron-sweep finding · 2026-05-10).
+      const vendored = countVendoredSkills();
+      return {
+        firstParty: firstPartySkills.length,
+        firstPartyList: firstPartySkills,
+        vendored,
+        catalogTotal: firstPartySkills.length + vendored,
+        creatorEarningsOG: existing.skills.creatorEarningsOG,
+        creatorEarningsLabel: existing.skills.creatorEarningsLabel,
+      };
+    })(),
     packages: {
       workspaceTotal: packageDirs.length + apps.length,
       apps: apps.length,
@@ -252,9 +316,12 @@ async function buildSnapshot(): Promise<NumbersFile> {
       // adding a new test in any of the 3 languages reflects without
       // hand-editing. Same anti-staleness rationale as
       // countTypecheckClean (cron-sweep finding · 2026-05-10).
+      // crossImplVectors counts entries in the VECTORS list of
+      // scripts/verifier-py/cross_check.py.
       tests: {
         ...existing.polyglotHash.tests,
         ...countPolyglotTests(),
+        crossImplVectors: countCrossImplVectors(),
       },
     },
     mainnet: existing.mainnet,
