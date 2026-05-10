@@ -26,7 +26,7 @@ export interface RateLimitResult {
   windowSec: number;
 }
 
-export type RateKind = 'ip' | 'wallet' | 'skill-save' | 'memory-write' | 'onboard' | 'siwe-handshake';
+export type RateKind = 'ip' | 'wallet' | 'skill-save' | 'memory-write' | 'onboard' | 'siwe-handshake' | 'dashboard-read';
 
 /**
  * Slide a bucket and check whether one more hit fits.
@@ -45,6 +45,7 @@ export function checkRateLimit(
     'memory-write': { limit: 60, windowSec: 3_600 }, // 60 memory writes per hour per wallet (~1/min)
     onboard: { limit: 5, windowSec: 900 }, // 5 onboard-metadata uploads per 15 min per IP (operator pays gas; tight ceiling, legit retry budget)
     'siwe-handshake': { limit: 30, windowSec: 60 }, // 30 nonce-or-verify hits per minute per IP. Anonymous flood otherwise (a) balloons the in-memory nonce Map (b) burns CPU on ECDSA recovery in verify.
+    'dashboard-read': { limit: 60, windowSec: 60 }, // 60 fresh-address dashboard reads per minute per IP. The 60s LRU cache absorbs repeats; an attacker rotating addresses bypasses cache and forces RPC chain-walks, threatening the operator's RPC quota.
   };
   const limit = opts?.limit ?? limits[kind].limit;
   const windowSec = opts?.windowSec ?? limits[kind].windowSec;
