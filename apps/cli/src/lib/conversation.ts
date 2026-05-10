@@ -51,16 +51,52 @@ export function saveConversation(c: ConversationFile): string {
   return path;
 }
 
+/**
+ * Lightweight runtime shape check for ConversationFile · HALF_BAKED §J-3
+ * (sweep 158). Pre-sweep, `loadConversation` cast `JSON.parse(...) as
+ * ConversationFile` with no runtime validation. A stale or migration-
+ * dropped conversation file would crash downstream at `.messages.length`
+ * with a useless "Cannot read 'length' of undefined" error.
+ *
+ * Not a full Zod schema (CLI doesn't depend on zod). Just the fields
+ * `loadConversation`'s callers rely on, with a structured error pointing
+ * at the missing field.
+ */
+function parseConversationFile(json: unknown, sourcePath: string): ConversationFile {
+  if (!json || typeof json !== 'object') {
+    throw new Error(`malformed conversation file at ${sourcePath}: expected object, got ${typeof json}`);
+  }
+  const j = json as Record<string, unknown>;
+  const required: Array<{ k: keyof ConversationFile; t: string }> = [
+    { k: 'id', t: 'string' },
+    { k: 'updatedAt', t: 'number' },
+    { k: 'network', t: 'string' },
+    { k: 'model', t: 'string' },
+    { k: 'messages', t: 'array' },
+  ];
+  for (const { k, t } of required) {
+    const v = j[k];
+    const ok = t === 'array' ? Array.isArray(v) : typeof v === t;
+    if (!ok) {
+      throw new Error(`malformed conversation file at ${sourcePath}: field "${String(k)}" expected ${t}, got ${Array.isArray(v) ? 'array' : typeof v}`);
+    }
+  }
+  return j as unknown as ConversationFile;
+}
+
 export function loadConversation(id: string): ConversationFile {
   const dir = findConvDir();
   const direct = join(dir, id.endsWith('.json') ? id : `${id}.json`);
-  if (existsSync(direct)) return JSON.parse(readFileSync(direct, 'utf8')) as ConversationFile;
+  if (existsSync(direct)) {
+    return parseConversationFile(JSON.parse(readFileSync(direct, 'utf8')), direct);
+  }
   // Allow short-id prefix match
   const entries = readdirSync(dir);
   const prefix = id.startsWith('conv_') ? id : `conv_${id}`;
   const match = entries.find((e) => e.startsWith(prefix));
   if (!match) throw new Error(`conversation "${id}" not found in ${dir}`);
-  return JSON.parse(readFileSync(join(dir, match), 'utf8')) as ConversationFile;
+  const matchPath = join(dir, match);
+  return parseConversationFile(JSON.parse(readFileSync(matchPath, 'utf8')), matchPath);
 }
 
 export function listConversations(limit = 20): { id: string; updatedAt: number; messages: number; model: string }[] {
@@ -71,9 +107,15 @@ export function listConversations(limit = 20): { id: string; updatedAt: number; 
     .map((e) => {
       try {
         const stat = statSync(join(dir, e));
-        const body = JSON.parse(readFileSync(join(dir, e), 'utf8')) as ConversationFile;
+        const path = join(dir, e);
+        const body = parseConversationFile(JSON.parse(readFileSync(path, 'utf8')), path);
         return { id: body.id, updatedAt: body.updatedAt, messages: body.messages.length, model: body.model, mtime: stat.mtimeMs };
       } catch {
+        // Malformed conversation file — skip in listing rather than crash.
+        // parseConversationFile throws with sourcePath context; the outer
+        // catch suppresses but the file is still untouched on disk for
+        // operator inspection (`ivaronix session prune --dry-run` lists
+        // candidates, the listing skip just keeps the menu clean).
         return null;
       }
     })
