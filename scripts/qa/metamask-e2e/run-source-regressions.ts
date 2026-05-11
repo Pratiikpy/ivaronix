@@ -122,6 +122,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-hardcoded-studio-base/, // HALF_BAKED §J-10 · CLI proof URLs use studioUrl() not hardcoded localhost (sweep 144)
       /^verify-cli-receipt-count-unified/, // sweep 178+179 · CLI receipt-count headlines read both V1 + V2 (post-K-2 unified) — locks the V1-only drift pattern
       /^verify-cli-findbyagent-unified/, // sweep 180+181 · CLI findByAgent calls iterate V1 + V2 (post-K-2 unified) — locks per-agent V1-only drift
+      /^verify-cli-findbyreceiptroot-unified/, // sweep 182 · CLI findByReceiptRoot calls iterate V1 + V2 — completes the V2-drift trifecta
     ],
   },
   contracts: {
