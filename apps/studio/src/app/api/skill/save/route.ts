@@ -5,6 +5,7 @@ import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
+import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -111,8 +112,10 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     parsedFm = parseYaml(fmMatch[1] ?? '');
   } catch (err) {
+    // §K-11: sanitize the parser message (yaml lib can leak source context).
+    console.error('[api/skill/save] YAML parse error:', err);
     return NextResponse.json(
-      { error: `manifest YAML parse error: ${(err as Error).message}` },
+      { error: `manifest YAML parse error: ${sanitizeErrorMessage(err)}` },
       { status: 400 },
     );
   }
@@ -186,7 +189,10 @@ export async function POST(req: Request): Promise<NextResponse> {
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, manifest, 'utf8');
   } catch (err) {
-    return NextResponse.json({ error: `write failed: ${(err as Error).message}` }, { status: 500 });
+    // §K-11: write failures often surface filesystem absolute paths
+    // from Node's fs error messages — sanitize before responding.
+    console.error('[api/skill/save] write failed:', err);
+    return NextResponse.json({ error: `write failed: ${sanitizeErrorMessage(err)}` }, { status: 500 });
   }
 
   return NextResponse.json({ path: target, skillId, wallet: session.wallet }, { status: 201 });

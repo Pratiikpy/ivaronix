@@ -91,6 +91,8 @@ const FILTERS: Record<string, Filter> = {
       /^verify-studio-disk-receipt-safety/, // sweep 205 · HALF_BAKED §J-3 closure · Studio disk-receipt reads go through safeReadReceiptBody validator instead of raw JSON.parse-as-ReceiptBody cast
       /^verify-no-console-log-in-libs/, // sweep 207 · HALF_BAKED §J-11 third rule · no console.log/debug in library packages (warn/error/info still allowed for operator-facing signals)
       /^verify-no-tee-bound-overclaim/, // sweep 211 · HALF_BAKED §I-6 closure · no capital-B "TEE-Bound" in app source or render-target docs (judge-facing surfaces)
+      /^verify-api-route-error-sanitize/, // sweep 212 · HALF_BAKED §K-11 closure · API routes wrap err.message with sanitizeErrorMessage before responding
+      /^verify-no-jsdoc-glob-terminator/, // sweep 212 meta-regression · forbid the JSDoc terminator token inside a multi-line comment (third-occurrence prevention)
     ],
   },
   'studio-live': {

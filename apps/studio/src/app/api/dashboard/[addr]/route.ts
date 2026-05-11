@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { loadDashboard } from '@/lib/dashboard';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
+import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,8 @@ export async function GET(
     if ((err as Error).message?.startsWith('invalid address')) {
       return NextResponse.json({ error: 'invalid address' }, { status: 400 });
     }
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
+    // §K-11: sanitize before responding; full err stays in server logs.
+    console.error('[api/dashboard] load error:', err);
+    return NextResponse.json({ error: sanitizeErrorMessage(err) }, { status: 500 });
   }
 }

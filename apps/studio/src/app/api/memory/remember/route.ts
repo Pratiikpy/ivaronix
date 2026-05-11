@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { rememberNote } from '@/lib/studio-memory';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
+import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -84,6 +85,8 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
     return NextResponse.json({ note });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 400 });
+    // §K-11: sanitize client-facing message; full err to server log.
+    console.error('[api/memory/remember] error:', err);
+    return NextResponse.json({ error: sanitizeErrorMessage(err) }, { status: 400 });
   }
 }

@@ -355,10 +355,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 ### I-2 · `/api/run` Burn Mode `keyFingerprint` is sha256 over a label string, not over an AES key  *(severity S · ✅ FIXED 25b2266)*
 - ✅ Studio Burn Mode now runs real AES-256-GCM encryption via `createStorageClient(...).uploadEncryptedBurn(plaintext)`. The session key is 256-bit `randomBytes(32)`, fingerprint is `sha256(key)` captured BEFORE the key buffer is zeroed (so the receipt commits to the actual key that destroyed itself). See K-16 (duplicate) for the same closure.
 
-### I-3 · "Operator-on-behalf-of-user" receipts FAIL the project's own verifier  *(severity S — most embarrassing finding)*
-- `packages/runtime/src/pipeline.ts:451-453, 577` sets `agent.ownerWallet = delegatedOwnerWallet` (user) but `signReceipt` always uses the operator's signer. `packages/receipts/src/verify.ts:85-89` rejects when `signature.signer !== agent.ownerWallet` → `state: 'INVALID'`.
-- Every W9 run produces a receipt that fails offline verification. A judge running `ivaronix receipt verify <W9-id>` sees `INVALID`.
-- **Fix:** either (a) require browser-side `signMessage` of the receiptRoot via wagmi before /api/run anchors, or (b) drop W9 entirely and admit ownerWallet is the operator. Today's middle path produces invalid receipts.
+### I-3 · "Operator-on-behalf-of-user" receipts FAIL the project's own verifier  *(severity S · ✅ CLOSED sweep 156)*
+- ✅ `packages/receipts/src/verify.ts:104-147` now branches on `agent.signedBy`. For `'operator'` and `'user-direct'` the signer-owner equality is enforced as before. For `'operator-on-behalf-of-user'` (the W9 tier) the inequality is the design — operator anchored a receipt attributing the action to a user wallet who authenticated via SIWE before `/api/run` accepted the request — and the verifier records the delegated provenance honestly: `delegated · signer <operator> (operator) signed on behalf of <user> (user)`. The receipt no longer self-rejects; the trust gradient is captured in the receipt body, not lost.
 
 ### I-4 · RunPanel TEE light flips green on registry-match, not on TEE attestation  *(severity S · ✅ FIXED 9e88987 + sweep 157)*
 - ✅ RunPanel now reads `teeRouterVerified` (aggregated across every consensus role's real attestation) and gates the TEE chip on it. `scan.matches` only feeds the separate REGISTRY MATCH chip. NIM-routed TIER 2 runs no longer light TEE green: they show `TIER 2 · EXTERNAL` in amber, matching CLAUDE.md §6.
@@ -530,9 +528,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `apps/studio/src/app/api/dashboard/[addr]/route.ts:23-71`. Any user who can write to operator's `.ivaronix/schedules` (see K-9 — same operator runtime) gets schedules surfaced under any address.
 - **Fix:** treat schedules as authoritative only when signed by claimed wallet.
 
-### K-11 · Error messages leak operator paths and stack traces  *(Medium)*
-- All four API routes return `(err as Error).message` to client. Includes filesystem paths, env-misconfig details, indexer URLs.
-- **Fix:** in production, log full error server-side; return `{ error: 'internal error', requestId }`.
+### K-11 · Error messages leak operator paths and stack traces  *(Medium · ✅ FIXED sweep 212)*
+- ✅ `apps/studio/src/lib/error-sanitize.ts` exports `sanitizeErrorMessage(err)` which strips absolute paths (Windows `C:\...` + POSIX `/Users/`, `/home/`, `/tmp/`), 0x-prefixed addresses (20 + 32 byte), `IVARONIX_*` / `OG_*` / `EVM_*` env-var names, truncates to first line, caps at 240 chars. Applied to every API route that previously returned raw `err.message`: `/api/run`, `/api/dashboard/[addr]`, `/api/memory/remember`, `/api/skill/save` (×2), `/api/onboard/metadata`. Each call site also `console.error`s the full err so server logs retain stack + paths. Locked by `verify-api-route-error-sanitize.ts` which gates: any route referencing `(err as Error).message` must either pass through `sanitizeErrorMessage` or use the value in a routing-decision context (e.g. `.startsWith('invalid address')`). 10 routes scanned, 0 violations.
 
 ### K-12 · No HTTP security headers anywhere  *(Medium · ✅ CLOSED sweep 130 — mirrors §A-10)*
 - ✅ `apps/studio/next.config.ts` `headers()` config now ships `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=63072000; preload`. Locked by `verify-studio-security-headers.ts`. CSP + `frame-ancestors` for `/embed/r/[id]` queued separately (the embed path needs a controlled allow-list of iframe parents).
@@ -541,9 +538,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - All four routes. Once SIWE auth lands, third-party `fetch('/api/run', {credentials:'include'})` burns the user's quota.
 - **Fix:** `Origin === self` check; `SameSite=Strict` cookies; custom `X-Ivaronix-CSRF` header.
 
-### K-14 · "Operator-on-behalf-of-user" receipts are forgeries by our own verifier  *(Critical — duplicates I-3, repeated for security framing)*
-- See I-3. The W9 path produces receipts that our `verify.ts:85-92` rejects.
-- **Fix:** branch verify on `agent.signedBy`; for `'operator-on-behalf-of-user'` require operator signer in an allow-list AND `agent.ownerWallet` matches the SIWE-authenticated user. Until SIWE handshake exists, do not advertise this tier.
+### K-14 · "Operator-on-behalf-of-user" receipts are forgeries by our own verifier  *(Critical · ✅ CLOSED sweep 156 — duplicates §I-3)*
+- ✅ Verifier branches on `agent.signedBy` (see §I-3 closure). SIWE handshake landed in sweep 245e017 (§K-8 + §K-9); the W9 path now requires an active SIWE session matching `body.userWallet` before `/api/run` accepts the anchor, so the operator-signer + user-ownerWallet pairing is bound to a real authentication event. The verifier's tier-aware logic accepts that pairing honestly.
 
 ### N · K-15 · RFC-8785 polyglot canonical hash  ·  ⚙️ 3 OF 4 LANGUAGES SHIPPED 2026-05-10 (`39d7f29` TS · `<sha>` Python · `a97058b` Rust + cross-impl + CI) · Go queued (operator-action A-V2-K15-Go)
 - **TS reference:** `packages/core/src/jcs.ts` + `jcs.test.ts` · 17/17 self-tests green.

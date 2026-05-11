@@ -5,6 +5,7 @@ import { createStorageClient } from '@ivaronix/og-storage';
 import { ensureEnv } from '@/lib/boot-env';
 import { getNetwork } from '@/lib/chain';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
+import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
       method: 'local-sha256',
       handle,
       ownerWallet,
-      warning: `0G Storage unavailable: ${(err as Error).message.split('\n')[0]}`,
+      warning: `0G Storage unavailable: ${sanitizeErrorMessage(err)}`,
     });
   }
 }

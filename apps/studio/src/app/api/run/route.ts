@@ -4,6 +4,7 @@ import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
 import { ensureEnv } from '@/lib/boot-env';
 import { checkRateLimit, rateLimitHeaders, readClientIp } from '@/lib/rate-limit';
 import { readSession, SESSION_COOKIE_NAME } from '@/lib/siwe-session';
+import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -177,10 +178,15 @@ export async function POST(req: Request) {
       logs: entries,
     });
   } catch (err) {
+    // HALF_BAKED §K-11 closure (sweep 212): sanitize before responding.
+    // Full err + stack stays in server logs via console.error; client
+    // only sees the high-level class with paths / addresses / env-var
+    // names stripped.
+    console.error('[api/run] pipeline error:', err);
     return NextResponse.json(
       {
         ok: false,
-        error: (err as Error).message,
+        error: sanitizeErrorMessage(err),
         logs: entries,
       },
       { status: 500 },
