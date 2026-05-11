@@ -28,15 +28,17 @@
 
 These are code-complete in the repo. The chain deploy itself needs operator-side OG. Each block lists exactly one command sequence.
 
-### A-V2-K1 · Deploy `AgentPassportINFTV2` to Galileo
+### A-V2-K1 · Deploy `AgentPassportINFTV2` to Galileo · ✅ DEPLOYED
+- **Status as of 2026-05-10:** **deployed at `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`** · tx `0xbdc828b0444beb2794a39ae18308d40d972755c25ce05f33744c781f3185ce36`. Operator wallet authorized as recorder (tx `0xdf079cd6018ffd0b99cf66099b5404f04b359c621f6353f299e72b09b8797ccb`). Block explorer link in `contracts/deployments/testnet.json`. The runbook below is preserved for the mainnet redeploy (USER_TODO §A-2).
 - **Why:** closes K-1 (Critical) — the V1 `recordReceipt` accepts unbounded self-claimed trustScore from token owners. V2 requires `authorizedRecorders` only, cross-checks the receipt id on `ReceiptRegistry`, caps `trustScoreDelta` to `[-100, +100]`. Bundles K-4 (executor authorizations cleared on transfer via per-token version counter) and K-6 (mint reentrancy fix) into the same redeploy.
-- **Status:** `contracts/src/AgentPassportINFTV2.sol` shipped; 16/16 Foundry tests pass; deploy script `contracts/script/DeployPassportV2.s.sol` ready.
+- **Source state:** `contracts/src/AgentPassportINFTV2.sol` shipped; 16/16 Foundry tests pass; deploy script `contracts/script/DeployPassportV2.s.sol` shipped.
 - **Cost:** ~0.05 OG on Galileo (already funded, see A-1). No new funding required.
 - **Run:**
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<your-deployer-key>           # already in your .env
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted by the deploy script.
+  export IVARONIX_SIGNER_KEY=<your-deployer-key>           # already in your .env
   export PASSPORT_VERIFIER_ADDR=0x...                 # current Erc7857Verifier address
   export RECEIPT_REGISTRY_ADDR=0x...                  # current ReceiptRegistry address
   forge script script/DeployPassportV2.s.sol:DeployPassportV2 \
@@ -107,15 +109,17 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Sentry signup (5 min, free):** create project, copy DSN, set `SENTRY_DSN` in Vercel env. Errors will surface in Sentry instead of disappearing into Vercel logs.
 - **Upstash Redis (recommended for multi-instance):** set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` so rate-limit buckets are shared across Vercel function instances. Without this, each instance has its own in-memory bucket and an attacker can multiply their ceiling by spreading hits.
 
-### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo
+### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo · ✅ DEPLOYED
+- **Status as of 2026-05-10:** **deployed at `0xf675d4183b34fe8d1981FA9c117065aAcff690ab`** · tx `0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af`. Block explorer link in `contracts/deployments/testnet.json`. The runbook below is preserved for the mainnet redeploy (USER_TODO §A-2).
 - **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so any wallet can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature; replay protection via per-agent monotonic nonces.
-- **Status:** code-complete · `contracts/src/ReceiptRegistryV2.sol` ships; 15/15 V2 Foundry tests pass; deploy script `contracts/script/DeployReceiptRegistryV2.s.sol` ready.
+- **Source state:** `contracts/src/ReceiptRegistryV2.sol` shipped; 15/15 V2 Foundry tests pass; deploy script `contracts/script/DeployReceiptRegistryV2.s.sol` shipped.
 - **Cost:** ~0.05 OG on Galileo (already funded, see A-1).
 - **Run:**
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<your-deployer-key>           # already in your .env
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted by the deploy script.
+  export IVARONIX_SIGNER_KEY=<your-deployer-key>           # already in your .env
   forge script script/DeployReceiptRegistryV2.s.sol:DeployReceiptRegistryV2 \
     --rpc-url https://evmrpc-testnet.0g.ai \
     --broadcast --legacy
@@ -141,7 +145,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - Update `apps/studio/src/app/docs/page.tsx` to link the new contract address from the 0G Chain card.
 
 ### B-2 · Wire SIWE (sign-in-with-ethereum) for Studio user-side anchoring
-- **Why it matters:** today every Studio-anchored receipt is signed by the operator's `EVM_PRIVATE_KEY`, not the connected browser wallet. The receipt page is honest about this (the agent address is shown), but the model would be cleaner if the user's connected wallet signed.
+- **Why it matters:** today every Studio-anchored receipt is signed by the operator's `IVARONIX_SIGNER_KEY` (legacy: `EVM_PRIVATE_KEY`), not the connected browser wallet. The receipt page is honest about this (the agent address is shown), but the model would be cleaner if the user's connected wallet signed.
 - **Source:** `apps/studio/src/app/api/run/route.ts:24-25` flagged in `docs/PHASE_B_DISCLOSURES.md` item 1.
 - **Action:** add SIWE middleware (Vercel guide: `https://docs.vercel.com/integrations/siwe`), expose a client-side wagmi sign-and-anchor path, tag every Studio-anchored receipt with `signedBy: 'user' | 'operator'`.
 
@@ -160,7 +164,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - Add to `.env`: `ZG_MEMORY_URL=http://localhost:1995`
   - That's it — the runtime auto-detects via `MemoryClient.fromEnv()` and starts populating `request.memoryQuery` on every receipt.
 - **Verify:** run `ivaronix doc ask sample.txt "..." --skill private-doc-review` twice; the second receipt's `request.memoryQuery.retrievedCount` should be > 0 (the second run reads the first run's anchored memory back as context).
-- **No mainnet equivalent yet.** The sidecar is wallet-keyed (encrypted with a key derived from `EVM_PRIVATE_KEY`) so it works against either testnet or mainnet receipts depending on which network the receipts were anchored on.
+- **No mainnet equivalent yet.** The sidecar is wallet-keyed (encrypted with a key derived from `IVARONIX_SIGNER_KEY` · legacy: `EVM_PRIVATE_KEY`) so it works against either testnet or mainnet receipts depending on which network the receipts were anchored on.
 
 ### B-4 · Anchor data-room manifests on 0G Storage (not just local)
 - **Why it matters:** today `apps/studio/src/app/data-room/[id]/page.tsx` reads only the local FS. A judge browsing the deployed Studio on a different host sees "Room not found" because the manifest was created on the operator's machine.
@@ -193,7 +197,8 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<deployer-key>
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted.
+  export IVARONIX_SIGNER_KEY=<deployer-key>
   forge script script/DeployV2Marketplace.s.sol --rpc-url https://evmrpc.0g.ai --broadcast --legacy
   ```
 
@@ -299,7 +304,8 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<deployer-key>
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted.
+  export IVARONIX_SIGNER_KEY=<deployer-key>
   export RECEIPT_REGISTRY_ADDR=<V2-addr-from-A-V2-K2>    # or V1 fallback
   forge script script/DeploySubscriptionEscrowV2.s.sol:DeploySubscriptionEscrowV2 \
     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
@@ -316,7 +322,8 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<deployer-key>
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted.
+  export IVARONIX_SIGNER_KEY=<deployer-key>
   forge script script/DeploySkillRegistryV2.s.sol:DeploySkillRegistryV2 \
     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
   ```
@@ -332,7 +339,8 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   ```bash
   cd contracts
-  export OG_PRIVATE_KEY=<deployer-key>
+  # Canonical-first; legacy alias OG_PRIVATE_KEY also accepted.
+  export IVARONIX_SIGNER_KEY=<deployer-key>
   export CAPABILITY_REGISTRY_ADDR=<V2-addr-from-B-V2-15>
   forge script script/DeployMemoryAccessLogV2.s.sol:DeployMemoryAccessLogV2 \
     --rpc-url https://evmrpc-testnet.0g.ai --broadcast --legacy
