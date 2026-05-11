@@ -135,8 +135,9 @@ When you write **anything that ships** (READMEs, docs, marketing copy, PR descri
 - **Cut every word the sentence still works without.** Read it aloud — if you're embarrassed, rewrite.
 - **Match Ivaronix's voice**: terse, technical, blunt. Editorial cream-on-black. Receipts > rhetoric.
 - **JSDoc and NatSpec describe WHAT the code does, not WHEN it was written.** No `Day-N`, `Phase A/B/C`, `K-N fix`, `MVP`, `killer demo`, `Track N headline`, `sprint`. Use capability-statement framing ("this writes the receipt anchor"), threat-model framing ("defends against operator-side disclosure"), or roadmap framing ("queued in USER_TODO §B-V2"). Sprint references fossilize — in NatSpec they compile into permanent contract metadata. The exception is explicit traceability links (`planning-003 §A.5.X`, `WT 31`) that map a comment to a specific audit closure; those are intentional and stay.
+- **No competitor-bashing in public-facing copy.** README, JUDGE_GUIDE, PITCH, MAINNET_READINESS, the Studio UI, OG-image labels, npx-cli README — these are the *public trust surface*, not battle notes. Rules: explain the product first; show real proof (numbers, links, commands); state facts not "we beat X"; never name a competitor negatively; no "the only project in the field" / "no other 0G project ships" superlatives; use "why this matters" not "why others fail"; mention tradeoffs honestly; let proof speak. Section headings: "What makes Ivaronix different" (a bulleted list of facts), never "How Ivaronix compares" with a competitor column. Comparison analysis stays in **internal docs only** (`docs/HALF_BAKED.md`, `docs/_internal/`, the `entries/` reference folder) — never in a file a judge or user reads as the product's own voice. A top-tier project's README reads calm, confident, factual; it doesn't read insecure. (Codex review · 2026-05-11.)
 
-If you catch yourself writing AI slop: stop, delete the paragraph, write one sentence that is true, ship that.
+If you catch yourself writing AI slop or competitor-dunking: stop, delete the paragraph, write one sentence that is true about *our* product, ship that.
 
 ## 10. Visual contract — match `brand/Ivaronix.html`
 

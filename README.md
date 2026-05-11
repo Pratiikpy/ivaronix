@@ -103,22 +103,17 @@ Every Ivaronix receipt is **TIER 1** (TEE-attested on 0G Compute, rendered green
 | **TIER 1** | TEE-attested 0G Compute | `evidenceRoot` on 0G Storage | `ReceiptRegistry` / V2 | `ivaronix receipt verify <id> --tee-independent` returns FULLY VERIFIED ✓ |
 | **TIER 2** | External (NIM / Gemini / etc.) | optional | yes | `ivaronix receipt verify <id>` returns ANCHORED (not FULLY VERIFIED) |
 
-Some competitors (e.g. AlphaTrace) market external-provider receipts as "verifiable" without distinguishing storage-integrity from compute-integrity. We don't. The `/r/<id>` proof page renders an explicit "verifies storage integrity ✓ verifies compute integrity ⚠ external provider" line on TIER 2 — honesty per CLAUDE.md §6.
+The `/r/<id>` proof page never claims compute integrity it can't back: a TIER 2 receipt renders an explicit "verifies storage integrity ✓ · verifies compute integrity ⚠ external provider" line. Storage-integrity and compute-integrity are separate claims and the page labels each one (CLAUDE.md §6).
 
-## How Ivaronix compares
+## What makes Ivaronix different
 
-| Axis | OpenClaw | 0GClaw | Trapezohe Ghast | AlphaTrace | **Ivaronix** |
-|---|---|---|---|---|---|
-| Where compute runs | Your laptop | 0G infra (cron + x402) | Git-only registry | Gemini (no TEE) | **TEE-attested 0G Compute** |
-| Verifiable compute | No | Storage proof only | No | Storage only (NOT compute) | **TIER 1 TEE + chain anchor + 3rd-party re-verify** |
-| Receipt-gated payment | No | x402 USDC | No | No | **`og.creator.fee_split` per skill** |
-| Re-runnable on stranger's machine | No | No | No | No | **Yes — `ivaronix receipt verify <id> --tee-independent`** |
-| Polyglot canonical hash | No | No | No | No | **TS + Python + Rust byte-equal in CI on every PR** |
-| Honest TIER 1 vs TIER 2 disclosure | n/a | n/a | n/a | No (conflates) | **Yes** |
+- **Receipts are independently re-verifiable.** `ivaronix receipt verify <id> --tee-independent` re-runs `broker.processResponse` against the original 0G Compute provider — on any machine, in any of three languages, without an account. A TIER 1 receipt that passes returns `FULLY VERIFIED ✓`.
+- **TIER 1 vs TIER 2 is labeled honestly.** Green chip when the inference ran inside a TEE-attested 0G Compute provider; amber chip when it ran on an external provider (NIM / Gemini / etc.). Both are signed and chain-anchored; the page never conflates the two.
+- **Receipt hashes are canonical across languages.** The receipt's canonical hash is byte-equal across TypeScript, Python, and Rust reference implementations — checked on every PR (see below). RFC-8785 (JSON Canonicalisation Scheme) is the spec.
+- **Creators earn only from receipt-backed runs.** Each skill manifest can declare `og.creator.fee_split`; the split is recorded on the receipt, so a creator's earnings trace back to verifiable executions.
+- **Proof links work without an account.** `/r/<id>` renders the four-light evidence row, the TIER chip, the anchor tx link, and the key fingerprint — to anyone, no wallet, no login.
 
-The wedge: Ivaronix is the only project where a judge re-runs verification on a stranger's clean machine and arrives at FULLY VERIFIED ✓ without an account.
-
-## Polyglot canonical hash · the only Criterion-1 moat in the field
+## Polyglot canonical hash · RFC-8785
 
 Three reference implementations of the receipt's canonical hash, byte-equal across all three on every PR:
 
@@ -128,7 +123,7 @@ Three reference implementations of the receipt's canonical hash, byte-equal acro
 
 Cross-impl proof runs in `.github/workflows/jcs-roundtrip.yml` on every push: each language hashes the same 29 vectors, `scripts/verifier-py/cross_check.py` asserts byte-equality across all three. The CI workflow blocks merge on any divergence. Go support queued ([USER_TODO §A-V2-K15-Go](docs/USER_TODO.md)).
 
-No other project in the 0G APAC field ships a polyglot canonical hash with byte-equality CI. RFC-8785 (JSON Canonicalisation Scheme) is the spec — `docs/HASH_FUNCTION.md` is the design doc.
+Why this matters: "re-verify on any machine, in any language" is only true if the canonical hash is language-independent. RFC-8785 (JSON Canonicalisation Scheme) is the spec; `docs/HASH_FUNCTION.md` is the design doc, including the `schemaVersion` migration plan that lets v1 and v2 receipts coexist forever.
 
 ## Documentation
 
@@ -152,9 +147,9 @@ No other project in the 0G APAC field ships a polyglot canonical hash with byte-
 - [BRAND.md](BRAND.md) · brand-asset license (separate from MIT code grant); rules for forks + attribution + widget embedding
 - [CHANGELOG.md](CHANGELOG.md) · audit-fix ledger with `Closes audit <ID>` commit trailers (queryable via `pnpm audit:list`)
 
-## Memory primitive · counters SealedMind on a single command
+## Memory primitive · portable, encrypted, on-chain audit trail
 
-SealedMind pitches "first portable memory layer for AI agents" and gets the headline. Ivaronix has the same primitive shipped, plus on-chain audit trail: `MemoryEngine` (encrypted hybrid vector + FTS via the K-20-fixed AES-GCM crypto) wired to `CapabilityRegistry` (on-chain grants) and `MemoryAccessLog` (on-chain access trail).
+`MemoryEngine` is an encrypted hybrid memory layer — vector similarity + FTS keyword, encrypted at rest with AES-256-GCM (fresh per-call nonce) — wired to `CapabilityRegistry` (on-chain access grants) and `MemoryAccessLog` (on-chain access trail). It's portable across machines: `memory stream-id` derives a deterministic 0G KV stream-ID from any wallet, so memory moves without a server-side index.
 
 ```bash
 # Write an observation to your hybrid memory (encrypted, indexed, optional on-chain log)
@@ -172,11 +167,11 @@ ivaronix memory log --agent $IVARONIX_WALLET_ADDRESS --limit 10
 
 10 sub-commands total: `remember`, `recall`, `forget`, `grant`, `revoke`, `list`, `log`, `log-emit`, `stream-id`, `snapshot`. The `stream-id` command derives a deterministic 0G KV stream-ID from any wallet so memory is portable across machines without a server-side index. Studio `/memory` page mirrors the surface: SIWE-gated, real-time event feed from `MemoryAccessLog`, grant management UI for `CapabilityRegistry`.
 
-Wedge vs SealedMind: receipts. Every `memory remember` anchors a `memory_access` receipt on chain (when `--no-log` isn't set). The receipt records the access type + the K-20-encrypted blob's storage root. Same memory layer, plus the audit trail competitors don't have.
+Every `memory remember` anchors a `memory_access` receipt on chain (unless `--no-log` is passed). The receipt records the access type plus the encrypted blob's storage root — so a memory write isn't just stored, it's attested. The same applies to reads and grants: each access is a receipt.
 
 ## Verify a real receipt right now
 
-The single command that no other 0G project ships:
+Clone, install, run one command — no account, no wallet:
 
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs
@@ -412,7 +407,7 @@ This folder is the **single source of truth** for Ivaronix planning. Read in ord
 | **[brand/Ivaronix.html](brand/Ivaronix.html)** | Bundled visual mockup — the design source of truth. Open in browser to see the rendered reference. Use Playwright to capture screenshots at 1440×900 / 1280×800 / 390×844. |
 | **[brand/](brand/)** | Logo SVG assets: `ivaronix-mark.svg` (full), `ivaronix-icon.svg` (brackets-with-i), `ivaronix-dot.svg` (favicon), `ivaronix-wordmark.svg` (text). |
 | **[0G_TESTNET_NOTES.md](docs/reference/0G_TESTNET_NOTES.md)** | Live testnet state: Wallet A `0xaa95...`, current Router pricing, confirmed inference endpoint. |
-| **[entries.md](docs/reference/entries.md)** | Competitor scorecard for the 16 grant-track entries. Companion to `REFERENCE_PATTERNS.md`. |
+| **[entries.md](docs/reference/entries.md)** | Internal field-reference notes on other 0G APAC entries (local reference, not part of the public submission). Companion to `REFERENCE_PATTERNS.md`. |
 | **[.env.example](.env.example)** | Template for credentials (real `.env` is gitignored). |
 
 Single source of truth ordering (when docs disagree):
@@ -433,81 +428,13 @@ When in doubt, **link, don't duplicate.**
 | Folder | Holds |
 |---|---|
 | `oglabs resources/` | Official 0G docs, SDKs, agent-skills patterns, awesome-0g curated list |
-| `og-projects-showcase/` | 8 projects featured by OG Labs team — winning patterns |
-| `entries/` | 16 grant-track entries we are competing against |
-| `CLI Open Source Project/` | 5 viral CLIs we synthesize from (OpenCode, HermesAgent, Octogent, claude-mem, awesome-claude-skills) |
+| `og-projects-showcase/` | Projects featured by the OG Labs team — reference patterns |
+| `entries/` · `new-entries/` | Other 0G APAC Hackathon entries — local reference, not edited |
+| `CLI Open Source Project/` | CLI projects synthesised from (OpenCode, HermesAgent, Octogent, claude-mem, awesome-claude-skills) |
 | `_archive/` | Pre-v2 planning docs (kept for history; do not edit) |
-
----
-
-## TL;DR Strategy
-
-**Wedge:** AI Action Receipts on 0G. The receipt is the unit of trust; every surface (web, CLI, MCP, marketplace, trust-layer schema) is plumbing that makes the receipt real.
-
-**Five surfaces:** Studio (primary, web app) · Forge CLI · API+MCP · Skill Registry · Trust Layer (Phase 3).
-
-**Strategy:** Testnet-complete first (FULL feature surface, no compromise), then mainnet promotion as a single deliberate event. **30-day plan, two phases:**
-- **Phase A (Day 1-22):** build + test the FULL product on testnet 16602. Studio + 50-skill marketplace + 6 contracts + ≥100 testnet receipts.
-- **Phase B (Day 23-30):** re-deploy contracts to mainnet 16661, anchor ≥100 mainnet receipts, ChainGPT audit applied for, submit grant.
-
-**Differentiation (no other 0G project has):**
-- Real Studio with drop-zone + 50+ skills + public Proof URLs
-- Tiered Adjudicated Consensus (Quick / Standard 3-role / High-Stakes 5-role)
-- Hybrid memory (vector + temporal graph + FTS + KV)
-- 9 typed receipt types with 3-state verification UI
-- ERC-7857 Agent Passport at MVP (most defer to Phase 4)
-- Independent TEE verification via `broker.inference.processResponse()`
-- 50+ skill marketplace seeded from awesome-claude-skills, **with a 0G-native `og:` manifest extension that is the real long-term moat (not the 50-count)**
-- `@ivaronix/og-toolkit` clean SDK wrappers (every 0G app eventually adopts these)
-
-**Avoid:** scope creep into team workspaces, agent economy, marketplace economics-as-business-model, voice/image/fine-tuning. **All Phase 3+.**
-
-**Beat the bar:** Provus's playbook with full Nexus depth — mainnet contracts + verified addresses + live metrics + audit + ENGINEERING_DEBUG_LOG + Studio + 50 skills.
-
-**Honest monetization:** Pro subscription (Phase 2) and Enterprise/Trust Layer (Phase 3) are the realistic revenue lines. Marketplace is a discovery moat, not a revenue line.
-
----
-
-## Day-1 quickstart (when implementation begins)
-
-```bash
-# 1. Scaffold monorepo (pnpm + Turborepo)
-pnpm create turbo@latest ivaronix
-cd ivaronix && pnpm install
-
-# 2. Add 0G SDKs + ethers v6 + foundry
-pnpm add ethers@^6 @0gfoundation/0g-storage-ts-sdk @0gfoundation/0g-compute-ts-sdk
-pnpm add @0glabs/0g-serving-broker
-forge init contracts/
-
-# 3. Wire up testnet env (docs/build/BUILD.md §2)
-cp .env.example .env  # IVARONIX_CHAIN_ID=16602 (legacy: OG_CHAIN_ID)
-
-# 4. Doctor
-ivaronix doctor   # all green = ready for Day 2
-```
-
-Then walk through `docs/build/BUILD.md §1` Day 1 → Day 22 (testnet) → Day 23-30 (mainnet promotion).
-
----
-
-## Locked Engineering Defaults (docs/build/BUILD.md §11)
-
-- Chain client (daemon): **ethers v6**
-- Wallet (browser): **viem + wagmi + walletconnect**
-- Daemon HTTP: **Hono**
-- Memory store: **better-sqlite3 + FTS5**
-- Memory vector: **hnswlib-node + transformers.js (`all-MiniLM-L6-v2`)**
-- Default model: **`qwen/qwen-2.5-7b-instruct`** with `--model` override
-- Daemon lifecycle: **auto-start with transparent logs**
-- Package manager: **pnpm + Turborepo**
-- Solidity: **Foundry, 0.8.24, OZ v5, evmVersion `cancun`**
-- Studio: **Next.js 15 + React 19 + Tailwind v4 + shadcn/ui** on Vercel
 
 ---
 
 ## Contact
 
-(Personal project — single maintainer.)
-
-Submit via the OG Labs grant form when `docs/pitch/PITCH.md §8` two-gate checklist is fully green.
+Personal project — single maintainer.
