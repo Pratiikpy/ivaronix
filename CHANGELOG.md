@@ -45,6 +45,8 @@ Recap of the audit closures landed between sweeps 200-228. Each commit's subject
 | JUDGE_GUIDE Phase B SIWE | `9eb6f33` | 226 | stale caption corrected |
 | env.ts §B-V2-10 stale | `f24fa79` | 227 | cross-ref updated to ✅ SHIPPED |
 | §B-V2-N cross-ref lock | `966d59b` | 228 | `verify-b-v2-crossref-status` regression + 1 follow-on fix |
+| CHANGELOG-DRIFT-1 backfill | `806eb73` | 231 | self-audit caught missing trailers; this Phase D table is the human-readable recovery |
+| CHANGELOG-DRIFT-1 lock | `0c6c5a8` | 236 | `.githooks/commit-msg` enforces `Closes audit <ID>` on commits adding ✅ to HALF_BAKED / PHASE_B_DISCLOSURES |
 
 Net state at end of run:
 - HALF_BAKED: 79 closed entries, 8 queued (all with B-V2 runbook), 0 stale
