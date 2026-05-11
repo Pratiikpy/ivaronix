@@ -537,9 +537,9 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 ### K-12 · No HTTP security headers anywhere  *(Medium · ✅ CLOSED sweep 130 — mirrors §A-10)*
 - ✅ `apps/studio/next.config.ts` `headers()` config now ships `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=63072000; preload`. Locked by `verify-studio-security-headers.ts`. CSP + `frame-ancestors` for `/embed/r/[id]` queued separately (the embed path needs a controlled allow-list of iframe parents).
 
-### K-13 · No CSRF protection on any state-changing route  *(Medium)*
-- All four routes. Once SIWE auth lands, third-party `fetch('/api/run', {credentials:'include'})` burns the user's quota.
-- **Fix:** `Origin === self` check; `SameSite=Strict` cookies; custom `X-Ivaronix-CSRF` header.
+### K-13 · No CSRF protection on any state-changing route  *(Medium · ⚠ PARTIALLY CLOSED sweep 217)*
+- **Primary defense ✅ shipped:** SIWE session cookies are set with `sameSite: 'strict'` in both handshake routes (`/api/auth/siwe/nonce` + `/api/auth/siwe/verify`). A browser will not attach the cookie to a cross-origin POST, so a malicious third-party page cannot drive `/api/run` with the user's credentials even with `fetch('/api/run', { credentials: 'include' })`. The specific K-13 attack vector is structurally blocked. Locked by `verify-siwe-cookie-samesite-strict.ts` (sweep 217) which fails on any sameSite value other than `'strict'` in the SIWE handshake files.
+- **Hardening queued for mainnet (B-V2-27):** Origin/Referer allowlist check on state-changing routes + optional custom `X-Ivaronix-CSRF` header. These are belt-and-suspenders defenses on top of SameSite — they catch the residual attack surface (compromised same-site subdomain, future browser policy change, embedded-iframe edge cases). Deferring to mainnet because production needs careful origin-allowlist configuration that depends on the final deployment URL.
 
 ### K-14 · "Operator-on-behalf-of-user" receipts are forgeries by our own verifier  *(Critical · ✅ CLOSED sweep 156 — duplicates §I-3)*
 - ✅ Verifier branches on `agent.signedBy` (see §I-3 closure). SIWE handshake landed in sweep 245e017 (§K-8 + §K-9); the W9 path now requires an active SIWE session matching `body.userWallet` before `/api/run` accepts the anchor, so the operator-signer + user-ownerWallet pairing is bound to a real authentication event. The verifier's tier-aware logic accepts that pairing honestly.

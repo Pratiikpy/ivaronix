@@ -388,6 +388,14 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-27 · CSRF hardening on state-changing routes (Origin allowlist + custom header)
+- **Source:** HALF_BAKED §K-13 partial closure (sweep 217). Primary defense (`sameSite: 'strict'` on SIWE cookies) is shipped and locked. Belt-and-suspenders defenses are queued for production:
+  - **Origin/Referer allowlist** on POST `/api/run`, `/api/skill/save`, `/api/onboard/metadata`, `/api/memory/remember`. Allowed origins read from `IVARONIX_STUDIO_BASE` + Vercel preview URL pattern. Reject on mismatch with 403.
+  - **Custom `X-Ivaronix-CSRF` header** required on state-changing routes; browsers can't set custom headers cross-origin without a preflight that exposes the attempt.
+  - **Same-site cookie audit:** confirm no future cookie (e.g. theme preference, dashboard view) accidentally defaults to `lax` and weakens the boundary.
+- **Why queued not shipped:** production origin allowlist needs the final deployment URL (Vercel preview URLs rotate per branch; the env var pattern needs the live domain). Testnet today has only `ivaronix-studio.vercel.app` so the lock would be tight enough to break preview-branch QA. Land alongside the custom domain decision in mainnet promotion (§B-V2-2).
+- **Effort:** ~45 min once the production origin pattern is decided.
+
 ### B-V2-26 · Production error capture (Sentry or equivalent)
 - **Source:** HALF_BAKED §A-11. Currently no Sentry / LogRocket / production error capture anywhere. For testnet the operator reads errors from terminal + Vercel function logs; for mainnet a `/api/run` 500 during a live demo is invisible without aggregated telemetry.
 - **Action:**

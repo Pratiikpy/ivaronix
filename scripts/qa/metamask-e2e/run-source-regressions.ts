@@ -93,6 +93,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-tee-bound-overclaim/, // sweep 211 · HALF_BAKED §I-6 closure · no capital-B "TEE-Bound" in app source or render-target docs (judge-facing surfaces)
       /^verify-api-route-error-sanitize/, // sweep 212 · HALF_BAKED §K-11 closure · API routes wrap err.message with sanitizeErrorMessage before responding
       /^verify-no-jsdoc-glob-terminator/, // sweep 212 meta-regression · forbid the JSDoc terminator token inside a multi-line comment (third-occurrence prevention)
+      /^verify-siwe-cookie-samesite-strict/, // sweep 217 · HALF_BAKED §K-13 primary CSRF defense · SIWE session cookies must stay sameSite: 'strict'
     ],
   },
   'studio-live': {
