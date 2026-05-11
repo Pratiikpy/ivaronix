@@ -35,8 +35,9 @@ export interface Env {
  * `EVM_PRIVATE_KEY`, `OG_RPC_URL`, `OG_NETWORK`, etc.) still resolve so
  * existing operator `.env` files don't break, but `validateEnv()` logs a
  * one-time deprecation warning per alias used. Forge deploy scripts
- * separately read `OG_PRIVATE_KEY` directly via vm.envString — that
- * migration is the operator-action follow-up (USER_TODO §B-V2-10).
+ * now read `IVARONIX_SIGNER_KEY` via `vm.envOr("IVARONIX_SIGNER_KEY",
+ * vm.envUint("OG_PRIVATE_KEY"))` — the migration shipped in
+ * `USER_TODO §B-V2-10` (✅ SHIPPED).
  */
 const SIGNER_KEY_ALIASES = ['IVARONIX_SIGNER_KEY', 'OG_PRIVATE_KEY', 'EVM_PRIVATE_KEY'] as const;
 const READ_PROXY_KEY_ALIASES = ['IVARONIX_READ_PROXY_KEY', 'READ_PROXY_PRIVATE_KEY'] as const;
