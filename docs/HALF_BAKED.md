@@ -415,9 +415,9 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `apps/studio/src/app/skills/page.tsx:75-76` header copy promises "first-party"; `loadAllSkills()` returns every skill under `seed-skills/` including 150 third-party imports per `registry.json`. Most have not been anchored.
 - **Fix:** filter to `source: 'first-party'` (already in registry.json), or split into two sections with honest counts.
 
-### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A)*
-- `packages/runtime/src/pipeline.ts:259-295` NVIDIA branch. When `provider: 'nvidia'`, receipt is correctly tagged TIER 2 but the sandbox does not refuse despite manifest's TEE requirement. The dead-branch bug from Round-1 A-1 makes this reachable from a future code path.
-- **Fix:** in `runPipeline` after computing `providerKind`, throw if `manifest.og.permissions.compute_tee_required && providerKind !== '0g'`.
+### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A · ✅ CLOSED)*
+- ✅ Sandbox now blocks the bypass. `packages/skills/src/sandbox.ts:77` refuses any run where `permissions.compute_tee_required === true` and `ctx.providerKind` is set to a non-`0g` value. `packages/runtime/src/pipeline.ts:192-202` passes `providerKind: input.provider ?? '0g'` into `evaluateSandbox` and throws on `!decision.allow`, so a NIM-routed run against a TEE-required skill fails closed before any inference fires.
+- Locked by tests `packages/skills/src/sandbox.test.ts` S-1 series (5 cases: nvidia/openai/ollama all block, 0g allows, omitted providerKind allows the legacy CLI path).
 
 ### I-11 · `passport mint` writes sha256 of plaintext metadata to chain `metadataRoot`  *(severity A)*
 - `apps/cli/src/commands/passport.ts:78-92`: `metadataRoot = '0x' + sha256(JSON.stringify(metadata))`. No Storage upload, no DA dispersal. The chain holds a hash with no retrievable preimage.
@@ -428,37 +428,37 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - **Storage half:** ✅ shipped. `ivaronix memory snapshot --upload` produces a content-addressed blob on 0G Storage. Anyone with the rootHash can re-fetch and verify against the manifest schema.
 - **Chain half:** queued in USER_TODO §B-V2-24 — calling `AgentPassportINFT.updateMemoryRoot(tokenId, storageRootHash)` so the passport canonically points at the latest manifest. Needs tokenId lookup + real-fund contract write + a `passport_update` receipt anchor.
 
-### I-13 · `/r/[id]` "RISK" pill reads from receipt's claimed `riskLevel`; pipeline always writes 'low'  *(severity A)*
-- `packages/runtime/src/pipeline.ts:568-572` and `apps/cli/src/commands/doc.ts:569` both write `outputs.riskLevel: 'low'` unconditionally. Every receipt anywhere claims `low`. The pill is decorative.
-- **Fix:** parse `severity:` markers from `finalText` server-side (RunPanel already has the regex).
+### I-13 · `/r/[id]` "RISK" pill reads from receipt's claimed `riskLevel`; pipeline always writes 'low'  *(severity A · ✅ CLOSED 42005a9 + 86fe676)*
+- ✅ `packages/runtime/src/risk.ts` now exports `deriveRiskLevel(finalText)` which parses both explicit `severity:` markers and bare-keyword tokens. Both write sites populate it from the model's output: `packages/runtime/src/pipeline.ts:772` (Studio runs) and `apps/cli/src/commands/doc.ts:619` (CLI `doc ask`). The chip on `/r/[id]` and the `--risk` line in CLI summaries now reflect the real risk class. Extension to passport-consolidate landed in 86fe676.
 
-### I-14 · README `1,330+`, JUDGE_GUIDE `1,400+`, PITCH `1,165`, MAINNET_READINESS `1,071` — same date  *(severity A)*
-- Round-1 C noted drift; the new finding is README's hero number `1,330+` is the **first thing a judge sees** and contradicts the JUDGE_GUIDE the same judge reads next.
-- **Fix:** Studio home already loads `ReceiptRegistry.nextId()` server-side. Replace all four hardcoded numbers with one `<LiveCount/>` component plus a stamped "as of" line.
+### I-14 · README `1,330+`, JUDGE_GUIDE `1,400+`, PITCH `1,165`, MAINNET_READINESS `1,071` — same date  *(severity A · ✅ CLOSED 399958a + 85cdc59 + a34798c)*
+- ✅ Auto-render pipeline shipped (`scripts/diag/docs-render.ts`). Every numerical claim ≥ 100 in README / PITCH / JUDGE_GUIDE / MAINNET_READINESS is wrapped in `<!-- numbers:auto:KEY -->VALUE<!-- /numbers:auto:KEY -->` markers and re-derived from `docs/numbers.json` on every `pnpm docs:render`. `verify-no-bare-numbers-in-rendered-docs.ts` (sweep 86 +) gates against bare numbers re-entering those docs. Today all four docs show the same `receipts.total` (1644+), no contradiction possible — drift is structurally blocked.
 
-### I-15 · `/api/run` returns no `tier` / `providerKind` / `verificationMethod` to client  *(severity A)*
-- `apps/studio/src/app/api/run/route.ts:80-102` and `RunPanel.tsx:39-54`. ResultCard cannot honestly render TIER 1 vs TIER 2 from a fresh run. Judge has to click through to `/r/[id]`.
-- **Fix:** add `tier`, `providerKind`, `routerVerified` to route response; show matching chip in ResultCard.
+### I-15 · `/api/run` returns no `tier` / `providerKind` / `verificationMethod` to client  *(severity A · ✅ CLOSED 7bc289c + 9e88987)*
+- ✅ `/api/run` now forwards `teeRouterVerified: boolean | null` aggregated from every consensus role's `attestation.routerVerified` (see `apps/studio/src/app/api/run/route.ts:170` and `packages/runtime/src/pipeline.ts:488-491`). `RunPanel.tsx:537-539` renders the matching chip without a click-through:
+  - `true` → `TIER 1 · TEE` (every role TEE-attested on 0G Compute)
+  - `false` → `TIER 2 · EXTERNAL` (at least one role on NIM / external-signed)
+  - `null` → `ANCHORED` (no TEE check requested)
+- The original finding asked for three fields (tier, providerKind, verificationMethod); shipping `teeRouterVerified` collapses all three into the user-visible signal a judge actually needs. The richer per-role fields are still recoverable from `/r/[id]` for deep inspection.
 
-### I-16 · `daBlobRef.status` records `PROCESSING` as terminal  *(severity A)*
-- `apps/cli/src/commands/doc.ts:224-237` calls `daClient.disperseBlob()` once and never polls. `result.status` is typically `PROCESSING`. Receipt records a provisional state as a permanent fact.
-- **Fix:** call `disperseAndFinalize` (already exists in `og-da/src/index.ts`).
+### I-16 · `daBlobRef.status` records `PROCESSING` as terminal  *(severity A · ✅ CLOSED 977499f)*
+- ✅ `apps/cli/src/commands/doc.ts:241-256` now polls `daClient.getBlobStatus()` after the initial disperse, with a 30s deadline (responsive but long enough that most testnet dispersals finalize). `FINALIZED` collapses to `CONFIRMED`; failure modes (`FAILED`, `INSUFFICIENT_SIGNATURES`) are recorded honestly. On poll timeout the receipt records the LAST-OBSERVED status, so `PROCESSING` only appears when the blob genuinely hadn't finalized by sign time — no provisional state is captured as permanent.
 
-### I-17 · `/r/[id]` storage caption "anyone with the SDK can re-download this blob" without proof of upload  *(severity A)*
-- `apps/studio/src/app/r/[id]/page.tsx:290-292`. Caption stays the same when `doc ask` falls back from Storage upload to local sha256.
-- **Fix:** add `storage.evidenceOnStorage: boolean`; gate caption on it.
+### I-17 · `/r/[id]` storage caption "anyone with the SDK can re-download this blob" without proof of upload  *(severity A · ✅ CLOSED 35d85f3)*
+- ✅ Schema now carries `storage.proofDownloadVerified: boolean` (`apps/studio/src/lib/local-receipt.ts`). `/r/[id]` reads it (`page.tsx:404-408`) and renders one of two captions:
+  - `true` → "0G Storage Merkle root — re-download verified by independent fetch."
+  - `false` → "0G Storage Merkle root for the run's evidence blob." (no claim about retrievability)
+- The "anyone with the SDK can re-download this blob" sentence is gone. The sha256-fallback path (when Storage upload fails) still produces a 0x-prefixed root value, but the caption no longer overpromises about it.
 
 ### I-18 · `priorReceiptIds` lineage claim unverifiable from the receipt alone  *(severity B)*
 - `apps/studio/src/app/r/[id]/page.tsx:357-360` says "lineage is verifiable." Code just lists local-FS receipts keyed by owner+skill. Nothing in the receipt body proves the agent **read** them. No model-input hash.
 - **Fix:** include `request.priorContextHash` in the canonical hash. Then chain receipt commits to which prior bodies were folded in.
 
-### I-19 · `passport revoke` / `delegate revoke` submit chain txs with no confirmation  *(severity B)*
-- New on top of Round-1 E (memory revoke). `delegate.ts revoke <id>` is silent on irreversibility. Mistype + enter spends gas to revoke a grant the user wanted.
-- **Fix:** `--confirm` flag or interactive `[y/N]`.
+### I-19 · `passport revoke` / `delegate revoke` submit chain txs with no confirmation  *(severity B · ✅ CLOSED 037abac + 59a156a)*
+- ✅ `apps/cli/src/lib/confirm.ts` provides `confirmAction(prompt)`; both `delegate.ts:440` (revoke grant) and `passport.ts:388` (passport revoke) now require an explicit `y/N` interactive ack, with a `--yes` escape for scripted use. Memory `forget` got the same treatment in 59a156a. A mistyped id no longer spends gas before the operator sees the prompt.
 
-### I-20 · "14 packages typecheck-clean" claim — actual count is 25 packages + 8 apps  *(severity A)*
-- `JUDGE_GUIDE.md:108` and `README.md:4` claim "14 packages." `ls packages/` returns 25 directories; `apps/` has 8. Either some aren't typechecked, or the number is stale.
-- **Fix:** `pnpm -r typecheck` and report the exact count. One source of truth in CI.
+### I-20 · "14 packages typecheck-clean" claim — actual count is 25 packages + 8 apps  *(severity A · ✅ CLOSED c6b49c9 + sweep 200)*
+- ✅ `scripts/diag/numbers-refresh.ts` `countTypecheckClean()` now walks `packages/` + `apps/`, counts only entries whose `typecheck` script actually invokes `tsc`, and writes the count to `docs/numbers.json` `packages.typecheckClean`. Sweep 200 hardened the regex against an echo-placeholder false-positive (`opencode-bin`'s typecheck echoes a message mentioning "tsc errors" — the new `^\s*echo\b` exclusion stops the substring from miscount). README + JUDGE_GUIDE both render from the same `numbers.json` key — single source of truth. Today: `21 packages typecheck-clean` across 25 workspace projects (2 echo placeholders correctly excluded).
 
 ---
 
