@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
-import { loadGoogleFont } from '@/lib/og-font';
+import { loadBrandFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
 // Skip static prerender at build time — the loadFonts() helper does
@@ -25,7 +25,7 @@ export const contentType = 'image/png';
  * the most-shared page in Studio.
  */
 export default async function Image() {
-  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
+  const fonts = await loadBrandFont();
   const network = getNetwork();
 
   const modules: Array<{ name: string; status: 'live' | 'partial' | 'roadmap'; tagline: string }> = [

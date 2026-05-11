@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
-import { loadGoogleFont } from '@/lib/og-font';
+import { loadBrandFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
 // Skip build-time prerender — see /0g/opengraph-image for rationale.
@@ -20,7 +20,7 @@ export const contentType = 'image/png';
  * per-route OG images at `/r/[id]/` and `/0g/` ship separately.
  */
 export default async function Image() {
-  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
+  const fonts = await loadBrandFont();
   const network = getNetwork();
 
   return new ImageResponse(

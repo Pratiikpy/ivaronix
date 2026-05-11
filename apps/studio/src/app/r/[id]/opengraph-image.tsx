@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { unifiedGetReceipt, unifiedFindByReceiptRoot, getNetwork } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
-import { loadGoogleFont } from '@/lib/og-font';
+import { loadBrandFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
 // Stays on the Node runtime (not edge): the headline lookup imports ethers
@@ -20,7 +20,7 @@ export const contentType = 'image/png';
  * and link unfurls. Per CLAUDE.md §9 — never AI-glossy.
  */
 export default async function Image({ params }: { params: { id: string } }) {
-  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
+  const fonts = await loadBrandFont();
   const network = getNetwork();
   let id = params.id;
   let headline = `Verified action receipt on 0G ${network}`;

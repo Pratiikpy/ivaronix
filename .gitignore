@@ -111,3 +111,5 @@ test-targets/*
 # Tracked, not ignored — the README docs grid + planning-003 §A.5.X
 # both reference these files. Earlier `_archive/` entry in this file
 # was self-contradicting drift; removed.
+
+.vercel
