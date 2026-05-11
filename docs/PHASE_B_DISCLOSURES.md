@@ -45,11 +45,10 @@
 
 ## Open · documented honestly, no UI lies
 
-### 1 · Studio-anchored receipt issuer is the operator wallet, not the user (audit #1)
-- **File:** `apps/studio/src/app/api/run/route.ts`.
-- **Reality:** When a user runs the `/api/run` flow from the Studio, the resulting receipt is signed by `EVM_PRIVATE_KEY` (the operator wallet), not by the connected browser wallet. SIWE was never wired.
-- **What the user sees today:** the connected-wallet chip in the header is unchanged; the receipt page renders the agent's wallet truthfully (the operator wallet). A judge inspecting `/r/<id>` can see the wallet and check it against the on-chain owner.
-- **Phase B fix:** wire SIWE on the Studio onboard, expose a client-side sign-and-anchor path via wagmi, and tag every Studio-anchored receipt with `signedBy: 'user' | 'operator'` so the source of identity is unambiguous.
+### 1 · Studio-anchored receipt issuer is the operator wallet, not the user (audit #1)  ·  ✅ CLOSED sweep 245e017 + sweep 156
+- **File:** `apps/studio/src/app/api/run/route.ts` + `packages/receipts/src/verify.ts`.
+- **What shipped:** SIWE handshake landed in sweep 245e017 (K-8 + K-9 closure). `/api/run` now reads the `SESSION_COOKIE_NAME` cookie before accepting a `userWallet` claim — the SIWE-signed session is verified server-side and must match the wallet the body claims. The receipt schema's `agent.signedBy` field now distinguishes three trust tiers: `'operator'` (legacy default), `'operator-on-behalf-of-user'` (operator anchors a receipt attributing the action to a SIWE-authenticated user wallet), and `'user-direct'` (browser-side `signMessage` via wagmi — fully self-sovereign provenance, available behind opt-in). The verifier (`verify.ts:104-147`, sweep 156 closure for §I-3/K-14) branches on this field: equality between `signature.signer` and `agent.ownerWallet` is enforced for `'operator'` and `'user-direct'`; the inequality for `'operator-on-behalf-of-user'` is honest by design and recorded in the verifier output as `"delegated · signer X (operator) signed on behalf of Y (user)"`.
+- **What the user sees today:** when the browser wallet authenticates via SIWE before the run, `/r/<id>` shows `agent.ownerWallet` as the user's wallet (not the operator). A judge inspecting the receipt sees the user-direct or operator-on-behalf-of-user attribution honestly; legacy operator-issued receipts stay tagged `'operator'`. The four-light row gates correctly on every variant.
 
 ### 2 · SubscriptionEscrow contract deployed, no CLI / Studio surface (audit #3)
 - **Files:** `contracts/src/SubscriptionEscrow.sol`, receipt type slot 9 in `packages/core/src/types.ts`.
