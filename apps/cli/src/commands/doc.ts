@@ -532,8 +532,12 @@ docCommand
                 convergenceScore: consensusResult.convergence.score,
                 agreementSummary: consensusResult.convergence.agreementSummary,
                 disagreementSummary: consensusResult.convergence.disagreementSummary,
+                // J-4 closure (sweep 216): type-predicate filter narrows
+                // `providerAddress` from optional to required, removing the
+                // load-bearing `!` postfix that the type system couldn't
+                // verify across the .filter()/.map() boundary.
                 individualAttestations: consensusResult.attestations
-                  .filter((a) => a.providerAddress)
+                  .filter((a): a is typeof a & { providerAddress: NonNullable<typeof a.providerAddress> } => Boolean(a.providerAddress))
                   .map((a) => ({
                     role: a.role,
                     // H-1: keccak256 of the chat ID — anchors a real
@@ -541,7 +545,7 @@ docCommand
                     attestationHash: (a.zgResKey
                       ? keccak256(toUtf8Bytes(a.zgResKey))
                       : ('0x' + '0'.repeat(64))) as Hash,
-                    providerAddress: a.providerAddress!,
+                    providerAddress: a.providerAddress,
                     chatId: a.zgResKey ?? undefined,
                     content: roleContent.get(a.role),
                     independentVerified: null,
@@ -593,18 +597,22 @@ docCommand
         proofDownloadVerified: false,
         evidenceRoot: evidenceRoot ?? undefined,
         ...(daBlobRef ? { daBlobRef } : {}),
-        encryption: burnMode
+        encryption: burnMode && burnMeta
           ? {
               enabled: true,
               type: 'aes-256-gcm',
               headerDetected: true,
-              keyFingerprint: burnMeta!.keyFingerprint,
+              keyFingerprint: burnMeta.keyFingerprint,
             }
           : { enabled: false, type: 'none', headerDetected: false },
       },
-      burn: burnMode
+      // J-4 closure (sweep 216): drop the `!` postfix; gate the entire
+      // burn payload on `burnMode && burnMeta` so TS narrows naturally.
+      // The two flags are set together in the encryption block above, so
+      // they can't diverge in practice — explicit gate beats trust-me-bro.
+      burn: burnMode && burnMeta
         ? {
-            sessionKeyDestroyedAt: burnMeta!.destroyedAt,
+            sessionKeyDestroyedAt: burnMeta.destroyedAt,
             // §K-24 closure (sweep 215): burn pipeline encrypts in-memory
             // and uploads ciphertext; no plaintext temp files exist on
             // disk. `not-applicable` is the honest status — `completed`
