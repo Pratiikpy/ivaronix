@@ -38,14 +38,17 @@ if [[ -n "${GIT_INDEX_FILE:-}" ]]; then
 fi
 
 # Are we touching one of the gated docs?
+# Sweep 239 extension: USER_TODO.md is the third audit-tracking surface
+# (after sweep 238's closure-citation gate extension covered it). Same
+# trailer rule applies for entries marked ✅ SHIPPED / ✅ DEPLOYED.
 STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
 case "$STAGED_FILES" in
-  *docs/HALF_BAKED.md*|*docs/PHASE_B_DISCLOSURES.md*) ;;
+  *docs/HALF_BAKED.md*|*docs/PHASE_B_DISCLOSURES.md*|*docs/USER_TODO.md*) ;;
   *) exit 0 ;;
 esac
 
 # Does the diff add a closure marker?
-ADDED_CLOSURE=$(git diff --cached -- docs/HALF_BAKED.md docs/PHASE_B_DISCLOSURES.md 2>/dev/null \
+ADDED_CLOSURE=$(git diff --cached -- docs/HALF_BAKED.md docs/PHASE_B_DISCLOSURES.md docs/USER_TODO.md 2>/dev/null \
   | grep -E '^\+### .*✅ (CLOSED|FIXED|SHIPPED|DEPLOYED|VERIFIED|CODE-COMPLETE)\b' \
   | head -3 || true)
 if [[ -z "$ADDED_CLOSURE" ]]; then
