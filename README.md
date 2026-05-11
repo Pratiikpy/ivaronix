@@ -26,14 +26,14 @@
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix
 cd ivaronix && pnpm install
-pnpm cli verify 1644
+pnpm ivaronix receipt verify 1644
 # → ANCHORED ✓ (chain anchor + canonical hash + signature recovery)
 ```
 
 For TEE re-attestation, add `--tee-independent` against a recent receipt:
 
 ```bash
-pnpm cli verify <id> --tee-independent
+pnpm ivaronix receipt verify <id> --tee-independent
 # → FULLY VERIFIED ✓ (also re-runs broker.processResponse against the
 #                    original 0G Compute provider — works on receipts
 #                    anchored within the last ~30 days; older receipts
