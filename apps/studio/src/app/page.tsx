@@ -19,10 +19,17 @@ async function liveReceiptCount(): Promise<bigint | null> {
 }
 
 async function livePassportCount(): Promise<bigint | null> {
+  // Sweep 186: AgentPassportINFT initializes `nextTokenId = 1` (the
+  // first mint gets tokenId 1, post-increment to 2). Anchored count
+  // is `nextTokenId - 1`. Pre-sweep this returned the raw nextTokenId
+  // and the home page labeled it "passports minted" — off by 1 (and
+  // shows 1 when zero passports were minted). Matches the convention
+  // already used in apps/studio/src/lib/dashboard.ts.
   const p = getPassportClient();
   if (!p) return null;
   try {
-    return await p.nextTokenId();
+    const next = await p.nextTokenId();
+    return next > 0n ? next - 1n : 0n;
   } catch {
     return null;
   }
