@@ -30,12 +30,27 @@ const NONCE_COOKIE = 'iv-siwe-nonce';
 function getHmacSecret(): Buffer {
   const env = process.env.IVARONIX_SESSION_SECRET;
   if (env && env.length >= 32) return Buffer.from(env, 'utf8');
+  // Sweep 195: warn on misconfigured-but-set secret. Operators who set
+  // IVARONIX_SESSION_SECRET to a too-short value EXPECT stable sessions
+  // across restarts; pre-sweep this fell through silently to a per-
+  // process random secret and they'd be confused why every restart
+  // invalidates every session. Warn once so the misconfig is visible
+  // in operator logs.
+  if (env && env.length < 32 && !shortSecretWarned) {
+    shortSecretWarned = true;
+    console.warn(
+      `[siwe-session] IVARONIX_SESSION_SECRET is set but too short (${env.length} chars; needs ≥ 32). ` +
+      `Falling back to per-process random secret — sessions will die on every restart. ` +
+      `Generate a real secret: \`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"\``,
+    );
+  }
   // Per-process random secret. Sessions die on restart — acceptable for single
   // instance; for multi-instance the operator MUST set IVARONIX_SESSION_SECRET.
   if (!perProcessSecret) perProcessSecret = randomBytes(32);
   return perProcessSecret;
 }
 let perProcessSecret: Buffer | null = null;
+let shortSecretWarned = false;
 
 /** Issue a fresh nonce for a SIWE handshake; valid for NONCE_TTL_MS. */
 export function issueNonce(): { nonce: string; cookieValue: string } {
