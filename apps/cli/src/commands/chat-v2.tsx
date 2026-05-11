@@ -3,7 +3,7 @@ import React from 'react';
 import { render } from 'ink';
 import { JsonRpcProvider } from 'ethers';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
-import { AgentPassportClient, ReceiptRegistryClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { AgentPassportClient, ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
 import type { Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -53,14 +53,23 @@ export const chatV2Command = new Command('chat-v2')
       }
     };
     const fetchTotalReceipts = async () => {
+      // Sweep 179: unified V1 + V2 sum so the TUI header counts post-K-2
+      // anchors too. Pre-sweep this read V1's nextId alone and the
+      // displayed count under-counted by every V2 anchor since sweep 222.
       try {
-        const addr = getDeployedAddress(env.network, 'ReceiptRegistry');
-        if (!addr) return null;
-        const client = new ReceiptRegistryClient(addr, provider);
-        // The contract exposes a monotonically-increasing nextId; the
-        // anchored count is nextId - 1 (id 0 is reserved as "unset").
-        const next = await client.nextId();
-        return next > 0n ? next - 1n : 0n;
+        const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+        const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
+        if (!v2Addr && !v1Addr) return null;
+        let total = 0n;
+        if (v2Addr) {
+          const next = await new ReceiptRegistryV2Client(v2Addr, provider).nextId();
+          if (next > 0n) total += next - 1n;
+        }
+        if (v1Addr) {
+          const next = await new ReceiptRegistryClient(v1Addr, provider).nextId();
+          if (next > 0n) total += next - 1n;
+        }
+        return total;
       } catch {
         return null;
       }
