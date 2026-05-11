@@ -304,18 +304,15 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 ### H-1 · 0G Chain · `attestationHash` is permanently zero on chain  *(severity A · ✅ CLOSED 1f43a27)*
 - ✅ The receipt-build sites now derive `attestationHash = keccak256(toUtf8Bytes(zgResKey))` whenever the role's chat ID is present (`packages/runtime/src/pipeline.ts:669-674` for the Studio path, `apps/cli/src/commands/doc.ts:649-650` for the CLI Build path). The on-chain anchor receives the real hash via `pipeline.ts:828`. Zero-fallback is retained only when no chat ID exists (no TEE check requested), making the field's meaning unambiguous on chainscan.
 
-### H-2 · 0G Compute · `processResponse` called with two args, the SDK supports three  *(severity S)*
-- `apps/cli/src/commands/receipt.ts:253` calls `broker.inference.processResponse(providerAddress, chatID)`. Provus's `entries/provus-protocol/scripts/probe-compute.ts` and AIsphere's docs both pass the **content** as the third argument. We verify the chat ID was billed but not that the content corresponds to it.
-- **Fix:** look up content via `contentMap` already populated at `packages/consensus/src/index.ts:208-211` and pass it. ~2 lines.
+### H-2 · 0G Compute · `processResponse` called with two args, the SDK supports three  *(severity S · ✅ FIXED 77eb746)*
+- ✅ Every `processResponse` call now passes the three-arg form: `(providerAddress, chatID, JSON.stringify(usage ?? {}))`. Locked by `verify-h2-process-response.ts` which scans first-party code for the forbidden two-arg shape.
 
 ### H-3 · 0G Storage · runtime pipeline + `/api/run` never call `storage.upload`  *(severity S — most damaging in this section)*
 - `packages/runtime/src/pipeline.ts` and `apps/studio/src/app/api/run/route.ts` have **zero** references to `createStorageClient` (verified via grep). Every receipt produced from the home Run button gets a local sha256 evidenceRoot, not a 0G Storage Merkle root. The pipeline source even comments: "Studio's /api/run does not yet upload the encrypted blob to 0G Storage." The four-light Storage chip lights green anyway (Round-1 A-4, A-5).
 - **Fix:** copy the upload block from `apps/cli/src/commands/doc.ts:196-207` into `route.ts` before `anchorReceipt`. ~25 lines including failure-mode tagging.
 
-### H-4 · 0G Persistent Memory · the pipeline reads but never writes  *(severity S — broken promise)*
-- `packages/runtime/src/memory-client.ts:24-26` comment: "every anchor stores the receipt body keyed by skillId + walletAddress." Reality: grep shows zero callers of `memoryClient.store()` in the entire repo. The pipeline searches and prepends results to the prompt context (`pipeline.ts:201-219`) but never persists. The store is empty forever; `request.memoryQuery.retrievedCount` is 0 on every call.
-- The zgs-kv Docker container `ivaronix-kv-node` IS running per `docker ps`. No SDK code connects to it.
-- **Fix:** call `memoryClient.store({ group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory', content: ..., metadata: ... })` post-anchor. ~12 lines.
+### H-4 · 0G Persistent Memory · the pipeline reads but never writes  *(severity S · ✅ FIXED 1f43a27)*
+- ✅ `memoryClient.store(...)` is now invoked post-anchor in both the Studio runtime path (`packages/runtime/src/pipeline.ts`) and the CLI doc.ts Build path. Every receipt persists episodic memory keyed by `(group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory')`. Locked by `verify-h1-h4-attest-memory.ts`.
 
 ### H-5 · 0G DA · gRPC client is the deepest in the field but no live blob exists  *(severity S — claim without evidence)*
 - `packages/og-da/src/index.ts:105-236` ships real gRPC client over `@grpc/grpc-js` with three full RPCs (`DisperseBlob`, `GetBlobStatus`, `RetrieveBlob`) against the upstream `disperser.proto`. **No competitor in the field has this.** AIsphere mentions DA only as a future cross-chain step; Provus doesn't integrate it.
@@ -352,22 +349,19 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 
 20 net-new findings. Pattern: schema or UI advertises a property the code path fakes, short-circuits, or admits to with sprint-tagged comments.
 
-### I-1 · `/r/[id]` "VERIFIED" chip gated on file existence, not on hash/signature  *(severity S)*
-- `apps/studio/src/app/r/[id]/page.tsx:147-148`: `overallState = hasLocalBody ? 'verified' : 'pending'`. The page never invokes `verifyClaimed()`. A locally-tampered JSON whose `receiptRoot` no longer matches its content still renders "VERIFIED" green so long as a file exists.
-- **Fix:** call `verifyClaimed(local)` server-side; gate `verified` on `result.state !== 'INVALID'`.
+### I-1 · `/r/[id]` "VERIFIED" chip gated on file existence, not on hash/signature  *(severity S · ✅ FIXED d57b635)*
+- ✅ `/r/[id]` now calls `verifyClaimed(local)` server-side and gates the FULLY VERIFIED chip on `result.state !== 'INVALID'`. A tampered receipt JSON whose `receiptRoot` no longer matches its content lands on INVALID and shows red. Locked by `verify-fully-verified-gates-on-verifyclaimed.ts` (extended to every tamper-sensitive surface).
 
-### I-2 · `/api/run` Burn Mode `keyFingerprint` is sha256 over a label string, not over an AES key  *(severity S — schema lie)*
-- `packages/runtime/src/pipeline.ts:444-447`: `keyFingerprint = sha256("burn:" + skillId + userPromptHash + sessionKeyDestroyedAt)`. **No AES-256-GCM key is generated, no encryption happens, nothing is destroyed.** Code comment admits the schema record is "schema-faithful burn proof without the full evidence-encryption pipeline." That is fabrication of a security property.
-- **Fix:** when Studio cannot run the real burn pipeline, OMIT `storage.encryption.keyFingerprint` and `burn` entirely. Or wire the real burn path from `apps/cli/src/commands/doc.ts:170-186` into the runtime.
+### I-2 · `/api/run` Burn Mode `keyFingerprint` is sha256 over a label string, not over an AES key  *(severity S · ✅ FIXED 25b2266)*
+- ✅ Studio Burn Mode now runs real AES-256-GCM encryption via `createStorageClient(...).uploadEncryptedBurn(plaintext)`. The session key is 256-bit `randomBytes(32)`, fingerprint is `sha256(key)` captured BEFORE the key buffer is zeroed (so the receipt commits to the actual key that destroyed itself). See K-16 (duplicate) for the same closure.
 
 ### I-3 · "Operator-on-behalf-of-user" receipts FAIL the project's own verifier  *(severity S — most embarrassing finding)*
 - `packages/runtime/src/pipeline.ts:451-453, 577` sets `agent.ownerWallet = delegatedOwnerWallet` (user) but `signReceipt` always uses the operator's signer. `packages/receipts/src/verify.ts:85-89` rejects when `signature.signer !== agent.ownerWallet` → `state: 'INVALID'`.
 - Every W9 run produces a receipt that fails offline verification. A judge running `ivaronix receipt verify <W9-id>` sees `INVALID`.
 - **Fix:** either (a) require browser-side `signMessage` of the receiptRoot via wagmi before /api/run anchors, or (b) drop W9 entirely and admit ownerWallet is the operator. Today's middle path produces invalid receipts.
 
-### I-4 · RunPanel TEE light flips green on registry-match, not on TEE attestation  *(severity S)*
-- `apps/studio/src/components/RunPanel.tsx:136`: `TEE: data.scan?.matches ? 'verified' : 'pending'`. `scan.matches` is a SkillRegistry manifest-hash check, not a TEE check. NIM-routed TIER 2 runs against a registered skill light the TEE chip green.
-- **Fix:** read `scan.matches` for the registry chip only; gate TEE on `data.tier === 'tier-1-tee'` AND `data.routerVerified === true`.
+### I-4 · RunPanel TEE light flips green on registry-match, not on TEE attestation  *(severity S · ✅ FIXED 9e88987 + sweep 157)*
+- ✅ RunPanel now reads `teeRouterVerified` (aggregated across every consensus role's real attestation) and gates the TEE chip on it. `scan.matches` only feeds the separate REGISTRY MATCH chip. NIM-routed TIER 2 runs no longer light TEE green: they show `TIER 2 · EXTERNAL` in amber, matching CLAUDE.md §6.
 
 ### I-5 · `/r/[id]` Chain light hardcoded `verified` even when no anchor tx in body  *(severity A · ✅ CLOSED b9676f1)*
 - ✅ `apps/studio/src/app/r/[id]/page.tsx:220-227` now reads `txHash = local?.chainAnchor?.anchorTxHash ?? null` and gates the chip on it: `Chain: txHash ? 'verified' : 'pending'`. A receipt rendered without an anchor tx (off-chain only) honestly shows `pending` rather than green.
@@ -505,41 +499,33 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 
 26 findings; 5 Critical, 5 High, 7 Medium, 9 Low. Critical = loses funds or forges receipts. High = compromises a feature. Medium = DoS or info leak.
 
-### K-1 · `AgentPassport.recordReceipt` lets the token owner forge unbounded trustScore  *(Critical)*
-- `contracts/src/AgentPassportINFT.sol:107-125`. Function gates on `msg.sender == _ownerOf(tokenId) || authorizedRecorders[msg.sender]`. Owner branch lets ANY token holder write any score with no link to a real `ReceiptRegistry` row. `trustScore += anyDelta`. **Every dashboard, fee-split tier, and "agent reputation" UI reads this value.**
-- **Fix:** restrict to `authorizedRecorders` only. Verify `receiptRoot` exists on `ReceiptRegistry`. Cap `trustScoreDelta` per call ([-100, +100]).
+### K-1 · `AgentPassport.recordReceipt` lets the token owner forge unbounded trustScore  *(Critical · ✅ DEPLOYED 3b7bdeb · address `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`)*
+- ✅ AgentPassportINFTV2 deployed on Galileo. `recordReceipt` + `recordViolation` are now `authorizedRecorders`-only. Each write cross-checks the receipt id on the configured ReceiptRegistry — `receiptRoot` must match the supplied expected root, `receiptType` must match, and the receipt's `agentAddress` must equal the passport owner. `trustScoreDelta` bounded to ±100 per call. Locked by `verify-k1-passport-v2.ts`.
 
-### K-2 · Anyone can anchor any receiptRoot on `ReceiptRegistry`, claiming any agent identity  *(Critical)*
-- `contracts/src/ReceiptRegistry.sol:67-90`. `anchor()` writes `agentAddress: msg.sender` with zero check that `msg.sender` actually signed the referenced receipt. An attacker writes a receipt offline, signs with their key, anchors a different `receiptRoot` claiming someone else's wallet. Chain-only verifiers see the lie.
-- **Fix:** EIP-712 signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)` recovered inside `anchor()`. Stop trusting `msg.sender` as the agent.
+### K-2 · Anyone can anchor any receiptRoot on `ReceiptRegistry`, claiming any agent identity  *(Critical · ✅ DEPLOYED c73ee7d · address `0xf675d4183b34fe8d1981FA9c117065aAcff690ab`)*
+- ✅ ReceiptRegistryV2 deployed on Galileo. `anchor()` now recovers EIP-712 typed-data signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)`. Per-agent monotonic nonces prevent replay. `msg.sender` is the relayer; `agentAddress` is recovered from the signature, not trusted from the caller. Locked by `verify-k2-registry-v2.ts`.
 
-### K-3 · `attestationHash` allowed `bytes32(0)`, never validated against any TEE source  *(High)*
-- `ReceiptRegistry.sol:67-90` accepts zero. Pipeline writes `0x000…0`. The TIER 1 claim has no on-chain commitment.
-- **Fix:** require `attestationHash != bytes32(0)` for TIER 1 types. Maintain a separate `AttestationRegistry` keyed by `chatId → attestationHash`.
+### K-3 · `attestationHash` allowed `bytes32(0)`, never validated against any TEE source  *(High · ✅ FIXED 1f43a27 — mirrors §H-1)*
+- ✅ Pipeline now writes the real `attestationHash = keccak256(toUtf8Bytes(zgResKey))` for TIER 1 receipts. The on-chain field is bound to the chat ID via cryptographic commitment. See §H-1 for full closure narrative.
 
-### K-4 · `iTransferFrom` clears no executor authorizations  *(High)*
-- `AgentPassportINFT.sol:200-229`. Doc-string says "Authorizations are cleared on transfer for security." Implementation does not iterate or delete. After transfer, every executor authorized by the previous owner can still run the agent until TTL expires.
-- **Fix:** per-token version counter checked in `isAuthorizedExecutor`, OR maintain an array of authorized executors and zero them in `_update`. Doc and code must agree.
+### K-4 · `iTransferFrom` clears no executor authorizations  *(High · ✅ DEPLOYED 3b7bdeb — closed in V2 redeploy with K-1)*
+- ✅ AgentPassportINFTV2 uses per-token version counters checked inside `isAuthorizedExecutor`. On transfer, the counter increments — every executor authorized under the old owner is structurally invalidated without an iteration loop. Doc and code now agree.
 
 ### K-5 · `Erc7857Verifier` not EIP-712; uses `abi.encodePacked` + raw `_recover`  *(Medium)*
 - `Erc7857Verifier.sol:54-82`. No domain separator with `address(this)`/`chainid`. No `deadline`. `_recover` accepts `s` in upper half of curve (signature malleability). Nonce key is `keccak(recipient, metadataHash, nonce)` so a future V2 deployment lets V1 sigs replay against V2.
 - **Fix:** EIP-712 typed data with full domain separator + deadline. OZ `ECDSA.recover` (handles malleability + length).
 
-### K-6 · `mint()` reentrancy via `onERC721Received`  *(Medium)*
-- `AgentPassportINFT.sol:_safeMint` happens BEFORE `passportOf[to] = tokenId` is set on line 96. A malicious recipient contract re-enters `mint` from inside `onERC721Received` for the same `to`; second-level `passportOf == 0` check still passes. One wallet ends up with two passports.
-- **Fix:** set `passportOf[msg.sender] = tokenId` BEFORE `_safeMint`, OR add `nonReentrant` to `mint()`.
+### K-6 · `mint()` reentrancy via `onERC721Received`  *(Medium · ✅ DEPLOYED 3b7bdeb — closed in V2 redeploy with K-1)*
+- ✅ AgentPassportINFTV2 sets `passportOf[msg.sender] = tokenId` BEFORE `_safeMint`. A re-entry attempt from `onERC721Received` fails the second-level `passportOf == 0` check. The state mutation is now atomic-before-callback.
 
-### K-7 · `recordViolation` callable by token owner  *(Low)*
-- `AgentPassportINFT.sol:130-144`. Combined with K-1, owner can pump trustScore arbitrarily then choose not to record bad-faith violations.
-- **Fix:** restrict to `authorizedRecorders`.
+### K-7 · `recordViolation` callable by token owner  *(Low · ✅ DEPLOYED 3b7bdeb — closed in V2 redeploy with K-1)*
+- ✅ Per the V2 redeploy, `recordViolation` is also `authorizedRecorders`-only (same access path as `recordReceipt`). Token owner can no longer pump trustScore and selectively skip violations.
 
-### K-8 · `/api/run` zero auth + zero rate limit  *(Critical)*
-- `apps/studio/src/app/api/run/route.ts:47-113`. Anonymous POST. Body trusts client-supplied `userWallet`. Operator's `EVM_PRIVATE_KEY` signs receipts on their behalf. **A single attacker drains operator OG balance, NIM quota, 0G Compute credits in minutes.**
-- **Fix:** Upstash rate-limit (per-IP and per-`userWallet`). Require SIWE session cookie tied to `userWallet` before anchoring on behalf of a user.
+### K-8 · `/api/run` zero auth + zero rate limit  *(Critical · ✅ FIXED 245e017)*
+- ✅ Per-IP rate limit (10/min) plus per-wallet rate limit (50/hr) via `apps/studio/src/lib/rate-limit.ts`. When `body.userWallet` is set, the route requires an active SIWE session matching the claimed wallet (`apps/studio/src/lib/siwe-session.ts`). Anonymous flood path is bounded to the IP bucket. Locked by `verify-api-route-rate-limit.ts`.
 
-### K-9 · `/api/skill/save` writes to disk with no auth — RCE-class  *(Critical)*
-- `apps/studio/src/app/api/skill/save/route.ts:18-71`. Anonymous POST writes a 64 KiB file to operator's `<workspace>/.ivaronix/skills/<skillId>/SKILL.md`. The next CLI run loads the planted manifest and executes hooks declared in it via `runHooks`.
-- **Fix:** SIWE session, rate-limit, scope per-wallet, validate manifest with the same Zod schema CLI uses, refuse manifests whose `og.hooks.*` paths point outside per-wallet sandbox.
+### K-9 · `/api/skill/save` writes to disk with no auth — RCE-class  *(Critical · ✅ FIXED 245e017)*
+- ✅ Route now requires an active SIWE session. Manifest is validated via the canonical `SkillManifestSchema` from `@ivaronix/skills` (same Zod the CLI uses). Hooks declared in `og.hooks.*` are scanned for shell-injection patterns. Per-wallet sandbox: writes go to `.ivaronix/skills/<wallet>/<skillId>/` (planted manifests can't influence a different wallet's run). Per-wallet rate limit (5 saves/hr). Locked by `verify-api-route-rate-limit.ts` + `verify-api-route-zod-validation.ts`.
 
 ### K-10 · `/api/dashboard/[addr]` filesystem walk reads arbitrary `.json` from disk  *(Medium)*
 - `apps/studio/src/app/api/dashboard/[addr]/route.ts:23-71`. Any user who can write to operator's `.ivaronix/schedules` (see K-9 — same operator runtime) gets schedules surfaced under any address.
@@ -549,9 +535,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - All four API routes return `(err as Error).message` to client. Includes filesystem paths, env-misconfig details, indexer URLs.
 - **Fix:** in production, log full error server-side; return `{ error: 'internal error', requestId }`.
 
-### K-12 · No HTTP security headers anywhere  *(Medium)*
-- `apps/studio/src/middleware.ts:1-23` only does vanity-URL rewrites. No `next.config.ts` `headers()`. Missing CSP / XFO / XCTO / Referrer-Policy / HSTS / Permissions-Policy. `/embed/r/[id]` has no `frame-ancestors` policy.
-- **Fix:** `headers()` in `next.config.ts` with the standard set.
+### K-12 · No HTTP security headers anywhere  *(Medium · ✅ CLOSED sweep 130 — mirrors §A-10)*
+- ✅ `apps/studio/next.config.ts` `headers()` config now ships `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=63072000; preload`. Locked by `verify-studio-security-headers.ts`. CSP + `frame-ancestors` for `/embed/r/[id]` queued separately (the embed path needs a controlled allow-list of iframe parents).
 
 ### K-13 · No CSRF protection on any state-changing route  *(Medium)*
 - All four routes. Once SIWE auth lands, third-party `fetch('/api/run', {credentials:'include'})` burns the user's quota.
@@ -629,9 +614,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 
 **Why this is the correct no-compromise shape:** the headline claim — "anyone, any machine, any language" — becomes provable, not promised. EIP-712, JWS, COSE all ship polyglot reference impls. Without them, "independent verification" is a JS-only oxymoron. The 1,330 v1 receipts stay byte-perfect; the chain history is preserved; the migration is forward-only by version field.
 
-### K-16 · Studio Burn Mode `keyFingerprint` is sha256 of plaintext label  *(Critical — duplicates I-2)*
-- See I-2. The headline Burn Mode privacy claim is partially fictional in the Studio surface judges use first.
-- **Fix:** wire `uploadEncryptedBurn` server-side, OR set `storage.encryption.type = 'none'` and remove burn UI from Studio until real.
+### K-16 · Studio Burn Mode `keyFingerprint` is sha256 of plaintext label  *(Critical · ✅ FIXED 25b2266 — duplicates §I-2)*
+- ✅ Real AES-256-GCM session encryption now runs server-side via `createStorageClient(...).uploadEncryptedBurn(plaintext)`. The 256-bit session key (`randomBytes(32)`) is fingerprinted with `sha256(key)` BEFORE the key buffer is zeroed; the receipt commits to the actual key that destroyed itself. No more label-string fingerprint. See §I-2 for the full closure.
 
 ### K-17 · `chainId` and `registryAddress` in receipt body not bound to anchor target  *(High)*
 - `packages/receipts/src/schema.ts:245-253`, `verify.ts`. Verifier reads from `env.network` for the registry address, not from the receipt body. An attacker swaps `registryAddress`/`chainId` to a chain they control, deploys a vanilla `ReceiptRegistry`, anchors the same `receiptRoot`. Verifier shows green ANCHORED.
