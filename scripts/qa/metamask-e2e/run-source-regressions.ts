@@ -87,6 +87,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-readme-pnpm-scripts-exist/, // sweep 190+191 · every `pnpm <script>` in render-target docs is a real script in root package.json
       /^verify-readme-ivaronix-commands-exist/, // sweep 192 · every `ivaronix <subcommand>` in render-target docs maps to a real Commander binding
       /^verify-user-todo-deploy-markers/, // sweep 199 · USER_TODO §A-V2 deploy entries match contracts/deployments/testnet.json (✅ DEPLOYED markers stay fresh)
+      /^verify-half-baked-closure-citations/, // sweep 203 · every ✅ <STATUS> header in HALF_BAKED.md cites a sha / sweep / date / address / verification phrase (locks the "ship fix + forget to close the doc" drift class sweep 202 caught manually)
     ],
   },
   'studio-live': {

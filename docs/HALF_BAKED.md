@@ -415,7 +415,7 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `apps/studio/src/app/skills/page.tsx:75-76` header copy promises "first-party"; `loadAllSkills()` returns every skill under `seed-skills/` including 150 third-party imports per `registry.json`. Most have not been anchored.
 - **Fix:** filter to `source: 'first-party'` (already in registry.json), or split into two sections with honest counts.
 
-### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A · ✅ CLOSED)*
+### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A · ✅ CLOSED sweep 202)*
 - ✅ Sandbox now blocks the bypass. `packages/skills/src/sandbox.ts:77` refuses any run where `permissions.compute_tee_required === true` and `ctx.providerKind` is set to a non-`0g` value. `packages/runtime/src/pipeline.ts:192-202` passes `providerKind: input.provider ?? '0g'` into `evaluateSandbox` and throws on `!decision.allow`, so a NIM-routed run against a TEE-required skill fails closed before any inference fires.
 - Locked by tests `packages/skills/src/sandbox.test.ts` S-1 series (5 cases: nvidia/openai/ollama all block, 0g allows, omitted providerKind allows the legacy CLI path).
 
