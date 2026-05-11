@@ -80,6 +80,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-api-route-zod-validation/, // HALF_BAKED §J-2 · every body-taking API route validates via Zod safeParse (sweeps 145-149 fixed; sweep 150 locks)
       /^verify-publishable-metadata/, // HALF_BAKED §J-14 · npm-publishable packages have description/license/homepage/repository/bugs/engines (sweep 155)
       /^verify-fully-verified-gates-on-verifyclaimed/, // I-1 mirror · FULLY VERIFIED chip on every tamper-sensitive surface requires verifyClaimed pass (sweeps 175-176)
+      /^verify-unified-nextid-anchored-convention/, // sweep 184+185 · unifiedNextId.total uses anchored convention (nextId-1 sum), not raw nextId sum
     ],
   },
   'studio-live': {
