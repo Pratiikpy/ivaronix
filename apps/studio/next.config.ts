@@ -43,21 +43,48 @@ const config: NextConfig = {
     '@xenova/transformers',
     '@0gfoundation/0g-ts-sdk',
   ],
-  // Drop the MiniLM / ONNX / sharp stack from every route's traced files. The
-  // memory engine's `await import('@xenova/transformers')` is gated behind
-  // IVARONIX_MEMORY_EMBEDDER=fallback on Vercel (and falls back to the
+  // What actually blew `api/run` past Vercel's 250 MB cap: `@vercel/nft`
+  // pulled the webpack PERSISTENT BUILD CACHE (`.next/cache/webpack/*.pack`,
+  // ~600+ MB) and `*.tsbuildinfo` files into the function trace — pure
+  // build-time artifacts with no runtime use. Plus the workspace `.ivaronix/`
+  // data dirs (1500+ committed CLI receipt fixtures) and the npx-cli bundle
+  // got dragged in by string-path references in the delegate path.
+  //
+  // The MiniLM / ONNX / sharp stack is also excluded: the memory engine's
+  // `await import('@xenova/transformers')` is gated behind
+  // IVARONIX_MEMORY_EMBEDDER=fallback on Vercel (and degrades to the
   // hashing-trick embedder if the module is absent), so ~150 MB of weights +
-  // native runtime never executes there. Without this exclude, Vercel rejects
-  // the `api/run` deployment ("Max serverless function size of 250 MB reached").
+  // native runtime never executes there.
   outputFileTracingExcludes: {
     '**': [
+      // build-time artifacts (belt — `config.cache = false` below is the
+      // real defence; the .pack files only exist if webpack writes them)
+      '.next/cache/**',
+      '**/.next/cache/**',
+      'apps/studio/.next/cache/**',
+      '**/*.tsbuildinfo',
+      '**/*.pack',
+      '**/*.pack.old',
+      '**/*.pack.gz',
+      '**/.next/trace',
+      // workspace runtime-data dirs that resolved into the trace by accident
+      '**/.ivaronix/**',
+      'apps/npx-cli/dist/**',
+      // ML stack — never runs on Vercel (hashing-trick fallback embedder)
       'node_modules/**/onnxruntime-node/**',
       'node_modules/**/@xenova/transformers/**',
       'node_modules/**/sharp/**',
       'node_modules/**/@img/**',
     ],
   },
-  webpack: (cfg) => {
+  webpack: (cfg, { dev }) => {
+    // Disable webpack's filesystem cache for production `next build`. It writes
+    // `.next/cache/webpack/*.pack` (600+ MB here) which @vercel/nft drags into
+    // every serverless function's trace via .tsbuildinfo references — that's
+    // what pushed `api/run` past Vercel's 250 MB cap. Vercel builds fresh each
+    // time so there's no cache to reuse anyway; locally it just means `next
+    // build` doesn't get the incremental speedup (`next dev` is unaffected).
+    if (!dev) cfg.cache = false;
     cfg.resolve = cfg.resolve ?? {};
     cfg.resolve.extensionAlias = {
       ...(cfg.resolve.extensionAlias ?? {}),
