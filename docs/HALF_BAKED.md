@@ -15,80 +15,55 @@
 
 These are not polish. These are claims the codebase makes that the code does not enforce.
 
-### A-1 · `compute_tee_required` security guard is a dead branch
-- **`packages/skills/src/sandbox.ts:67`** — gate is `if (p.compute_tee_required && false /* placeholder */)`. The `&& false` makes this check permanently skipped.
-- **Effect:** any skill that declares `compute_tee_required: true` runs on a non-TEE provider with **zero enforcement**. The sandbox advertises a security property it does not provide.
-- **Fix:** delete `&& false`. Either trust consensus's TEE check (then remove this branch entirely) or wire `modelCapabilities.teeVerified` from the gate input as the real guard. One-line change.
+### A-1 · `compute_tee_required` security guard is a dead branch  ·  ✅ CLOSED d15703f (mirrors §I-10)
+- ✅ The `&& false` placeholder has been removed; sandbox enforces the check. See §I-10 for full closure narrative + S-1 series tests in `packages/skills/src/sandbox.test.ts`.
 
-### A-2 · `StubKvClient` is the only KV implementation in production
-- **`packages/og-kv/src/index.ts:35-37`** — `createKvClient()` unconditionally returns an in-process `Map<string, string>`. Comment from line 10: "Real implementation lands in Day 8."
-- **Effect:** every "hybrid memory" claim, every `passport:{wallet}:latest` pointer, every `memory:{agentId}:manifest` reference is fictional. Reset the process and all KV state vanishes.
-- **Fix:** implement `RealKvClient` against the 0G memory KV server (spec at `oglabs resources/0g-memory-kv-server/`). Gate on `IVARONIX_KV_URL`; fall back to stub only in tests.
+### A-2 · `StubKvClient` is the only KV implementation in production  ·  ⚠ PARTIALLY CLOSED sweep 65
+- **API honest** (sweep 65): `packages/og-kv/src/index.ts` now exposes `createKvClient()` returning an `InMemoryKvClient` honestly labeled as non-durable, plus an overload `createKvClient({ requireDurable: true })` that returns `null` so callers can detect the gap. First call logs a one-time warning. Third-party `@ivaronix/og-toolkit` consumers can no longer mistake the stub for production.
+- **Durable backend still queued:** `RealKvClient` against the 0G memory KV server (`oglabs resources/0g-memory-kv-server/`) is not wired. Today every `passport:<wallet>:latest` / `memory:<agentId>:manifest` lookup goes to the in-process Map. Mainnet item — queued in USER_TODO §B-V2 (the `og-toolkit` KV backend is a Docker dependency).
 
-### A-3 · `attestationHash: null` on every TIER 1 receipt
-- **`packages/consensus/src/index.ts:174`** — `attestationFromRaw` always sets `attestationHash: null`. The field is never populated anywhere downstream.
-- **Effect:** the on-chain `anchor()` call passes `0x000…000` for the attestation hash slot of every receipt. The `--tee-independent` re-verifier still works (it re-runs `broker.processResponse`), but the on-chain attestation field is useless.
+### A-3 · `attestationHash: null` on every TIER 1 receipt  ·  ✅ CLOSED 1f43a27 (mirrors §H-1)
+- ✅ Receipt-build sites now write `attestationHash = keccak256(toUtf8Bytes(zgResKey))` when the role's chat ID is present. See §H-1 for the full closure narrative.
 - **Fix:** populate from `raw.x0gTrace?.tee_attestation_hash` or derive `keccak256(zgResKey)` for TIER 1. Five lines.
 
-### A-4 · `/r/[id]` shows green "Storage" light when no storage upload happened
+### A-4 · `/r/[id]` shows green "Storage" light when no storage upload happened  ·  ✅ CLOSED b9676f1 (mirrors §I-5 + §S-2)
 - **`apps/studio/src/app/r/[id]/page.tsx:151`** — `Storage: hasLocalBody ? 'verified' : 'pending'`. Any receipt with a local JSON file shows a green Storage light, even if `evidenceRoot` is absent.
 - **Effect:** receipts that never touched 0G Storage display "all four lights green." Misleading at first paint.
 - **Fix:** `Storage: local?.storage?.evidenceRoot ? 'verified' : 'pending'`. One line.
 
-### A-5 · `RunPanel` Storage light is green at click, not on result
-- **`apps/studio/src/components/RunPanel.tsx:113`** — `setLayers({ Storage: 'verified', ... })` runs immediately on click, before any upload.
-- **Effect:** the Storage light goes green visually before any upload happens; stays green on error. UX lies during the live demo.
-- **Fix:** start all four lights as `'pending'`. Set Storage to `'verified'` only when `data.ok && data.scan?.matches`.
+### A-5 · `RunPanel` Storage light is green at click, not on result  ·  ✅ CLOSED 98f102b (mirrors §S-3)
+- ✅ All four lights now start `'pending'` on click and only transition based on the real response. Storage gates on `result.storage?.evidenceRoot` rather than firing optimistically.
 
-### A-6 · `delegate run` mutates `process.env` then forces `exitCode = 0`
-- **`apps/cli/src/commands/delegate.ts:469-488`** — sets `process.env.EVM_PRIVATE_KEY = delegateKey`, calls `docCommand.parseAsync`, restores in `finally`. Same `finally` resets `process.exitCode = 0` unconditionally.
-- **Effect:** (1) Race-unsafe — concurrent async ops between set and restore see the wrong key. (2) Exit code masking — child run failures return exit 0 to scripted callers.
-- **Fix:** spawn `docCommand` in a child process with the delegate's env vars set on the subprocess. Remove the `process.exitCode = 0` from `finally`.
+### A-6 · `delegate run` mutates `process.env` then forces `exitCode = 0`  ·  ✅ CLOSED 38452bc (mirrors §S-4)
+- ✅ `restoreEnv()` helper makes the env-var swap reversible; `process.exitCode = 0` reset removed from the `finally` block. Child failures now propagate to scripted callers via the real exit code. Locked by `verify-s4-delegate-exit.ts`.
 
-### A-7 · `chat-v2` import may reference a non-existent file
-- **`apps/cli/src/bin/ivaronix.ts:41`** — `import { chatV2Command } from '../commands/chat-v2.js'`.
-- **Effect:** if the source `chat-v2.ts` doesn't exist, every `ivaronix` invocation throws on startup.
-- **Fix:** verify `apps/cli/src/commands/chat-v2.ts` exists. If not, remove the import and the `program.addCommand(chatV2Command)` call.
+### A-7 · `chat-v2` import may reference a non-existent file  ·  ✅ VERIFIED (file exists; build passes · mirrors §S-5)
+- ✅ `apps/cli/src/commands/chat-v2.ts` exists; `pnpm --filter @ivaronix/cli typecheck` is green; `bin/ivaronix.ts` resolves the import at build time. No runtime crash risk.
 
-### A-8 · `/onboard` falls back to `local-sha256` and mints anyway
-- **`apps/studio/src/app/api/onboard/metadata/route.ts:72-83`** — when 0G Storage upload fails, returns `method: 'local-sha256'`, browser proceeds to `AgentPassportINFT.mint(localSha256Root)`.
-- **Effect:** passport is minted with a non-Merkle-root in `metadataRoot`. There is no way to distinguish a fallback mint from a real one by reading on-chain state.
-- **Fix:** when fallback fires, return 503 `{ error: '0G Storage unavailable; retry after a moment' }`. Do not mint with degraded identity.
+### A-8 · `/onboard` falls back to `local-sha256` and mints anyway  ·  ✅ CLOSED sweep 164 (mirror of §I-11 shape)
+- ✅ The route still falls back to `local-sha256` on Storage failure but now tags the response `{ method: 'local-sha256', warning: '0G Storage unavailable: ...' }`. Browser code (`OnboardClient.tsx`) reads `method` and shows an amber chip when degraded. The honest-tagging shape matches §I-11's resolution for `passport mint`: don't fail closed (testnet indexer is flaky), but never silently advertise TIER-1 evidence when TIER-2 ran. Aligns with CLAUDE.md §6 "honest > flattering".
 
-### A-9 · `/api/run` has zero rate limiting
-- **`apps/studio/src/app/api/run/route.ts`** — anonymous POST. No `X-Api-Key`, no per-IP throttle, no quota. Only guard is `maxDuration = 60` Vercel cap.
-- **Effect:** a single anonymous caller can exhaust the operator's OG balance, NVIDIA NIM quota, and 0G Compute credits in minutes. Live demo can run out of gas mid-presentation.
-- **Fix:** add Upstash rate-limit or simple in-memory IP token-bucket in `middleware.ts`. 1-4h.
+### A-9 · `/api/run` has zero rate limiting  ·  ✅ CLOSED 245e017 (mirrors §K-8)
+- ✅ Per-IP (10/min) + per-wallet (50/hr) token-bucket rate limits in `apps/studio/src/lib/rate-limit.ts`. SIWE-gated when `userWallet` claim present. Locked by `verify-api-route-rate-limit.ts`.
 
-### A-10 · No HTTP security headers
-- **`next.config.ts`** — no `headers()` config. Missing `Content-Security-Policy`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`.
-- **Effect:** any XSS becomes cookie theft. Clickjacking is trivial. The `/embed/r/[id]` route is designed to be iframed but has no `frame-ancestors` policy controlling who can embed Ivaronix.
-- **Fix:** add `headers()` to `next.config.ts`. Under 1h.
+### A-10 · No HTTP security headers  ·  ✅ CLOSED sweep 130 (mirrors §G Tier-A item 6)
+- ✅ `apps/studio/next.config.ts` `headers()` config carries `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Strict-Transport-Security: max-age=63072000; preload`. Locked by `verify-studio-security-headers.ts`.
 
 ### A-11 · No production error capture
 - **No Sentry, LogRocket, or any error telemetry anywhere.**
-- **Effect:** a `/api/run` 500 during the live demo is invisible. No alert, no aggregated view. Flying blind.
-- **Fix:** `@sentry/nextjs`, one config file. Under 1h.
+- **Status:** still open. Mainnet ops concern — for testnet the operator reads errors from terminal / Vercel function logs. Queued in USER_TODO §B-V2-26 for production promotion (`@sentry/nextjs`, one config file, under 1h once a Sentry project exists).
 
-### A-12 · Trust-layer policy engine is built but never called
-- **`packages/trust-layer/src/policy.ts`** — `evaluatePolicy()` and `defaultPolicySet()` exist, exported, with mainnet-high-stakes-requires-approval rules. **Zero callers** in `runPipeline` or anywhere else.
-- **Effect:** "Phase 3 enterprise spend limits / approval gates" is advertised but the rule set fires on nothing.
-- **Fix:** either call `evaluatePolicy()` in `runPipeline()` before consensus, or document it as "design only, not yet wired" so judges who read the package don't assume enforcement.
+### A-12 · Trust-layer policy engine is built but never called  ·  ✅ CLOSED 2026-05-09 (mirrors §J-7)
+- ✅ `packages/trust-layer/` moved under `packages/_design/trust-layer/` and dropped from the active workspace. The "exported but uncalled" misrepresentation is gone — `_design/` is signposted as design-only.
 
-### A-13 · `compute verify-tee` is a stub that no-ops
-- **`apps/cli/src/commands/compute.ts:69-77`** — prints "forwarding to receipt verify" and exits without actually calling `receipt verify`.
-- **Effect:** a user running `ivaronix compute verify-tee` expecting verification gets nothing.
-- **Fix:** either delete the command and document the alias in `compute --help`, or actually invoke `receipt verify --tee-independent` via `parseAsync`.
+### A-13 · `compute verify-tee` is a stub that no-ops  ·  ✅ CLOSED 275a315 (mirrors §I-7)
+- ✅ `apps/cli/src/commands/compute.ts:79-84` now invokes `receiptCommand.parseAsync(['node', 'verify', id, '--tee-independent'])` and propagates the inner exit code. No stub print path.
 
-### A-14 · CI silently passes broken Studio builds
-- **`.github/workflows/ci.yml:56`** — Studio `next build` step has `continue-on-error: true` with a "platform-specific issue" comment.
-- **Effect:** the CI badge lies. A broken production build silently passes CI green.
-- **Fix:** either fix the underlying issue (font preload) or split into a separate non-blocking optional job with a clear label.
+### A-14 · CI silently passes broken Studio builds  ·  ✅ CLOSED sweep 54 + sweep 75 (mirrors §J-9)
+- ✅ `continue-on-error: true` removed from the Studio build step. Underlying font-preload issue resolved via `export const dynamic = 'force-dynamic'` on OG-image routes. Locked by `verify-no-ci-suppress-exit.ts`.
 
-### A-15 · `/global` reaches into private fields via `as unknown as`
-- **`apps/studio/src/app/global/page.tsx:44`** — casts `MemoryAccessLogClient` to access its private `.contract` field, then calls `.queryFilter()` directly.
-- **Effect:** if `MemoryAccessLogClient` renames or encapsulates `contract`, the global page breaks at runtime with no compile error.
-- **Fix:** add `queryRecentAccessEvents(fromBlock)` method to `MemoryAccessLogClient` in `packages/og-chain/`. Use it.
+### A-15 · `/global` reaches into private fields via `as unknown as`  ·  ✅ CLOSED 2026-05-08 (mirrors §J-5)
+- ✅ `MemoryAccessLogClient.listGlobal(lookbackBlocks)` is the public surface; `/global/page.tsx:38-39` calls it directly with no `unknown` cast.
 
 ---
 

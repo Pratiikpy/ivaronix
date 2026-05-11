@@ -388,6 +388,16 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-26 · Production error capture (Sentry or equivalent)
+- **Source:** HALF_BAKED §A-11. Currently no Sentry / LogRocket / production error capture anywhere. For testnet the operator reads errors from terminal + Vercel function logs; for mainnet a `/api/run` 500 during a live demo is invisible without aggregated telemetry.
+- **Action:**
+  1. Create a Sentry project (or alternative — Highlight, BetterStack, etc).
+  2. Add `@sentry/nextjs` to Studio: `pnpm --filter @ivaronix/studio add @sentry/nextjs`.
+  3. Wire `sentry.server.config.ts` + `sentry.client.config.ts` reading `SENTRY_DSN` from env.
+  4. Add `SENTRY_DSN` (canonical `IVARONIX_SENTRY_DSN`) to `apps/studio/.env.production.template` (operator-set) — keep optional so dev runs without it.
+  5. Forward 5xx responses and unhandled exceptions only. Don't capture PII or receipt bodies (privacy boundary — `docs/PRIVACY_NOTES.md`).
+- **Effort:** ~1h once a Sentry project exists. Defer until mainnet promotion (B-V2-3); testnet doesn't justify the operator cost or the privacy review.
+
 ### B-V2-25 · CLI disk-JSON safe-read pattern (mirror of Studio §J-3 closure) · ✅ SHIPPED sweep 206
 - **Status:** ✅ Closed in a different shape than the original §J-3 finding called for. The three CLI sites flagged in HALF_BAKED §J-3 were ALREADY defensively coded via prior sweeps:
   - `apps/cli/src/lib/conversation.ts` — `parseConversationFile()` validator (sweep 158)
