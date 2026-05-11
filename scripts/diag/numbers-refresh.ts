@@ -136,8 +136,12 @@ function countTypecheckClean(): number {
         const tc = pkg.scripts?.typecheck ?? '';
         // Real typechecks invoke tsc / tsc -b / tsc --noEmit; the
         // `echo skip` placeholders don't count. opencode-bin's typecheck
-        // currently echoes a status message about needing port work
-        // (1267 first-round tsc errors); that doesn't count either.
+        // echoes a status message whose body MENTIONS "tsc" (e.g. "1267
+        // first-round tsc errors"), so the bare `\btsc\b` substring
+        // match used to count it incorrectly. Sweep 200 fix: reject
+        // echo-prefixed scripts up front so the message body is never
+        // inspected for substring matches.
+        if (/^\s*echo\b/.test(tc)) continue;
         if (/\btsc\b/.test(tc)) count += 1;
       } catch {
         // Malformed package.json — skip silently.

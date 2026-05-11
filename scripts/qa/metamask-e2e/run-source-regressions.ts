@@ -53,6 +53,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-deployments-path-canonical/, // §15 bookkeeping · docs reference contracts/deployments/ post-fb3db59 move
       /^verify-pnpm-scripts-exist/, // meta · every pnpm <verb> in CI + package.json resolves to a real script
       /^verify-numbers-vs-deployments/, // numbers.json contracts.* must match contracts/deployments/testnet.json
+      /^verify-typecheck-clean-count/, // sweep 200 · numbers.json packages.typecheckClean excludes echo-prefixed placeholders even if message body mentions "tsc"
       /^verify-env-template-completeness/, // §15 · every IVARONIX_* var in code is in at least one env template
       /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker

@@ -1,6 +1,6 @@
 {
   "$schema": "Single source of truth for numeric claims across README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md. Refresh with: pnpm numbers:refresh. See planning-003 §A.2.7 for the auto-render pipeline (queued).",
-  "lastRefreshed": "2026-05-10",
+  "lastRefreshed": "2026-05-11",
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
     "v1Anchored": 1644,
@@ -69,7 +69,7 @@
   "packages": {
     "workspaceTotal": 25,
     "apps": 6,
-    "typecheckClean": 22,
+    "typecheckClean": 21,
     "testFiles": 21,
     "appsList": [
       "cli",
