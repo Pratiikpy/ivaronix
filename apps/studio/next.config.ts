@@ -1,7 +1,15 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
+
+// apps/studio/ → ../../ is the monorepo root. Pin it so file tracing (and the
+// outputFileTracingExcludes globs below) resolve against the right base on
+// Vercel — without this Next *infers* the root from lockfile walk-up and warns.
+const MONOREPO_ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const config: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: MONOREPO_ROOT,
   // Workspace packages are written as ESM-style TypeScript with `.js` extensions
   // in source imports (NodeNext convention). Tell webpack to resolve those to
   // the corresponding `.ts` source so we don't need a build step in dev.
@@ -21,9 +29,34 @@ const config: NextConfig = {
     '@ivaronix/receipts',
     '@ivaronix/runtime',
   ],
-  // The runtime imports better-sqlite3 transitively via @ivaronix/skills?? no,
-  // it doesn't. But it does need .env loaded at server startup.
-  serverExternalPackages: [],
+  // Keep heavy/native deps OUT of the server JS bundle — Vercel's serverless
+  // functions cap at 250 MB uncompressed and `/api/run` (via @ivaronix/runtime
+  // → og-storage / memory) drags in a lot. These are loaded from node_modules
+  // at runtime instead of inlined: better-sqlite3 (native .node) + sharp +
+  // onnxruntime-node (~92 MB native) + @xenova/transformers (~45 MB, the MiniLM
+  // embedder — only the hashing-trick fallback runs on Vercel) + the 0G Storage
+  // SDK (ships its own ethers v5).
+  serverExternalPackages: [
+    'better-sqlite3',
+    'sharp',
+    'onnxruntime-node',
+    '@xenova/transformers',
+    '@0gfoundation/0g-ts-sdk',
+  ],
+  // Drop the MiniLM / ONNX / sharp stack from every route's traced files. The
+  // memory engine's `await import('@xenova/transformers')` is gated behind
+  // IVARONIX_MEMORY_EMBEDDER=fallback on Vercel (and falls back to the
+  // hashing-trick embedder if the module is absent), so ~150 MB of weights +
+  // native runtime never executes there. Without this exclude, Vercel rejects
+  // the `api/run` deployment ("Max serverless function size of 250 MB reached").
+  outputFileTracingExcludes: {
+    '**': [
+      'node_modules/**/onnxruntime-node/**',
+      'node_modules/**/@xenova/transformers/**',
+      'node_modules/**/sharp/**',
+      'node_modules/**/@img/**',
+    ],
+  },
   webpack: (cfg) => {
     cfg.resolve = cfg.resolve ?? {};
     cfg.resolve.extensionAlias = {
