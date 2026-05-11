@@ -71,6 +71,21 @@ export function checkRateLimit(
     };
   }
   bucket.hits.push(now);
+  // Sweep 193: opportunistic memory-leak fix. The buckets Map grows
+  // unboundedly — every unique (kind, key) pair adds an entry, and a
+  // rotating-IP attacker could fill it with thousands of empty
+  // buckets. Sweep every ~100th call: drop buckets whose newest hit
+  // is older than 1 hour (the longest configured window). Conservative
+  // cutoff so we never evict a bucket whose own kind's window is
+  // still active. The current call's bucket is exempt by check below.
+  if (buckets.size > 64 && Math.random() < 0.01) {
+    const conservativeCutoff = now - 3_600 * 1000; // 1h, the longest configured window
+    for (const [k, b] of buckets) {
+      if (k === bucketKey) continue;
+      const newest = b.hits.length > 0 ? b.hits[b.hits.length - 1]! : 0;
+      if (newest < conservativeCutoff) buckets.delete(k);
+    }
+  }
   return {
     ok: true,
     remaining: limit - used - 1,
