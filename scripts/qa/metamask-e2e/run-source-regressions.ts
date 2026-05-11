@@ -134,6 +134,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-cli-findbyreceiptroot-unified/, // sweep 182 · CLI findByReceiptRoot calls iterate V1 + V2 — completes the V2-drift trifecta
       /^verify-cli-getreceipt-unified/, // sweep 183 · CLI chain getReceipt calls iterate V1 + V2 — 4th member of V2-drift reader-pattern lockdown
       /^verify-memory-snapshot-upload/, // sweep 201 · HALF_BAKED §I-12 partial closure · memory snapshot --upload wires createStorageClient.upload
+      /^verify-cli-disk-json-safety/, // sweep 206 · HALF_BAKED §J-3 CLI-half closure · no CLI file casts disk JSON to a named type without going through validator/unknown narrow
     ],
   },
   contracts: {
