@@ -219,3 +219,40 @@ test('K-19 · ReceiptV1Schema accepts well-formed 130-hex signature', async () =
   const sig = signed.signature!.signature;
   assert.equal(sig.length, 132, 'eth_personal_sign signature is 0x + 130 hex = 132 chars');
 });
+
+// HALF_BAKED §K-18 closure (sweep 214). Schema used to accept any integer
+// for chainId; tightened to the canonical pair {16602 testnet, 16661
+// mainnet} plus a cross-check that network + chainId agree.
+test('K-18 · ReceiptV1Schema rejects wrong chainId (e.g. 1 = Ethereum)', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const tampered = { ...signed, chainAnchor: { ...signed.chainAnchor, chainId: 1 } };
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(tampered);
+  assert.equal(result.success, false, 'chainId=1 must NOT parse');
+});
+
+test('K-18 · ReceiptV1Schema rejects network/chainId mismatch', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  // Real testnet receipt but claim mainnet chainId.
+  const tampered = {
+    ...signed,
+    chainAnchor: { ...signed.chainAnchor, network: 'testnet' as const, chainId: 16661 },
+  };
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(tampered);
+  assert.equal(result.success, false, 'network=testnet + chainId=16661 must NOT parse');
+});
+
+test('K-18 · ReceiptV1Schema accepts canonical testnet (16602)', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(signed);
+  assert.equal(result.success, true, 'canonical testnet receipt must parse');
+  assert.equal(signed.chainAnchor.chainId, 16602);
+});

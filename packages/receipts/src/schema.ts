@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { NETWORKS } from '@ivaronix/core';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Canonical Action Receipt schema (RECEIPTS_SPEC.md v1.0)
@@ -339,14 +340,38 @@ export const ReceiptV1Schema = z.object({
     })
     .optional(),
 
+  /**
+   * HALF_BAKED §K-18 closure (sweep 214): pre-fix the chainId field
+   * accepted any integer, so a receipt with `chainId: 1` (Ethereum
+   * mainnet) parsed cleanly. Combined with §K-17 it made spoofing the
+   * anchor target trivial at the schema level. The refine binds the
+   * field to the canonical pair {testnet: 16602, mainnet: 16661},
+   * sourced from `NETWORKS` so a future testnet redeploy (if 0G
+   * rotates chainIds) propagates without a separate schema edit.
+   * The superRefine cross-checks the (network, chainId) pair so a
+   * receipt can't claim `network: 'testnet'` and `chainId: 16661`
+   * or vice versa.
+   */
   chainAnchor: z.object({
     network: NetworkSchema,
-    chainId: z.number().int(),
+    chainId: z.number().int().refine(
+      (n) => n === NETWORKS.testnet.chainId || n === NETWORKS.mainnet.chainId,
+      { message: `chainId must be ${NETWORKS.testnet.chainId} (testnet) or ${NETWORKS.mainnet.chainId} (mainnet)` },
+    ),
     rpcUrlHash: Sha256Hex,
     registryAddress: HexAddress,
     anchorTxHash: HexHash.optional(),
     anchorBlockNumber: z.number().int().optional(),
     anchorTimestamp: z.number().int().optional(),
+  }).superRefine((data, ctx) => {
+    const expected = NETWORKS[data.network].chainId;
+    if (data.chainId !== expected) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['chainId'],
+        message: `chainId ${data.chainId} mismatches network "${data.network}" (expected ${expected})`,
+      });
+    }
   }),
 
   outputs: z.object({

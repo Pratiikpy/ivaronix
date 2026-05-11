@@ -616,9 +616,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `packages/receipts/src/schema.ts:245-253`, `verify.ts`. Verifier reads from `env.network` for the registry address, not from the receipt body. An attacker swaps `registryAddress`/`chainId` to a chain they control, deploys a vanilla `ReceiptRegistry`, anchors the same `receiptRoot`. Verifier shows green ANCHORED.
 - **Fix:** require `receipt.chainAnchor.chainId === NETWORKS[env.network].chainId` AND `registryAddress === getDeployedAddress(env.network, 'ReceiptRegistry')`.
 
-### K-18 · Schema enforces no `chainId === 16602` invariant  *(Medium)*
-- `schema.ts:248`: `chainId: z.number().int()`. A receipt with `chainId: 1` parses cleanly. Combined with K-17, makes spoofing trivial.
-- **Fix:** `z.union([z.literal(16602), z.literal(<mainnet-id>)])`.
+### K-18 · Schema enforces no `chainId === 16602` invariant  *(Medium · ✅ FIXED sweep 214)*
+- ✅ FIXED sweep 214. `packages/receipts/src/schema.ts` chainId is now `z.number().int().refine(n => n === NETWORKS.testnet.chainId || n === NETWORKS.mainnet.chainId)` — the literal set sourced from `@ivaronix/core`'s NETWORKS map, so a future 0G testnet chainId rotation propagates without a separate schema edit. Plus a superRefine on the chainAnchor object that cross-checks `(network, chainId)` consistency: a receipt claiming `network: 'testnet'` with `chainId: 16661` fails parse. Three unit tests in `builder.test.ts` lock the rules. 24/24 receipts tests green.
 
 ### K-19 · `signature.signature` regex accepts any hex length  *(Low · ✅ FIXED sweep 213)*
 - ✅ `packages/receipts/src/schema.ts:371` tightened to `regex(/^0x[0-9a-fA-F]{130}$/)` — exactly 65 bytes (32 r + 32 s + 1 v) as eth_personal_sign produces. `0x00` and any other length no longer schema-pass. Locked by two unit tests in `packages/receipts/src/builder.test.ts`: one asserts `0x00` is rejected, the other asserts real `signReceipt` output parses cleanly (132 chars: `0x` + 130 hex). 21/21 receipts tests green.
