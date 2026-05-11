@@ -90,6 +90,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-half-baked-closure-citations/, // sweep 203 · every ✅ <STATUS> header in HALF_BAKED.md cites a sha / sweep / date / address / verification phrase (locks the "ship fix + forget to close the doc" drift class sweep 202 caught manually)
       /^verify-studio-disk-receipt-safety/, // sweep 205 · HALF_BAKED §J-3 closure · Studio disk-receipt reads go through safeReadReceiptBody validator instead of raw JSON.parse-as-ReceiptBody cast
       /^verify-no-console-log-in-libs/, // sweep 207 · HALF_BAKED §J-11 third rule · no console.log/debug in library packages (warn/error/info still allowed for operator-facing signals)
+      /^verify-no-tee-bound-overclaim/, // sweep 211 · HALF_BAKED §I-6 closure · no capital-B "TEE-Bound" in app source or render-target docs (judge-facing surfaces)
     ],
   },
   'studio-live': {
