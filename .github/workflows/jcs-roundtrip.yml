@@ -40,7 +40,11 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: TS · self-tests
-        run: pnpm --filter @ivaronix/core exec tsx --test packages/core/src/jcs.test.ts
+        # `pnpm --filter <pkg> exec` runs with the package directory as
+        # CWD, so the path is relative to packages/core/ — NOT the repo
+        # root. `packages/core/src/...` here resolved to
+        # packages/core/packages/core/src/... and failed "Could not find".
+        run: pnpm --filter @ivaronix/core exec tsx --test src/jcs.test.ts
 
       - name: Python · self-tests
         run: cd scripts/verifier-py && python -m unittest test_jcs.py

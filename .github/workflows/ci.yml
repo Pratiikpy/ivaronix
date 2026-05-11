@@ -73,10 +73,18 @@ jobs:
         # prerender bugs that previously kept it best-effort).
         run: pnpm -r --filter "@ivaronix/*" --filter "!@ivaronix/opencode-*" --filter "!@ivaronix/studio" run build
       - name: Build npx-cli bundle (strict)
-        # Bare-name `ivaronix` package isn't matched by @ivaronix/* filter.
         # Bundle is the npm-publish artifact + the README's Quick Start
         # `npx ivaronix` workflow target — must succeed.
-        run: pnpm --filter ivaronix run build
+        #
+        # PATH filter (`./apps/npx-cli`), NOT name filter (`ivaronix`):
+        # the repo-root package.json is ALSO named `ivaronix` (private,
+        # 0.0.1), so `--filter ivaronix` matches BOTH the root and
+        # apps/npx-cli — and the root's `build` is `turbo run build`,
+        # which builds the whole monorepo including the vendored
+        # @ivaronix/opencode-bin (1267 tsc errors · multi-week port,
+        # build intentionally not green yet). The path filter targets
+        # apps/npx-cli unambiguously and runs only `node bundle.mjs`.
+        run: pnpm --filter ./apps/npx-cli run build
       - name: Build Studio (strict · next build)
         # Sweep 67 made next build deterministic by:
         #   1. Switching apps/studio/src/app/skill/new/page.tsx to
