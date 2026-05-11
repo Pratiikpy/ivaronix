@@ -43,6 +43,29 @@ export const NETWORKS: Record<Network, NetworkConfig> = {
 /** Stale chain IDs that doctor must reject. */
 export const STALE_CHAIN_IDS = new Set([16601, 16600]);
 
+/**
+ * Known ReceiptRegistry deployment addresses per network. HALF_BAKED
+ * §K-17 closure (sweep 219): the receipts schema cross-checks the
+ * chainAnchor.registryAddress against this set so a tampered receipt
+ * claiming a fake registry on the right chain fails parse-time
+ * validation. Lowercase-compared, so checksum-vs-lowercase variants
+ * are equivalent.
+ *
+ * Single source of truth lives in `contracts/deployments/<network>.json`;
+ * `scripts/qa/metamask-e2e/verify-known-registries-vs-deployments.ts`
+ * regression keeps this constant in sync with that file (sweep 219).
+ *
+ * Adding a future ReceiptRegistryV3 means appending its address here
+ * AND in the deployments JSON. Doc reference: §15 bookkeeping rule.
+ */
+export const KNOWN_RECEIPT_REGISTRIES: Record<Network, ReadonlySet<string>> = {
+  testnet: new Set<string>([
+    '0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c'.toLowerCase(), // ReceiptRegistry V1
+    '0xf675d4183b34fe8d1981FA9c117065aAcff690ab'.toLowerCase(), // ReceiptRegistryV2 (K-2 fix · EIP-712 anchor)
+  ]),
+  mainnet: new Set<string>(),
+};
+
 /** Receipt type codes per RECEIPTS_SPEC.md §1. */
 export const RECEIPT_TYPES = {
   doc_ask: 0,

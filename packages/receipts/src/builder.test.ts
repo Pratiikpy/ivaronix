@@ -5,7 +5,11 @@ import { sha256HexAsync } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, type BuildReceiptInput } from './builder.js';
 import { verifyClaimed } from './verify.js';
 
-const TEST_REGISTRY = '0x000000000000000000000000000000000000bEEF' as `0x${string}`;
+// §K-17 closure (sweep 219): fixture now uses the real ReceiptRegistryV2
+// testnet address so the schema's KNOWN_RECEIPT_REGISTRIES superRefine
+// accepts the fixture. Tests still exercise the canonical hash + signer
+// + Zod path; only the bytes32 registry slot changed.
+const TEST_REGISTRY = '0xf675d4183b34fe8d1981FA9c117065aAcff690ab' as `0x${string}`;
 
 function fixtureInput(walletAddress: string): BuildReceiptInput {
   return {
@@ -318,4 +322,52 @@ test("K-24 · ReceiptV1Schema rejects unknown localCleanupStatus value", async (
   };
   const result = ReceiptV1Schema.safeParse(bad);
   assert.equal(result.success, false, 'unknown value must NOT parse');
+});
+
+// HALF_BAKED §K-17 closure (sweep 219). chainAnchor.registryAddress
+// now cross-checks against KNOWN_RECEIPT_REGISTRIES per network. A
+// tampered receipt claiming a fake registry on the right chain fails
+// schema validation, not just on-chain re-fetch.
+test('K-17 · ReceiptV1Schema rejects unknown registryAddress for testnet', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  // Tamper: substitute a syntactically-valid but unknown address.
+  const tampered = {
+    ...signed,
+    chainAnchor: {
+      ...signed.chainAnchor,
+      registryAddress: '0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef' as `0x${string}`,
+    },
+  };
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(tampered);
+  assert.equal(result.success, false, 'unknown registry must NOT parse');
+});
+
+test('K-17 · ReceiptV1Schema accepts the canonical V2 ReceiptRegistry address', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(signed);
+  assert.equal(result.success, true, 'canonical V2 testnet registry must parse');
+  assert.equal(signed.chainAnchor.registryAddress.toLowerCase(), '0xf675d4183b34fe8d1981fa9c117065aacff690ab');
+});
+
+test('K-17 · ReceiptV1Schema is case-insensitive on registryAddress check', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  // Substitute the V1 ReceiptRegistry address in lowercase.
+  const lowered = {
+    ...signed,
+    chainAnchor: {
+      ...signed.chainAnchor,
+      registryAddress: '0x97376c6f0be0ee08aa34c4cacdbdec2183e7743c' as `0x${string}`,
+    },
+  };
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(lowered);
+  assert.equal(result.success, true, 'lowercase known address must parse (checksum-insensitive)');
 });

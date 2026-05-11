@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NETWORKS } from '@ivaronix/core';
+import { NETWORKS, KNOWN_RECEIPT_REGISTRIES } from '@ivaronix/core';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Canonical Action Receipt schema (RECEIPTS_SPEC.md v1.0)
@@ -380,6 +380,22 @@ export const ReceiptV1Schema = z.object({
         code: z.ZodIssueCode.custom,
         path: ['chainId'],
         message: `chainId ${data.chainId} mismatches network "${data.network}" (expected ${expected})`,
+      });
+    }
+    // §K-17 closure (sweep 219): registryAddress must be a known
+    // ReceiptRegistry deployment for the claimed network. A tampered
+    // receipt claiming a fake registry on the right chain now fails
+    // parse-time validation rather than only at the on-chain re-fetch
+    // step (which not every verifier runs). Mainnet's empty set means
+    // any mainnet receipt fails this gate until the first mainnet
+    // deploy lands — that's deliberate so we don't accept mainnet
+    // receipts before the registries are real.
+    const known = KNOWN_RECEIPT_REGISTRIES[data.network];
+    if (known.size > 0 && !known.has(data.registryAddress.toLowerCase())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['registryAddress'],
+        message: `registryAddress ${data.registryAddress} is not a known ${data.network} ReceiptRegistry deployment`,
       });
     }
   }),

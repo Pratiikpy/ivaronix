@@ -95,6 +95,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-jsdoc-glob-terminator/, // sweep 212 meta-regression · forbid the JSDoc terminator token inside a multi-line comment (third-occurrence prevention)
       /^verify-siwe-cookie-samesite-strict/, // sweep 217 · HALF_BAKED §K-13 primary CSRF defense · SIWE session cookies must stay sameSite: 'strict'
       /^verify-pipeline-storage-upload/, // sweep 218 · HALF_BAKED §H-3 closure · Studio runtime pipeline uploads evidence to 0G Storage before anchoring
+      /^verify-known-registries-vs-deployments/, // sweep 219 · HALF_BAKED §K-17 closure · KNOWN_RECEIPT_REGISTRIES in core stays in sync with contracts/deployments/{network}.json
     ],
   },
   'studio-live': {
