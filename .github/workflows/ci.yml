@@ -25,9 +25,11 @@ jobs:
           version: ${{ env.FOUNDRY_VERSION }}
       - name: Show Forge version
         run: forge --version
-      - name: Install OpenZeppelin into contracts/lib
-        working-directory: contracts
-        run: forge install OpenZeppelin/openzeppelin-contracts@v5.1.0 --no-commit
+      # OpenZeppelin + forge-std are VENDORED under contracts/lib/ (713 + 68
+      # tracked files) and resolved via contracts/remappings.txt — no
+      # `forge install` needed. (The old step used `--no-commit`, removed
+      # in newer Foundry; and re-installing would conflict with the
+      # vendored copy anyway.)
       - name: Build
         working-directory: contracts
         run: forge build --skip test
