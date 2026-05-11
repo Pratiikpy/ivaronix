@@ -64,7 +64,7 @@ const closedHeaderRe = /^###\s+.*✅\s+(CLOSED|FIXED|SHIPPED|DEPLOYED|VERIFIED|C
 // a real citation.
 const citationPatterns = [
   { name: 'commit sha (7+ hex)', re: /\b[0-9a-f]{7,40}\b/i },
-  { name: 'sweep N', re: /\bsweep\s+\d+/i },
+  { name: 'sweep N', re: /\bsweeps?\s+\d+/i }, // accepts "sweep 200" and "sweeps 145-150" (range across multiple sweeps)
   { name: 'ISO date', re: /\b20\d{2}-\d{2}-\d{2}\b/ },
   { name: 'address 0x...', re: /\baddress\s+`?0x[0-9a-fA-F]{6,}/i },
   { name: 'verification phrase', re: /\b(file exists|build passes|tests? pass|verified)\b/i },

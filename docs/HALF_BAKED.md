@@ -326,9 +326,8 @@ Five subagents ran in parallel: 0G integration depth, functional integrity, code
 
 For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Provus / Aishi.
 
-### H-1 · 0G Chain · `attestationHash` is permanently zero on chain  *(severity A)*
-- `packages/consensus/src/index.ts:174` hardcodes `attestationHash: null`. Every TIER 1 anchor passes `0x000…000` for the on-chain attestation slot. A reviewer reading `ReceiptRegistry.receipts(id)` on chainscan sees zero. The independent re-verifier still works because it re-runs `processResponse`, but the chain field is dead weight.
-- **Fix:** `keccak256(toUtf8Bytes(zgResKey))` for TIER 1; thread through `anchorReceipt`. ~5 lines.
+### H-1 · 0G Chain · `attestationHash` is permanently zero on chain  *(severity A · ✅ CLOSED 1f43a27)*
+- ✅ The receipt-build sites now derive `attestationHash = keccak256(toUtf8Bytes(zgResKey))` whenever the role's chat ID is present (`packages/runtime/src/pipeline.ts:669-674` for the Studio path, `apps/cli/src/commands/doc.ts:649-650` for the CLI Build path). The on-chain anchor receives the real hash via `pipeline.ts:828`. Zero-fallback is retained only when no chat ID exists (no TEE check requested), making the field's meaning unambiguous on chainscan.
 
 ### H-2 · 0G Compute · `processResponse` called with two args, the SDK supports three  *(severity S)*
 - `apps/cli/src/commands/receipt.ts:253` calls `broker.inference.processResponse(providerAddress, chatID)`. Provus's `entries/provus-protocol/scripts/probe-compute.ts` and AIsphere's docs both pass the **content** as the third argument. We verify the chat ID was billed but not that the content corresponds to it.
@@ -395,25 +394,21 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `apps/studio/src/components/RunPanel.tsx:136`: `TEE: data.scan?.matches ? 'verified' : 'pending'`. `scan.matches` is a SkillRegistry manifest-hash check, not a TEE check. NIM-routed TIER 2 runs against a registered skill light the TEE chip green.
 - **Fix:** read `scan.matches` for the registry chip only; gate TEE on `data.tier === 'tier-1-tee'` AND `data.routerVerified === true`.
 
-### I-5 · `/r/[id]` Chain light hardcoded `verified` even when no anchor tx in body  *(severity A)*
-- `apps/studio/src/app/r/[id]/page.tsx:154`: `Chain: 'verified'` is hardcoded with comment "we got onChain, so chain is verified." But the page also renders for receipts whose `local.chainAnchor.anchorTxHash` is missing.
-- **Fix:** `Chain: txHash ? 'verified' : 'mismatch'`.
+### I-5 · `/r/[id]` Chain light hardcoded `verified` even when no anchor tx in body  *(severity A · ✅ CLOSED b9676f1)*
+- ✅ `apps/studio/src/app/r/[id]/page.tsx:220-227` now reads `txHash = local?.chainAnchor?.anchorTxHash ?? null` and gates the chip on it: `Chain: txHash ? 'verified' : 'pending'`. A receipt rendered without an anchor tx (off-chain only) honestly shows `pending` rather than green.
 
 ### I-6 · `bin/ivaronix.ts` advertises "TEE-Bound Delegated AI Agent" — no TEE binding ships  *(severity S)*
 - `apps/cli/src/bin/ivaronix.ts:85` comment + `apps/cli/src/commands/delegate.ts:33-38` admit: "Today the key is held server-side; the trust boundary is 'the operator does not export the key.'" Delegate keys are `Wallet.createRandom()` in plaintext under `.ivaronix/delegates/<id>/key.json`. Zero TEE involvement.
 - **Fix:** strip "TEE-Bound" from descriptions. Replace with "Operator-Held Delegate Wallet (Phase A)."
 
-### I-7 · `compute verify-tee` does not verify; prints a hint and exits 0  *(severity A)*
-- `apps/cli/src/commands/compute.ts:69-77` says help "alias for `receipt verify --tee-independent`." Action body prints a hint and exits 0, never invoking it.
-- **Fix:** `await receiptCommand.parseAsync(['node', 'verify', id, '--tee-independent']);` propagate exit code.
+### I-7 · `compute verify-tee` does not verify; prints a hint and exits 0  *(severity A · ✅ CLOSED 275a315)*
+- ✅ `apps/cli/src/commands/compute.ts:79-84` now invokes the real verifier: `await receiptCommand.parseAsync(['node', 'verify', id, '--tee-independent'])`. Exit code propagates from the inner command. The earlier "title + hint then exit 0" path that misled judges is gone.
 
-### I-8 · Build-path receipts omit `attestationHash` entirely  *(severity A)*
-- `apps/cli/src/commands/doc.ts:512-519` Build path has no `attestationHash` write. JUDGE_GUIDE example would mislead.
-- **Fix:** populate from `primaryAtt.zgResKey` when present.
+### I-8 · Build-path receipts omit `attestationHash` entirely  *(severity A · ✅ CLOSED sweep 162)*
+- ✅ `apps/cli/src/commands/doc.ts:642-661` now computes `anchorAttestationHash = primaryAtt?.zgResKey ? keccak256(toUtf8Bytes(...)) : zero` and threads it into the anchor call. CLI Build-path receipts carry the real on-chain attestationHash; JUDGE_GUIDE replay path matches what the receipt body asserts.
 
-### I-9 · `/skills` page header "First-party skills" but loads 156 imports  *(severity A)*
-- `apps/studio/src/app/skills/page.tsx:75-76` header copy promises "first-party"; `loadAllSkills()` returns every skill under `seed-skills/` including 150 third-party imports per `registry.json`. Most have not been anchored.
-- **Fix:** filter to `source: 'first-party'` (already in registry.json), or split into two sections with honest counts.
+### I-9 · `/skills` page header "First-party skills" but loads 156 imports  *(severity A · ✅ CLOSED sweep 163)*
+- ✅ `apps/studio/src/app/skills/page.tsx:78-84` renamed to "Skill catalog" and surfaces a breakdown: total · ~N anchored on the SkillRegistry · ~M imported from upstream (not yet anchored). The "First-party skills" misnomer is gone; readers see the honest provenance split.
 
 ### I-10 · `compute_tee_required` skills can run on NVIDIA NIM via runtime  *(severity A · ✅ CLOSED sweep 202)*
 - ✅ Sandbox now blocks the bypass. `packages/skills/src/sandbox.ts:77` refuses any run where `permissions.compute_tee_required === true` and `ctx.providerKind` is set to a non-`0g` value. `packages/runtime/src/pipeline.ts:192-202` passes `providerKind: input.provider ?? '0g'` into `evaluateSandbox` and throws on `!decision.allow`, so a NIM-routed run against a TEE-required skill fails closed before any inference fires.
@@ -464,13 +459,11 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 
 ## Section J · Code quality
 
-### J-1 · Studio tsconfig forks the strictness contract  *(severity A)*
-- `apps/studio/tsconfig.json` does not extend `tsconfig.base.json`. Sets `strict: true` but drops `noUncheckedIndexedAccess`. Studio is the largest typecheck surface and the one judges open in DevTools.
-- **Fix:** `"extends": "../../tsconfig.base.json"`. Run `pnpm --filter @ivaronix/studio typecheck` and fix what falls out.
+### J-1 · Studio tsconfig forks the strictness contract  *(severity A · ✅ CLOSED 2026-05-09)*
+- ✅ `apps/studio/tsconfig.json:2` now reads `"extends": "../../tsconfig.base.json"`. Studio inherits the same strict contract as every other workspace package (`noUncheckedIndexedAccess`, `noImplicitOverride`, `exactOptionalPropertyTypes`). `pnpm --filter @ivaronix/studio typecheck` is green under the unified contract.
 
-### J-2 · Three API routes cast `req.json()` without runtime validation  *(severity A)*
-- `apps/studio/src/app/api/run/route.ts:51` (`as RunBody`), `apps/studio/src/app/api/skill/save/route.ts:21`, `apps/studio/src/app/api/onboard/metadata/route.ts:32`. Combined with no rate limit, an attacker posts `{ contentText: "<10MB string>" }` and reaches `runPipeline`.
-- **Fix:** `RunBodySchema = z.object({...}).parse(await req.json())`.
+### J-2 · Three API routes cast `req.json()` without runtime validation  *(severity A · ✅ CLOSED sweeps 145-150)*
+- ✅ All three named routes plus the four other body-taking API routes now parse via Zod `safeParse`. `apps/studio/src/app/api/run/route.ts:29-89` declares `RunBodySchema` with conservative size caps (skillId ≤80, question ≤4KB, contentText ≤2MB) and rejects with `400 invalid body` on parse failure. Locked by `verify-api-route-zod-validation.ts` which scans every `/api/**/route.ts` for a Zod safeParse call against the request body.
 
 ### J-3 · 14 `JSON.parse(readFileSync) as T` casts (disk-as-truth)  *(severity A)*
 - Worst 5: `apps/studio/src/lib/local-receipt.ts:142` (receipt body straight to `ReceiptBody`), `local-receipts.ts:66`, `apps/cli/src/lib/conversation.ts:57,63,74`, `apps/cli/src/commands/delegate.ts:94,108`, `passport.ts:230`. A migration-stale local receipt crashes `/r/<id>` first paint with `Cannot read 'X' of undefined`.
@@ -480,29 +473,24 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `doc.ts:553,559`, `doc-bulk.ts:264,272,305`, `passport-consolidate.ts:320,336,374`, `room.ts:355,565`, `openclaw.ts:188`. `signed.storage!.receiptRoot` after a fallback that may set storage null.
 - **Fix:** explicit `if (!signed.storage) throw new Error('storage anchor missing')`.
 
-### J-5 · `apps/studio/src/app/global/page.tsx:44` reaches into a private contract field  *(severity A)*
-- `(client as unknown as { contract: { queryFilter: Function; filters: { MemoryAccessed: Function } } }).contract`. Type-laundering through `unknown` to call a private field. Rename of `MemoryAccessLogClient.contract` breaks `/global` at runtime.
-- **Fix:** add `queryRecentAccessEvents(fromBlock)` to `MemoryAccessLog.ts`. Delete the cast.
+### J-5 · `apps/studio/src/app/global/page.tsx:44` reaches into a private contract field  *(severity A · ✅ CLOSED 2026-05-08)*
+- ✅ `MemoryAccessLogClient.listGlobal(lookbackBlocks)` is now the public surface (`packages/og-chain/src/contracts/MemoryAccessLog.ts:50-65`). `/global/page.tsx:38-39` calls it directly: no `unknown` cast, no private field reach. A future rename of the internal contract handle no longer breaks the dashboard.
 
-### J-6 · Receipt schema accepts empty strings on identifier fields  *(severity A)*
-- `packages/receipts/src/schema.ts:63,79,80,93`. `passportId: z.string()`, `skillId: z.string()` — no `.min(1)`, no shape regex. Empty `skillId` validates and gets canonical-hashed and anchored.
-- **Fix:** `passportId: z.string().regex(/^pas_[0-9A-HJ-NP-Z]{26}$/)`, `skillId: z.string().min(3).max(80)`, `mode: z.enum([...])`.
+### J-6 · Receipt schema accepts empty strings on identifier fields  *(severity A · ✅ CLOSED sweep 152)*
+- ✅ `packages/receipts/src/schema.ts:80` now requires `passportId: z.string().min(1)`; `:99` enforces `skillId: z.string().min(1).max(80)` (aligns with `SkillManifestSchema`). An empty `skillId` no longer canonical-hashes; the schema rejects at parse time before the receipt reaches the canonical-hash step.
 
-### J-7 · `@ivaronix/trust-layer` — entire package, zero importers  *(severity A)*
-- `packages/trust-layer/`. `evaluatePolicy()` exported, zero callers anywhere. README claims approval gates that fire on nothing.
-- **Fix:** wire into `pipeline.ts` before consensus, OR move to `packages/_design/` and remove from workspace until shipped.
+### J-7 · `@ivaronix/trust-layer` — entire package, zero importers  *(severity A · ✅ CLOSED 2026-05-09)*
+- ✅ `packages/trust-layer/` moved under `packages/_design/trust-layer/` and dropped from the active workspace. The `_design/` subtree is excluded from CI builds + the typecheck-clean count (see `scripts/diag/numbers-refresh.ts` walk shape). Ghost-surface gate `verify-no-ghost-surfaces.ts` ensures no doc surface still claims trust-layer as a shipped feature.
 
 ### J-8 · Three TS unit tests in 23 first-party packages  *(severity S)*
 - All of them: `consensus/convergence.test.ts`, `memory/engine.test.ts`, `receipts/builder.test.ts`. **Worst ratios:** `packages/skills` 14 src / 0 tests, `packages/og-chain` 7 / 0, `packages/runtime` 5 / 0. `runPipeline` has zero unit tests; central orchestration is exercised only by manual E2E.
 - **Fix:** start with three: `pipeline.test.ts` (stub Router + stub anchor; assert receipt schema parses, canonical hash stable), `sandbox.test.ts` (assert `compute_tee_required` branch fires), `ReceiptRegistry.test.ts` (mocked Contract; assert calldata).
 
-### J-9 · CI silently passes broken Studio builds  *(severity S)*
-- `.github/workflows/ci.yml:54-58` Studio `next build` step has `continue-on-error: true`. CI badge says green while production builds fail.
-- **Fix:** fix the underlying preload issue or split into separate `[optional]` job. Restore CI as a real signal.
+### J-9 · CI silently passes broken Studio builds  *(severity S · ✅ CLOSED sweep 54 + sweep 75)*
+- ✅ `.github/workflows/ci.yml` no longer carries `continue-on-error: true` on the Studio build step. The underlying preload issue was fixed by setting `export const dynamic = 'force-dynamic'` on the OG-image routes (font-fetch at runtime can't statically prerender). The remaining inline `continue-on-error` mention is an explanatory comment, not an active suppression. Locked by `verify-no-ci-suppress-exit.ts` which fails on any `|| true` / `continue-on-error: true` in CI workflows.
 
-### J-10 · 13 hardcoded `http://localhost:3300` strings in CLI user output  *(severity A)*
-- `commands/{room,demo,delegate,doc-bulk,passport-consolidate,pr,skill-schedule}.ts` plus `apps/telegram-bot/src/index.ts:56`. The proof URL printed is the one a judge copies; today it's localhost regardless of `STUDIO_BASE`.
-- **Fix:** `studioUrl(path)` helper in `core/src/env.ts` reads `IVARONIX_STUDIO_BASE`.
+### J-10 · 13 hardcoded `http://localhost:3300` strings in CLI user output  *(severity A · ✅ CLOSED sweep 143-144)*
+- ✅ `studioUrl(path)` helper landed at `packages/core/src/studio-url.ts` reading the `IVARONIX_STUDIO_BASE → STUDIO_BASE → localhost` alias chain. 9 CLI sites + the Telegram bot rewritten to call it. Locked by `verify-no-hardcoded-studio-base.ts` which scans first-party code for raw `'http://localhost:3300'` strings outside legitimate `??` fallback chains or smoke fixtures. Operator-overridden `IVARONIX_STUDIO_BASE` produces the correct judge-facing proof URL.
 
 ### J-11 · 13 packages have `lint: echo skip` and `test: echo skip`  *(severity A)*
 - `packages/{core,memory,og-chain,og-router,og-storage,og-toolkit,og-da,og-kv,runtime,skills,trust-layer}/package.json`. CI's `pnpm -r run lint` is green for free.
@@ -512,8 +500,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `} catch { /* skip malformed */ }` — uniform. No log, no telemetry. When a real bug arrives, the CLI silently iterates past it.
 - **Fix:** `silentSkip(err, where)` helper that increments a debug counter when `IVARONIX_DEBUG=1`.
 
-### J-13 · Seven empty packages drag CI time  *(severity B)*
-- `packages/widget/`, `tui/`, `ui/`, `sdk/`, `orchestrator/`, `policy/`, `hooks/` — zero `.ts` files in `src/`. `pnpm-workspace.yaml` enumerates them.
+### J-13 · Seven empty packages drag CI time  *(severity B · ✅ CLOSED 2026-05-08)*
+- ✅ Six of the seven (`tui`, `ui`, `sdk`, `orchestrator`, `policy`, `hooks`) removed from the workspace. `widget` retained — it has a real `src/index.tsx` and is wired into Studio. Ghost-surface gate `verify-no-ghost-surfaces.ts` ensures no HLD §1 surface row still maps to a deleted package directory.
 - **Fix:** delete the empties. Re-add when needed.
 
 ### J-14 · Most package.json missing publishable metadata  *(severity B)*
