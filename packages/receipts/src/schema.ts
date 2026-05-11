@@ -334,7 +334,17 @@ export const ReceiptV1Schema = z.object({
   burn: z
     .object({
       sessionKeyDestroyedAt: z.number(),
-      localCleanupStatus: z.enum(['completed', 'partial', 'failed']),
+      /**
+       * HALF_BAKED §K-24 closure (sweep 215). Pre-fix every receipt
+       * wrote `'completed'` with an empty `tempPathsZeroed` array,
+       * which is internally contradictory — "completed" implies a
+       * cleanup happened. The runtime Burn Mode (Studio /api/run +
+       * CLI doc/room) operates in-memory: plaintext never lands on
+       * disk under the current pipeline, so there are no temp paths
+       * to zero. The honest value is `'not-applicable'`. Older
+       * receipts with `'completed'` still parse (backwards-compat).
+       */
+      localCleanupStatus: z.enum(['completed', 'partial', 'failed', 'not-applicable']),
       tempPathsZeroed: z.array(z.string()),
       wording: z.string(),
     })

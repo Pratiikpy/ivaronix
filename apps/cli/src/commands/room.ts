@@ -322,10 +322,13 @@ roomCommand
         },
         burn: {
           sessionKeyDestroyedAt: burned.destroyedAt,
-          localCleanupStatus: 'completed',
+          // §K-24 closure (sweep 215): room create encrypts in-memory.
+          // `not-applicable` is the honest status when no temp paths
+          // were created; `completed` implied a cleanup that wasn't needed.
+          localCleanupStatus: 'not-applicable',
           tempPathsZeroed: [],
           wording:
-            'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope.',
+            'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload).',
         },
         chainAnchor: defaultChainAnchor(env.network as 'testnet' | 'mainnet', registryAddr as Address),
         outputs: {

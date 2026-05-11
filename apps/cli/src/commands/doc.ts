@@ -605,9 +605,13 @@ docCommand
       burn: burnMode
         ? {
             sessionKeyDestroyedAt: burnMeta!.destroyedAt,
-            localCleanupStatus: 'completed',
+            // §K-24 closure (sweep 215): burn pipeline encrypts in-memory
+            // and uploads ciphertext; no plaintext temp files exist on
+            // disk. `not-applicable` is the honest status — `completed`
+            // implied a cleanup that wasn't needed.
+            localCleanupStatus: 'not-applicable',
             tempPathsZeroed: [],
-            wording: 'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope.',
+            wording: 'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload).',
           }
         : undefined,
       chainAnchor: defaultChainAnchor(env.network, registryAddr),

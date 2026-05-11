@@ -256,3 +256,66 @@ test('K-18 · ReceiptV1Schema accepts canonical testnet (16602)', async () => {
   assert.equal(result.success, true, 'canonical testnet receipt must parse');
   assert.equal(signed.chainAnchor.chainId, 16602);
 });
+
+// HALF_BAKED §K-24 closure (sweep 215). Burn-mode receipts claimed
+// localCleanupStatus: 'completed' with tempPathsZeroed: [] — internally
+// contradictory. Extended the enum with 'not-applicable' and switched
+// all three runtime/CLI write sites to use it. These tests lock that
+// the new value parses cleanly AND legacy 'completed' values stay
+// backwards-compatible.
+test("K-24 · ReceiptV1Schema accepts localCleanupStatus 'not-applicable'", async () => {
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt({
+    ...fixtureInput(owner.address),
+    execution: { ...fixtureInput(owner.address).execution, burnMode: true },
+  });
+  const signed = await signReceipt(draft, owner);
+  const withBurn = {
+    ...signed,
+    burn: {
+      sessionKeyDestroyedAt: Date.now(),
+      localCleanupStatus: 'not-applicable' as const,
+      tempPathsZeroed: [] as string[],
+      wording: 'Session key destroyed (in-memory pipeline; no temp files created).',
+    },
+  };
+  const result = ReceiptV1Schema.safeParse(withBurn);
+  assert.equal(result.success, true, "'not-applicable' must parse");
+});
+
+test("K-24 · ReceiptV1Schema still accepts legacy 'completed' value (backwards-compat)", async () => {
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const legacy = {
+    ...signed,
+    burn: {
+      sessionKeyDestroyedAt: Date.now(),
+      localCleanupStatus: 'completed' as const,
+      tempPathsZeroed: ['/some/path'] as string[],
+      wording: 'cleanup ran.',
+    },
+  };
+  const result = ReceiptV1Schema.safeParse(legacy);
+  assert.equal(result.success, true, "legacy 'completed' must stay valid");
+});
+
+test("K-24 · ReceiptV1Schema rejects unknown localCleanupStatus value", async () => {
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const bad = {
+    ...signed,
+    burn: {
+      sessionKeyDestroyedAt: Date.now(),
+      localCleanupStatus: 'unknown-status' as 'completed',
+      tempPathsZeroed: [] as string[],
+      wording: '',
+    },
+  };
+  const result = ReceiptV1Schema.safeParse(bad);
+  assert.equal(result.success, false, 'unknown value must NOT parse');
+});

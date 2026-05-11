@@ -754,10 +754,13 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       ? {
           burn: {
             sessionKeyDestroyedAt,
-            localCleanupStatus: 'completed' as const,
+            // §K-24 closure (sweep 215): runtime burn pipeline operates
+            // in-memory, so no temp files exist to be zeroed. The
+            // honest field value is 'not-applicable', not 'completed'.
+            localCleanupStatus: 'not-applicable' as const,
             tempPathsZeroed: [],
             wording:
-              'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope.',
+              'Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline).',
           },
         }
       : {}),

@@ -638,9 +638,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `contracts/src/MemoryAccessLog.sol:43-52`. Anyone calls `logAccess()` with any combination. The on-chain audit trail is pollutable.
 - **Fix:** `onlyAuthorizedLogger`, OR cross-check `grantId` against `CapabilityRegistry` and require `msg.sender == agent`.
 
-### K-24 · Burn-Mode "delete" does not delete underlying storage; schema says `tempPathsZeroed: []`  *(Low)*
-- `packages/og-storage/src/burn.ts` + `pipeline.ts:553-563`. Cryptographic claim is sound (key destroyed → ciphertext unreadable to operator); schema fields lie about local cleanup.
-- **Fix:** populate `tempPathsZeroed` with real overwritten paths, or remove field.
+### K-24 · Burn-Mode "delete" does not delete underlying storage; schema says `tempPathsZeroed: []`  *(Low · ✅ FIXED sweep 215)*
+- ✅ The cryptographic claim was always sound (session key destroyed → ciphertext unreadable to the operator). The misleading part was `localCleanupStatus: 'completed'` paired with `tempPathsZeroed: []` — "completed" implies a cleanup happened. The runtime + CLI Burn pipelines operate in-memory (plaintext never lands on disk), so no temp paths exist to zero. Fix: extended the schema enum to `['completed', 'partial', 'failed', 'not-applicable']` and switched all 3 write sites (`pipeline.ts`, `doc.ts`, `room.ts`) to use `'not-applicable'`. The wording was extended to say "No temp files were created (in-memory pipeline)." so a reader of `/r/[id]` sees the trust gradient explicitly. Older receipts with `'completed'` still parse (backwards-compatible). Three unit tests in `builder.test.ts` lock the rule. 24 → 27 receipts tests green.
 
 ### K-25 · `SubscriptionEscrow.cancel` lets agent grief client  *(Low)*
 - `contracts/src/SubscriptionEscrow.sol:230-238`. Either party cancels with no notice period.
