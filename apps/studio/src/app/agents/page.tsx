@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
-import { getPassportClient, getNetwork } from '@/lib/chain';
+import { getPassportClient, livePassportCount, getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -17,13 +17,12 @@ interface AgentRow {
 async function loadAgents(): Promise<AgentRow[]> {
   const passport = getPassportClient();
   if (!passport) return [];
-  let next: bigint;
-  try {
-    next = await passport.nextTokenId();
-  } catch {
-    return [];
-  }
-  const total = Number(next - 1n);
+  // Sweep 188: livePassportCount() returns the anchored-count (nextTokenId-1)
+  // following the convention used by home/thesis/global. Iterating
+  // tokenIds 1..total below is now driven by the same source-of-truth.
+  const anchored = await livePassportCount();
+  if (anchored === null) return [];
+  const total = Number(anchored);
   if (total <= 0) return [];
 
   // Walk tokenIds 1..total in parallel — typically <20 mints, so the RPC
