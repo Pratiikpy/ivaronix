@@ -16,6 +16,44 @@ Where `<ID>` is the audit code from `docs/HALF_BAKED.md` or `docs/planning-003.m
 
 CLAUDE.md §1: NO `Co-Authored-By` trailers. Conventional-commit subject + body only.
 
+## Phase D — cron-paced sweep loop (sweeps 200-228 · 2026-05-11)
+
+Recap of the audit closures landed between sweeps 200-228. Each commit's subject carries the `· close §<ID> · sweep N` shape; the canonical `Closes audit <ID>` git-trailer convention was missed across the run (sweep 231 finding) so `pnpm audit:list` undercounts these. From sweep 232+ the trailer is restored. This table is the human-readable backfill.
+
+| Audit ID | Commit | Sweep | Closure shape |
+|---|---|---|---|
+| §K-15 (TS+Python+Rust) | `39d7f29` · `a97058b` | < 200 | 3 of 4 verifiers shipped; Go queued (B-V2-K15-Go) |
+| numbers regex bug | `42f8b87` | 200 | `\btsc\b` over-match in `echo` placeholder fixed |
+| §I-12 storage half | `d9122aa` | 201 | `memory snapshot --upload` writes manifest to 0G Storage |
+| §A frozen-snapshot batch | `83cd073` | 209 | 13 §A-* mirrors closed with sub-section citations |
+| §H/§I/§K batch | `be89aef` | 210 | 15 entries closed (H-2, H-4, I-1, I-2, I-4, K-1, K-2, K-3, K-4, K-6, K-7, K-8, K-9, K-12, K-16) |
+| §I-6 TEE-Bound overclaim | `6ac56cb` | 211 | `verify-no-tee-bound-overclaim` regression |
+| §K-11 error-sanitize | `7aaa839` | 212 | `sanitizeErrorMessage()` applied to 5 API routes |
+| §I-3 / §K-14 verifier branch | `7aaa839` | 212 | tier-aware signer-check in `verify.ts` |
+| §K-19 signature regex | `99e1fb5` | 213 | exact 130-hex enforcement + 2 tests |
+| §K-18 chainId bind | `68e4f54` | 214 | NETWORKS-bound + (network, chainId) superRefine + 3 tests |
+| §K-24 not-applicable enum | `2a4b72d` | 215 | `localCleanupStatus: 'not-applicable'` + 3 sites + 3 tests |
+| §J-4 non-null assertions | `aaeeda3` | 216 | type-predicate filter + `burnMeta &&` gate (doc.ts → 0 `!` postfixes) |
+| §K-13 sameSite primary | `0d4765b` | 217 | `verify-siwe-cookie-samesite-strict` regression |
+| §H-3 pipeline storage upload | `f4e9245` | 218 | `createStorageClient(...).upload(evidenceBytes)` + 8-assertion lock |
+| §K-17 registryAddress bind | `37edd42` | 219 | `KNOWN_RECEIPT_REGISTRIES` in `@ivaronix/core` + dual lock |
+| §H-7 verified-no-bug | `66656a8` | 220 | analytical close: testnet `routerVerified=false` is honest |
+| §K-10 dashboard arbitrary-read | `a2d6006` | 221 | cumulative defenses (K-9 closure + sweeps 177, 196) |
+| 7 items queued B-V2-15..30 | `be3aa40` | 222 | H-5, H-6, I-18, K-5, K-21, K-22, K-23, K-25 → B-V2 entries |
+| PHASE_B Item #1 SIWE | `423ccc2` | 223 | closure-citation gate + present-state narrative |
+| closure-citation gate extended | `0339f6a` | 224 | PHASE_B_DISCLOSURES.md now scanned |
+| JUDGE_GUIDE Phase B SIWE | `9eb6f33` | 226 | stale caption corrected |
+| env.ts §B-V2-10 stale | `f24fa79` | 227 | cross-ref updated to ✅ SHIPPED |
+| §B-V2-N cross-ref lock | `966d59b` | 228 | `verify-b-v2-crossref-status` regression + 1 follow-on fix |
+
+Net state at end of run:
+- HALF_BAKED: 79 closed entries, 8 queued (all with B-V2 runbook), 0 stale
+- PHASE_B_DISCLOSURES: 1 explicitly closed; remaining 5 items in "Open · documented honestly" are accurately open
+- Source regressions: 74 (57 Studio + 13 CLI + 4 contract)
+- Unit tests: 259 across 12 library packages
+- Foundry tests: 167 (per `docs/numbers.json`)
+- USER_TODO B-V2 entries: 30 (11 shipped, 19 queued for mainnet/operator-action)
+
 ## Phase C — testnet polish bundle (in progress · 2026-05-10)
 
 Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates for mainnet captured in `docs/USER_TODO.md` §B-V2-1 through §B-V2-13.
