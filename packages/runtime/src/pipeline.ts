@@ -10,7 +10,7 @@ import {
   type ReceiptType,
 } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
-import { burnEncrypt } from '@ivaronix/og-storage';
+import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
@@ -394,6 +394,7 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
   let receiptId: string | null = null;
   let receiptTxHash: string | null = null;
   let receiptOnchainId: bigint | null = null;
+  let runStorageEvidenceRoot: string | null = null;
 
   if (input.receipt) {
     const result = await anchorReceipt({
@@ -422,6 +423,10 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptId = result.id;
     receiptTxHash = result.txHash;
     receiptOnchainId = result.onchainId;
+    // H-3 closure (sweep 218): the upload root returned from anchorReceipt
+    // is bubbled to the PipelineOutput.storageEvidenceRoot field below so
+    // /api/run can forward it to RunPanel for the Storage light.
+    runStorageEvidenceRoot = result.evidenceRoot;
 
     // H-4: after a successful anchor, persist the receipt as an episodic
     // memory keyed by skillId + walletAddress. The pipeline already
@@ -501,11 +506,11 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptOnchainId,
     scan,
     teeRouterVerified,
-    // No 0G Storage upload happens in the Studio runtime path today (see
-    // HALF_BAKED.md H-3). When H-3 lands, the upload result's Merkle root
-    // populates this field; until then `null` is the honest answer and
-    // RunPanel keeps the Storage light pending accordingly.
-    storageEvidenceRoot: null,
+    // H-3 closure (sweep 218): when the anchor path uploaded the evidence
+    // to 0G Storage, this carries the Merkle root. Honest `null` when
+    // no upload happened (no signer, or indexer failure) — RunPanel's
+    // Storage light gates on this rather than firing optimistically.
+    storageEvidenceRoot: runStorageEvidenceRoot,
   };
 }
 
@@ -563,7 +568,7 @@ function policyShortName(
   }
 }
 
-async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null }> {
+async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string; txHash: string; onchainId: bigint | null; evidenceRoot: string | null }> {
   const { env, skill, tier, activeContext, activePrompt, finalText, consensus, outDir, receiptType, tag, log, burnEnabled, resolvedModel, routerRotations } = a;
 
   if (!env.privateKey) throw new Error('No private key for receipt signing');
@@ -608,12 +613,31 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     burnCiphertext = burned.ciphertext;
     log.info(tag(`burn-mode            encrypted ${burnCiphertext.length} bytes · keyFingerprint=${burned.keyFingerprint.slice(0, 23)}…  destroyed`));
   }
-  // burnCiphertext is in-memory only at this point. When 0G Storage upload
-  // is wired (HALF_BAKED H-3), this blob becomes the on-storage evidence;
-  // until then the schema honestly omits the storage root and the receipt's
-  // burn block records the destroyed-at + fingerprint as the key-existence
-  // proof. Mark as intentionally unused so tsc with strict checks accepts.
-  void burnCiphertext?.length;
+  // HALF_BAKED §H-3 closure (sweep 218): upload the evidence to 0G
+  // Storage and use the returned Merkle root as `storage.evidenceRoot`.
+  // When burn mode is on, the ciphertext is uploaded — so the operator
+  // can never reconstruct the plaintext from on-storage bytes alone
+  // (the session key was destroyed before this point). When burn is
+  // off, the plaintext context bytes are uploaded as evidence. Upload
+  // is gated on env.privateKey because the storage indexer requires
+  // a signer; tagged failure mode preserves the run if Storage flakes.
+  let evidenceRoot: Hash | undefined;
+  const evidenceBytes = burnCiphertext ?? Buffer.from(activeContext, 'utf8');
+  if (env.privateKey) {
+    try {
+      const sc = createStorageClient({ network: env.network, privateKey: env.privateKey });
+      log.info(tag(`storage upload       ${evidenceBytes.length} bytes → 0G Storage...`));
+      const sr = await sc.upload(evidenceBytes);
+      evidenceRoot = sr.rootHash as Hash;
+      log.info(tag(`storage rootHash     ${sr.rootHash}  (tx ${sr.txHash})`));
+    } catch (err) {
+      // Honest fallback: the receipt's evidenceRoot stays undefined when
+      // upload fails. /r/[id] reads storage.evidenceRoot to gate the
+      // green/pending light, so the trust gradient is visible to the
+      // operator + reader.
+      log.fail(tag('storage upload failed; receipt will omit evidenceRoot'), (err as Error).message.split('\n')[0]);
+    }
+  }
 
   // W9 — when an SIWE-style delegated wallet is provided, the receipt
   // owner becomes the user's wallet (operator merely anchors).
@@ -746,6 +770,11 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     })(),
     storage: {
       proofDownloadVerified: false,
+      // H-3 closure (sweep 218): when the upload succeeded, commit the
+      // Merkle root to the receipt body. Absent means upload didn't
+      // happen (no signer, or Storage indexer failure) — the schema
+      // accepts the omission honestly.
+      ...(evidenceRoot ? { evidenceRoot } : {}),
       encryption: burnEnabled
         ? { enabled: true, type: 'aes-256-gcm', headerDetected: true, keyFingerprint }
         : { enabled: false, type: 'none', headerDetected: false },
@@ -911,5 +940,5 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
     for (const lg of r.logs) log.info(tag(`hook                 ${lg}`));
   }
 
-  return { path, id: signed.id, txHash: tx.hash, onchainId };
+  return { path, id: signed.id, txHash: tx.hash, onchainId, evidenceRoot: evidenceRoot ?? null };
 }
