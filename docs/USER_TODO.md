@@ -388,6 +388,16 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-24 · `memory snapshot` updates `passport.memoryRoot` on-chain after Storage upload
+- **Source:** HALF_BAKED §I-12 partial closure (sweep 201). The blob-upload half is shipped today (`ivaronix memory snapshot --upload` writes the manifest JSON to 0G Storage and prints the storage rootHash + tx); the on-chain follow-up — calling `AgentPassportINFT.updateMemoryRoot(tokenId, storageRootHash)` so the passport canonically points at the latest manifest — stays queued.
+- **Why:** `passport.memoryRoot` is read by Studio dashboard + 3rd-party agents to verify "this agent's memory has not been tampered with since." Today it's whatever value was set at mint. Wiring the snapshot → on-chain update closes the lifecycle so the chain state stays current with the local manifest.
+- **Action (testnet, ~30 min once a passport is minted):**
+  1. Snapshot the local memory first: `pnpm ivaronix memory snapshot --upload`. Capture the printed `manifest on 0G Storage: 0x...` rootHash.
+  2. Resolve the operator's passport tokenId via `pnpm ivaronix passport status` (or `AgentPassportClient.getPassportByWallet(operatorAddress)`).
+  3. Call `AgentPassportClient.updateMemoryRoot(tokenId, storageRootHash)` with a funded signer. Cost: ~0.0002 OG per update.
+  4. Verify via `pnpm ivaronix passport status` — the displayed `memoryRoot` should now equal the storage hash.
+- **Why queued not shipped:** the update requires tokenId lookup + a real-fund contract write. The CLI command would be a 30-line addition to `apps/cli/src/commands/memory.ts` (find tokenId, sign, send, anchor a `passport_update` receipt). It's bounded but burns OG every run — gating behind a `--anchor-on-chain` flag and operator opt-in is the right shape, and that's the work this entry tracks.
+
 ### B-V2-22 · 0G DA live disperse + retrieve capture for the README "judges can replay" headline
 - **Source:** plan-003 §A.5.21 scaffolding shipped: `docker-compose.yml` + `da.env.example` + `ivaronix da preflight` now points operators at the compose stack instead of a raw `docker run`. The remaining piece is the *captured artefact* — a real `request_id` + `storage_root` from a live disperse + retrieve roundtrip — that the README + JUDGE_GUIDE can quote so a judge knows the integration isn't theoretical.
 - **Why:** AIsphere / Provus / Aishi all *diagram* 0G DA but none *retrieve* a live blob. A captured request_id + storage_root in the README is the field-unique flex (planning-003 §2.1). Without it, "wired in code" reads as paper-thin.

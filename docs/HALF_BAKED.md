@@ -423,9 +423,10 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `apps/cli/src/commands/passport.ts:78-92`: `metadataRoot = '0x' + sha256(JSON.stringify(metadata))`. No Storage upload, no DA dispersal. The chain holds a hash with no retrievable preimage.
 - **Fix:** upload metadata to 0G Storage first; use returned Merkle root as `metadataRoot`.
 
-### I-12 · `memory snapshot` prints sprint-tagged TODO; manifest is never persisted  *(severity A)*
-- `apps/cli/src/commands/memory.ts:240` says "Day 11+ will upload this manifest." The command computes a manifest in memory and never uploads it anywhere.
-- **Fix:** upload to 0G Storage now (the engine has a path), or rename `memory snapshot --print-only`.
+### I-12 · `memory snapshot` prints sprint-tagged TODO; manifest is never persisted  *(severity A · ⚠ PARTIALLY CLOSED sweep 201)*
+- `apps/cli/src/commands/memory.ts` — pre-sweep the command only printed the manifest and pointed at a §B-V2 queue with no concrete code path. Sweep 201 shipped `--upload`: with `IVARONIX_SIGNER_KEY` set, the snapshot now serialises the manifest as canonical JSON and writes the bytes to 0G Storage via `createStorageClient(...).upload()`, printing the storage rootHash + tx hash.
+- **Storage half:** ✅ shipped. `ivaronix memory snapshot --upload` produces a content-addressed blob on 0G Storage. Anyone with the rootHash can re-fetch and verify against the manifest schema.
+- **Chain half:** queued in USER_TODO §B-V2-24 — calling `AgentPassportINFT.updateMemoryRoot(tokenId, storageRootHash)` so the passport canonically points at the latest manifest. Needs tokenId lookup + real-fund contract write + a `passport_update` receipt anchor.
 
 ### I-13 · `/r/[id]` "RISK" pill reads from receipt's claimed `riskLevel`; pipeline always writes 'low'  *(severity A)*
 - `packages/runtime/src/pipeline.ts:568-572` and `apps/cli/src/commands/doc.ts:569` both write `outputs.riskLevel: 'low'` unconditionally. Every receipt anywhere claims `low`. The pill is decorative.

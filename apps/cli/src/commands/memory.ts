@@ -10,7 +10,7 @@ import {
   type MemoryAccessType,
 } from '@ivaronix/og-chain';
 import { MemoryEngine } from '@ivaronix/memory';
-import { memoryStreamId, MEMORY_STREAM_NAMESPACE } from '@ivaronix/og-storage';
+import { memoryStreamId, MEMORY_STREAM_NAMESPACE, createStorageClient } from '@ivaronix/og-storage';
 import { NETWORKS, type Address, type Hash } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -222,8 +222,16 @@ memoryCommand
 // ─── snapshot ────────────────────────────────────────────────────────────────
 memoryCommand
   .command('snapshot')
-  .description('Compute the current memory manifest (rootHash + observation count)')
-  .action(() => {
+  .description('Compute the current memory manifest (rootHash + observation count). Pass --upload to also persist the manifest JSON to 0G Storage.')
+  .option('--upload', 'persist manifest JSON to 0G Storage (requires IVARONIX_SIGNER_KEY in env)', false)
+  .action(async (opts: { upload: boolean }) => {
+    // HALF_BAKED §I-12 closure (sweep 201): pre-sweep this command only
+    // printed the manifest and pointed at a §B-V2 queue with no concrete
+    // path. The blob upload half is testnet-implementable today via the
+    // og-storage client, so --upload now actually writes to 0G Storage
+    // and prints the storage rootHash + tx. Updating passport.memoryRoot
+    // on-chain to point at the storage blob still needs tokenId lookup +
+    // a real-fund contract write; that half stays queued in §B-V2-24.
     const engine = buildEngine();
     if (!engine) {
       process.exitCode = 1;
@@ -237,8 +245,47 @@ memoryCommand
       ui.info(`rootHash             ${m.rootHash}`);
       ui.info(`lastWriteAt          ${m.lastWriteAt > 0 ? new Date(m.lastWriteAt).toISOString() : '(never)'}`);
       ui.info(`embedding            ${m.embedding.method} dim=${m.embedding.dim}`);
-      ui.divider();
-      ui.hint('Manifest upload to 0G Storage + passport.memoryRoot update queued in USER_TODO §B-V2.');
+
+      if (!opts.upload) {
+        ui.divider();
+        ui.hint('Manifest stays local until --upload is passed. With --upload it writes a JSON blob to 0G Storage; updating passport.memoryRoot on-chain stays queued in USER_TODO §B-V2-24.');
+        return;
+      }
+
+      const env = loadEnv();
+      if (!env.privateKey) {
+        ui.divider();
+        ui.fail('--upload needs IVARONIX_SIGNER_KEY in env (legacy: OG_PRIVATE_KEY / EVM_PRIVATE_KEY).');
+        process.exitCode = 1;
+        return;
+      }
+      // Canonical JSON: stable key order so the same manifest bytes
+      // produce the same Storage rootHash on a re-upload. The Storage
+      // SDK keccak-merkles the bytes; key reordering would produce a
+      // different blob hash for the same logical manifest.
+      const json = JSON.stringify({
+        ownerWallet: m.ownerWallet,
+        observationCount: m.observationCount,
+        rootHash: m.rootHash,
+        lastWriteAt: m.lastWriteAt,
+        embedding: { method: m.embedding.method, dim: m.embedding.dim },
+      });
+      const bytes = new TextEncoder().encode(json);
+      try {
+        const sc = createStorageClient({ network: env.network, privateKey: env.privateKey });
+        ui.pending(`uploading manifest (${bytes.length} bytes) to 0G Storage...`);
+        const sr = await sc.upload(bytes);
+        ui.divider();
+        ui.pass(`manifest on 0G Storage: ${sr.rootHash}`);
+        ui.info(`upload tx            ${sr.txHash}`);
+        ui.info(`bytes                ${sr.size}`);
+        ui.divider();
+        ui.hint(`Storage blob is content-addressed; anyone with the rootHash can re-fetch the manifest JSON. Updating passport.memoryRoot on-chain to ${sr.rootHash.slice(0, 10)}... stays queued in USER_TODO §B-V2-24 (needs tokenId resolution + funded write).`);
+      } catch (err) {
+        ui.divider();
+        ui.fail('manifest upload failed', (err as Error).message.split('\n')[0]);
+        process.exitCode = 1;
+      }
     } finally {
       engine.close();
     }
