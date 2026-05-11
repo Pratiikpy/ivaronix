@@ -32,10 +32,17 @@ const config: NextConfig = {
     };
     // wagmi v2's MetaMask connector tries to import mobile-only deps
     // (@react-native-async-storage/async-storage) for React Native parity.
-    // We don't ship a mobile build, so noop them to silence the webpack warning.
+    // WalletConnect's logger pulls pino, which has an optional
+    // `require('pino-pretty')` for dev-only pretty-printing, plus lokijs;
+    // node-fetch reaches for `encoding`. None ship in our browser bundle, so
+    // noop them — otherwise webpack emits "Module not found" warnings every
+    // build (cosmetic, but noisy and looks like a real failure).
     cfg.resolve.fallback = {
       ...(cfg.resolve.fallback ?? {}),
       '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
+      lokijs: false,
+      encoding: false,
     };
     return cfg;
   },
