@@ -48,10 +48,6 @@ const ok = (label: string) => {
   console.log(`OK: ${label}`);
 };
 
-const halfBakedPath = resolve(REPO_ROOT, 'docs', 'HALF_BAKED.md');
-const lines = readFileSync(halfBakedPath, 'utf8').split(/\r?\n/);
-ok(`loaded docs/HALF_BAKED.md (${lines.length} lines)`);
-
 // Match any header line carrying a closure marker. The marker word can
 // be CLOSED / FIXED / SHIPPED / DEPLOYED / VERIFIED / CODE-COMPLETE.
 // We require the marker to appear AFTER a `✅` so half-bakeds carrying
@@ -70,33 +66,60 @@ const citationPatterns = [
   { name: 'verification phrase', re: /\b(file exists|build passes|tests? pass|verified)\b/i },
 ];
 
-interface Violation { line: number; header: string; }
-const violations: Violation[] = [];
-let closedCount = 0;
-const cited: Record<string, number> = {};
-
-for (let i = 0; i < lines.length; i += 1) {
-  const line = lines[i] ?? '';
-  if (!closedHeaderRe.test(line)) continue;
-  closedCount += 1;
-  let matched: string | null = null;
-  for (const p of citationPatterns) {
-    if (p.re.test(line)) { matched = p.name; break; }
-  }
-  if (matched === null) {
-    violations.push({ line: i + 1, header: line });
-  } else {
-    cited[matched] = (cited[matched] ?? 0) + 1;
-  }
+interface ScanResult {
+  relPath: string;
+  closedCount: number;
+  violations: { line: number; header: string }[];
+  cited: Record<string, number>;
 }
 
-ok(`scanned ${closedCount} ✅ <STATUS> headers in HALF_BAKED.md`);
+/**
+ * Scan a doc for `### ... ✅ <STATUS>` headers and check each carries
+ * a verifiable citation. Same rule applies whether the file is the
+ * audit log (HALF_BAKED.md) or a judge-facing disclosure
+ * (PHASE_B_DISCLOSURES.md, sweep 223 extension).
+ */
+function scanDocForClosureCitations(relPath: string): ScanResult {
+  const fullPath = resolve(REPO_ROOT, relPath);
+  const lines = readFileSync(fullPath, 'utf8').split(/\r?\n/);
+  const result: ScanResult = { relPath, closedCount: 0, violations: [], cited: {} };
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i] ?? '';
+    if (!closedHeaderRe.test(line)) continue;
+    result.closedCount += 1;
+    let matched: string | null = null;
+    for (const p of citationPatterns) {
+      if (p.re.test(line)) { matched = p.name; break; }
+    }
+    if (matched === null) {
+      result.violations.push({ line: i + 1, header: line });
+    } else {
+      result.cited[matched] = (result.cited[matched] ?? 0) + 1;
+    }
+  }
+  return result;
+}
 
-if (violations.length > 0) {
+// Sweep 223 extension: PHASE_B_DISCLOSURES.md is the judge-facing
+// counterpart to HALF_BAKED — same drift class (fix ships, doc forgets)
+// applies. Same rule too: any ✅ closure marker must cite a verifiable
+// artefact so readers can audit the closure.
+const docs = ['docs/HALF_BAKED.md', 'docs/PHASE_B_DISCLOSURES.md'];
+const results = docs.map(scanDocForClosureCitations);
+
+for (const r of results) {
+  ok(`scanned ${r.closedCount} ✅ <STATUS> headers in ${r.relPath}`);
+}
+
+const allViolations = results.flatMap((r) =>
+  r.violations.map((v) => ({ ...v, relPath: r.relPath })),
+);
+
+if (allViolations.length > 0) {
   console.error('');
-  console.error(`FAIL: ${violations.length} closed HALF_BAKED entry header(s) lack a verifiable citation:`);
-  for (const v of violations) {
-    console.error(`  docs/HALF_BAKED.md:${v.line}`);
+  console.error(`FAIL: ${allViolations.length} closed entry header(s) lack a verifiable citation:`);
+  for (const v of allViolations) {
+    console.error(`  ${v.relPath}:${v.line}`);
     console.error(`    ${v.header}`);
   }
   console.error('');
@@ -109,8 +132,16 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-ok(`every closed entry cites at least one verifiable artefact`);
-for (const [name, count] of Object.entries(cited).sort()) {
+ok(`every closed entry across ${docs.length} docs cites at least one verifiable artefact`);
+
+// Aggregate citation-form breakdown for the report.
+const aggregateCited: Record<string, number> = {};
+for (const r of results) {
+  for (const [name, count] of Object.entries(r.cited)) {
+    aggregateCited[name] = (aggregateCited[name] ?? 0) + count;
+  }
+}
+for (const [name, count] of Object.entries(aggregateCited).sort()) {
   ok(`citation form "${name}" used by ${count} entries`);
 }
 
