@@ -63,8 +63,20 @@ export function consumeNonce(nonce: string): boolean {
  */
 export function issueSession(wallet: `0x${string}`): { cookieValue: string; expiresAtMs: number } {
   const id = randomBytes(24).toString('hex');
-  const expiresAtMs = Date.now() + SESSION_TTL_MS;
-  sessions.set(id, { wallet, issuedAtMs: Date.now(), expiresAtMs });
+  const issuedAtMs = Date.now();
+  const expiresAtMs = issuedAtMs + SESSION_TTL_MS;
+  sessions.set(id, { wallet, issuedAtMs, expiresAtMs });
+  // Sweep 194: opportunistic GC matching the rate-limit Map cleanup
+  // (sweep 193). issueNonce already walks the nonces Map fully on
+  // every call; sessions doesn't (cleanup only fires on readSession
+  // when an expired entry is encountered). An attacker rate-limited
+  // to 30 SIWE handshakes/min/IP can still mint up to 30/min sessions
+  // that never get read. Walk every ~100th issue when size > 64.
+  if (sessions.size > 64 && Math.random() < 0.01) {
+    for (const [k, v] of sessions) {
+      if (issuedAtMs > v.expiresAtMs) sessions.delete(k);
+    }
+  }
   // Cookie value is `<id>.<hmac(id)>`. Tampering invalidates the HMAC.
   const sig = createHmac('sha256', getHmacSecret()).update(id).digest('hex');
   return { cookieValue: `${id}.${sig}`, expiresAtMs };
