@@ -8,6 +8,12 @@
  * Fallback: hashing-trick TF-IDF baseline. Used when the MiniLM model
  * fails to load (e.g. network-restricted CI), so memory still works.
  *
+ * Force the fallback with `IVARONIX_MEMORY_EMBEDDER=fallback`. Unit tests
+ * set this so they stay deterministic and offline — the real path pulls in
+ * onnxruntime-node + sharp (native) and a ~25MB model download from
+ * HuggingFace, which has no place in a unit suite. The real-model path is
+ * exercised by a live-smoke harness instead.
+ *
  * Both produce 384-dim float vectors with cosine similarity ∈ [-1,1] —
  * downstream code (FlatVectorIndex, FTS, engine) is unchanged.
  */
@@ -26,6 +32,10 @@ async function loadPipeline() {
   if (_pipeline) return _pipeline;
   if (_loadAttempted) return null;
   _loadAttempted = true;
+  // Escape hatch: skip the transformers.js model load entirely. Avoids the
+  // native onnxruntime-node / sharp dependency chain and the HuggingFace
+  // model fetch — `embedAsync` then uses the deterministic hashing-trick.
+  if (process.env.IVARONIX_MEMORY_EMBEDDER === 'fallback') return null;
   try {
     const xf = (await import('@xenova/transformers')) as { pipeline: (task: string, model: string) => Promise<typeof _pipeline> };
     _pipeline = await xf.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');

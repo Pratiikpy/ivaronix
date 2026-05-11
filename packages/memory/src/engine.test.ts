@@ -2,6 +2,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MemoryEngine } from './engine.js';
 
+// Deterministic + offline: force the hashing-trick embedder, never the real
+// MiniLM model (no HuggingFace fetch, no onnxruntime-node / sharp native
+// deps). The real-model path is covered by a live-smoke harness.
+process.env.IVARONIX_MEMORY_EMBEDDER ??= 'fallback';
+
 const ALICE_PK = '0x0000000000000000000000000000000000000000000000000000000000000001';
 const ALICE = '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf' as `0x${string}`;
 

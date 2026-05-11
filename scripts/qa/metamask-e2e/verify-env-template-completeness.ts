@@ -52,6 +52,7 @@ const STUDIO_TEMPLATE = resolve(REPO_ROOT, 'apps', 'studio', '.env.production.te
 const ALLOW_CODE_ONLY = new Set<string>([
   'IVARONIX_TG_TEST', // smoke-test internal flag
   'IVARONIX_DEBUG', // sweep 205 · verbose-logging opt-in flag (apps/studio/src/lib/local-receipt.ts logs disk-receipt parse failures when set). Pure debug; not part of operator config.
+  'IVARONIX_MEMORY_EMBEDDER', // packages/memory/src/vector.ts · `=fallback` forces the hashing-trick embedder over the MiniLM model. Set by the memory unit suite (deterministic/offline); not operator config.
 ]);
 
 // ─── Step 1: collect every IVARONIX_* token referenced in code ─────────
