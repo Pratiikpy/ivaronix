@@ -113,7 +113,13 @@ export function loadSchedulesForOwner(owner: string): DashboardSchedule[] {
     if (parent === dir) break;
     dir = parent;
   }
-  return out.sort((a, b) => b.createdAt - a.createdAt);
+  // Sweep 196: cap the response size. Pre-sweep, loadSchedulesForOwner
+  // returned EVERY matching schedule — a wallet with hundreds of
+  // schedules would produce a huge dashboard payload (the public read
+  // serves any caller via /api/dashboard/<addr>). 50 is well above any
+  // legit operator workload (typical: 3-10 schedules per wallet) but
+  // bounded.
+  return out.sort((a, b) => b.createdAt - a.createdAt).slice(0, 50);
 }
 
 // QA found findByAgent scans 100k blocks per call (>30s on testnet RPC).
