@@ -28,7 +28,7 @@
 
 These are code-complete in the repo. The chain deploy itself needs operator-side OG. Each block lists exactly one command sequence.
 
-### A-V2-K1 · Deploy `AgentPassportINFTV2` to Galileo · ✅ DEPLOYED
+### A-V2-K1 · Deploy `AgentPassportINFTV2` to Galileo · ✅ DEPLOYED 2026-05-10 · address `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`
 - **Status as of 2026-05-10:** **deployed at `0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`** · tx `0xbdc828b0444beb2794a39ae18308d40d972755c25ce05f33744c781f3185ce36`. Operator wallet authorized as recorder (tx `0xdf079cd6018ffd0b99cf66099b5404f04b359c621f6353f299e72b09b8797ccb`). Block explorer link in `contracts/deployments/testnet.json`. The runbook below is preserved for the mainnet redeploy (USER_TODO §A-2).
 - **Why:** closes K-1 (Critical) — the V1 `recordReceipt` accepts unbounded self-claimed trustScore from token owners. V2 requires `authorizedRecorders` only, cross-checks the receipt id on `ReceiptRegistry`, caps `trustScoreDelta` to `[-100, +100]`. Bundles K-4 (executor authorizations cleared on transfer via per-token version counter) and K-6 (mint reentrancy fix) into the same redeploy.
 - **Source state:** `contracts/src/AgentPassportINFTV2.sol` shipped; 16/16 Foundry tests pass; deploy script `contracts/script/DeployPassportV2.s.sol` shipped.
@@ -81,7 +81,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   After publish, the Rust verifier is `cargo install ivaronix-verifier` for any third party.
 
-### A-V2-L7 · Vercel-deploy Studio · ✅ DEPLOYED
+### A-V2-L7 · Vercel-deploy Studio · ✅ DEPLOYED 2026-05-10 · ivaronix-studio.vercel.app
 - **Status:** Studio live at `https://ivaronix-studio.vercel.app/` (referenced in docs/JUDGE_GUIDE.md ¶ on /0g). The runbook below is preserved for a custom-domain promotion (`ivaronix.app`) — buy + DNS + Vercel domain settings remain operator actions.
 - **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio used to be `pnpm --filter @ivaronix/studio dev` only. A judge who didn't clone never saw Studio at all. Now resolved.
 - **Source state:** `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.
@@ -110,7 +110,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Sentry signup (5 min, free):** create project, copy DSN, set `SENTRY_DSN` in Vercel env. Errors will surface in Sentry instead of disappearing into Vercel logs.
 - **Upstash Redis (recommended for multi-instance):** set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` so rate-limit buckets are shared across Vercel function instances. Without this, each instance has its own in-memory bucket and an attacker can multiply their ceiling by spreading hits.
 
-### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo · ✅ DEPLOYED
+### A-V2-K2 · Deploy `ReceiptRegistryV2` to Galileo · ✅ DEPLOYED 2026-05-10 · address `0xf675d4183b34fe8d1981FA9c117065aAcff690ab`
 - **Status as of 2026-05-10:** **deployed at `0xf675d4183b34fe8d1981FA9c117065aAcff690ab`** · tx `0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af`. Block explorer link in `contracts/deployments/testnet.json`. The runbook below is preserved for the mainnet redeploy (USER_TODO §A-2).
 - **Why:** closes K-2 (Critical) — V1's `anchor()` writes `agentAddress = msg.sender` with no signature recovery, so any wallet can anchor any receiptRoot claiming any agent identity. V2 recovers `agentAddress` from an EIP-712 typed-data signature; replay protection via per-agent monotonic nonces.
 - **Source state:** `contracts/src/ReceiptRegistryV2.sol` shipped; 15/15 V2 Foundry tests pass; deploy script `contracts/script/DeployReceiptRegistryV2.s.sol` shipped.
@@ -243,7 +243,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1 week.
 - **Decision:** post-hackathon. Not on critical path for judging.
 
-### B-V2-9 · Brand-token drift lint (`pnpm brand:check`) · ✅ SHIPPED gate · cleanup queued §B-V2-BRAND-AMNESTY
+### B-V2-9 · Brand-token drift lint (`pnpm brand:check`) · ✅ SHIPPED 2026-05-10 · cleanup queued §B-V2-BRAND-AMNESTY
 - **Source:** plan-003 §A.3.3 follow-up · `brand/tokens.css` + `brand/tokens.json` shipped today.
 - **Why:** the canonical palette is now in `brand/tokens.*`. Without a lint, future PRs can re-introduce hardcoded hex values that drift from the canonical set.
 - **Status:** ✅ Gate shipped same day. `pnpm brand:check` runs `scripts/qa/metamask-e2e/verify-brand-token-drift.ts` which scans `apps/studio/src/**/*.{ts,tsx,css}` for hex literals not present in `brand/tokens.json`. Found 123 existing drift entries on first run · captured to `scripts/qa/metamask-e2e/brand-amnesty.json` so the gate ships without forcing a 100+-file color refactor in one commit. New violations outside the amnesty fail the build. Wired into `pnpm --filter @ivaronix/studio test` (8/8 → 9/9 offline regs pass).
@@ -266,7 +266,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action (mainnet · post-testnet):** decide which palette is canonical, refactor the loser (probably globals.css) to match, take screenshots at 1440×900 + 375×812 of every Studio route to verify no regressions per CLAUDE.md §10. Drop the alt-tokens once globals.css mirrors tokens.css value-for-value.
 - **Effort (residual):** 1-2h to reconcile + ~30min of side-by-side screenshot review.
 
-### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY` · ✅ SHIPPED
+### B-V2-10 · Migrate Foundry deploy scripts to `IVARONIX_SIGNER_KEY` · ✅ SHIPPED sweep 80
 - **Source:** plan-003 §A.3.4 follow-up · `packages/runtime/src/env.ts` already supports the canonical name with legacy aliases.
 - **Status (sweep 80):** ✅ All 8 `contracts/script/Deploy*.s.sol` scripts now read the canonical alias chain `vm.envOr("IVARONIX_SIGNER_KEY", vm.envUint("OG_PRIVATE_KEY"))`. Pre-sweep-80, four scripts (`DeployReceiptRegistry`, `DeployReceiptRegistryV2`, `DeployPassport`, `DeployPassportV2`) still read `OG_PRIVATE_KEY` directly — operators who set only the canonical name hit "missing OG_PRIVATE_KEY" mid-deploy. Migration also updated all JSDoc env-var references to lead with the canonical name (legacy noted as fallback). `forge build` clean post-migration.
 - **Regression:** `verify-deploy-scripts-canonical-key.ts` shipped same sweep · gates against re-introducing the bare legacy form OR new Deploy scripts that omit the alias chain entirely. Wired into the contracts filter (3 contract regressions now).
@@ -276,7 +276,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Why:** every closing commit carries `Closes audit <ID>`. A one-shot `git log --grep` makes the audit lifecycle queryable without scanning the file.
 - **Status:** `scripts/diag/audit-list.ts` ships with `pnpm audit:list`. Walks `git log --grep "Closes audit"` + parses IDs from each commit body. Filters: `--since 2w` · `--grep A.5` · `--json`. Uses `execFileSync` (not `execSync`) so the user-supplied filter strings can't shell-inject.
 
-### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json` · ✅ SHIPPED
+### B-V2-12 · Per-package tsconfig migration to extend `tsconfig.base.json` · ✅ SHIPPED sweep 79
 - **Source:** plan-003 §A.3.5 follow-up · `tsconfig.base.json` shipped at repo root with canonical strict settings.
 - **Status (sweep 79):** ✅ All 19 workspace packages now extend `tsconfig.base.json` (15 in `packages/`, 4 in `apps/` — `apps/npx-cli` has no tsconfig because it's a bundler script). The last holdout, `apps/studio`, was migrated in sweep 79. Stricter settings inherited from base (`noUncheckedIndexedAccess: true`, `noImplicitOverride: true`) revealed exactly one type-safety gap: `apps/studio/src/app/api/skill/save/route.ts:92` accessed `fmMatch[1]` after a non-null guard on `fmMatch` itself, but the regex-capture-group access widened to `string | undefined`. Fixed via `?? ''` coalesce. `tsc --noEmit` and `next build` both clean post-migration.
 - **Why this matters:** "14 packages typecheck-clean" now means 14 packages typecheck under a UNIFORM strict contract — no per-package opt-out from `noUncheckedIndexedAccess` etc. Future contributors editing any package inherit the same rules.
@@ -372,7 +372,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Run (mainnet · post-§A-2):** swap RPC URL to `https://evmrpc.0g.ai`.
 - **Post-deploy:** add the address to `contracts/deployments/<network>.json` under `CapabilityRegistryV2`. Leave V1 entry untouched (legacy grants stay readable). Studio + CLI grant-management surfaces query V2 first via the V2-first read pattern (planning-003 §A.1.3).
 
-### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution · ✅ SHIPPED
+### B-V2-8 · Auto-render pipeline for `docs/numbers.json` substitution · ✅ SHIPPED 2026-05-10
 - **Source:** plan-003 §A.2.7. First cut (`docs/numbers.json` + `pnpm numbers:refresh`) landed earlier; render-time substitution + 24h staleness gate landed in the A.2.7 (final) commit.
 - **Status:** `scripts/diag/docs-render.ts` ships with `pnpm docs:render` (in-place) + `pnpm docs:check` (CI gate · exits 1 on drift OR >24h-stale numbers.json). README has 7 `<!-- numbers:auto:KEY -->` markers covering receiptTypes.count, skills.catalogTotal, receipts.total, contracts.foundryTests, contracts.deployed, packages.typecheckClean, polyglotHash.languages. Dotted-path lookup so future markers like `polyglotHash.tests.ts` walk the JSON structure. Regression: `verify-a27-docs-render.ts` (in studio offline filter, 6/6 pass).
 - **Operator action remaining (post-mainnet):** add markers to PITCH.md + JUDGE_GUIDE.md + MAINNET_READINESS.md as those docs get re-edited. The pipeline is wired; it's a one-line marker insert per claim.
@@ -500,7 +500,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   4. Trigger the workflow manually once to verify it can read the secret + anchor a receipt.
   5. Add the funded address to `contracts/deployments/testnet.json` under a `ci_wallet` key.
 
-### B-V2-OG-ROUTER-TESTS · Unit tests for `@ivaronix/og-router` keyring + json-repair · ✅ SHIPPED
+### B-V2-OG-ROUTER-TESTS · Unit tests for `@ivaronix/og-router` keyring + json-repair · ✅ SHIPPED sweep 78
 - **Source:** cron-sweep finding 2026-05-10. The `.claude/rules/og-router.md` rules file claimed `packages/og-router/test/` vitest existed. It did not — `pnpm --filter @ivaronix/og-router test` was `echo skip`.
 - **Status:**
   - ✅ Keyring failure-mode taxonomy locked in via `packages/og-router/src/keyring.test.ts` (14 tests, shipped same day). Covers: `'402'` permanent invalidation, `'auth'` permanent invalidation, `'429'` transient rotation (the regression-critical case), multi-key cascade, drain/peek log semantics, "all keys depleted" recovery throw.
@@ -530,7 +530,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Why:** the gate ships today and blocks NEW drift. The amnesty buys time to clean up the 18 non-`harness` legit-marketing-token hits over time.
 - **Status (sweep 68):** ✅ context-awareness for `harness` shipped (eliminates ~24 legitimate hits without amnesty entries). ⏳ Remaining ~18 marketing tokens still in the amnesty for sentence-level rewrites; not blocking testnet. Track-3 polish pass.
 
-### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED
+### B-V2-OG-STORAGE-TESTS · Unit tests for `@ivaronix/og-storage` Burn Mode · ✅ SHIPPED 2026-05-10
 - **Source:** cron-sweep finding 2026-05-10. Same drift pattern as og-router: rules claimed `packages/og-storage/test/` vitest existed; `echo skip` in reality.
 - **Status:** ✅ Shipped same day. `packages/og-storage/src/burn.test.ts` ships 15 tests covering the full Burn Mode invariant set — self-contained blob layout, fresh-nonce-per-call (K-20 regression), 1000-nonce uniqueness draw, keyFingerprint format, capture-before-zero ordering via the `sha256(zeros(32))` constant sentinel, fingerprint freshness across calls, encryptionType tag, destroyedAt timestamp bounds, empty-plaintext layout, 1MB plaintext layout, externally-held-key round-trip, wrong-key tag rejection, tampered-ciphertext tag rejection, short-blob explicit error, wrong-key-length explicit error. CI runs the suite as part of the `unit-tests` job (112 → 127 unit tests across 8 packages).
 - **Indexer + SDK paths** still uncovered (they need a live 0G Storage indexer endpoint); queued for the live-smoke harness work under `scripts/qa/`.

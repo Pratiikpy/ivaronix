@@ -104,7 +104,13 @@ function scanDocForClosureCitations(relPath: string): ScanResult {
 // counterpart to HALF_BAKED — same drift class (fix ships, doc forgets)
 // applies. Same rule too: any ✅ closure marker must cite a verifiable
 // artefact so readers can audit the closure.
-const docs = ['docs/HALF_BAKED.md', 'docs/PHASE_B_DISCLOSURES.md'];
+//
+// Sweep 238 extension: USER_TODO.md ✅ SHIPPED entries also need
+// header-level citations. The body usually has the sweep/commit ref,
+// but surfacing it at the header level makes the headers self-auditing
+// without scanning the body. Six entries promoted from body-only to
+// header-cited in the same sweep.
+const docs = ['docs/HALF_BAKED.md', 'docs/PHASE_B_DISCLOSURES.md', 'docs/USER_TODO.md'];
 const results = docs.map(scanDocForClosureCitations);
 
 for (const r of results) {
