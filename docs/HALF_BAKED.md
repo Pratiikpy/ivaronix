@@ -620,9 +620,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `schema.ts:248`: `chainId: z.number().int()`. A receipt with `chainId: 1` parses cleanly. Combined with K-17, makes spoofing trivial.
 - **Fix:** `z.union([z.literal(16602), z.literal(<mainnet-id>)])`.
 
-### K-19 · `signature.signature` regex accepts any hex length  *(Low)*
-- `schema.ts:271-276`: `regex(/^0x[0-9a-fA-F]+$/)`. Matches `0x00`. Schema "PASS" claims well-formed when not.
-- **Fix:** `regex(/^0x[0-9a-fA-F]{130}$/)`.
+### K-19 · `signature.signature` regex accepts any hex length  *(Low · ✅ FIXED sweep 213)*
+- ✅ `packages/receipts/src/schema.ts:371` tightened to `regex(/^0x[0-9a-fA-F]{130}$/)` — exactly 65 bytes (32 r + 32 s + 1 v) as eth_personal_sign produces. `0x00` and any other length no longer schema-pass. Locked by two unit tests in `packages/receipts/src/builder.test.ts`: one asserts `0x00` is rejected, the other asserts real `signReceipt` output parses cleanly (132 chars: `0x` + 130 hex). 21/21 receipts tests green.
 
 ### K-20 · Memory-at-rest AES-GCM nonce derived from plaintext + ms timestamp  *(Critical — catastrophic crypto break)*
 - `packages/memory/src/encryption.ts:28-34`. `nonce = sha256(plaintext || Date.now()).slice(0, 12)`. Two calls in the same millisecond with the same plaintext produce the same nonce under the same key. **AES-GCM nonce reuse with the same key recovers the keystream and forges GHASH tags.**

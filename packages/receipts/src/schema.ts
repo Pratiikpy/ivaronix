@@ -368,7 +368,14 @@ export const ReceiptV1Schema = z.object({
     .object({
       method: z.literal('eth_personal_sign'),
       signer: HexAddress,
-      signature: z.string().regex(/^0x[0-9a-fA-F]+$/),
+      /**
+       * eth_personal_sign signatures are exactly 65 bytes (32 r + 32 s + 1 v),
+       * encoded as 130 hex chars after the `0x` prefix. HALF_BAKED §K-19
+       * closure (sweep 213): pre-fix the regex was `/^0x[0-9a-fA-F]+$/`
+       * which accepted `0x00` — a well-formed schema pass with a malformed
+       * signature. Tightened to exactly 130 hex digits.
+       */
+      signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
     })
     .optional(),
 });

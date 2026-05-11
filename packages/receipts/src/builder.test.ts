@@ -190,3 +190,32 @@ test('verifyClaimed rejects signer != ownerWallet when signedBy=user-direct', as
   assert.equal(result.state, 'INVALID');
   assert.equal(result.checks.find((c) => c.name === 'signature')?.pass, false);
 });
+
+// HALF_BAKED §K-19 closure (sweep 213). The schema previously accepted
+// any 0x-hex via `regex(/^0x[0-9a-fA-F]+$/)` — so a `0x00` "signature"
+// passed schema validation. eth_personal_sign signatures are exactly
+// 65 bytes (32 r + 32 s + 1 v) = 130 hex chars after the `0x` prefix.
+// These two tests lock that the schema regex stays at the 130-hex
+// length, so a future refactor can't loosen it back.
+test('K-19 · ReceiptV1Schema rejects malformed signature (0x00 short string)', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  // Tamper: replace the real 130-hex signature with a too-short one.
+  const tampered = { ...signed, signature: { ...signed.signature!, signature: '0x00' as `0x${string}` } };
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(tampered);
+  assert.equal(result.success, false, '0x00 must NOT parse as a valid signature');
+});
+
+test('K-19 · ReceiptV1Schema accepts well-formed 130-hex signature', async () => {
+  const owner = Wallet.createRandom();
+  const draft = buildReceipt(fixtureInput(owner.address));
+  const signed = await signReceipt(draft, owner);
+  const { ReceiptV1Schema } = await import('./schema.js');
+  const result = ReceiptV1Schema.safeParse(signed);
+  assert.equal(result.success, true, 'real eth_personal_sign signature must parse');
+  // Confirm length is exactly what we asserted in the regex.
+  const sig = signed.signature!.signature;
+  assert.equal(sig.length, 132, 'eth_personal_sign signature is 0x + 130 hex = 132 chars');
+});
