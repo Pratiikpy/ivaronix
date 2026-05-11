@@ -1,32 +1,34 @@
 /**
  * Loads a Google-hosted font for `next/og`'s `ImageResponse`.
  *
- * Google Fonts serves `.woff2` only to browser User-Agents — a bare
- * server-side `fetch()` gets a `.ttf` `src` line back instead. The OG
- * routes' woff2-only regex missed that, so the loader returned `[]`, and
- * `new ImageResponse(..., { fonts: [] })` throws (satori needs at least one
- * font) → the route 500s in production. Sending a browser UA gets the woff2
- * variant, and the regex falls back to `.ttf` if Google ever changes again.
+ * Two gotchas this navigates:
+ *   1. `next/og`'s satori renderer parses TTF / OTF / WOFF — NOT WOFF2
+ *      (Brotli-compressed). Google Fonts' CSS API serves a `.woff2` `src`
+ *      line to browser User-Agents and a `.ttf` line to everything else, so
+ *      we deliberately fetch with NO browser UA and match the `.ttf` URL.
+ *   2. `ImageResponse` has no usable bundled default font in the Vercel
+ *      function bundle — passing `fonts: []` (or `undefined`) throws
+ *      "No fonts are loaded." So callers must only render once this returns
+ *      a non-empty array.
  *
- * Returns `[]` on any failure (font fetch is best-effort). Callers MUST pass
- * `undefined` — not `[]` — to `ImageResponse` when this is empty, so it
- * falls back to its own bundled default font instead of throwing.
+ * Returns `[]` on any failure (network / parse). If that ever happens at
+ * request time the OG route 500s; bundling a fallback `.ttf` for full
+ * offline robustness is queued in docs/USER_TODO.md.
  */
 export type OgFont = { name: string; data: ArrayBuffer; style: 'normal'; weight: 400 | 600 };
 
-const BROWSER_UA =
-  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
-
 export async function loadGoogleFont(name: string, spec: string, weight: 400 | 600): Promise<OgFont[]> {
   try {
-    const css = await fetch(`https://fonts.googleapis.com/css2?family=${spec}&display=swap`, {
-      headers: { 'User-Agent': BROWSER_UA },
-    }).then((r) => r.text());
+    // No User-Agent header → Google Fonts answers with the `.ttf` variant
+    // (satori can't parse `.woff2`).
+    const css = await fetch(`https://fonts.googleapis.com/css2?family=${spec}&display=swap`).then((r) => r.text());
     const url =
-      css.match(/src:\s*url\((https:\/\/[^)]+\.woff2)\)/)?.[1] ??
-      css.match(/src:\s*url\((https:\/\/[^)]+\.ttf)\)/)?.[1];
+      css.match(/src:\s*url\((https:\/\/[^)]+\.ttf)\)/)?.[1] ??
+      css.match(/src:\s*url\((https:\/\/[^)]+\.otf)\)/)?.[1] ??
+      css.match(/src:\s*url\((https:\/\/[^)]+\.woff)\)/)?.[1]; // WOFF1 only — never .woff2
     if (!url) return [];
     const data = await fetch(url).then((r) => r.arrayBuffer());
+    if (data.byteLength === 0) return [];
     return [{ name, data, style: 'normal', weight }];
   } catch {
     return [];
