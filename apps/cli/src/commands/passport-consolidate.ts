@@ -140,11 +140,13 @@ export function addConsolidateCommand(parent: Command): void {
 
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const wallet = new Wallet(env.privateKey, provider);
-      // V2-first WRITE per .claude/rules/og-chain.md. The READ below
-      // (reg.findByAgent) stays on V1 because legacy receipts being
-      // consolidated were anchored on V1; a unified-across-both read
-      // is queued for the unifiedFindByAgent migration (CLI parity
-      // with apps/studio/src/lib/chain.ts).
+      // V2-first WRITE per .claude/rules/og-chain.md. Sweep 180: READ
+      // is now unified across V1 + V2 — pre-sweep this was V1-only,
+      // so once V2 became the active write target (sweep 222), the
+      // consolidation silently missed every new receipt. The comment
+      // here used to defer the fix to a "unifiedFindByAgent migration";
+      // sweep 180 inlines it because each registry's findByAgent has
+      // the same shape and merging is a 5-line walk.
       const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
       const writeAddr = registryAddrV2 ?? registryAddrV1;
@@ -155,16 +157,35 @@ export function addConsolidateCommand(parent: Command): void {
         process.exitCode = 1;
         return;
       }
-      const reg = new ReceiptRegistryClient(registryAddrV1, wallet);
+      // Per-version read clients. Used below to walk findByAgent on
+      // both V1 + V2 and merge. The unified write target is `writeAddr`
+      // (V2 if deployed, V1 fallback).
+      const regV1 = registryAddrV1 ? new ReceiptRegistryClient(registryAddrV1, wallet) : null;
+      const regV2 = registryAddrV2 ? new ReceiptRegistryV2Client(registryAddrV2, wallet) : null;
 
       ui.title(`Consolidating recent receipts · window=${window.label}`);
       ui.info(`agent wallet         ${env.walletAddress}`);
       ui.info(`network              ${env.network}`);
       ui.info(`lookback             ~${window.lookbackBlocks.toLocaleString()} blocks`);
 
-      // 1. Fetch recent on-chain receipts for this agent
-      ui.pending('reading on-chain receipts...');
-      const onChain = await reg.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks);
+      // 1. Fetch recent on-chain receipts for this agent · V1 + V2 union.
+      ui.pending('reading on-chain receipts (V1 + V2)...');
+      const [v1Rows, v2Rows] = await Promise.all([
+        regV1 ? regV1.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
+        regV2 ? regV2.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
+      ]);
+      // Merge + de-dupe by receiptRoot (a single hash anchored on both
+      // registries would be a manual-migration artifact; rare but
+      // possible). Sort newest-first.
+      const seenRoots = new Set<string>();
+      const onChain = [...v2Rows, ...v1Rows]
+        .filter((r) => {
+          const k = r.receiptRoot.toLowerCase();
+          if (seenRoots.has(k)) return false;
+          seenRoots.add(k);
+          return true;
+        })
+        .sort((a, b) => Number(b.timestamp) - Number(a.timestamp));
       const cutoff = Math.floor(Date.now() / 1000) - window.seconds;
       const inWindow = onChain.filter((r) => Number(r.timestamp) >= cutoff);
 
@@ -365,7 +386,11 @@ export function addConsolidateCommand(parent: Command): void {
         const nextId = await regV2.nextId();
         onChainId = (nextId - 1n).toString();
       } else {
-        const tx = await reg.anchor(
+        // writeVersion === 'v1' here means registryAddrV2 was unset,
+        // so V1 is the only deployment AND regV1 is non-null per the
+        // construction above. Sweep 180 renamed reg → regV1.
+        if (!regV1) throw new Error('invariant: regV1 must exist when writeVersion is v1');
+        const tx = await regV1.anchor(
           signed.storage.receiptRoot as Hash,
           sourceIdsHashBytes32,
           RECEIPT_TYPE_CODE,
@@ -374,7 +399,7 @@ export function addConsolidateCommand(parent: Command): void {
         txHash = tx.hash;
         const r = await tx.wait();
         txBlock = r?.blockNumber ?? null;
-        const nextId = await reg.nextId();
+        const nextId = await regV1.nextId();
         onChainId = (nextId - 1n).toString();
       }
 
