@@ -80,8 +80,20 @@ export interface UnifiedReceipt {
 
 /**
  * Sum of next-ids across V1 + V2 registries. Studio home + /global use
- * `total` as the headline; `v2` breakout surfaces post-K-2 activity for
- * judges who care which registry is active.
+ * `total` as the headline; `v2` / `v1` breakouts surface post-K-2
+ * activity for judges who care which registry is active.
+ *
+ * Sweep 184 fix: `total` is now ANCHORED COUNT (sum of `nextId - 1` per
+ * registry), matching the convention used by numbers-refresh.ts and
+ * the CLI count headlines. Pre-sweep `total: v2id + v1id` over-counted
+ * by 1 per deployed registry because each registry's `nextId` value
+ * is the NEXT id to assign, not the count of anchored receipts. With
+ * both V1 + V2 deployed, the over-count was 2 — Studio's /global
+ * showed 1646 while docs (numbers.json) and CLI quoted 1644.
+ *
+ * The `v2` / `v1` raw nextId values are still returned in the breakout
+ * fields for callers that need them; only the `total` semantics
+ * changed.
  */
 export async function unifiedNextId(): Promise<{ v2: bigint; v1: bigint; total: bigint }> {
   const { v2, v1 } = getRegistries();
@@ -89,7 +101,9 @@ export async function unifiedNextId(): Promise<{ v2: bigint; v1: bigint; total: 
     v2 ? v2.nextId().catch(() => 0n) : Promise.resolve(0n),
     v1 ? v1.nextId().catch(() => 0n) : Promise.resolve(0n),
   ]);
-  return { v2: v2id, v1: v1id, total: v2id + v1id };
+  const v2Anchored = v2id > 0n ? v2id - 1n : 0n;
+  const v1Anchored = v1id > 0n ? v1id - 1n : 0n;
+  return { v2: v2id, v1: v1id, total: v2Anchored + v1Anchored };
 }
 
 /**
