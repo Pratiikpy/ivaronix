@@ -79,6 +79,29 @@ export interface UnifiedReceipt {
 }
 
 /**
+ * Live passport count from AgentPassportINFT.
+ *
+ * Contract initializes `nextTokenId = 1` (the first mint gets id 1).
+ * Anchored count is `nextTokenId - 1`. Sweep 187 consolidates this
+ * subtraction so the three Studio surfaces (home, thesis, dashboard)
+ * read through one helper instead of duplicating the convention.
+ *
+ * Returns null when the AgentPassportINFT client is unavailable (no
+ * deployment for the current network) or when the chain read fails.
+ * Returns 0n for an empty registry (no passports minted).
+ */
+export async function livePassportCount(): Promise<bigint | null> {
+  const p = getPassportClient();
+  if (!p) return null;
+  try {
+    const next = await p.nextTokenId();
+    return next > 0n ? next - 1n : 0n;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Sum of next-ids across V1 + V2 registries. Studio home + /global use
  * `total` as the headline; `v2` / `v1` breakouts surface post-K-2
  * activity for judges who care which registry is active.

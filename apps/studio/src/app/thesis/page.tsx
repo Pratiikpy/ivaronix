@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { unifiedNextId, getPassportClient } from '@/lib/chain';
+import { unifiedNextId, livePassportCount } from '@/lib/chain';
 import numbersJson from '../../../../../docs/numbers.json';
 
 export const dynamic = 'force-dynamic';
@@ -11,23 +11,14 @@ export const dynamic = 'force-dynamic';
 const FALLBACK_RECEIPTS = `${numbersJson.receipts.total.toLocaleString()}+`;
 
 async function liveNumbers(): Promise<{ receipts: number | null; passports: number | null }> {
-  // Sweep 186: passport count is `nextTokenId - 1` (the contract
-  // initializes nextTokenId = 1; first mint gets tokenId 1). Pre-sweep
-  // this returned raw nextTokenId and the page rendered an off-by-1
-  // headline. Matches the convention used in dashboard.ts + sweep 184's
-  // unifiedNextId.total convention.
-  const passport = getPassportClient();
+  // Sweep 187: passport count via the shared livePassportCount helper
+  // so the convention lives in one place (apps/studio/src/lib/chain.ts).
   const [unified, p] = await Promise.all([
     unifiedNextId().catch(() => null),
-    passport
-      ? passport
-          .nextTokenId()
-          .then((n) => (n > 0n ? Number(n - 1n) : 0))
-          .catch(() => null)
-      : Promise.resolve(null),
+    livePassportCount().catch(() => null),
   ]);
   const r = unified && unified.total > 0n ? Number(unified.total) : null;
-  return { receipts: r, passports: p };
+  return { receipts: r, passports: p !== null ? Number(p) : null };
 }
 
 export default async function ThesisPage() {

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
-import { unifiedNextId, getPassportClient, getNetwork } from '@/lib/chain';
+import { unifiedNextId, livePassportCount, getNetwork } from '@/lib/chain';
 import { loadAllSkills } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic'; // always read live chain state
@@ -18,22 +18,10 @@ async function liveReceiptCount(): Promise<bigint | null> {
   }
 }
 
-async function livePassportCount(): Promise<bigint | null> {
-  // Sweep 186: AgentPassportINFT initializes `nextTokenId = 1` (the
-  // first mint gets tokenId 1, post-increment to 2). Anchored count
-  // is `nextTokenId - 1`. Pre-sweep this returned the raw nextTokenId
-  // and the home page labeled it "passports minted" — off by 1 (and
-  // shows 1 when zero passports were minted). Matches the convention
-  // already used in apps/studio/src/lib/dashboard.ts.
-  const p = getPassportClient();
-  if (!p) return null;
-  try {
-    const next = await p.nextTokenId();
-    return next > 0n ? next - 1n : 0n;
-  } catch {
-    return null;
-  }
-}
+// Sweep 187: livePassportCount moved to @/lib/chain so home, thesis,
+// dashboard, and any future surface read the convention from a single
+// source-of-truth helper instead of duplicating the `nextTokenId - 1`
+// subtraction at each call site.
 
 export default async function HomePage() {
   const [totalReceipts, totalPassports] = await Promise.all([
