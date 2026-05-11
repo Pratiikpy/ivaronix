@@ -21,6 +21,7 @@ export const contentType = 'image/png';
  */
 export default async function Image({ params }: { params: { id: string } }) {
   const fonts = await loadBrandFont();
+  if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();
   let id = params.id;
   let headline = `Verified action receipt on 0G ${network}`;

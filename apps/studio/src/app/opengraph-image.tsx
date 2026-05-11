@@ -21,6 +21,7 @@ export const contentType = 'image/png';
  */
 export default async function Image() {
   const fonts = await loadBrandFont();
+  if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();
 
   return new ImageResponse(
