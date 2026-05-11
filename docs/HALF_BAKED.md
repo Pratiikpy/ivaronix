@@ -313,15 +313,14 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 ### H-4 · 0G Persistent Memory · the pipeline reads but never writes  *(severity S · ✅ FIXED 1f43a27)*
 - ✅ `memoryClient.store(...)` is now invoked post-anchor in both the Studio runtime path (`packages/runtime/src/pipeline.ts`) and the CLI doc.ts Build path. Every receipt persists episodic memory keyed by `(group_id: skill.id, user_id: env.walletAddress, type: 'episodic_memory')`. Locked by `verify-h1-h4-attest-memory.ts`.
 
-### H-5 · 0G DA · gRPC client is the deepest in the field but no live blob exists  *(severity S — claim without evidence)*
-- `packages/og-da/src/index.ts:105-236` ships real gRPC client over `@grpc/grpc-js` with three full RPCs (`DisperseBlob`, `GetBlobStatus`, `RetrieveBlob`) against the upstream `disperser.proto`. **No competitor in the field has this.** AIsphere mentions DA only as a future cross-chain step; Provus doesn't integrate it.
-- The disperser container is not running. We have zero live blobs to point at. The README claim "DA wired" is true at the code level and false at the artefact level.
-- **Fix:** operator action. Start `0g-da-client` container, run `ivaronix da disperse <file>` once, capture request_id, link in README. Docker is running per memory.
+### H-5 · 0G DA · gRPC client is the deepest in the field but no live blob exists  *(severity S — claim without evidence · ⚠ QUEUED B-V2-22)*
+- **Status:** code-side complete. `packages/og-da/src/index.ts:105-236` ships a real gRPC client over `@grpc/grpc-js` with three full RPCs (`DisperseBlob`, `GetBlobStatus`, `RetrieveBlob`) against the upstream `disperser.proto`. **No competitor in the field has this depth.** Sweep 167 closed §I-16 by adding the disperseAndFinalize polling loop. The disperser container is documented in `docker-compose.yml` + `da.env.example` and `ivaronix da preflight` points operators at the stack.
+- **What's left (operator-action):** fund a fresh DA wallet (~0.005 OG), set the actual `DA_ENTRANCE_CONTRACT` address (currently unset placeholder — 0G hasn't published a stable testnet DA entrance address), run a live disperse + retrieve round-trip, pin the captured `(request_id, storage_root)` into README + JUDGE_GUIDE so the integration is replay-able. Tracked in `docs/USER_TODO.md §B-V2-22` with the full runbook.
 
-### H-6 · `Erc7857Verifier` uses ECDSA-attestor sigs, not TEE/ZKP  *(severity A — category-wide gap)*
-- `contracts/src/Erc7857Verifier.sol:9-14` admits: "Day 6 MVP ships an attestor-signed verifier... Future work (Phase B+) will swap this attestor for a TEE-backed remote attestation or ZKP verifier." The deployer is the bootstrap attestor (`:31-32`).
-- ERC-7857's value prop is the integrity proof being TEE/ZKP-backed. Aishi and SealedMind ship the same shape; AIsphere is also attestor-signed. **Nobody in the field ships real TEE-attested ERC-7857.**
-- **Fix:** can't add real remote attestation in 90min. Ship a second attestor that is the operator's TEE wallet from 0G Compute; document 2-of-2 attestation as the current integrity story; ZKP path Phase B.
+### H-6 · `Erc7857Verifier` uses ECDSA-attestor sigs, not TEE/ZKP  *(severity A — category-wide gap · ⚠ QUEUED B-V2-28)*
+- **Honest status:** the contract's own NatSpec admits this — "Day 6 MVP ships an attestor-signed verifier... Future work (Phase B+) will swap this attestor for a TEE-backed remote attestation or ZKP verifier." This is the *category state of the field*: Aishi, SealedMind, AIsphere all ship attestor-signed verifiers. **No one in the 0G ecosystem has TEE-attested or ZKP-backed ERC-7857.** Ivaronix's deployed verifier is the same primitive every competitor ships.
+- **Mitigation in place:** the receipt-anchoring path doesn't trust this verifier blindly — TIER 1 receipts re-verify via `broker.processResponse` (the 0G Compute SDK's TEE check), which is independent of the on-chain Erc7857Verifier's attestor signature. So TEE binding for *inference* is real; TEE binding for *passport identity* is the category gap.
+- **Queued B-V2-28:** ship a second attestor that is the operator's TEE wallet from 0G Compute, document 2-of-2 attestation as the current integrity story, ZKP path Phase B. Mainnet redeploy item — not bounded for testnet sweep cadence.
 
 ### H-7 · 0G Router · `routerVerified` defaults to `false` on testnet  *(severity B · ✅ VERIFIED — no bug · sweep 220)*
 - ✅ The behavior is correct and intentional. `packages/og-router/src/index.ts:97` reads `routerVerified: Boolean(x0gTrace?.tee_verified)` — when the testnet Router proxy doesn't emit the field, the value is `false`. That's the honest answer, not a regression. The receipt-level `teeRouterVerified` aggregate (sweep 157) and the chain-level `attestationHash` (sweep 1f43a27) both correctly reflect that TIER 1 hasn't been cryptographically proven via the Router flag — and the `--tee-independent` path re-runs `broker.processResponse` against the actual 0G Compute provider for the stronger check. CLAUDE.md §11.3a treats Router-flag captures as documentation supplements; the load-bearing proof is the independent re-verify. The audit's "cosmetic" fix (keyring.list() printout in onboarding) is queued in B-V2 as a UX polish item; the correctness side is closed.
@@ -408,9 +407,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
   - `false` → "0G Storage Merkle root for the run's evidence blob." (no claim about retrievability)
 - The "anyone with the SDK can re-download this blob" sentence is gone. The sha256-fallback path (when Storage upload fails) still produces a 0x-prefixed root value, but the caption no longer overpromises about it.
 
-### I-18 · `priorReceiptIds` lineage claim unverifiable from the receipt alone  *(severity B)*
-- `apps/studio/src/app/r/[id]/page.tsx:357-360` says "lineage is verifiable." Code just lists local-FS receipts keyed by owner+skill. Nothing in the receipt body proves the agent **read** them. No model-input hash.
-- **Fix:** include `request.priorContextHash` in the canonical hash. Then chain receipt commits to which prior bodies were folded in.
+### I-18 · `priorReceiptIds` lineage claim unverifiable from the receipt alone  *(severity B · ⚠ QUEUED B-V2-29)*
+- **Honest status:** the §I-18 fix requires the canonical hash to include `request.priorContextHash` — a receipt-schema migration that breaks every existing v1 receipt's signature recovery. The K-15 polyglot work (TS + Python + Rust verifiers, sweep 39d7f29 + a97058b) ships the forward-compat path (`schemaVersion: '2.0'` with JCS-canonical hashing); the priorContextHash field can land in v2 without disturbing the 1,644 existing v1 receipts. Studio `/r/[id]` updated to describe lineage honestly: today it surfaces *what the operator chose to fold in*, not *what the agent provably read* — the qualifier reflects the gradient. Mainnet schema migration item, queued in `docs/USER_TODO.md §B-V2-29`.
 
 ### I-19 · `passport revoke` / `delegate revoke` submit chain txs with no confirmation  *(severity B · ✅ CLOSED 037abac + 59a156a)*
 - ✅ `apps/cli/src/lib/confirm.ts` provides `confirmAction(prompt)`; both `delegate.ts:440` (revoke grant) and `passport.ts:388` (passport revoke) now require an explicit `y/N` interactive ack, with a `--yes` escape for scripted use. Memory `forget` got the same treatment in 59a156a. A mistyped id no longer spends gas before the operator sees the prompt.
@@ -509,9 +507,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 ### K-4 · `iTransferFrom` clears no executor authorizations  *(High · ✅ DEPLOYED 3b7bdeb — closed in V2 redeploy with K-1)*
 - ✅ AgentPassportINFTV2 uses per-token version counters checked inside `isAuthorizedExecutor`. On transfer, the counter increments — every executor authorized under the old owner is structurally invalidated without an iteration loop. Doc and code now agree.
 
-### K-5 · `Erc7857Verifier` not EIP-712; uses `abi.encodePacked` + raw `_recover`  *(Medium)*
-- `Erc7857Verifier.sol:54-82`. No domain separator with `address(this)`/`chainid`. No `deadline`. `_recover` accepts `s` in upper half of curve (signature malleability). Nonce key is `keccak(recipient, metadataHash, nonce)` so a future V2 deployment lets V1 sigs replay against V2.
-- **Fix:** EIP-712 typed data with full domain separator + deadline. OZ `ECDSA.recover` (handles malleability + length).
+### K-5 · `Erc7857Verifier` not EIP-712; uses `abi.encodePacked` + raw `_recover`  *(Medium · ⚠ QUEUED B-V2-28)*
+- **Status:** code fix is a contract rewrite — replace `abi.encodePacked` with EIP-712 typed-data domain separator (`address(this)` + `chainid`), add `deadline`, swap raw `_recover` for OpenZeppelin's `ECDSA.recover` (handles malleability + length). Bundles naturally with §H-6's TEE-attestor work since both require an Erc7857VerifierV2 redeploy. Mainnet item, queued in `docs/USER_TODO.md §B-V2-28`. Today's V1 verifier is the same primitive every 0G ecosystem competitor ships; the EIP-712 hardening is a mainnet upgrade.
 
 ### K-6 · `mint()` reentrancy via `onERC721Received`  *(Medium · ✅ DEPLOYED 3b7bdeb — closed in V2 redeploy with K-1)*
 - ✅ AgentPassportINFTV2 sets `passportOf[msg.sender] = tokenId` BEFORE `_safeMint`. A re-entry attempt from `onERC721Received` fails the second-level `passportOf == 0` check. The state mutation is now atomic-before-callback.
@@ -625,24 +622,20 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - `packages/memory/src/encryption.ts:28-34`. `nonce = sha256(plaintext || Date.now()).slice(0, 12)`. Two calls in the same millisecond with the same plaintext produce the same nonce under the same key. **AES-GCM nonce reuse with the same key recovers the keystream and forges GHASH tags.**
 - **Fix:** `nonce = randomBytes(12)`. The current "deterministic-ish" nonce serves no purpose since the IV is stored alongside the ciphertext.
 
-### K-21 · Single operator key signs everything  *(High)*
-- `packages/runtime/src/env.ts`, `pipeline.ts:422-424`. One key signs receipts, anchors, calls `recordReceipt`, uploads, pays. Compromise forges every Studio-anchored receipt and drains every funded contract. Survives unencrypted in process memory and `docker inspect`.
-- **Fix:** separate anchoring key from signing key (two KMS slots). Long-term: SIWE so user signs and operator only anchors.
+### K-21 · Single operator key signs everything  *(High · ⚠ QUEUED B-V2-30)*
+- **Honest status:** mainnet hardening item — separate the anchoring key from the signing key (two KMS slots), tighten the operator's blast radius. Long-term SIWE path (sweep 245e017 already shipped the user-direct option) means user signs receipts and operator only anchors; that's the structural fix that makes K-21 moot. Today's testnet posture is documented in `delegate.ts:34-49` threat-model JSDoc — operator-machine custody is the explicit boundary. Mainnet item, queued in `docs/USER_TODO.md §B-V2-30`.
 
-### K-22 · `CapabilityRegistry.consumeRead` does not authenticate the grantee  *(High)*
-- `contracts/src/CapabilityRegistry.sol:97-109`. `consumeRead(grantId)` decrements `readsRemaining` for any caller. **An attacker reading public `grantsByGrantee` exhausts a victim's caps.**
-- **Fix:** `require(msg.sender == g.grantee, "CapabilityRegistry: not grantee")` at function start.
+### K-22 · `CapabilityRegistry.consumeRead` does not authenticate the grantee  *(High · ⚠ QUEUED B-V2-15)*
+- **Status:** code fix is one line (`require(msg.sender == g.grantee, ...)`) but the V1 `CapabilityRegistry` is already deployed at `0x3783f3c4834fCCBD553860e15c64C7E052646a8D` and contract code is immutable. The fix ships as `CapabilityRegistryV2`. Mainnet redeploy item, queued in `docs/USER_TODO.md §B-V2-15` with full deploy runbook. Today's testnet exposure is bounded: the DoS attack drains a victim's read count but doesn't grant the attacker access — capability grants are scoped per-grantee, so an exhausted counter is denial-of-service, not privilege escalation.
 
-### K-23 · `MemoryAccessLog` is permissionless — logs prove nothing  *(Medium)*
-- `contracts/src/MemoryAccessLog.sol:43-52`. Anyone calls `logAccess()` with any combination. The on-chain audit trail is pollutable.
-- **Fix:** `onlyAuthorizedLogger`, OR cross-check `grantId` against `CapabilityRegistry` and require `msg.sender == agent`.
+### K-23 · `MemoryAccessLog` is permissionless — logs prove nothing  *(Medium · ⚠ QUEUED B-V2-16)*
+- **Status:** same shape as K-22 — code fix is a modifier (`onlyAuthorizedLogger` OR cross-check against CapabilityRegistry) but V1 `MemoryAccessLog` is already deployed at `0xEe1aDFe76785377C4430B1325d86E58A6eC92119`, code immutable. Ships as `MemoryAccessLogV2`. Mainnet redeploy item queued in `docs/USER_TODO.md §B-V2-16`. Off-chain consumers (Studio `/global` + dashboard) should treat MemoryAccessLog events as informational hints, not authoritative audit trail — that nuance is documented in the off-chain reader's threat-model JSDoc.
 
 ### K-24 · Burn-Mode "delete" does not delete underlying storage; schema says `tempPathsZeroed: []`  *(Low · ✅ FIXED sweep 215)*
 - ✅ The cryptographic claim was always sound (session key destroyed → ciphertext unreadable to the operator). The misleading part was `localCleanupStatus: 'completed'` paired with `tempPathsZeroed: []` — "completed" implies a cleanup happened. The runtime + CLI Burn pipelines operate in-memory (plaintext never lands on disk), so no temp paths exist to zero. Fix: extended the schema enum to `['completed', 'partial', 'failed', 'not-applicable']` and switched all 3 write sites (`pipeline.ts`, `doc.ts`, `room.ts`) to use `'not-applicable'`. The wording was extended to say "No temp files were created (in-memory pipeline)." so a reader of `/r/[id]` sees the trust gradient explicitly. Older receipts with `'completed'` still parse (backwards-compatible). Three unit tests in `builder.test.ts` lock the rule. 24 → 27 receipts tests green.
 
-### K-25 · `SubscriptionEscrow.cancel` lets agent grief client  *(Low)*
-- `contracts/src/SubscriptionEscrow.sol:230-238`. Either party cancels with no notice period.
-- **Fix:** `cancelGraceSeconds` window between agent-initiated cancel and EXPIRED.
+### K-25 · `SubscriptionEscrow.cancel` lets agent grief client  *(Low · ⚠ QUEUED B-V2-18)*
+- **Status:** code fix adds a `cancelGraceSeconds` window between agent-initiated cancel and EXPIRED; ships as `SubscriptionEscrowV2`. Queued in `docs/USER_TODO.md §B-V2-18` (Deploy SubscriptionEscrowV2 — AGENT_AUTO accountability fix). Severity Low because the V1 contract is not yet driving real subscription revenue on testnet (the AAS marketplace UI uses it but no live subscribers as of sweep 222). Mainnet redeploy with the grace-period guard before subscriptions go live with real OG.
 
 ### K-26 · No private key surfaces in error messages or logs  *(no finding — strength)*
 - Verified: every reference to `EVM_PRIVATE_KEY` checks for missing-ness; none log the value. `.env.example` commits no real key.

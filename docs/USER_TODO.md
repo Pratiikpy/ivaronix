@@ -388,6 +388,33 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-30 · Split operator anchoring key from signing key (K-21 hardening)
+- **Source:** HALF_BAKED §K-21 (High). Today one operator wallet signs receipts, anchors, calls `recordReceipt`, uploads to Storage, pays gas. Compromise forges every Studio-anchored receipt and drains every funded contract.
+- **Why queued not shipped:** the structural fix is SIWE handshake (sweep 245e017 already shipped `signedBy: 'user-direct'` support), which makes the operator's key not load-bearing for *signing* receipts — the user signs in the browser via wagmi, operator only anchors. Production rollout needs the SIWE flow promoted from optional to required for receipt creation. Threat-model JSDoc in `delegate.ts:34-49` documents the current operator-machine-custody boundary.
+- **Action:**
+  1. Promote SIWE handshake from "claim a userWallet" to "default path" for receipt creation in Studio `/api/run`.
+  2. Generate a second key for anchoring only (the user signs the receipt body; operator's anchoring key submits the on-chain tx).
+  3. Document the dual-key topology in `docs/MAINNET_READINESS.md` and the CI wallet runbook.
+- **Effort:** ~3-4h once SIWE is the default path. Mainnet promotion item.
+
+### B-V2-29 · `priorReceiptIds` lineage proof via `request.priorContextHash` in v2 canonical hash
+- **Source:** HALF_BAKED §I-18 (severity B). Today the receipt's `priorReceiptIds` field lists local-FS receipts keyed by owner+skill. Nothing proves the agent **read** them. No model-input hash.
+- **Why queued not shipped:** the fix requires including `request.priorContextHash` (sha256 of the concatenated prior receipt bodies that were folded into the model's input) inside the canonical hash. That's a receipt-schema migration — every existing v1 receipt's signature would need to be re-recovered with the new shape.
+- **Approach (forward-compat via K-15 schemaVersion):** the K-15 polyglot canonical-hash work already shipped `schemaVersion: '1.0' | '2.0'` infrastructure. The `priorContextHash` field can land in v2 without disturbing the 1,644 existing v1 receipts. v1 verifiers continue with the existing canonical hash; v2 verifiers fold priorContextHash into the canonical bytes.
+- **Action:**
+  1. Add `request.priorContextHash` field to the v2 receipt schema (optional in v1, required in v2).
+  2. Pipeline computes `priorContextHash = sha256(concat(priorReceiptBodies))` before consensus.
+  3. Studio `/r/[id]` lineage display updates: v1 receipts show "operator-asserted lineage" chip; v2 receipts show "model-input-bound lineage" chip.
+  4. Polyglot reference verifiers (TS + Python + Rust + Go) handle v2's priorContextHash inclusion.
+- **Effort:** ~4-6h across schema, pipeline, verifiers, Studio surface, regression tests.
+
+### B-V2-28 · Erc7857VerifierV2 with EIP-712 typed-data + TEE-attestor (K-5 + H-6 bundle)
+- **Source:** HALF_BAKED §K-5 (Medium) + §H-6 (severity A — category-wide gap). Both target the same contract (`Erc7857Verifier`); ship as a single V2 redeploy.
+- **K-5 fix:** replace `abi.encodePacked` + raw `_recover` with EIP-712 typed-data domain separator (`address(this)` + `chainid`), add `deadline`, swap to OpenZeppelin `ECDSA.recover` (handles malleability + length). Nonce key includes `address(this)` so V1 sigs can't replay against V2.
+- **H-6 fix:** ship a second attestor that is the operator's TEE wallet from 0G Compute. Document 2-of-2 attestation (deployer bootstrap attestor + TEE attestor) as the current integrity story. ZKP path is Phase B+ research.
+- **Why queued not shipped:** both fixes require an Erc7857VerifierV2 deploy (V1 is at `0xEAd66Cb90B681720f3aab52d86c289E21106d938`). AgentPassportINFTV2 references the V1 verifier in its constructor — V2 verifier deploy requires either a coordinated AgentPassport V3 redeploy or a verifier-swap upgrade path. Mainnet redeploy item.
+- **Effort:** ~6-8h (contract rewrite + Foundry tests + AgentPassport V3 or migrate path + 2-of-2 attestor wiring + verify-erc7857-v2 regression).
+
 ### B-V2-27 · CSRF hardening on state-changing routes (Origin allowlist + custom header)
 - **Source:** HALF_BAKED §K-13 partial closure (sweep 217). Primary defense (`sameSite: 'strict'` on SIWE cookies) is shipped and locked. Belt-and-suspenders defenses are queued for production:
   - **Origin/Referer allowlist** on POST `/api/run`, `/api/skill/save`, `/api/onboard/metadata`, `/api/memory/remember`. Allowed origins read from `IVARONIX_STUDIO_BASE` + Vercel preview URL pattern. Reject on mismatch with 403.
