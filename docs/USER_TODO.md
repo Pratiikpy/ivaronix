@@ -81,9 +81,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   After publish, the Rust verifier is `cargo install ivaronix-verifier` for any third party.
 
-### A-V2-L7 · Vercel-deploy Studio
-- **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio is `pnpm --filter @ivaronix/studio dev` only. A judge who doesn't clone never sees Studio at all.
-- **Status:** code-complete · `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.
+### A-V2-L7 · Vercel-deploy Studio · ✅ DEPLOYED
+- **Status:** Studio live at `https://ivaronix-studio.vercel.app/` (referenced in docs/JUDGE_GUIDE.md ¶ on /0g). The runbook below is preserved for a custom-domain promotion (`ivaronix.app`) — buy + DNS + Vercel domain settings remain operator actions.
+- **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio used to be `pnpm --filter @ivaronix/studio dev` only. A judge who didn't clone never saw Studio at all. Now resolved.
+- **Source state:** `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.
 - **Cost:** Vercel hobby tier is free. Domain `~$12/yr` (your call). Sentry + Upstash both have free tiers.
 - **Run:**
 
