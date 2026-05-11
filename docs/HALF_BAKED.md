@@ -323,9 +323,8 @@ For each primitive, claimed depth vs actual depth, with the gap to AIsphere / Pr
 - ERC-7857's value prop is the integrity proof being TEE/ZKP-backed. Aishi and SealedMind ship the same shape; AIsphere is also attestor-signed. **Nobody in the field ships real TEE-attested ERC-7857.**
 - **Fix:** can't add real remote attestation in 90min. Ship a second attestor that is the operator's TEE wallet from 0G Compute; document 2-of-2 attestation as the current integrity story; ZKP path Phase B.
 
-### H-7 · 0G Router · `routerVerified` defaults to `false` on testnet  *(severity B)*
-- `packages/og-router/src/index.ts:97`: when `x_0g_trace.tee_verified` is missing (testnet default), `routerVerified` falls back to `false`. The Router-flag check is best-effort. The trustworthy check is `--tee-independent`.
-- **Fix:** cosmetic. Add `keyring.list()` printout in studio onboarding so judge sees four credentials rotating.
+### H-7 · 0G Router · `routerVerified` defaults to `false` on testnet  *(severity B · ✅ VERIFIED — no bug · sweep 220)*
+- ✅ The behavior is correct and intentional. `packages/og-router/src/index.ts:97` reads `routerVerified: Boolean(x0gTrace?.tee_verified)` — when the testnet Router proxy doesn't emit the field, the value is `false`. That's the honest answer, not a regression. The receipt-level `teeRouterVerified` aggregate (sweep 157) and the chain-level `attestationHash` (sweep 1f43a27) both correctly reflect that TIER 1 hasn't been cryptographically proven via the Router flag — and the `--tee-independent` path re-runs `broker.processResponse` against the actual 0G Compute provider for the stronger check. CLAUDE.md §11.3a treats Router-flag captures as documentation supplements; the load-bearing proof is the independent re-verify. The audit's "cosmetic" fix (keyring.list() printout in onboarding) is queued in B-V2 as a UX polish item; the correctness side is closed.
 
 ### Top-3 ship-today fixes from H
 
