@@ -126,15 +126,25 @@ jobs:
 
   unit-tests:
     # Package-level unit tests via Node's built-in `node:test` runner
-    # (tsx --test ...). 5 packages with real test files today: core
-    # (jcs canonical-hash · 17 tests), consensus (gates + policy +
-    # tier-shape + convergence · 34 tests), receipts (builder +
-    # fee-split · 16 tests), skills (manifest schema · 9 tests),
-    # memory (encryption · 14 tests). Total ~90 tests across 5
-    # packages. Found by the cron-sweep audit on 2026-05-10 — CI
-    # had typecheck + build + regression-smokes but no actual unit
-    # gate, so a regression in (e.g.) the policy aggregator could
-    # have shipped silently.
+    # (tsx --test src/*.test.ts). One step per workspace package with a
+    # real test suite. Found by the cron-sweep audit on 2026-05-10 — CI
+    # had typecheck + build + regression-smokes but no actual unit gate,
+    # so a regression in (e.g.) the policy aggregator could have shipped
+    # silently.
+    #
+    # Test scripts use `src/*.test.ts` (single star), NOT `src/**/*.test.ts`:
+    # the runner's bash has no `globstar`, and `node --test` only learned
+    # glob patterns in v21 — `**` was either left literal or collapsed to
+    # `*` (= `src/*/*.test.ts`, matching nothing) and the step failed
+    # "Could not find". The convention is flat: every suite lives at
+    # `packages/<X>/src/*.test.ts`.
+    #
+    # @ivaronix/trust-layer is NOT listed: it was parked under
+    # packages/_design/ (HALF_BAKED §J-7 · "dead package", Phase-3
+    # scaffold) and removed from pnpm-workspace.yaml, so `--filter
+    # @ivaronix/trust-layer` no longer resolves. Its 17 tests run
+    # manually from the package dir until/unless it re-enters the
+    # workspace.
     name: Package unit tests
     runs-on: ubuntu-latest
     needs: workspace
@@ -152,7 +162,7 @@ jobs:
         run: pnpm --filter @ivaronix/core test
       - name: consensus (gates + policy + tier-shape + convergence · 34 tests)
         run: pnpm --filter @ivaronix/consensus test
-      - name: receipts (builder + fee-split · 16 tests)
+      - name: receipts (builder + fee-split · 30 tests)
         run: pnpm --filter @ivaronix/receipts test
       - name: skills (manifest schema · 9 tests)
         run: pnpm --filter @ivaronix/skills test
@@ -160,19 +170,17 @@ jobs:
         run: pnpm --filter @ivaronix/memory test
       - name: og-chain (deployments walk-up · 8 tests)
         run: pnpm --filter @ivaronix/og-chain test
-      - name: og-router (keyring failure-mode taxonomy · 14 tests)
+      - name: og-router (keyring failure-mode taxonomy · 19 tests)
         run: pnpm --filter @ivaronix/og-router test
       - name: og-storage (Burn Mode AES-GCM + nonce regression · 15 tests)
         run: pnpm --filter @ivaronix/og-storage test
-      - name: trust-layer (policy evaluator semantics · 17 tests)
-        run: pnpm --filter @ivaronix/trust-layer test
       - name: og-kv (InMemoryKvClient + WT-11 honest-stub · 12 tests)
         run: pnpm --filter @ivaronix/og-kv test
       - name: og-da (DaClient surface + size-guard boundary · 14 tests)
         run: pnpm --filter @ivaronix/og-da test
-      - name: indexer (SQLite read-replica · CRUD + filters + stats · 19 tests)
+      - name: indexer (SQLite read-replica · CRUD + filters + stats · 22 tests)
         run: pnpm --filter @ivaronix/indexer test
-      - name: runtime (json-repair conservative parse · 21 tests)
+      - name: runtime (json-repair conservative parse · 30 tests)
         run: pnpm --filter @ivaronix/runtime test
       - name: docs:check (numbers.json staleness + marker drift)
         run: pnpm docs:check
