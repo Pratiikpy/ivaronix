@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
+import { loadGoogleFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
 // Skip static prerender at build time — the loadFonts() helper does
@@ -24,7 +25,7 @@ export const contentType = 'image/png';
  * the most-shared page in Studio.
  */
 export default async function Image() {
-  const fonts = await loadFonts().catch(() => []);
+  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
   const network = getNetwork();
 
   const modules: Array<{ name: string; status: 'live' | 'partial' | 'roadmap'; tagline: string }> = [
@@ -110,7 +111,7 @@ export default async function Image() {
                     textTransform: 'uppercase',
                     borderRadius: 4,
                     border: m.status === 'live' ? '1px solid #26c050' : '1px solid #d4d4d4',
-                    background: m.status === 'live' ? '#e6f9ec' : '#f5f5f0',
+                    background: m.status === 'live' ? '#e6f9ec' : '#f5f5f0', // brand-check:allow:OG status-pill tints — satori SVG can't reference CSS vars
                     color: m.status === 'live' ? '#0e6428' : '#6b6b66',
                   }}
                 >
@@ -133,16 +134,7 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts,
+      fonts: fonts.length > 0 ? fonts : undefined,
     },
   );
-}
-
-async function loadFonts() {
-  const family = 'Outfit:wght@600';
-  const css = await fetch(`https://fonts.googleapis.com/css2?family=${family}&display=swap`).then((r) => r.text());
-  const fontUrl = css.match(/src: url\((https:\/\/[^)]+)\) format\('woff2'\)/)?.[1];
-  if (!fontUrl) return [];
-  const fontData = await fetch(fontUrl).then((r) => r.arrayBuffer());
-  return [{ name: 'Outfit', data: fontData, style: 'normal' as const, weight: 600 as const }];
 }

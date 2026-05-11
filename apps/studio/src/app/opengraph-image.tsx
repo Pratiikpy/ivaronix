@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import { getNetwork } from '@/lib/chain';
+import { loadGoogleFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
 // Skip build-time prerender — see /0g/opengraph-image for rationale.
@@ -19,7 +20,7 @@ export const contentType = 'image/png';
  * per-route OG images at `/r/[id]/` and `/0g/` ship separately.
  */
 export default async function Image() {
-  const fonts = await loadFonts().catch(() => []);
+  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
   const network = getNetwork();
 
   return new ImageResponse(
@@ -90,16 +91,7 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts,
+      fonts: fonts.length > 0 ? fonts : undefined,
     },
   );
-}
-
-async function loadFonts() {
-  const family = 'Outfit:wght@600';
-  const css = await fetch(`https://fonts.googleapis.com/css2?family=${family}&display=swap`).then((r) => r.text());
-  const fontUrl = css.match(/src: url\((https:\/\/[^)]+)\) format\('woff2'\)/)?.[1];
-  if (!fontUrl) return [];
-  const fontData = await fetch(fontUrl).then((r) => r.arrayBuffer());
-  return [{ name: 'Outfit', data: fontData, style: 'normal' as const, weight: 600 as const }];
 }

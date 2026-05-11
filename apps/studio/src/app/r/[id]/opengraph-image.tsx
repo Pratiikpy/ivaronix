@@ -1,18 +1,15 @@
 import { ImageResponse } from 'next/og';
 import { unifiedGetReceipt, unifiedFindByReceiptRoot, getNetwork } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
+import { loadGoogleFont } from '@/lib/og-font';
 
 export const runtime = 'nodejs';
-// Known platform issue: Next 15.0.3 dev-server on Windows mangles @vercel/og's
-// bundled font URL (".\\file:\\C:\\…"), throwing ERR_INVALID_URL on every
-// request. Edge runtime would sidestep it but our route imports ethers via
-// @/lib/chain for the headline lookup; ethers can't run on edge. Production
-// on Vercel (Linux) is unaffected. Tracked in TEST_REPORT.md as
-// "OG image dev-only bug" — Discord/Twitter unfurls work post-deploy.
-//
-// Sweep 67: also skip build-time prerender — same rationale as
-// /0g/opengraph-image. The font fetch + chain RPC at build time
-// can fail in CI sandboxes; this route generates per-request anyway.
+// Stays on the Node runtime (not edge): the headline lookup imports ethers
+// via @/lib/chain, which can't run on edge. A known Windows dev-server quirk
+// mangles @vercel/og's bundled font URL ("file:\\C:\\…", ERR_INVALID_URL) on
+// every request; production on Vercel (Linux) is unaffected, and unfurls work
+// post-deploy. Also skips build-time prerender (font fetch + chain RPC at
+// build time can fail in CI sandboxes; this route generates per-request).
 export const dynamic = 'force-dynamic';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
@@ -23,7 +20,7 @@ export const contentType = 'image/png';
  * and link unfurls. Per CLAUDE.md §9 — never AI-glossy.
  */
 export default async function Image({ params }: { params: { id: string } }) {
-  const fonts = await loadFonts().catch(() => []);
+  const fonts = await loadGoogleFont('Outfit', 'Outfit:wght@600', 600);
   const network = getNetwork();
   let id = params.id;
   let headline = `Verified action receipt on 0G ${network}`;
@@ -101,16 +98,7 @@ export default async function Image({ params }: { params: { id: string } }) {
     ),
     {
       ...size,
-      fonts,
+      fonts: fonts.length > 0 ? fonts : undefined,
     },
   );
-}
-
-async function loadFonts() {
-  const family = 'Outfit:wght@600';
-  const css = await fetch(`https://fonts.googleapis.com/css2?family=${family}&display=swap`).then((r) => r.text());
-  const fontUrl = css.match(/src: url\((https:\/\/[^)]+)\) format\('woff2'\)/)?.[1];
-  if (!fontUrl) return [];
-  const fontData = await fetch(fontUrl).then((r) => r.arrayBuffer());
-  return [{ name: 'Outfit', data: fontData, style: 'normal' as const, weight: 600 as const }];
 }
