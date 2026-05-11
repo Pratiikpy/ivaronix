@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, existsSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
+import { z } from 'zod';
 
 /**
  * Server-side helper: locate a locally-saved receipt JSON whose
@@ -137,6 +138,50 @@ function findReceiptsDirs(): string[] {
   return out;
 }
 
+/**
+ * Minimum-shape validator for local-disk receipt JSON. HALF_BAKED §J-3
+ * closure (sweep 205): the pre-fix code cast `JSON.parse(...)` straight
+ * to ReceiptBody, so a migration-stale file (missing `id`, mistyped
+ * `type`, corrupted top-level) crashed `/r/[id]` first paint with
+ * `Cannot read 'X' of undefined`.
+ *
+ * The schema is intentionally narrow — it only requires the fields
+ * every consumer actually reads (`id`, `type`) and uses `.passthrough()`
+ * for everything else, so the existing loose `ReceiptBody` TS interface
+ * still applies via upcast. Stricter validation lives in
+ * `@ivaronix/receipts` `ReceiptV1Schema`; this shape exists for the
+ * Studio's permissive disk-read path where adding fields shouldn't
+ * break callers.
+ */
+const LocalReceiptShape = z.object({
+  id: z.string().min(1),
+  type: z.string().min(1),
+}).passthrough();
+
+/**
+ * Read a local receipt JSON and return it as a ReceiptBody if the
+ * minimum shape parses, else null. Logs a one-line warning on parse
+ * failure when IVARONIX_DEBUG is set so operators see what got
+ * rejected; in normal mode the failure is silent (matches the
+ * existing `skip malformed` pattern).
+ */
+function safeReadReceiptBody(file: string): ReceiptBody | null {
+  let raw: unknown;
+  try { raw = JSON.parse(readFileSync(file, 'utf8')); }
+  catch { return null; }
+  const parsed = LocalReceiptShape.safeParse(raw);
+  if (!parsed.success) {
+    if (process.env.IVARONIX_DEBUG) {
+      console.warn(`[local-receipt] skipped ${file}: ${parsed.error.issues[0]?.message ?? 'shape mismatch'}`);
+    }
+    return null;
+  }
+  // Upcast: the schema enforces id+type, the TS interface declares the
+  // broader (permissive) shape via `[key: string]: unknown` so the rest
+  // of the access paths are already optional-chained.
+  return parsed.data as unknown as ReceiptBody;
+}
+
 export function findLocalReceiptByRoot(receiptRoot: string): LocalReceiptLookup | null {
   const dirs = findReceiptsDirs();
   const target = receiptRoot.toLowerCase();
@@ -148,15 +193,16 @@ export function findLocalReceiptByRoot(receiptRoot: string): LocalReceiptLookup 
       const file = resolve(dir, entry);
       try {
         if (!statSync(file).isFile()) continue;
-        const body = JSON.parse(readFileSync(file, 'utf8')) as ReceiptBody;
-        const root = body.storage?.receiptRoot?.toLowerCase();
-        if (root && root === target) {
-          return { root, path: file, body };
-        }
-      } catch {
-        /* skip unreadable / malformed */
+      } catch { continue; }
+      const body = safeReadReceiptBody(file);
+      if (!body) continue;
+      const root = body.storage?.receiptRoot?.toLowerCase();
+      if (root && root === target) {
+        return { root, path: file, body };
       }
     }
   }
   return null;
 }
+
+export { safeReadReceiptBody };

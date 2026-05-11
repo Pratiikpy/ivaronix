@@ -388,6 +388,14 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-25 · CLI disk-JSON safe-read pattern (mirror of Studio §J-3 closure)
+- **Source:** HALF_BAKED §J-3 partial closure (sweep 205). The Studio half is locked by `verify-studio-disk-receipt-safety.ts`; the CLI half still casts disk JSON to typed shapes in three places:
+  - `apps/cli/src/lib/conversation.ts:57,63,74` (conversation log replay)
+  - `apps/cli/src/commands/delegate.ts:94,108` (delegate key + grant manifest)
+  - `apps/cli/src/commands/passport.ts:230` (local passport profile)
+- **Why queued not shipped:** the CLI is single-user (operator's own files); a corrupt receipt JSON crashes one local command rather than a public page. Lower blast-radius than Studio. The pattern + Zod schema should land in `apps/cli/src/lib/disk.ts` and gate the three sites before mainnet so a stale local file from an older CLI version doesn't surprise users mid-flow.
+- **Action:** lift `safeReadReceiptBody` shape into a shared util (`packages/core/src/disk-safe.ts` or similar) so Studio + CLI share the Zod shape. Wire the three CLI sites. Add a `verify-cli-disk-receipt-safety.ts` regression mirroring the Studio one. Effort: ~45 min.
+
 ### B-V2-24 · `memory snapshot` updates `passport.memoryRoot` on-chain after Storage upload
 - **Source:** HALF_BAKED §I-12 partial closure (sweep 201). The blob-upload half is shipped today (`ivaronix memory snapshot --upload` writes the manifest JSON to 0G Storage and prints the storage rootHash + tx); the on-chain follow-up — calling `AgentPassportINFT.updateMemoryRoot(tokenId, storageRootHash)` so the passport canonically points at the latest manifest — stays queued.
 - **Why:** `passport.memoryRoot` is read by Studio dashboard + 3rd-party agents to verify "this agent's memory has not been tampered with since." Today it's whatever value was set at mint. Wiring the snapshot → on-chain update closes the lifecycle so the chain state stays current with the local manifest.

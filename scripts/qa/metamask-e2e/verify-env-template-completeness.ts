@@ -51,6 +51,7 @@ const STUDIO_TEMPLATE = resolve(REPO_ROOT, 'apps', 'studio', '.env.production.te
 // operator-set config).
 const ALLOW_CODE_ONLY = new Set<string>([
   'IVARONIX_TG_TEST', // smoke-test internal flag
+  'IVARONIX_DEBUG', // sweep 205 · verbose-logging opt-in flag (apps/studio/src/lib/local-receipt.ts logs disk-receipt parse failures when set). Pure debug; not part of operator config.
 ]);
 
 // ─── Step 1: collect every IVARONIX_* token referenced in code ─────────

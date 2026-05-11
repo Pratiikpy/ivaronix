@@ -88,6 +88,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-readme-ivaronix-commands-exist/, // sweep 192 · every `ivaronix <subcommand>` in render-target docs maps to a real Commander binding
       /^verify-user-todo-deploy-markers/, // sweep 199 · USER_TODO §A-V2 deploy entries match contracts/deployments/testnet.json (✅ DEPLOYED markers stay fresh)
       /^verify-half-baked-closure-citations/, // sweep 203 · every ✅ <STATUS> header in HALF_BAKED.md cites a sha / sweep / date / address / verification phrase (locks the "ship fix + forget to close the doc" drift class sweep 202 caught manually)
+      /^verify-studio-disk-receipt-safety/, // sweep 205 · HALF_BAKED §J-3 closure · Studio disk-receipt reads go through safeReadReceiptBody validator instead of raw JSON.parse-as-ReceiptBody cast
     ],
   },
   'studio-live': {

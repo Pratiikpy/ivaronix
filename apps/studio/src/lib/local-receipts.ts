@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import type { ReceiptBody } from './local-receipt';
+import { safeReadReceiptBody } from './local-receipt';
 
 /**
  * Server-side helper: load all locally-saved anchored receipts from
@@ -62,25 +62,26 @@ export function loadAllLocalReceipts(maxEntries = 50): ReceiptSummary[] {
 
   const out: ReceiptSummary[] = [];
   for (const { file } of files) {
-    try {
-      const body = JSON.parse(readFileSync(file, 'utf8')) as ReceiptBody & {
-        billing?: { totalCostOg?: string; inputTokens?: number; outputTokens?: number };
-      };
-      const og = body.billing?.totalCostOg ? Number(body.billing.totalCostOg) : 0;
-      out.push({
-        id: body.id,
-        receiptRoot: body.storage?.receiptRoot ?? '',
-        skillId: body.request?.skillId ?? null,
-        skillVersion: body.request?.skillVersion ?? null,
-        totalCostOg: Number.isFinite(og) ? og : 0,
-        inputTokens: body.billing?.inputTokens ?? 0,
-        outputTokens: body.billing?.outputTokens ?? 0,
-        riskLevel: body.outputs?.riskLevel ?? null,
-        anchorTimestamp: body.chainAnchor?.anchorTimestamp ?? null,
-        anchorTxHash: body.chainAnchor?.anchorTxHash ?? null,
-        ownerWallet: body.agent?.ownerWallet ?? null,
-      });
-    } catch { /* skip unreadable / malformed */ }
+    // HALF_BAKED §J-3 closure (sweep 205): pre-fix this site did
+    // `JSON.parse(readFileSync) as ReceiptBody` which would crash on a
+    // migration-stale or corrupt file. safeReadReceiptBody runs a
+    // minimum-shape Zod validator and returns null on parse fail.
+    const body = safeReadReceiptBody(file);
+    if (!body) continue;
+    const og = body.billing?.totalCostOg ? Number(body.billing.totalCostOg) : 0;
+    out.push({
+      id: body.id,
+      receiptRoot: body.storage?.receiptRoot ?? '',
+      skillId: body.request?.skillId ?? null,
+      skillVersion: body.request?.skillVersion ?? null,
+      totalCostOg: Number.isFinite(og) ? og : 0,
+      inputTokens: body.billing?.inputTokens ?? 0,
+      outputTokens: body.billing?.outputTokens ?? 0,
+      riskLevel: body.outputs?.riskLevel ?? null,
+      anchorTimestamp: body.chainAnchor?.anchorTimestamp ?? null,
+      anchorTxHash: body.chainAnchor?.anchorTxHash ?? null,
+      ownerWallet: body.agent?.ownerWallet ?? null,
+    });
   }
   return out;
 }
