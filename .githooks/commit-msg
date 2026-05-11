@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+#
+# commit-msg hook: enforce the `Closes audit <ID>` trailer convention
+# (CLAUDE.md §15) for any commit that adds a ✅ closure marker to
+# HALF_BAKED.md or PHASE_B_DISCLOSURES.md.
+#
+# Why this exists (sweep 236):
+#   The cron-paced sweep loop (sweeps 200-228) shipped ~30 audit
+#   closures across HALF_BAKED but used a subject-line citation shape
+#   (`· close §K-19 · sweep 213`) instead of the canonical trailer.
+#   Result: `pnpm audit:list` (which walks git log for the trailer)
+#   undercounted real closure activity by ~30. Sweep 231 backfilled
+#   via CHANGELOG.md but committed to "from sweep 232+ the trailer is
+#   restored." This hook makes that commitment structural rather than
+#   relying on muscle memory.
+#
+# Behaviour:
+#   - Pre-condition: commit modifies docs/HALF_BAKED.md or
+#     docs/PHASE_B_DISCLOSURES.md AND adds a line shaped
+#     `+### ... ✅ {CLOSED|FIXED|SHIPPED|DEPLOYED|VERIFIED|CODE-COMPLETE}`
+#   - If so, the commit body MUST contain a line shaped
+#     `Closes audit <ID>` (matching the audit-list trailer regex).
+#   - Otherwise: pass.
+#
+# Bypass: `git commit --no-verify` (per CLAUDE.md, never use unless
+# explicitly authorized).
+
+set -euo pipefail
+
+MSG_FILE="${1:-}"
+if [[ -z "$MSG_FILE" ]] || [[ ! -f "$MSG_FILE" ]]; then
+  exit 0  # nothing to check
+fi
+
+# Skip the check on merge commits / rebases / amends without staged work.
+if [[ -n "${GIT_INDEX_FILE:-}" ]]; then
+  : # normal commit path
+fi
+
+# Are we touching one of the gated docs?
+STAGED_FILES=$(git diff --cached --name-only 2>/dev/null || true)
+case "$STAGED_FILES" in
+  *docs/HALF_BAKED.md*|*docs/PHASE_B_DISCLOSURES.md*) ;;
+  *) exit 0 ;;
+esac
+
+# Does the diff add a closure marker?
+ADDED_CLOSURE=$(git diff --cached -- docs/HALF_BAKED.md docs/PHASE_B_DISCLOSURES.md 2>/dev/null \
+  | grep -E '^\+### .*✅ (CLOSED|FIXED|SHIPPED|DEPLOYED|VERIFIED|CODE-COMPLETE)\b' \
+  | head -3 || true)
+if [[ -z "$ADDED_CLOSURE" ]]; then
+  exit 0
+fi
+
+# Does the commit message carry the trailer?
+if grep -qE '^[ \t]*Closes audit[ \t]+[A-Za-z]' "$MSG_FILE"; then
+  exit 0
+fi
+
+# Failure — print the offending diff lines and exit non-zero.
+cat <<EOF >&2
+
+commit-msg gate · sweep 236 · CLAUDE.md §15 trailer convention
+
+This commit adds a ✅ closure marker to docs/HALF_BAKED.md or
+docs/PHASE_B_DISCLOSURES.md but the message body lacks a
+'Closes audit <ID>' trailer.
+
+Offending added header line(s):
+$(echo "$ADDED_CLOSURE" | sed 's/^/  /')
+
+pnpm audit:list (the queryable audit ledger) walks
+'git log --grep "Closes audit"' — without the trailer, this
+closure won't appear in the queryable view. Add a trailer at the
+bottom of the commit body:
+
+  Closes audit X-N
+
+Where X-N is the audit code from docs/HALF_BAKED.md (e.g. K-19,
+I-3, A.5.6). Multiple closures: emit one trailer line per ID.
+
+Bypass: 'git commit --no-verify' — never use unless explicitly
+authorized.
+EOF
+exit 1
