@@ -82,7 +82,7 @@ Open any receipt's JSON body. Three fields are load-bearing for honest grading:
   },
   "agent": {
     "ownerWallet": "0x...",
-    "signedBy": "operator-on-behalf-of-user"  // or 'operator' or 'user-direct' (Phase B SIWE)
+    "signedBy": "operator-on-behalf-of-user"  // or 'operator' (legacy) or 'user-direct' (SIWE end-state · opt-in today)
   },
   "request": {
     "priorReceiptIds": ["rcpt_..."]       // memory DAG · planning-01 §3A
