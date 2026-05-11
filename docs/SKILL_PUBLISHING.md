@@ -76,9 +76,9 @@ Are you a first-party (Ivaronix-operated) creator?
 
 ## Lint coverage
 
-`pnpm skills:check` (queued · USER_TODO §B-V2-13) will lint all three paths:
-- Every `seed-skills/<id>/SKILL.md` parses against `SkillManifestSchema`.
-- Every `seed-skills/<id>/SKILL.md` has a `creator.fee_split` block (per `MARKETPLACE_DESIGN.md`).
-- Every published manifest's hash matches the on-chain record.
+Three rules govern first-party skill manifests; two are gated by a regression today, one stays runtime-only:
+- **Schema parse** — every `seed-skills/<id>/SKILL.md` parses against the canonical `SkillManifestSchema`. ✅ Gated by `scripts/qa/metamask-e2e/verify-seed-skill-manifests.ts` (sweep 103). Failures show up at pre-commit, not at user-first-run.
+- **`creator.fee_split` block** — required per `MARKETPLACE_DESIGN.md` (creator + treasury === 10000). ✅ Enforced by the Zod schema itself (`SkillManifestSchema` rejects manifests without the block); same regression covers it.
+- **Published manifest hash matches on-chain record** — still queued. The on-chain `SkillRegistry` records each skill's manifest hash at publish time; a deliberate check against `loadAllSkills()` output would catch drift between the seed file and the deployed registry entry. No bounded driver yet; runtime path catches major divergence via `scanSkill(...)` inside `runPipeline`, but a one-shot lint command would be cleaner.
 
-Until that lint ships, the schema check runs at load time via `loadAllSkills()` and the per-wallet sandbox check runs at save time via `/api/skill/save`.
+The runtime checks (schema parse at load time via `loadAllSkills()`, per-wallet sandbox check at save time via `/api/skill/save`) remain in place as the defense-in-depth layer.
