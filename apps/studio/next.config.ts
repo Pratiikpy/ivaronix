@@ -5,10 +5,17 @@ const config: NextConfig = {
   // Workspace packages are written as ESM-style TypeScript with `.js` extensions
   // in source imports (NodeNext convention). Tell webpack to resolve those to
   // the corresponding `.ts` source so we don't need a build step in dev.
+  //
+  // EVERY @ivaronix/* package Studio imports MUST be listed here, otherwise
+  // a production `next build` (Vercel) fails to transpile the raw .ts source.
+  // Studio currently imports: core, og-chain, og-storage, receipts, runtime,
+  // skills (and pulls og-router transitively via runtime). `verify-vercel-
+  // transpile-packages.ts` regression locks this against drift.
   transpilePackages: [
     '@ivaronix/core',
     '@ivaronix/og-chain',
     '@ivaronix/og-router',
+    '@ivaronix/og-storage',
     '@ivaronix/consensus',
     '@ivaronix/skills',
     '@ivaronix/receipts',

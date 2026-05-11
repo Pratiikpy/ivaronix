@@ -149,6 +149,24 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
   }
 
+  // Vercel-deploy guard (production-deploy audit · VERCEL-DEPLOY-AUDIT-1):
+  // this route writes to `<workspace>/.ivaronix/skills/...` — a path that
+  // exists on the operator's machine but NOT on Vercel's read-only,
+  // ephemeral serverless filesystem. On Vercel the mkdirSync/writeFileSync
+  // below would throw EROFS and 500. Detect the serverless environment up
+  // front and return an honest 503 pointing at the two persistent
+  // publishing paths instead. `process.env.VERCEL` is set by Vercel on
+  // every deployment; `AWS_LAMBDA_FUNCTION_NAME` covers other serverless
+  // hosts using the same read-only-FS model.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return NextResponse.json(
+      {
+        error: 'skill publish via Studio is not available on this hosted deployment (read-only filesystem). Use the CLI: `ivaronix skill publish <dir>` (on-chain SkillRegistry) or open a PR to `seed-skills/<id>/SKILL.md` (first-party). See docs/SKILL_PUBLISHING.md.',
+      },
+      { status: 503 },
+    );
+  }
+
   // Find the workspace root by walking up looking for pnpm-workspace.yaml.
   let dir = process.cwd();
   let root: string | null = null;
