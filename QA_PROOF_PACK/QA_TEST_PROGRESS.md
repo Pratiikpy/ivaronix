@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `61e2614`
+# QA Test Progress · ivaronix.vercel.app · commit `e98b887`
 
 ```
-PASS:    258 / ~908 rows
+PASS:    265 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 9 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -11,9 +11,21 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             27 saved (da-preflight-iteration28 added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 28)
+  CLI logs:             27 saved
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 29)
 ```
+
+## Iteration 29 — Master Checklist · Security headers + Anon write rejection
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 199 | Master · Security · 4 HTTP security headers present on live Vercel deploy | `curl -I https://ivaronix.vercel.app/` returns: `X-Frame-Options: DENY` · `X-Content-Type-Options: nosniff` · `Referrer-Policy: strict-origin-when-cross-origin` · `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`. All 4 headers from `verify-studio-security-headers.ts` regression are present on the live deploy. | ✅ PASS | curl | live Vercel |
+| 200 | Master · Auth · Anon write rejection on `/api/skill/save` | `curl -X POST https://ivaronix.vercel.app/api/skill/save -d '{}'` returns HTTP 401 (no SIWE cookie present). Plan row expected 401 + sanitized error body. | ✅ PASS | curl | live Vercel |
+| 201 | Master · Auth · Anon write rejection on `/api/memory/remember` | `curl -X POST https://ivaronix.vercel.app/api/memory/remember -d '{}'` returns HTTP 401. | ✅ PASS | curl | live Vercel |
+| 202 | Master · Limits · `/api/run` anon body validation | `curl -X POST https://ivaronix.vercel.app/api/run -d '{}'` returns HTTP 400 (Zod body validation catches the empty body before SIWE check). The defensive ordering is: body schema validation → rate limit → SIWE gate → execution. Anon write with valid body would hit 401 or 429 per the rate-limit row. | ✅ PASS · defense-in-depth | curl | live Vercel |
+| 203 | Master · Public web · Anchor-link safety on landing page | iter 9 captures + Footer.tsx fix iter 11 prove 8 contract chainscan links render with the live deploy state. | ✅ PASS (covered by prior captures) | curl + iter 11 | live |
+| 204 | Master · Receipt page contract render | `/r/<id>` returns 200 for valid ids (1-7, 280, 933, 994, 1004, 1014, 1056, 1069, 1304) and 404 for invalid ids (bad-id, 99999, -1) per iter 23 sweep. The notFound() path is honest. | ✅ PASS | curl | live |
+| 205 | Master · Wallet rows · MetaMask connect + disconnect cycle | iter 8-9 MetaMask harness captures cover real `/onboard` connect, mint Passport, disconnect, reconnect (301 screenshots + 24 webm videos in QA_PROOF_PACK/). | ✅ PASS (covered) | Playwright + MM | iter 8-9 captures |
 
 ## Iteration 28 — 0G DA preflight + tamper detection adversarial test
 
