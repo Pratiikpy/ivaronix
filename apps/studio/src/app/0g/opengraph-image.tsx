@@ -78,48 +78,50 @@ export default async function Image() {
           </span>
         </div>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gridTemplateRows: 'repeat(2, 1fr)',
-            gap: 14,
-            flex: 1,
-          }}
-        >
-          {modules.map((m) => (
-            <div
-              key={m.name}
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'space-between',
-                padding: 20,
-                background: '#ffffff',
-                border: '1px solid #d4d4d4',
-                borderRadius: 14,
-              }}
-            >
-              <span style={{ fontSize: 22, fontWeight: 600 }}>{m.name}</span>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 14, color: '#6b6b66' }}>{m.tagline}</span>
-                <span
-                  style={{
-                    alignSelf: 'flex-start',
-                    padding: '2px 10px',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    letterSpacing: 1,
-                    textTransform: 'uppercase',
-                    borderRadius: 4,
-                    border: m.status === 'live' ? '1px solid #26c050' : '1px solid #d4d4d4',
-                    background: m.status === 'live' ? '#e6f9ec' : '#f5f5f0', // brand-check:allow:OG status-pill tints — satori SVG can't reference CSS vars
-                    color: m.status === 'live' ? '#0e6428' : '#6b6b66',
-                  }}
-                >
-                  {m.status === 'live' ? 'INTEGRATED' : 'ROADMAP'}
-                </span>
-              </div>
+        {/* 2-row × 3-col layout via nested flex · satori doesn't support display: grid */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
+          {[[0, 1, 2], [3, 4, 5]].map((row) => (
+            <div key={row.join('-')} style={{ display: 'flex', flexDirection: 'row', gap: 14, flex: 1 }}>
+              {row.map((idx) => {
+                const m = modules[idx];
+                if (!m) return null;
+                return (
+                  <div
+                    key={m.name}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      padding: 20,
+                      background: '#ffffff',
+                      border: '1px solid #d4d4d4',
+                      borderRadius: 14,
+                      flex: 1,
+                    }}
+                  >
+                    <span style={{ fontSize: 22, fontWeight: 600 }}>{m.name}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 14, color: '#6b6b66' }}>{m.tagline}</span>
+                      <span
+                        style={{
+                          alignSelf: 'flex-start',
+                          padding: '2px 10px',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          letterSpacing: 1,
+                          textTransform: 'uppercase',
+                          borderRadius: 4,
+                          border: m.status === 'live' ? '1px solid #26c050' : '1px solid #d4d4d4',
+                          background: m.status === 'live' ? '#e6f9ec' : '#f5f5f0', // brand-check:allow:OG status-pill tints — satori SVG can't reference CSS vars
+                          color: m.status === 'live' ? '#0e6428' : '#6b6b66',
+                        }}
+                      >
+                        {m.status === 'live' ? 'INTEGRATED' : 'ROADMAP'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           ))}
         </div>
