@@ -67,6 +67,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-memory-access-log-v2-coexists-with-v1/, // iter-124 closure · MemoryAccessLog V1 lookup must have sibling V2 lookup (B-V2-16 log-spoofing fix coverage · completes V2-rollout cascade)
       /^verify-qa-plan-regression-counts/, // iter-126 closure · the user's QA plan "Source-File Regression Suite" numeric claims must match actual file/filter counts (was 9-files stale at iter-125)
       /^verify-qa-plan-pending-vs-user-todo/, // iter-128 closure · QA plan PENDING markers must not reference USER_TODO entries already marked ✅ SHIPPED/CLOSED/CODE-COMPLETE/DEPLOYED/FIXED
+      /^verify-qa-plan-v2-deploy-tense/, // iter-129 closure · QA plan must not describe V2 deploys as future events (still-on-V1 / on-each-V2-redeploy / test-on-redeploy-day phrasing)
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter

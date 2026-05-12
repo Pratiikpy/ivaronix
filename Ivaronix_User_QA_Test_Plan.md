@@ -1123,13 +1123,13 @@ Run `cd contracts && forge test -vvv` and confirm every `*.t.sol` test passes. T
 | Mixed (canonical wins) | Set both canonical AND legacy to different values. | Canonical value used; legacy is silently ignored. |
 | All 10 chains | Repeat for each: `*_SIGNER_KEY`, `*_READ_PROXY_KEY`, `*_RPC_URL`, `*_NETWORK`, `*_CHAIN_ID`, `*_WALLET_ADDRESS`, `*_ROUTER_KEY`, `*_ROUTER_URL`, `*_ROUTER_PROVIDER`, `*_DEFAULT_MODEL`. | Every chain resolves; `pnpm env:check` returns all green. |
 
-## Source-File Regression Suite (<!-- regressions:auto:total -->106<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->87<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
+## Source-File Regression Suite (<!-- regressions:auto:total -->107<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->88<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
 
-`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->106<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->87<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
+`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->107<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->88<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
 
 | Suite | Command | Pass condition |
 |---|---|---|
-| Studio offline regressions (<!-- regressions:auto:studio -->70<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->70<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
+| Studio offline regressions (<!-- regressions:auto:studio -->71<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->71<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
 | CLI regressions (<!-- regressions:auto:cli -->13<!-- /regressions:auto:cli -->) | `pnpm --filter qa-metamask-e2e run regressions:cli` | All <!-- regressions:auto:cli -->13<!-- /regressions:auto:cli --> PASS. |
 | Contract regressions (<!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts -->) | `pnpm --filter qa-metamask-e2e run regressions:contracts` | All <!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts --> PASS. |
 | Live-server regressions (~<!-- regressions:auto:live -->19<!-- /regressions:auto:live -->) | `pnpm --filter qa-metamask-e2e run regressions:studio-live` after `pnpm --filter @ivaronix/studio dev` | Run before merging Studio changes that touch live-state behavior. |
@@ -1519,18 +1519,18 @@ These small affordances make the demo work end-to-end. Plan must verify each.
 | 5 | **Faucet link prompt** | When wallet balance < threshold | UI surfaces a link to `https://faucet.0g.ai` with the user's address and the exact amount needed. Tested via deliberately near-empty Wallet B. |
 | 6 | **Embed iframe sizing** | `/embed/r/<id>` | Renders at multiple viewport sizes (400×300, 800×600, 1200×800). No clipping, no horizontal scroll. |
 
-## Mainnet-Redeploy-Day Test Rows (the 4 contracts still on V1)
+## V2 Post-Deploy Verification Rows (all 4 contracts now live · 2026-05-12)
 
-Today (testnet), only `ReceiptRegistry` and `AgentPassportINFT` have V2 deployed. The other 4 (`CapabilityRegistry`, `MemoryAccessLog`, `SkillRegistry`, `SubscriptionEscrow`) are still V1. When each V2 redeploys, these rows must run.
+All 4 V2 contracts shipped on testnet 2026-05-12 (§B-V2-15/16/17/18). These rows verify the security fix that each V2 ships, against the deployed address. Pre-iter-122/123/124 audits caught CLI/Studio callers still using V1 addresses; those are now V2-first per the V2-rollout cascade structural locks (`verify-{capability,skill,memory}-v2-coexists-with-v1.ts` + iter-125 Studio scope extension).
 
-| Contract V2 | Reference | Test on redeploy day |
+| Contract V2 | Reference | Test against live deploy |
 |---|---|---|
-| `CapabilityRegistryV2` (§B-V2-15) | Closes social-graph leak + K-22 `consumeRead` DoS | After deploy: `consumeRead` rate-burst test (rejects floods); memory grants/revokes work identically to V1; existing V1 grants remain readable (or are migrated cleanly). |
-| `MemoryAccessLogV2` (§B-V2-16) | Closes log-spoofing | After deploy: Wallet B's writes to Wallet A's namespace revert; existing V1 logs remain readable. |
-| `SkillRegistryV2` (§B-V2-17) | Closes squatter risk | After deploy: cannot re-register an already-claimed skill name; existing V1 skills remain readable. |
-| `SubscriptionEscrowV2` (§B-V2-18) | Adds AGENT_AUTO accountability | After deploy: drain without agent-address claim reverts; `subscription_skill_exec` receipts (type slot 9) start producing. |
+| `CapabilityRegistryV2` (§B-V2-15 ✅ · `0x1351CD87...`) | Closes social-graph leak + K-22 `consumeRead` DoS | `consumeRead` rate-burst test (rejects floods); memory grants issued via `ivaronix memory grant` (V2-first per iter-122) land on V2; existing V1 grants remain readable via `listGrantsByOwner` (V1 ABI only — V2 renamed to `getGrantsByOwner` with access control). |
+| `MemoryAccessLogV2` (§B-V2-16 ✅ · `0xCbfE1f52...`) | Closes log-spoofing | Wallet B's writes to Wallet A's namespace revert ("MemoryAccessLogV2: not agent or grantee"); existing V1 logs remain readable. `ivaronix memory log` reader merges V1+V2 events per iter-124. |
+| `SkillRegistryV2` (§B-V2-17 ✅ · `0xF05113E8...`) | Closes squatter risk | Cannot re-register a reserved skill name (6 first-party IDs pre-reserved on deploy); `ivaronix skill publish` targets V2-first per iter-123; existing V1 skills remain readable via fallback. |
+| `SubscriptionEscrowV2` (§B-V2-18 ✅ · `0x74235b70...`) | Adds AGENT_AUTO accountability | Drain without agent-address claim reverts; `subscription_skill_exec` receipts (type slot 9) anchor on V3 via `ivaronix subscribe check-in`. Live anchor needs 2nd wallet (agent != msg.sender). |
 
-On each V2 redeploy, also add the new address to `contracts/deployments/testnet.json` and `KNOWN_RECEIPT_REGISTRIES` in `@ivaronix/core` per the CLAUDE.md §15 bookkeeping rule.
+Address bookkeeping confirmed: all 4 V2 addresses live in `contracts/deployments/testnet.json`; `KNOWN_RECEIPT_REGISTRIES` in `@ivaronix/core` includes all three ReceiptRegistry versions (V1+V2+V3) per the CLAUDE.md §15 bookkeeping rule.
 
 ## Submission-Day Smoke (final 30-minute reproducer)
 
