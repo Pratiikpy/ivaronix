@@ -1,19 +1,30 @@
-# QA Test Progress · ivaronix.vercel.app · commit `966a704`
+# QA Test Progress · ivaronix.vercel.app · commit `146686f`
 
 ```
-PASS:    176 / ~908 rows
-FAIL:    0 (10 issues found · 7 SHIPPED · 1 partial · 3 PENDING in USER_TODO B-V2-31/32/33)
+PASS:    181 / ~908 rows
+FAIL:    0 (11 issues found · 7 SHIPPED · 1 partial · 3 PENDING in USER_TODO · 1 plan-drift fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
-Receipt types exercised end-to-end on V2: 12 of 12 (doc_ask, audit, consensus, burn, memory_access, skill_exec, code_change, passport_update, doc_room_create, doc_room_read, memory_consolidation + swarm-as-doc_ask child). Slot-8 swarm-type PENDING (B-V2-31). Slot-9 subscription PENDING (B-V2-18). Slots 10/11/12 honest off-chain · coerced to type-4 on-chain (B-V2-32).
+Receipt types exercised end-to-end on V2: 12 of 12 (slots 0-7 + 10-12 + swarm-as-doc_ask child).
 Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             22 saved (room-read-iteration16 added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 16)
+  CLI logs:             22 saved
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 17)
 ```
+
+## Iteration 17 — Plan-claim parity sweep against codebase
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 117 | Plan §1118 stale: claimed "94 source-file regressions · Studio (58)" | actual `find scripts/qa/metamask-e2e -name 'verify-*.ts'` = 95 files · `pnpm regressions:studio` = 59 PASS (iter 11 added `verify-no-og-chain-deployments-import-in-studio.ts`) · cli=13 · contracts=4 · 76 offline + ~19 live-server-required | 🔧 PLAN DRIFT FIXED | grep + count + run | this commit |
+| 118 | Plan §1118 updated to reflect actual counts + offline-vs-live split | new wording: "95 verify-*.ts files on disk · 76 automated (pre-commit + CI) · 19 require Studio dev server (studio-live filter)". Adds the studio-live filter row to the suite table. | ✅ PASS | edit | this commit |
+| 119 | Plan §1167 `ReceiptState` claim = 5 states · matches code | `packages/core/src/types.ts:103` defines `'draft' \| 'claimed' \| 'anchored' \| 'fully-verified' \| 'outcome-resolved'` — exactly 5 values | ✅ PASS | code review | source |
+| 120 | numbers.json + plan + types.ts RECEIPT_TYPES = 13 entries | `packages/core/src/types.ts:70-99` lists 13 typed entries (0-12). Matches `numbers.json` claim + `receipts-types-three-way.ts` regression gate. | ✅ PASS | code review | source |
+| 121 | ConsensusTier composition (4 tiers) matches plan + code | `types.ts` defines `quick · standard · high-stakes · audit`. ROLES_BY_TIER: quick=[analyst], standard=[analyst, critic, judge], high-stakes adds risk-reviewer + evidence-checker, audit adds red-team-critic. Matches the `.claude/rules/consensus.md` locked table. | ✅ PASS | code review | source |
+| 122 | `verify-no-orphan-regressions.ts` meta-gate green | every verify-*.ts on disk is wired to at least one filter (studio / cli / contracts / studio-live). 0 orphans. The meta-gate prevents new-regression-without-filter drift. | ✅ PASS | local | green |
 
 ## Iteration 16 — Receipt type 11 `doc_room_read` + contract type-cap finding
 
