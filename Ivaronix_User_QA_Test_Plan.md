@@ -1271,7 +1271,7 @@ The master checklist already covers 28 commands. These 5 were missed — they an
 |---|---|---|---|
 | `ivaronix passport-consolidate <window>` | 1 | Consolidate last day's receipts. | Anchors a `memory_consolidation` receipt (type 12) pointing at the source ids. `request.priorReceiptIds` is populated. |
 | `ivaronix session ...` | 0/1 | Open / list / kill sessions. | Session state persists across runs; killing one wipes only that session's local state. |
-| `ivaronix skill-registry-export` | 0 | Export every on-chain `SkillRegistry` entry as JSON. | Output matches what `/api/skills` and `/skills` page render. |
+| `ivaronix skill registry export` | 0 | Export every on-chain `SkillRegistry` entry as JSON. Plan claim of top-level `ivaronix skill-registry-export` is WRONG — actual command is a sub-subcommand (3 levels: `skill → registry → export`). Per `apps/cli/src/commands/skill.ts:20` import + `apps/cli/src/commands/skill-registry-export.ts:118` registration. Driven iter-23: produced 156 entries (6 first-party + 150 imports) with sha256 manifestHashes; output at `skills/registry.json`. | Output matches what `/api/skills` and `/skills` page render. |
 | `ivaronix indexer ...` | 0 | Indexer reads (receipt-by-agent, receipt-by-root, count). | Same data as the V2-first chain client + Studio dashboard. |
 | `ivaronix debug <subcommand>` | 0/1 | Each debug subcommand (storage / chain / compute / env). | Output is honest about what's missing; no `console.log` litters the live build. |
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://ivaronix.studio/schemas/skills-registry/1.0",
-  "generated_at": "2026-05-09T16:15:27.604Z",
+  "generated_at": "2026-05-12T12:46:13.529Z",
   "total": 156,
   "counts": {
     "first_party": 6,
@@ -10,35 +10,43 @@
   "skills": [
     {
       "id": "0g-integration-auditor",
-      "version": "0.1.0",
-      "description": "Audit a GitHub repo's 0G integration quality. Checks chain ID correctness, SDK version pinning, encryption pattern, receipt usage, and 0G primitive coverage. Used by the Day-21 automation that anchors 100 mainnet receipts against public 0G OSS repos.",
+      "version": "0.1.1",
+      "description": "Audit a GitHub repo's 0G integration quality. Checks chain ID correctness, SDK version pinning, encryption pattern, receipt usage, and 0G primitive coverage. Drives the post-mainnet automation that anchors batched audit receipts against public 0G OSS repos.",
       "source": "first-party",
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/0g-integration-auditor/SKILL.md",
-      "manifestHash": "sha256:81129c39d5a426a395da9ca8e9a874575c83247e9ddd499c95fab2c758232527",
+      "manifestHash": "sha256:0ea8ae878c5e7f8216f628352efb23dcf7ab3ff1bc0b8a14e183fb6745f60010",
+      "fee_split": {
+        "creator": 9000,
+        "treasury": 1000
+      },
       "on_chain": false
     },
     {
       "id": "code-edit",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "description": "Propose minimal code changes for a task given source files. Outputs a unified diff that the user can apply. Does not actually write to disk — `build` mode emits the diff and the user (or follow-up tooling) applies it.",
       "source": "first-party",
       "default_tier": "standard",
       "burn_auto": false,
       "path": "seed-skills/code-edit/SKILL.md",
-      "manifestHash": "sha256:771499b4c2c4324ea2a4da80591c68013eb735cfccbad802ed65ccd41689c33b",
+      "manifestHash": "sha256:fd9703f7f697ea4e835e0dc52a5b36e29c848faa51ae6add394233fb29af144b",
+      "fee_split": {
+        "creator": 9000,
+        "treasury": 1000
+      },
       "on_chain": false
     },
     {
       "id": "content-pitch-review",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Review a marketing artefact (pitch deck script, press release, landing-page copy, fundraising one-pager, blog draft) and surface unsupported claims, weak hooks, audience mismatches, and language that fails legal/regulatory review. Track-3 marketing-persona skill — same receipt model as private-doc-review.",
       "source": "first-party",
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/content-pitch-review/SKILL.md",
-      "manifestHash": "sha256:f7ccd48e0fb5a81536df610b184cf4551911965b748b8e4b44d20d3fd2367174",
+      "manifestHash": "sha256:385e70d282736dbdcf416eb2b483edf53204889bd569ddca684b01a589d7c35c",
       "fee_split": {
         "creator": 7000,
         "treasury": 3000
@@ -47,35 +55,43 @@
     },
     {
       "id": "github-audit",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Audit a code snippet, single file, or small repo excerpt for security issues, code-quality smells, and architectural concerns. Lightweight first-pass review — full repo audits should layer on top of this with multiple skill runs.",
       "source": "first-party",
       "default_tier": "standard",
       "burn_auto": false,
       "path": "seed-skills/github-audit/SKILL.md",
-      "manifestHash": "sha256:caafaa81293fbe569ae5b4f95c404cbbe11917d480917712ec3243fad1a7b8ed",
+      "manifestHash": "sha256:1d0d80c66a82f0dac083f9963bc684633ed6047ee8c34dbcee2eb3a0da0108d2",
+      "fee_split": {
+        "creator": 9000,
+        "treasury": 1000
+      },
       "on_chain": false
     },
     {
       "id": "plan-step",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "description": "Read-only planning skill — produces a numbered, executable plan for a goal given context (project README, existing code, prior decisions). Used by `ivaronix plan`. No writes, no shell, no wallet.",
       "source": "first-party",
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/plan-step/SKILL.md",
-      "manifestHash": "sha256:a5b1b4dd885a3c88de32176d3bd2f0d0c114741fb730fd3a4a3a90b104cc5f4a",
+      "manifestHash": "sha256:946a23f647f52d49d0c22d2622820a03cf835fb3fc86ca8c576f3a4302900fc4",
+      "fee_split": {
+        "creator": 9000,
+        "treasury": 1000
+      },
       "on_chain": false
     },
     {
       "id": "private-doc-review",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "description": "Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Burn-mode-aware; produces an Action Receipt.",
       "source": "first-party",
       "default_tier": "standard",
       "burn_auto": true,
       "path": "seed-skills/private-doc-review/SKILL.md",
-      "manifestHash": "sha256:cbd6f0d4a9cd61748df45e6449a585d7aa9b5d7bc93ee7845ebc13fea478c438",
+      "manifestHash": "sha256:46070b1216d7bd41a0ee6459272828c577ca9cf0a37221c634f8b685184b6c63",
       "fee_split": {
         "creator": 9000,
         "treasury": 1000
@@ -90,7 +106,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/21risk-automation/SKILL.md",
-      "manifestHash": "sha256:a35aef52727bd13dc25724662d240e721a3dbf98319bffc4225fbee33c3f412c",
+      "manifestHash": "sha256:e614adccdab49dffdef4dd5bd7ab20be0e73c559c1585aa1b51e7ae0eae710bd",
       "on_chain": false
     },
     {
@@ -101,7 +117,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/2chat-automation/SKILL.md",
-      "manifestHash": "sha256:b43712d0a6afa882d00d68737d954a691bab3e1f5de7291b2b1199e9749c3e61",
+      "manifestHash": "sha256:88176837a1411c51e908c8ac3405ca50c26e81bdb80d330702e6f29397fd0624",
       "on_chain": false
     },
     {
@@ -112,7 +128,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ably-automation/SKILL.md",
-      "manifestHash": "sha256:f031a23fb8d39cb69b1d03a5bb0c8c3add5020d2fdb899e18a2a889885790b60",
+      "manifestHash": "sha256:c3d8299b5962337024eb43ca56aa356f5475250f83702c02ae65cf7c61c6e6de",
       "on_chain": false
     },
     {
@@ -123,7 +139,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/abstract-automation/SKILL.md",
-      "manifestHash": "sha256:01324049f4da5043b1c2a50b832b61ebb7297170923964407cb452fd6dc0eecb",
+      "manifestHash": "sha256:f583b4b25d81d6ec7bc661a422bee716d3a68e43629e49bcf67582d4af7b3533",
       "on_chain": false
     },
     {
@@ -134,7 +150,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/abuselpdb-automation/SKILL.md",
-      "manifestHash": "sha256:db5ecfc5fe29227ae8a40c2830ded15d6aa97e3c141456300bb49b22cbd348f9",
+      "manifestHash": "sha256:eb48aa87dbf6220a2aa5802be7cac0fd2d433f1997a00c9685be281d2c45f23a",
       "on_chain": false
     },
     {
@@ -145,7 +161,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/abyssale-automation/SKILL.md",
-      "manifestHash": "sha256:24383dd5dac9227cd3c2aaab9e88bb8bb351d6cf49b558aa62970460a319d509",
+      "manifestHash": "sha256:9ec52994e22f802b44b75b4a11d0df1332e0f656b5571f02a6c52a500981d26b",
       "on_chain": false
     },
     {
@@ -156,7 +172,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/accelo-automation/SKILL.md",
-      "manifestHash": "sha256:46060ecb908e5c405182f4f6a0d12cb610637e51f00fc1398b08a59fbc9acde8",
+      "manifestHash": "sha256:44efdf164dfddf266e9b3b0120fb18555b5475046d4d177163e8f2c29804a8e2",
       "on_chain": false
     },
     {
@@ -167,7 +183,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/accredible-certificates-automation/SKILL.md",
-      "manifestHash": "sha256:6c7d00fbcbf851b79a4ae965e93f1eae046e6c087e03b6f84cc9b076f137405e",
+      "manifestHash": "sha256:9069612bbbc6c6f071b4159269a61c836e9a0d823c59e7aa50e3b314d96e65fd",
       "on_chain": false
     },
     {
@@ -178,7 +194,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/acculynx-automation/SKILL.md",
-      "manifestHash": "sha256:ff2fef340ff6836eef8b046c7d92df026f12f9a66a08d3882193d97f5c85a309",
+      "manifestHash": "sha256:d2ab213599a31ab786980825ea57695288aea3ee16d38a6852d3b49dfb7f8266",
       "on_chain": false
     },
     {
@@ -189,7 +205,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/active-campaign-automation/SKILL.md",
-      "manifestHash": "sha256:de845af21e2416060adaa4d020187f3eb6db0b48abf85be2c42d61cdc6aa9520",
+      "manifestHash": "sha256:e7c4e3ed2e69e6ea6f1bf4d8ca3ca73e990deb42d6603a087f76f5c0edb13c97",
       "on_chain": false
     },
     {
@@ -200,7 +216,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/addresszen-automation/SKILL.md",
-      "manifestHash": "sha256:f78001cc00dc8fa1337482ec72c583c367f48a0424b3cd30a579c7411a9fad53",
+      "manifestHash": "sha256:ee49f21fa62904492c1bbd2f1795a9fea5e9d841a6282a17a6815180c41417aa",
       "on_chain": false
     },
     {
@@ -211,7 +227,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/adobe-automation/SKILL.md",
-      "manifestHash": "sha256:995c27d2c96669b3acd64880c3d17f09791e50d138521b3f4a620d9b37e1cc48",
+      "manifestHash": "sha256:7b8113fa3f566715fa05545709a81a24177449c65eb90f330b25c9cf15d4c525",
       "on_chain": false
     },
     {
@@ -222,7 +238,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/adrapid-automation/SKILL.md",
-      "manifestHash": "sha256:fd7433c3b7434f1036953f103f579dc6774f76f712a111b7727873d61cf9b033",
+      "manifestHash": "sha256:55b9906894f2ac9b3009a2e73e812bb642e9fe8c8c2a6ca2fe54582de1f2c1eb",
       "on_chain": false
     },
     {
@@ -233,7 +249,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/adyntel-automation/SKILL.md",
-      "manifestHash": "sha256:2ea5c00b45fcec544bca8c45bfa2387b06023dece2c1152420aa7fcdaf203651",
+      "manifestHash": "sha256:9dbdeb3918a467f0490a90d0908fc60a97367ecf0073f5d81335f2ad3e000773",
       "on_chain": false
     },
     {
@@ -244,7 +260,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/aero-workflow-automation/SKILL.md",
-      "manifestHash": "sha256:8f591b5d9ffcdb97b278747632587a4399f1b1302723c65304aa19132f8154ca",
+      "manifestHash": "sha256:4f98e3763b1fec6151791ca69a53c1c28cbe267b602c146f81cd7863765f4603",
       "on_chain": false
     },
     {
@@ -255,7 +271,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/aeroleads-automation/SKILL.md",
-      "manifestHash": "sha256:203ef60d05e9a2627d255ab71733820edcee840a3328fb5d1afcc60b66b4279a",
+      "manifestHash": "sha256:875caa2e48cfed0f312bddf6cabdf677490d9cdca1f5ace78ce416dccda8b517",
       "on_chain": false
     },
     {
@@ -266,7 +282,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/affinda-automation/SKILL.md",
-      "manifestHash": "sha256:8e710e7dfaa4dfb99cb8e7041b24f128b8d460c39018601b34417089165df520",
+      "manifestHash": "sha256:8a63c5ab718cd71b1f2e0b33233cc04a1848021f95dd43bec5518c6a3370fb6b",
       "on_chain": false
     },
     {
@@ -277,7 +293,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/affinity-automation/SKILL.md",
-      "manifestHash": "sha256:6a9dbc1ca400ee8173284896c20661dc1fdf450b96c47f74ee870c3e23a48444",
+      "manifestHash": "sha256:c9471394c5246fbd71fc5fc9a9e5f8b169475b53ca6fafa29c2d30b484beaf6b",
       "on_chain": false
     },
     {
@@ -288,7 +304,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agencyzoom-automation/SKILL.md",
-      "manifestHash": "sha256:5b38f6644a7b892004ff2d322efdd13b8eaa714fea690b797e94578df03a88b7",
+      "manifestHash": "sha256:34798b7b293d77180da3f9324187f128e1b89d972b44bb5154fbef8265fb90f7",
       "on_chain": false
     },
     {
@@ -299,7 +315,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agent-mail-automation/SKILL.md",
-      "manifestHash": "sha256:9e2a2859752c082f0d9651cce1a39d60db7597e999eb3dc7aba9a1036a5186b5",
+      "manifestHash": "sha256:f99560e7f2302997f441d38631d3540028346a3c0cdcc6352e53e6dbc0c3889b",
       "on_chain": false
     },
     {
@@ -310,7 +326,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agentql-automation/SKILL.md",
-      "manifestHash": "sha256:e2a50d3dde0372751ea09dc145be0a4a1ebe6b5ee825fea9dac797d89b3941de",
+      "manifestHash": "sha256:e5607d93a6a388b73e0a36bfe7db543067ac1dbd7c507d8c39420b95fad77124",
       "on_chain": false
     },
     {
@@ -321,7 +337,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agenty-automation/SKILL.md",
-      "manifestHash": "sha256:eaca5625e52c4ea1a1796b4df4e2c7e7c676f223e1bb025773813b5bec2dea32",
+      "manifestHash": "sha256:257e3a13fb31c04883b96b2ac1094374d3e3bdc056873dfd893911bc644865ed",
       "on_chain": false
     },
     {
@@ -332,7 +348,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agiled-automation/SKILL.md",
-      "manifestHash": "sha256:8b02e26d7b7fbc21a2038fccce993444061f3aedf636eb31d6edc8b087f2cede",
+      "manifestHash": "sha256:da5025def6d73cbaaebff7d6898d99568ac5b391bb34ed62233a1fd8c27190af",
       "on_chain": false
     },
     {
@@ -343,7 +359,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/agility-cms-automation/SKILL.md",
-      "manifestHash": "sha256:92597195f2e81c1a40ebb5578d40fb309961d7e6c1914b58ef88e963e1b473be",
+      "manifestHash": "sha256:e30a8c6d40eb77c0b87931d28e41a65da2eb075582a3bc4a06a8f187eccb355a",
       "on_chain": false
     },
     {
@@ -354,7 +370,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ahrefs-automation/SKILL.md",
-      "manifestHash": "sha256:4f79fa9efc17d5a590b68523dac855b828986f927037142f8f3689a99a6fff5a",
+      "manifestHash": "sha256:a1ca0eaa82c4a3a85cbc1d7047e3007dcf7bd3497e5e89e06b096bddf21102af",
       "on_chain": false
     },
     {
@@ -365,7 +381,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ai-ml-api-automation/SKILL.md",
-      "manifestHash": "sha256:9a92a1e4e7e9b50d22a3670f3cdba7704ba7324def2fc41ba706bd5829f50099",
+      "manifestHash": "sha256:e085a3fdc1716b112c2187b2ac5c832055ad0a353c000184d61a3985f1ce344f",
       "on_chain": false
     },
     {
@@ -376,7 +392,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/aivoov-automation/SKILL.md",
-      "manifestHash": "sha256:f639c43ee12ddd18bcfc3c0aaed463f4560afb617bc91404b18028c3371e3056",
+      "manifestHash": "sha256:de1b68fc301353ee58c160957acf65ebcac137adbc7c419936faac3bf7bfb38e",
       "on_chain": false
     },
     {
@@ -387,7 +403,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/alchemy-automation/SKILL.md",
-      "manifestHash": "sha256:34a5f051498daa8cbec3dd1cc35ec65daaa1fa5a9f7dfc7e55ab268b3d60a3b4",
+      "manifestHash": "sha256:d1acd93f3ed60f069b11073865e6fd97f539059c335f9d9a500854cece9ceb08",
       "on_chain": false
     },
     {
@@ -398,7 +414,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/algodocs-automation/SKILL.md",
-      "manifestHash": "sha256:46ced0258915f9c7d7320abbde55f6e6256ebd000cedadf48f06d71d7c9b52f6",
+      "manifestHash": "sha256:287d9146bbc2083f61382b484e4911505df8efe31241b257fe6884f44e4017bf",
       "on_chain": false
     },
     {
@@ -409,7 +425,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/algolia-automation/SKILL.md",
-      "manifestHash": "sha256:c2c5a4a1808f28ce292eed6350ce0586c1b4af5e9ebc893b4b548c5ca4c4dae5",
+      "manifestHash": "sha256:7f1977a385dc6aa61febeeaeefd35388626de2449d17a17aa9394f60f5f35090",
       "on_chain": false
     },
     {
@@ -420,7 +436,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/all-images-ai-automation/SKILL.md",
-      "manifestHash": "sha256:182901657936e433371bd10eb27d28dab9097b4969ead221a935eb23721b43bf",
+      "manifestHash": "sha256:53744680592c9d34045ee25db6f72e8863db63520cc80b2e9a44fb0be8ce4e72",
       "on_chain": false
     },
     {
@@ -431,7 +447,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/alpha-vantage-automation/SKILL.md",
-      "manifestHash": "sha256:9da73f56c70cde88e0a07d042208cc478773418164e9ef31d3d577ae300ef158",
+      "manifestHash": "sha256:46bb8bb3c881da2395f149c0c80e56d60b7451b40e3d0a872daacde2b57082e1",
       "on_chain": false
     },
     {
@@ -442,7 +458,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/altoviz-automation/SKILL.md",
-      "manifestHash": "sha256:fffb10ea777942c47a421a13667d01d3d52ea95cb6872319a21712b49fca0f77",
+      "manifestHash": "sha256:1604e80aecbe489968c4da7653ef2b1abc9f9847e5e4942a266cafb493e0d732",
       "on_chain": false
     },
     {
@@ -453,7 +469,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/alttext-ai-automation/SKILL.md",
-      "manifestHash": "sha256:59fb22e02b3484b35354ce68f1165e873b1b143b4f735d5d38013ebbb3911064",
+      "manifestHash": "sha256:f13ec234ff33f70084b9179b9ba4950fa408aee826fd873f8fde935453ac1232",
       "on_chain": false
     },
     {
@@ -464,7 +480,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/amara-automation/SKILL.md",
-      "manifestHash": "sha256:43c3147be4a5907b6acfff9c42f98a1536be10de98eab211b6beefc89286c9a9",
+      "manifestHash": "sha256:60a820388e34a09f492c64ac1795ca27c1933fedc87f0533db4fa1f0a00c3e7d",
       "on_chain": false
     },
     {
@@ -475,7 +491,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/amazon-automation/SKILL.md",
-      "manifestHash": "sha256:f2d7f4128bfa38d72cea3c2c27474b508c4ec7baf9efc5acf0d572fb30daed84",
+      "manifestHash": "sha256:07f2202cee240202674ed00fafe42e8f52f116d15809cfb9745e85f8ef77dbd8",
       "on_chain": false
     },
     {
@@ -486,7 +502,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ambee-automation/SKILL.md",
-      "manifestHash": "sha256:4457451843dc0316214b52da949153595f75fc43912ab6774a764f5d222d4a34",
+      "manifestHash": "sha256:70fbc2c8fd95c818c71c0dec9342c51608f11b848d9581e0b1d235a8494ad2fd",
       "on_chain": false
     },
     {
@@ -497,7 +513,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ambient-weather-automation/SKILL.md",
-      "manifestHash": "sha256:b52f8dd4a3ac7caeb5871a49f567a28555dd640fdbe50659e1aae9cd11ae4fc2",
+      "manifestHash": "sha256:3d16c747ccef9fe8592751fb224efdbd58bc39b6df3ebf1ea173751a37b5990b",
       "on_chain": false
     },
     {
@@ -508,7 +524,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/amcards-automation/SKILL.md",
-      "manifestHash": "sha256:4b0e0367a8a71515da9725e0ee00182abb485d96328d2fd687a5cc627f5d1f33",
+      "manifestHash": "sha256:d4626f997e5690b36a6e7eba53720847f7407bd01011ed704662251666866601",
       "on_chain": false
     },
     {
@@ -519,7 +535,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/anchor-browser-automation/SKILL.md",
-      "manifestHash": "sha256:ae736ae18a384ed439acd3d90c96a3c97c98e85ff81b708b9f2bb041daa76ece",
+      "manifestHash": "sha256:64dc174c812bc3eb1c6de2b3937b83747da22063ea620e54ab28ef63dd858f8c",
       "on_chain": false
     },
     {
@@ -530,7 +546,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/anonyflow-automation/SKILL.md",
-      "manifestHash": "sha256:cfa2f921ef185e5d9f0bfd4bb396b6d83f62474544f553c142a638bf4499302a",
+      "manifestHash": "sha256:80bf358ddf1c0a153e754285f8cb222f28c32b1b6e04474f6b760348a2648ad5",
       "on_chain": false
     },
     {
@@ -541,7 +557,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/anthropic-administrator-automation/SKILL.md",
-      "manifestHash": "sha256:0a576f11c2d6ffd39fd173978c3a34bdaaf202cc3dd8cb84cc7b06568ba5751a",
+      "manifestHash": "sha256:df2268dae892f1d853b467013a13597290da17fdf5fb45c8208d7327d774fbf3",
       "on_chain": false
     },
     {
@@ -552,7 +568,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apaleo-automation/SKILL.md",
-      "manifestHash": "sha256:1512c318f55fda39ebdf50cfba49413757c8bf7b537d5b495d044d38eed1371a",
+      "manifestHash": "sha256:3f6e9be2de0a8d84103f8ce32e11faae71bdd7defe3e8f60ffc94e654c1a3ab0",
       "on_chain": false
     },
     {
@@ -563,7 +579,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apex27-automation/SKILL.md",
-      "manifestHash": "sha256:2b7531721381da68fea7f8625d15c2cac3c7e4f6a31f25387169cd64b01c50fd",
+      "manifestHash": "sha256:f2c721e0bef2e509da149be7317381931cf820f8bfd09bae6ea303fd7e2c022e",
       "on_chain": false
     },
     {
@@ -574,7 +590,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/api-bible-automation/SKILL.md",
-      "manifestHash": "sha256:082ad7c0958f8488b730caa5a7b713b6961def25bda6058e5706a00c22a3024a",
+      "manifestHash": "sha256:4687a674afbed364e6cbfa34db9c7062048acc1c5de1eabe665f0cca145f521f",
       "on_chain": false
     },
     {
@@ -585,7 +601,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/api-labz-automation/SKILL.md",
-      "manifestHash": "sha256:d165786fbf0ad0d0d8a233b849f836a4ad9602dd52db0b70a703e6328c3862cd",
+      "manifestHash": "sha256:8f0d9016f2e2f1413d02ab29769cf5570f41d94d190cb687ff6aa22827a368ba",
       "on_chain": false
     },
     {
@@ -596,7 +612,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/api-ninjas-automation/SKILL.md",
-      "manifestHash": "sha256:9727f951a1a953deedb2dd2588324fb9d6aae9d6f5769fffbd4ca1fd22590116",
+      "manifestHash": "sha256:f7a7096282bb27a1aed8db66021afbd794a4a8968f2cbc7f459b09513afbbc8d",
       "on_chain": false
     },
     {
@@ -607,7 +623,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/api-sports-automation/SKILL.md",
-      "manifestHash": "sha256:fe76a58bf197a8b277f4dbdd17bb90104ab500c062589e9d8fc6cfedb6aa8707",
+      "manifestHash": "sha256:3a40c0043be801cb61f4e1c65c9d6f30d0eda2c49be877c1bb3b73da139674f6",
       "on_chain": false
     },
     {
@@ -618,7 +634,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/api2pdf-automation/SKILL.md",
-      "manifestHash": "sha256:c560fca19c8e06bc8e41da54a4d2727b53df275e5a313537a952f585f82093f7",
+      "manifestHash": "sha256:5425dffb5fc37372c93fb4b727cf9102a03ec136920c2017b5988a4803bbc7e1",
       "on_chain": false
     },
     {
@@ -629,7 +645,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apiflash-automation/SKILL.md",
-      "manifestHash": "sha256:fa41419c8f7e2e0533f4f9b7c75a0f462f6d4711e35a46d033d8e3d7b51812bf",
+      "manifestHash": "sha256:f82d9cefb71cc470a6dc1ef94440264da68245c7563f0f5f6b907c6a5d00ba3b",
       "on_chain": false
     },
     {
@@ -640,7 +656,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apify-automation/SKILL.md",
-      "manifestHash": "sha256:c5d21ee10a4ec9cf40fa4a0cc9cd0d3f74ec59b574014888cd92ddb4a7b69fbe",
+      "manifestHash": "sha256:0cdfc9d461575b600a3d437366c341cfda21597399dbfed19309856b93d79b30",
       "on_chain": false
     },
     {
@@ -651,7 +667,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apilio-automation/SKILL.md",
-      "manifestHash": "sha256:06e60696ffd91468526175a967d50cf2e96064efb5f2fefb9e23d92d60cba837",
+      "manifestHash": "sha256:dc7fd8cbb1bbbb1424e9a4b03714d0829de34d4e3d0426eb9f7711fde44c51b5",
       "on_chain": false
     },
     {
@@ -662,7 +678,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apipie-ai-automation/SKILL.md",
-      "manifestHash": "sha256:a2d1c5344c33a25c9a788dbe916190d9d4a6da5f6a47c7b0b5d7459b10a67e11",
+      "manifestHash": "sha256:7f30af93d050b8afc99dbbfbf9c574f31f2b3ccdde7fec034104437be3a36a35",
       "on_chain": false
     },
     {
@@ -673,7 +689,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apitemplate-io-automation/SKILL.md",
-      "manifestHash": "sha256:dba2d8421f26d882c27afab5d825638623b42eeb9bad02aa5aac7b41dd471b86",
+      "manifestHash": "sha256:4b8dac1aa27179a0399e36e8fc6aee4fae455bc1ff9a3c3df8b432b313b7dede",
       "on_chain": false
     },
     {
@@ -684,7 +700,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apiverve-automation/SKILL.md",
-      "manifestHash": "sha256:b430f7d42b8f4733c0a4ca0c86065d4c9012d64d99d0bd773654ad32b430ba79",
+      "manifestHash": "sha256:27b7cbbc8775d057a4380f04c7b5c9e6100646beb590ce47fcc36a7f6c5ec818",
       "on_chain": false
     },
     {
@@ -695,7 +711,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/apollo-automation/SKILL.md",
-      "manifestHash": "sha256:c55f049f4a8343ff118c4970e3cb4667a305760c893bbd2a818b6cf8a9067ebf",
+      "manifestHash": "sha256:25774a9166686318bbd0b3c0a6398fb6b79ff6d80131486b0ba1f86a68012b04",
       "on_chain": false
     },
     {
@@ -706,7 +722,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/appcircle-automation/SKILL.md",
-      "manifestHash": "sha256:f6bcb559707809b32f1c5dcb70adced5393fa38192ca0ad1b0bbae309d3f7018",
+      "manifestHash": "sha256:34685c1fcfff3b33d35bbb4b4d213706b9b4023d2a030a2ad89acf331ab7110c",
       "on_chain": false
     },
     {
@@ -717,7 +733,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/appdrag-automation/SKILL.md",
-      "manifestHash": "sha256:8a349f5854793e62e93f55a75dd71d3d15b0aefaab4e6b01b3835ab197e0022c",
+      "manifestHash": "sha256:1478ee71dcbd0d6393a422f67e58b01bfb5c38f4f535aa259ec077558b1214fe",
       "on_chain": false
     },
     {
@@ -728,7 +744,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/appointo-automation/SKILL.md",
-      "manifestHash": "sha256:b84d074ba3117b76650f60516e1d673fabb93e9cf51c1660fe0f8376f6f66c25",
+      "manifestHash": "sha256:d541456035fbb83e49b907329dba747c73b980dec0bb15ed55db5c6457d34470",
       "on_chain": false
     },
     {
@@ -739,7 +755,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/appsflyer-automation/SKILL.md",
-      "manifestHash": "sha256:d0d02e443729da231f4e4892c14c2318942aa63813a48eca1bd49a31b6f5327f",
+      "manifestHash": "sha256:0b560e880c4055b56d1c28ebdc9057031c00883fb1bce3a1c95be58152d1e72c",
       "on_chain": false
     },
     {
@@ -750,7 +766,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/appveyor-automation/SKILL.md",
-      "manifestHash": "sha256:1784d03fc6f73630dd8ad8560272600c7ad56be8f896ff9ab7cd46ccd10acb89",
+      "manifestHash": "sha256:de4d50610495afbbbafdd9293e7e8ae4f2c98e0c1f09080d83ebefcae8963e47",
       "on_chain": false
     },
     {
@@ -761,7 +777,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/artifacts-builder/SKILL.md",
-      "manifestHash": "sha256:406cd1e4efc5e6e38b47012beb9f0cd06dc86038bfd5832b95e324ce7e408e1d",
+      "manifestHash": "sha256:fae420b282193bcfce9723c9566069171fd9d2c3f37f7ac4aad568e3a1d2488d",
       "on_chain": false
     },
     {
@@ -772,7 +788,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/aryn-automation/SKILL.md",
-      "manifestHash": "sha256:2a6d2826cd59f4d3d18d5c95d4fef3c34934cacb05873681b9df59fd40b98113",
+      "manifestHash": "sha256:e0504651ebb8874e478e832510e14337aa55e7a510edf82d48b7ba5fcf10ba48",
       "on_chain": false
     },
     {
@@ -783,7 +799,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ascora-automation/SKILL.md",
-      "manifestHash": "sha256:8e07b494c458801b5864747e525d6a65d740d75b3a637a6fa047f2c908b75e5e",
+      "manifestHash": "sha256:12474077d4d74ed18d13b5638ac8eee5a9dd288067e52e7ed84a8eb77ec8c77b",
       "on_chain": false
     },
     {
@@ -794,7 +810,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ashby-automation/SKILL.md",
-      "manifestHash": "sha256:ebcc4ae6d9050ba9ea33bfc1c7f69b287a3be1f35ed046bdecc443d83276a64e",
+      "manifestHash": "sha256:b64687c42e4e1817728e77d09d5159a2cb2787994d1cf9ed4b38e974c2a90457",
       "on_chain": false
     },
     {
@@ -805,7 +821,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/asin-data-api-automation/SKILL.md",
-      "manifestHash": "sha256:99fab347881f81fed4f5f3676c8f57983708795236784513cd01a6b92b701880",
+      "manifestHash": "sha256:f07479fc8e6c3bfa4411a210ffb75eed0f2cce6ca378085c3bd39407660dfae3",
       "on_chain": false
     },
     {
@@ -816,7 +832,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/astica-ai-automation/SKILL.md",
-      "manifestHash": "sha256:7e173adfca5b1c0706552f6d903be82bf071ebae694175ba2ae808f272e0b309",
+      "manifestHash": "sha256:648ab013c5d82b5912879f6719679d168837afd72d52c26a6c4737d4b5ee722e",
       "on_chain": false
     },
     {
@@ -827,7 +843,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/async-interview-automation/SKILL.md",
-      "manifestHash": "sha256:313a87d97d913cf8ee2ef3d5da1b01d94fd82b9e667db38cbdaa71ee10b3ac9a",
+      "manifestHash": "sha256:818841e9c52bbcc50c9a6c3b1679bbfc14d7e690404fc8a57b879dee5c550449",
       "on_chain": false
     },
     {
@@ -838,7 +854,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/atlassian-automation/SKILL.md",
-      "manifestHash": "sha256:68d2464ac4475eec3eca2289aa999e9f48a7e04a1a622009aa3fd272badd0a6a",
+      "manifestHash": "sha256:9829532047484ce7d885136d11cef824ed2fe5797d2da69949b69f97378cc3c8",
       "on_chain": false
     },
     {
@@ -849,7 +865,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/attio-automation/SKILL.md",
-      "manifestHash": "sha256:ec173b2dbf90e7d915ac5a8c121662c009258d7bc9fcbe950e4092f6194ed719",
+      "manifestHash": "sha256:85e626d8ed804a9dddb9be159f31fc6131b2d489fdd15e1a1c21f43697bc89ab",
       "on_chain": false
     },
     {
@@ -860,7 +876,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/auth0-automation/SKILL.md",
-      "manifestHash": "sha256:07473adc63a126e657c4782ffaedcd9f2f62979e9343d65d14552c64285e8b9e",
+      "manifestHash": "sha256:01eaa136421edd2ea3cbcefe8640cbe41c1f0fe8c0738d1b4f622722bcb62acd",
       "on_chain": false
     },
     {
@@ -871,7 +887,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/autobound-automation/SKILL.md",
-      "manifestHash": "sha256:5f7c033fb2cf90cc89f2681b4492b03671d74686470d359e1fff0d746816e23d",
+      "manifestHash": "sha256:3a947e5ed6573e60d6ac06f1008f03f8ca100682101655a25be80d5c39bfe6e3",
       "on_chain": false
     },
     {
@@ -882,7 +898,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/autom-automation/SKILL.md",
-      "manifestHash": "sha256:1dd79dc855ccd7f72737644851a25551bd7b1511600f02d86c8b84856e9b628d",
+      "manifestHash": "sha256:3d3a96c904fb08fc96b45beed3d67bce96cb0bb4cc19604edc8399e444224b5f",
       "on_chain": false
     },
     {
@@ -893,7 +909,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/axonaut-automation/SKILL.md",
-      "manifestHash": "sha256:6dca8d4110cf51cc79198376fde27c083f6f54213372ab4a6dd8caa282617f43",
+      "manifestHash": "sha256:24e7462dd4c17e7d8dec7ee9247fb6801abb70b83858f2841817a62e9fa8f03e",
       "on_chain": false
     },
     {
@@ -904,7 +920,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/ayrshare-automation/SKILL.md",
-      "manifestHash": "sha256:ac411098859dda4185713da23995813d1cd2b53f58eaa614d21f029fb9d62624",
+      "manifestHash": "sha256:e0eca2fb4e5e095cb524eb7a42f43f04107dcf8e6e963e6f7249cdba4eb823b2",
       "on_chain": false
     },
     {
@@ -915,7 +931,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/backendless-automation/SKILL.md",
-      "manifestHash": "sha256:1594d29f44b3a13afa0ac85f85b86c240d42879d099e9410f2de4cf40139aedb",
+      "manifestHash": "sha256:f1b09e3099594372a52f469ec104bfdf7bd94a5fc089a1f474c8ebb0daefd1c5",
       "on_chain": false
     },
     {
@@ -926,7 +942,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bannerbear-automation/SKILL.md",
-      "manifestHash": "sha256:07f2122728368a3747259d8433abfc72a83ec2642b52392dc750b2946f942468",
+      "manifestHash": "sha256:6dbb5a6293eacefb63598767e0d97a1c7cffe7c00f74538c5e1392ed2fffe45b",
       "on_chain": false
     },
     {
@@ -937,7 +953,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bart-automation/SKILL.md",
-      "manifestHash": "sha256:2bf4ef98f0ed692bd392792fc7af7106081847281b3e40274e0b18998631dee5",
+      "manifestHash": "sha256:cfb1e836e548170df9c58b0326fddf7dd9b2d5524d1d64a2bbcae8afccd4cfcc",
       "on_chain": false
     },
     {
@@ -948,7 +964,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/baselinker-automation/SKILL.md",
-      "manifestHash": "sha256:baa8e19b2f750b577e43776dbca5a2022a1c56ed9aa292759df1c4a0d4b426c1",
+      "manifestHash": "sha256:e56d2edc2c69431769672283fa871cd1b04e152979483024e62af1c20cffab6d",
       "on_chain": false
     },
     {
@@ -959,7 +975,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/baserow-automation/SKILL.md",
-      "manifestHash": "sha256:bb011e412f44b25c7571bddb5ef636fa8dcc0883dc095be697dbd3b3f264406f",
+      "manifestHash": "sha256:0c4bf74d94dd31f59d959f2d61c47da10f1fcc288b8ddee4b9cdcbf81c40a9f6",
       "on_chain": false
     },
     {
@@ -970,7 +986,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/basin-automation/SKILL.md",
-      "manifestHash": "sha256:435a1a7145332bfdb57dbbf070f408608e3fc8a20c83351f9410623f556e09f3",
+      "manifestHash": "sha256:9f81c91e65880ce74fa2312939ba0988d78bc05be3fa5571dafc95ebd6b09ec3",
       "on_chain": false
     },
     {
@@ -981,7 +997,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/battlenet-automation/SKILL.md",
-      "manifestHash": "sha256:5d73849dffcb45e049691427742a3769b3aa8a70f421ac1c42572b4f7ffec871",
+      "manifestHash": "sha256:d8b706a0e6e8e93f0474210dfca7272efb944617edcfc5ff1dab42e073c79f11",
       "on_chain": false
     },
     {
@@ -992,7 +1008,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/beaconchain-automation/SKILL.md",
-      "manifestHash": "sha256:a9f0ccb8dd383d945d87554f707d9213d37affcd72eed6cb1ae7221d74850bd5",
+      "manifestHash": "sha256:33efb2a0385187b4a9209323dd0e42db8ce87a0a15cefb42ba71c1685d677759",
       "on_chain": false
     },
     {
@@ -1003,7 +1019,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/beaconstac-automation/SKILL.md",
-      "manifestHash": "sha256:9918b6dd42db86a54552512d40abb7bb3fd20b24beee04a4356645f1e01d2961",
+      "manifestHash": "sha256:b8991c95fda5c9ca6826421d53bfde38a259d645a5067214d31c086890f969b8",
       "on_chain": false
     },
     {
@@ -1014,7 +1030,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/beamer-automation/SKILL.md",
-      "manifestHash": "sha256:02fe4444a7369c96f595561bfc52dc397faa158347f39bc1c0efadfba20fe062",
+      "manifestHash": "sha256:b2901b566385e0af26c8e79bf4384ff13661d77a21367573b1d493a9e8bce71e",
       "on_chain": false
     },
     {
@@ -1025,7 +1041,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/beeminder-automation/SKILL.md",
-      "manifestHash": "sha256:174c9d0b42f9b66589cd36ac96fcb0c105a729b706976e340f049495899f9681",
+      "manifestHash": "sha256:376285cb6c2c7979cdc510a0d285a81275a7563e93bcbc24d00de1b82394dc81",
       "on_chain": false
     },
     {
@@ -1036,7 +1052,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bench-automation/SKILL.md",
-      "manifestHash": "sha256:7cdc6f7af3d9678da695cdd0e472cbb92d0107a34861d5cf9e4458db104240d3",
+      "manifestHash": "sha256:d57cfd412690024264a835462a750752b96ce721bb323153b8a0b10e260f7729",
       "on_chain": false
     },
     {
@@ -1047,7 +1063,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/benchmark-email-automation/SKILL.md",
-      "manifestHash": "sha256:c7c834d0f87c1ab43a55d57a48bfc424f10a1320d188df20fb69bb2ffe2dac2d",
+      "manifestHash": "sha256:11c704d182fc4db8ccc1fbbc472a3df3ba3fc24a05af1e064f275868416a24df",
       "on_chain": false
     },
     {
@@ -1058,7 +1074,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/benzinga-automation/SKILL.md",
-      "manifestHash": "sha256:08097a850a673a626053a701d508f482f2eed9c7730b4ea303fe52a1b49c3343",
+      "manifestHash": "sha256:12de1fd3c2be9193c5656f05f8eb0b299f5172ab2a379dfaa0378ddf16d6c602",
       "on_chain": false
     },
     {
@@ -1069,7 +1085,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bestbuy-automation/SKILL.md",
-      "manifestHash": "sha256:396a2aa9cc0580872e518e241926a26db0dfa54c1acd37a888968135070b762e",
+      "manifestHash": "sha256:711d7118d834b7fe4b64a9bb9f5ca6645604ae1b9ffac408209dce92b0986595",
       "on_chain": false
     },
     {
@@ -1080,7 +1096,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/better-proposals-automation/SKILL.md",
-      "manifestHash": "sha256:103c4fd83be6b1dc184eb86c995af2643123e0c984c815ba2ac8065e0c31ff04",
+      "manifestHash": "sha256:2e7c03213566f085870e3007e812d1dc40301cf0229fb9e3ef7be3185aa06cf0",
       "on_chain": false
     },
     {
@@ -1091,7 +1107,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/better-stack-automation/SKILL.md",
-      "manifestHash": "sha256:b354e68acf7a87a75bfd0784c87546d34270836b86254e5243a4431fb2808669",
+      "manifestHash": "sha256:6c97d1774d442b5da1002f48e3f68e46b0614f654c9dff23f6e3ccca5ce1abfd",
       "on_chain": false
     },
     {
@@ -1102,7 +1118,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bidsketch-automation/SKILL.md",
-      "manifestHash": "sha256:ee5f45b029e7299a07804ea81d54903f27cbf9aee3491a5ed791cdf7714d35a6",
+      "manifestHash": "sha256:987106d8cbbb84eecc532d30107d8eb305a7594e97ba91fbac1d128ad06d9c13",
       "on_chain": false
     },
     {
@@ -1113,7 +1129,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/big-data-cloud-automation/SKILL.md",
-      "manifestHash": "sha256:2604e9ca0d776d3977c7afe08d22e3d235512322cde230b444d812c6e2483532",
+      "manifestHash": "sha256:125e99898a263175802525fcdb46ce520628e1c34aa1e77e3e8b225ec350408a",
       "on_chain": false
     },
     {
@@ -1124,7 +1140,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bigmailer-automation/SKILL.md",
-      "manifestHash": "sha256:a526ddeea38f818cf7728f46b37681f48cb1ca1b759c4fdf75f4d3216ca0e53b",
+      "manifestHash": "sha256:dec9483e060afdaac2c7beb7b0cefe6b1c42c9de8ee4dfe8d791a8c67a1ae41f",
       "on_chain": false
     },
     {
@@ -1135,7 +1151,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bigml-automation/SKILL.md",
-      "manifestHash": "sha256:d85dc403e3f3b29a05bba62a4a25c0c9cb08483959d1cbc7a11cafaa68ad8f18",
+      "manifestHash": "sha256:0d63b8c7fe06fbebf66de6a1c996d11b654b5351efc54e61f5a0e66128503b39",
       "on_chain": false
     },
     {
@@ -1146,7 +1162,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bigpicture-io-automation/SKILL.md",
-      "manifestHash": "sha256:0db7db5ee20de1706d74df5c7dce6f74694136bbb573cc63db87e8d2f727465f",
+      "manifestHash": "sha256:4a53868b41675df2fce572de730d6fd62474a74d1d1b060d010deeb216185d67",
       "on_chain": false
     },
     {
@@ -1157,7 +1173,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bitquery-automation/SKILL.md",
-      "manifestHash": "sha256:c69f21074d7d6ec6ce7c4dfc9dab381588052b28a52b04f7cc40eb12e4d5545d",
+      "manifestHash": "sha256:7fd1002b646a9b76572a1b48a608f564d5feb1c128a7a3b978c25806b89d5019",
       "on_chain": false
     },
     {
@@ -1168,7 +1184,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bitwarden-automation/SKILL.md",
-      "manifestHash": "sha256:56cf863e2da756170be419f34b396443d8e415da3bef9361e6a64e9e113f6845",
+      "manifestHash": "sha256:106cb1940df553b7642f3e6b59bf83a1b6239c5799584823d1044fffdb5ee9b8",
       "on_chain": false
     },
     {
@@ -1179,7 +1195,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/blackbaud-automation/SKILL.md",
-      "manifestHash": "sha256:2aa0884e77d8e7ab7c3039f8d150ad3817982fc698cc6814d6000ec23c468c6e",
+      "manifestHash": "sha256:48814e14ce93be70bd8091c6594a875ebcdabca80ab40c5ed4969d82ed31363b",
       "on_chain": false
     },
     {
@@ -1190,7 +1206,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/blackboard-automation/SKILL.md",
-      "manifestHash": "sha256:725d92346d43dda29ba0f69c26b62179fc393c28a41249708776d5c4cc1d26bd",
+      "manifestHash": "sha256:9c4c0bbe81441007e7f68be63e434ac36fc1c88388bb56252c26b5378448770a",
       "on_chain": false
     },
     {
@@ -1201,7 +1217,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/blocknative-automation/SKILL.md",
-      "manifestHash": "sha256:902f37c8150feb8a0d4f363af4fe29f061665c551fe5c921497dbb36bf30cb8d",
+      "manifestHash": "sha256:6b1ba332075d2bee920b1a64ff71a7450d7e4bd561f5513dec63f24704aff03e",
       "on_chain": false
     },
     {
@@ -1212,7 +1228,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/boldsign-automation/SKILL.md",
-      "manifestHash": "sha256:4d9492c3eebdb0f507c3d32c6b7a7356bd1c8d160d934537fb116294171524f3",
+      "manifestHash": "sha256:456ba4dc9b73de38bf5149ea19942ce7b606a01134968c8c290b30961407a9e5",
       "on_chain": false
     },
     {
@@ -1223,7 +1239,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bolna-automation/SKILL.md",
-      "manifestHash": "sha256:2c3a3de1a457dd400ad8093da14c7d0c648dd7760856c3403cd5d63ecce65c07",
+      "manifestHash": "sha256:7208edb4d9bb00dfc0ecc117a3d6ffabe94654f5771386084fbf091bd9d17b3f",
       "on_chain": false
     },
     {
@@ -1234,7 +1250,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/boloforms-automation/SKILL.md",
-      "manifestHash": "sha256:32a7e869f179c1162bdd2ba7e9343ede8860109901f2e811a8248ea2e757dca5",
+      "manifestHash": "sha256:cb891517929c120c746dfe43636e6d6dd3b389229c9312232f05fd0da2bc5a56",
       "on_chain": false
     },
     {
@@ -1245,7 +1261,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bolt-iot-automation/SKILL.md",
-      "manifestHash": "sha256:62f5db1bcfb33857f9cf81e565f1e9369c2fc42d79ddd6b47f6aa8f3112c4c3c",
+      "manifestHash": "sha256:868cc92100f4505f34b1e1ee0169fc9c35413f18798f5b75f1ff06279670d8b7",
       "on_chain": false
     },
     {
@@ -1256,7 +1272,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bonsai-automation/SKILL.md",
-      "manifestHash": "sha256:fa7cd0f5d900f0d02af0522461607b1779f20cf3c35d94d80f93301352ce39e0",
+      "manifestHash": "sha256:983c1b2ab44847a70f920fd7a92996294816b620c0dc95e216563472565bbafa",
       "on_chain": false
     },
     {
@@ -1267,7 +1283,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bookingmood-automation/SKILL.md",
-      "manifestHash": "sha256:548c42f8ef5ed4551957c0b9a96c9a7548606f05743fb88cbea27021f5589403",
+      "manifestHash": "sha256:8352232c6ce9e3fe1a098071be76cd8d97e92b6a712f09b015165c37cac86811",
       "on_chain": false
     },
     {
@@ -1278,7 +1294,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/booqable-automation/SKILL.md",
-      "manifestHash": "sha256:ec6b5a69b727fa062ad3d5a6994cd4525d9c3f3a1722aa3b98692148a6e2a5d6",
+      "manifestHash": "sha256:db66ce6f7d4e00055637dcb453894634fad583fefcee64c5ec87db4ccdadfc77",
       "on_chain": false
     },
     {
@@ -1289,7 +1305,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/borneo-automation/SKILL.md",
-      "manifestHash": "sha256:d09fd66b2cf298ee3448b7d39e2164c601673582cebe2a3e185034294c1b1d3d",
+      "manifestHash": "sha256:2ce6d7c61966ebe4fdd09e14ea54213a7c1eaed428f5e101e30d3919613037dc",
       "on_chain": false
     },
     {
@@ -1300,7 +1316,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/botbaba-automation/SKILL.md",
-      "manifestHash": "sha256:e00427acca0abcdf699ce92f6f65ba4c64b7d2c30e2c25dd2f2e7c36437c0476",
+      "manifestHash": "sha256:e5973b29b5c08ab788728aa92693e8ef4c86ba6ef9e9b472026c320b520a0054",
       "on_chain": false
     },
     {
@@ -1311,7 +1327,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/botpress-automation/SKILL.md",
-      "manifestHash": "sha256:43f3856ee9ab74f872281bfd8145cafeb0b9aeb5e11c4fe9b0b3e8a1d176961f",
+      "manifestHash": "sha256:c4d7a55a7cc8d9404c031b29421d4699dfaf53fcca27724065277f38d171c016",
       "on_chain": false
     },
     {
@@ -1322,7 +1338,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/botsonic-automation/SKILL.md",
-      "manifestHash": "sha256:b387eb44dedf234b57343b1ad714453c8c024c04e6083cab3ff5fe81e3c7ee77",
+      "manifestHash": "sha256:155d1088e2c8f6f6fb4628b48b1b66971db3d7ef2dccb0fd3100ceae86308cde",
       "on_chain": false
     },
     {
@@ -1333,7 +1349,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/botstar-automation/SKILL.md",
-      "manifestHash": "sha256:a22320f5b37e502a1eb30d9900e87deb9219d0e2d63d3f5662defe4bcd8a0dfd",
+      "manifestHash": "sha256:eeffd806bc02590cb210ea8bc3d0123ff6635720ed65320399249b6b228c6dce",
       "on_chain": false
     },
     {
@@ -1344,7 +1360,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/bouncer-automation/SKILL.md",
-      "manifestHash": "sha256:0f2ad92c2a7b81c6026ba389ad800953d96d98883657d9766fa3826492b36331",
+      "manifestHash": "sha256:ff6ce9d00c9fdcc964260086444986eb92b29cf4e6e77976b96ebf9963601856",
       "on_chain": false
     },
     {
@@ -1355,7 +1371,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/boxhero-automation/SKILL.md",
-      "manifestHash": "sha256:300d989cfd2fa8000d48d6174d8b3bd4987ec17b5b3fc049d85acf30e49c6db7",
+      "manifestHash": "sha256:f9d298ec8a811aae940d0d88e49ab63e225e829ad6078f236804966d8cff2a6e",
       "on_chain": false
     },
     {
@@ -1366,7 +1382,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/braintree-automation/SKILL.md",
-      "manifestHash": "sha256:1bccb05375bbb5f9f1ebce4627c98012487517209c02c4dda9ea8e885b992fa9",
+      "manifestHash": "sha256:83dfa4a626b4d623d08a160c979e2db1e28b98b57d38d3d8015261c4ff3caaaf",
       "on_chain": false
     },
     {
@@ -1377,7 +1393,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/brand-guidelines/SKILL.md",
-      "manifestHash": "sha256:9410af50e6b34b3c599c03e0f8ce94f7ac9971d5cc505e51c4963f485cd829a6",
+      "manifestHash": "sha256:289f22b7ad35e8b3edcc72b6317e2330f5055e0314fecd58940df07aba182409",
       "on_chain": false
     },
     {
@@ -1388,7 +1404,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/brandfetch-automation/SKILL.md",
-      "manifestHash": "sha256:d7c529d46b4386db49fe4c4a59e397a8d3c566a80a63dcef28a941972930c972",
+      "manifestHash": "sha256:3318e356d95f7c9a2ee617c2a5ba559a3ef499e05c155cc477432f7517b5e08a",
       "on_chain": false
     },
     {
@@ -1399,7 +1415,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/breeze-automation/SKILL.md",
-      "manifestHash": "sha256:45aed433f19778cb682db3eef9dd2bd73d52f0357d61fcd54f63ca26b27d0940",
+      "manifestHash": "sha256:780848516b8fa6651fd8b5ed74245c408fa3dc1d1701cfbe807ab6d87f8f7fc9",
       "on_chain": false
     },
     {
@@ -1410,7 +1426,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/breezy-hr-automation/SKILL.md",
-      "manifestHash": "sha256:3c819c6c60dbd6ebb8bb5917ecba68d5eb28945421cb3d32e1e5f96d33f6378e",
+      "manifestHash": "sha256:2bc6a93a6c7732613482aa7db7ec878cb2f57a09567f5d1b32c20e67d1db9e73",
       "on_chain": false
     },
     {
@@ -1421,7 +1437,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/brex-automation/SKILL.md",
-      "manifestHash": "sha256:796bb0568f52ad5cc8810861bcdb05b1ecc5a0f5cc6a1e785e8707f1d7eebc0a",
+      "manifestHash": "sha256:4657495fea38a8aeab80bcd3a43b1fb16daa7c694b72832e47a8f91cb780e411",
       "on_chain": false
     },
     {
@@ -1432,7 +1448,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/brex-staging-automation/SKILL.md",
-      "manifestHash": "sha256:e9e27dee9c94f43bedb6643315e944055b09a302a064785dd356186945d97597",
+      "manifestHash": "sha256:46ab9b99135c161e01ff32ed0e2cd0c77fd3adad63e0040b89ecca3ccf947982",
       "on_chain": false
     },
     {
@@ -1443,7 +1459,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/brightdata-automation/SKILL.md",
-      "manifestHash": "sha256:c27341d901e636d8a4c8c53e0273e39589e3431a5559247f73fb233c74a40741",
+      "manifestHash": "sha256:4f7f500598cfcb7827c315d59f132865095224d611a49e25310a8a5394e06e5a",
       "on_chain": false
     },
     {
@@ -1454,7 +1470,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/canvas-design/SKILL.md",
-      "manifestHash": "sha256:15f948cbedcd01c34afd2a864a478683d6379ed1811fb8a8429a589f8aa5ab69",
+      "manifestHash": "sha256:17d7fda100b702d790f8ab78f91aab18b59c03553825388be3579e004678f2a7",
       "on_chain": false
     },
     {
@@ -1465,7 +1481,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/changelog-generator/SKILL.md",
-      "manifestHash": "sha256:a1f6f05ab0f9aafa980fc284d6a96754d5be26460bdc29fa0fe62448224e3236",
+      "manifestHash": "sha256:d900968b551558500fb08f1c25df0bb91770bcb4ba538c26049875ae1dfa336c",
       "on_chain": false
     },
     {
@@ -1476,7 +1492,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/cloudflare-automation/SKILL.md",
-      "manifestHash": "sha256:fd02af7eb79a0e3ff8ee6a8100984ad52a78229c05e17cd4544267204e033a45",
+      "manifestHash": "sha256:a6d25dd5a36960ee448b1f025f8733ffd4b1b57811d5194ff393ffbbf73b3381",
       "on_chain": false
     },
     {
@@ -1487,7 +1503,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/cloudinary-automation/SKILL.md",
-      "manifestHash": "sha256:4d326f68a248a3096d8877b4787c67caed6848e73622d3406df8c9442f306f37",
+      "manifestHash": "sha256:e442fec78807a207a46ca0b3ae3f4c07708d9680d431fa13caa3d5549dac9d0e",
       "on_chain": false
     },
     {
@@ -1498,7 +1514,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/competitive-ads-extractor/SKILL.md",
-      "manifestHash": "sha256:9a619738ada4030433615d33f8ddab99d8aacd8e91adc47f566961ec9dfcfa71",
+      "manifestHash": "sha256:1818f49e7f767686a2589a2b9b6f806a1b71d82ddc1f08515158cc604ee5a921",
       "on_chain": false
     },
     {
@@ -1509,7 +1525,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/connect/SKILL.md",
-      "manifestHash": "sha256:e48efdf5e370f8c5d86ee6e35ef108df1b618f66bef85c29ecccaaec8cf15558",
+      "manifestHash": "sha256:b1e3b31cb33c4af6448dd796042f41dc4d5d1f09241cd452af57a75b1e9cc196",
       "on_chain": false
     },
     {
@@ -1520,7 +1536,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/connect-apps/SKILL.md",
-      "manifestHash": "sha256:a0197371dbb7e726761020a4cbc59cf81339fc8fd423148a0a46f0b10d6abc40",
+      "manifestHash": "sha256:e27ef2f4def704d7f0dd192276a7e193799ca1e01590f0b512b6ede8355c39cb",
       "on_chain": false
     },
     {
@@ -1531,7 +1547,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/content-research-writer/SKILL.md",
-      "manifestHash": "sha256:fdc10554749f5cddb6a1764895e1a872399e01ed3add448e9cc21c48a402efa0",
+      "manifestHash": "sha256:aca53188f8e362978044bf4823b8d03161c9a7594d45c9562e612ccb0438ce62",
       "on_chain": false
     },
     {
@@ -1542,7 +1558,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/developer-growth-analysis/SKILL.md",
-      "manifestHash": "sha256:6e54e3bfb084198dd2c410230fc5b21c2559dbe7b4781a9ce910f1b30e6d73a3",
+      "manifestHash": "sha256:f4b7b2454f2a76964ae18011ae25446a6d6b4e41132e322abbdd277cbe9eb4a3",
       "on_chain": false
     },
     {
@@ -1553,7 +1569,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/domain-name-brainstormer/SKILL.md",
-      "manifestHash": "sha256:60434a997495faa68698f8478c8e797f7815e83f7261b3e185aa3236ef067f6c",
+      "manifestHash": "sha256:588325f0ec2bc7ff96fefbcdc71f79a44204d0bdc03174189fe077309b417736",
       "on_chain": false
     },
     {
@@ -1564,7 +1580,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/file-organizer/SKILL.md",
-      "manifestHash": "sha256:fa7dd6c891817af15974af21a321010f7b381f0e6b9527609cd3c899dbe01bcc",
+      "manifestHash": "sha256:20ef47dec8f481f693cbed8fb98d62fc6f02defed101bb966ce8407f68ccd0e5",
       "on_chain": false
     },
     {
@@ -1575,7 +1591,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/gong-automation/SKILL.md",
-      "manifestHash": "sha256:84e58bb0b7f732cc2d3af3c8cc449fdac7ad64de4740b852b6e5586f6b6540a9",
+      "manifestHash": "sha256:0f4ca879e599e0dfc548488ac45be4c69ef535372b50fc5cc1cf632d5ee2a8b9",
       "on_chain": false
     },
     {
@@ -1586,7 +1602,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/image-enhancer/SKILL.md",
-      "manifestHash": "sha256:766db596951c8fcf1b3f23beed36d368a52089738f38912efaf46787c256dd61",
+      "manifestHash": "sha256:63ddf34590f7577e0fc254cb9ccbe18602179b6fae82db3077fc6822a95dd142",
       "on_chain": false
     },
     {
@@ -1597,7 +1613,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/internal-comms/SKILL.md",
-      "manifestHash": "sha256:6659f6950228d6c310cd38e2d6ca0882841f03032d243805b93d2b6bc9fedfeb",
+      "manifestHash": "sha256:a1812580285be501b9e20132f024779c90a11e96ecaf7717023a0cbd205082c5",
       "on_chain": false
     },
     {
@@ -1608,7 +1624,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/invoice-organizer/SKILL.md",
-      "manifestHash": "sha256:a84af672642282b10cc652636735dceb96d9ec502a0ec5fae2a2f76d6d2f94ed",
+      "manifestHash": "sha256:5c13e389e0e5f8eed0c5fa3e96df4cb55a68f58334353293b30df3556e7f56f6",
       "on_chain": false
     },
     {
@@ -1619,7 +1635,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/langsmith-fetch/SKILL.md",
-      "manifestHash": "sha256:efdd653c3074526e9a586cf515b39adfe9c074461ac285caa0c4c268548ff35a",
+      "manifestHash": "sha256:d06fd67de42b4fbbe7affbfc27c9ff21e1f5da52d6e920557dc9d942dee0e296",
       "on_chain": false
     },
     {
@@ -1630,7 +1646,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/lead-research-assistant/SKILL.md",
-      "manifestHash": "sha256:e0ccab335967e2f089cc7a2a23677684d30d2329d11af8f0ab4b6610aa6d0dc1",
+      "manifestHash": "sha256:eb636424e25a5f18ae1df0c60e7c816839d8ccf37ca077ac9d2ff00310e4d5b4",
       "on_chain": false
     },
     {
@@ -1641,7 +1657,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/mcp-builder/SKILL.md",
-      "manifestHash": "sha256:d3b70fccfeb8fe83ad0eeb9fad2007166626a8ee3ea4c6802f33b0ddd6127bae",
+      "manifestHash": "sha256:3ba7d27ae8d741bfa9de6ecfcdeac6387681a7328d8b751a6b333351794713d7",
       "on_chain": false
     },
     {
@@ -1652,7 +1668,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/meeting-insights-analyzer/SKILL.md",
-      "manifestHash": "sha256:2b003744bfaa9278fbf52c5c5dabfd51777be7bb9cc95844f9d8a778df2f433d",
+      "manifestHash": "sha256:255392cf59fe8396728f5a22defd1e0c0f01bf0b6c66071d3ce8eb53d7b2aa56",
       "on_chain": false
     },
     {
@@ -1663,7 +1679,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/raffle-winner-picker/SKILL.md",
-      "manifestHash": "sha256:2daddfc185c88f6c1d1979491cb0a17710611ac3a2079e85acb57a6572772031",
+      "manifestHash": "sha256:6f6427db7d5eb49a5cf8f7fa2737355447795f7567b6998fed9d664d814a1d24",
       "on_chain": false
     },
     {
@@ -1674,7 +1690,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/skill-creator/SKILL.md",
-      "manifestHash": "sha256:6dbf1a81822b16e4cdb68affc41c7735abe4d8196f0d58cb88d47617c0a00722",
+      "manifestHash": "sha256:45ae17303e7a2510a50eda4ac66d67acb8250d2d112f11a5d7010c3413882c66",
       "on_chain": false
     },
     {
@@ -1685,7 +1701,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/skill-share/SKILL.md",
-      "manifestHash": "sha256:971ee89939ba0258daa8c86f7536e00cb295bde3041f919d716eceb4f1d73e2d",
+      "manifestHash": "sha256:a3774d1fa5dd266672303c0913e7a57a3928dceceeec40b8b072f64b5eefd58a",
       "on_chain": false
     },
     {
@@ -1696,7 +1712,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/slack-gif-creator/SKILL.md",
-      "manifestHash": "sha256:5422b3d43b494d61ebfa364a019e4311f8a628c2459c39b5610857b79bbedcc2",
+      "manifestHash": "sha256:e183367ff695666de85859049b874d8978ecf9323f0b272dd438364810630b6e",
       "on_chain": false
     },
     {
@@ -1707,7 +1723,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/tailored-resume-generator/SKILL.md",
-      "manifestHash": "sha256:fc7f269aa159cad12bcdd984e4de46a486d99d2d27770c5beda172c23d55fb73",
+      "manifestHash": "sha256:ced4baa570a98dae558c6bf8663a73bb7c10c61a6b81cc70dea543fba3a76199",
       "on_chain": false
     },
     {
@@ -1718,7 +1734,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/template-skill/SKILL.md",
-      "manifestHash": "sha256:684d3ab66ad2c658e646c2949b0c30e582bcfa4ca8a1dbe31c6e837b1441b281",
+      "manifestHash": "sha256:7aa579325e158eaa972e1b692ac7433f73b35a5ab68069621f53357bc027522f",
       "on_chain": false
     },
     {
@@ -1729,7 +1745,7 @@
       "default_tier": "quick",
       "burn_auto": false,
       "path": "seed-skills/imports/theme-factory/SKILL.md",
-      "manifestHash": "sha256:86f0b44498f826fb3724c288f8f9d766ffa5d70251e2daab9aa0531038ea4351",
+      "manifestHash": "sha256:5a9c2b83ad05d6fba1e4acc4f21bacf72985b9ba3ed8dc827c2b15bc13f163b4",
       "on_chain": false
     }
   ]

@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `77a2b83`
+# QA Test Progress · ivaronix.vercel.app · commit `6e54302`
 
 ```
-PASS:    216 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 5 plan-drift fixes · 1 env-check fix)
+PASS:    224 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 6 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -11,9 +11,20 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             24 saved (debug-chain-iteration22 added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 22)
+  CLI logs:             26 saved (session-list + skill-registry-export added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 23)
 ```
+
+## Iteration 23 — Remaining §1265 CLI commands + invalid-id negative flow
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 160 | Plan §1265 row 2 `ivaronix session list` | 3 saved sessions listed (conv_01KR3NE1V6WTJ + 2 others) · model: qwen/qwen-2.5-7b-instruct · output offers `attach <id>` + `show <id>` resume paths | ✅ PASS | CLI | `QA_PROOF_PACK/cli-logs/session-list-iteration23.log` |
+| 161 | 🔧 Plan §1265 row 3 wrong command name: claimed `ivaronix skill-registry-export` (top-level) | Actual is `ivaronix skill registry export` (3-level sub-subcommand). `apps/cli/src/commands/skill.ts:20` imports `addRegistryExportCommand`; `skill-registry-export.ts:118` registers it under `skill registry`. Plan row corrected. | 🔧 PLAN DRIFT FIXED | grep + edit | this commit |
+| 162 | Plan §1265 row 3 driven via correct path | `ivaronix skill registry export` produced 156 entries (6 first-party + 150 imports) with sha256 manifestHashes; output written to `skills/registry.json`. Matches `numbers.json.skills.catalogTotal: 156`. | ✅ PASS | CLI | `cli-logs/skill-registry-export-iteration23.log` |
+| 163 | Plan §1265 row 4 `ivaronix indexer stats` | local replica has 329 V1 receipts indexed · cursor at block 32591668 (chain head 32923871 → replica ~330k blocks behind · stale but functional) · distinct agents=1 · latest receipt id=496 · type breakdown: 12 doc_ask + 317 audit. The full V1 1644 set isn't indexed yet (~329 of 1644); operator `pnpm ivaronix indexer backfill` would catch up. | ✅ FUNCTIONAL · stale by ~330k blocks | CLI | live |
+| 164 | Plan §1277 invalid receipt ID negative flow | curl 3 invalid IDs against Vercel: `/r/bad-id` → 404, `/r/99999` → 404, `/r/-1` → 404. All three return 404 cleanly (not 500, not hang, not corrupted render). Studio handles invalid receipt IDs gracefully per Next.js notFound() pattern. | ✅ PASS | curl | live Vercel |
+| 165 | Plan §1265 row 5 ALL 5 CLI commands now driven across iterations | passport-consolidate (iter 14 · `memory_consolidation` receipt #4) + session list (iter 23) + skill registry export (iter 23 · 156 entries) + indexer stats (iter 23 · 329 V1 receipts) + debug chain (iter 22 · 8 contracts). 4 of 5 PASS green; 1 plan-drift fix (skill-registry-export sub-subcommand path). | ✅ MILESTONE | aggregate | iters 14-23 |
 
 ## Iteration 22 — `ivaronix debug` walk + V2 anchor count drift fix
 
