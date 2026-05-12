@@ -5,8 +5,9 @@
   "receipts": {
     "v1Anchored": 1644,
     "v2Anchored": 8,
-    "total": 1652,
-    "headlineLabel": "1,652+ receipts anchored across V1 + V2 registries"
+    "v3Anchored": 5,
+    "total": 1657,
+    "headlineLabel": "1,657+ receipts anchored across V1 + V2 + V3 registries"
   },
   "receiptTypes": {
     "count": 13,

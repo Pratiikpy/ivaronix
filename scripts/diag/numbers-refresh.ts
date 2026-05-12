@@ -15,7 +15,7 @@
  *   pnpm numbers:refresh --check   # exits 1 if numbers.json is > 24h stale
  */
 import { JsonRpcProvider } from 'ethers';
-import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, ReceiptRegistryV3Client, getDeployedAddress } from '@ivaronix/og-chain';
 import { readFileSync, writeFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,7 +29,7 @@ interface NumbersFile {
   $schema: string;
   lastRefreshed: string;
   network: string;
-  receipts: { v1Anchored: number; v2Anchored: number; total: number; headlineLabel: string };
+  receipts: { v1Anchored: number; v2Anchored: number; v3Anchored: number; total: number; headlineLabel: string };
   receiptTypes: { count: number; labels: string[]; source: string };
   contracts: { deployed: number; foundryTests: number; list: string[]; addresses: Record<string, string> };
   skills: {
@@ -45,13 +45,15 @@ interface NumbersFile {
   mainnet: { readinessChecklistGreen: string; deployedContractsToday: number; blockedOn: string };
 }
 
-async function fetchReceiptCounts(): Promise<{ v1: number; v2: number; total: number }> {
+async function fetchReceiptCounts(): Promise<{ v1: number; v2: number; v3: number; total: number }> {
   const RPC = 'https://evmrpc-testnet.0g.ai';
   const provider = new JsonRpcProvider(RPC, { chainId: 16602, name: 'galileo' });
   const v1Addr = getDeployedAddress('testnet', 'ReceiptRegistry') as `0x${string}` | null | undefined;
   const v2Addr = getDeployedAddress('testnet', 'ReceiptRegistryV2') as `0x${string}` | null | undefined;
+  const v3Addr = getDeployedAddress('testnet', 'ReceiptRegistryV3') as `0x${string}` | null | undefined;
   let v1NextId = 0n;
   let v2NextId = 0n;
+  let v3NextId = 0n;
   if (v1Addr) {
     try {
       const v1 = new ReceiptRegistryClient(v1Addr, provider);
@@ -68,10 +70,22 @@ async function fetchReceiptCounts(): Promise<{ v1: number; v2: number; total: nu
       console.warn(`v2.nextId() failed: ${(err as Error).message}`);
     }
   }
+  if (v3Addr) {
+    try {
+      const v3 = new ReceiptRegistryV3Client(v3Addr, provider);
+      v3NextId = await v3.nextId();
+    } catch (err) {
+      console.warn(`v3.nextId() failed: ${(err as Error).message}`);
+    }
+  }
   // V1 + V2 both 1-indexed: anchored = nextId - 1.
+  // V3 is 0-indexed: anchored = nextId (next id IS the count when starting at 0).
+  // V3's first anchor (iter-92) has onChainId=0 and increments nextId from 0 to 1.
+  // So nextId always equals the count of anchored receipts on V3.
   const v1Anchored = Math.max(0, Number(v1NextId) - 1);
   const v2Anchored = Math.max(0, Number(v2NextId) - 1);
-  return { v1: v1Anchored, v2: v2Anchored, total: v1Anchored + v2Anchored };
+  const v3Anchored = Math.max(0, Number(v3NextId));
+  return { v1: v1Anchored, v2: v2Anchored, v3: v3Anchored, total: v1Anchored + v2Anchored + v3Anchored };
 }
 
 function listFirstPartySkills(): string[] {
@@ -408,8 +422,9 @@ async function buildSnapshot(): Promise<NumbersFile> {
     receipts: {
       v1Anchored: receipts.v1,
       v2Anchored: receipts.v2,
+      v3Anchored: receipts.v3,
       total: receipts.total,
-      headlineLabel: `${receipts.total.toLocaleString()}+ receipts anchored across V1 + V2 registries`,
+      headlineLabel: `${receipts.total.toLocaleString()}+ receipts anchored across V1 + V2 + V3 registries`,
     },
     receiptTypes: {
       count: receiptTypes.count,
@@ -510,6 +525,7 @@ async function main(): Promise<void> {
   console.log(`numbers.json refreshed · ${NUMBERS_PATH}`);
   console.log(`  receipts.total          ${snap.receipts.total.toLocaleString()}`);
   console.log(`  receipts.v1Anchored     ${snap.receipts.v1Anchored.toLocaleString()}`);
+  console.log(`  receipts.v3Anchored     ${snap.receipts.v3Anchored.toLocaleString()}`);
   console.log(`  receipts.v2Anchored     ${snap.receipts.v2Anchored.toLocaleString()}`);
   console.log(`  receiptTypes.count      ${snap.receiptTypes.count}`);
   console.log(`  skills.firstParty       ${snap.skills.firstParty}`);
