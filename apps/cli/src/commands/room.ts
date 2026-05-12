@@ -591,6 +591,7 @@ roomCommand
       : ZERO_HASH) as Hash;
     let txHash: string;
     let blockNumber: number | null;
+    let onChainId: string | null = null;
     if (registryVersion === 'v2') {
       const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
       const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
@@ -602,22 +603,32 @@ roomCommand
       txHash = v2Tx.hash;
       const r = await v2Tx.wait();
       blockNumber = r?.blockNumber ?? null;
+      // Resolve the on-chain id by reading nextId() AFTER the anchor confirmed.
+      // This receipt's id is nextId - 1 (the latest anchored). Matches the
+      // pattern in passport-consolidate.ts:386-387 + 402-403.
+      try { onChainId = ((await regV2.nextId()) - 1n).toString(); } catch { onChainId = null; }
     } else {
       const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
       const v1Tx = await regV1.anchor(signed.storage.receiptRoot as Hash, storageRoot, RECEIPT_TYPE_CODE, ZERO_HASH);
       txHash = v1Tx.hash;
       const r = await v1Tx.wait();
       blockNumber = r?.blockNumber ?? null;
+      try { onChainId = ((await regV1.nextId()) - 1n).toString(); } catch { onChainId = null; }
     }
 
-    // B-V2-33 fix · iter-68: write anchorTxHash + anchorBlockNumber back to
-    // the receipt JSON AFTER the anchor tx confirms. Pre-fix, room.ts wrote
-    // the receipt JSON BEFORE anchoring and never updated it post-confirm,
-    // leaving chainAnchor missing the per-anchor metadata.
+    // B-V2-33 fix · iter-68 + iter-69: write anchorTxHash + anchorBlockNumber
+    // + anchorTimestamp + onChainId + status back to the receipt JSON AFTER
+    // the anchor tx confirms. Pre-fix, room.ts wrote the receipt JSON BEFORE
+    // anchoring and never updated it post-confirm, leaving chainAnchor with
+    // only the 4 static fields. Iter-68 added 3 anchorXxx fields; iter-69
+    // adds onChainId + status to bring room.ts to full parity with
+    // passport-consolidate.ts:411-421 (the gold-standard write-back pattern).
     const anchoredReceipt = {
       ...signed,
       chainAnchor: {
         ...signed.chainAnchor,
+        status: 'anchored' as const,
+        ...(onChainId !== null ? { onChainId } : {}),
         anchorTxHash: txHash,
         ...(blockNumber !== null ? { anchorBlockNumber: blockNumber } : {}),
         anchorTimestamp: Math.floor(Date.now() / 1000),
@@ -628,6 +639,7 @@ roomCommand
     ui.pass(`receipt              ${signed.id}`);
     ui.pass(`tx                   ${txHash}`);
     ui.pass(`block                ${blockNumber ?? '?'}`);
+    ui.pass(`on-chain id          ${onChainId ?? '?'}`);
     ui.divider();
-    ui.hint(`Public proof: ${studioUrl('/r/<onchain-id>')}  (use \`ivaronix indexer backfill\` to resolve the on-chain id)`);
+    ui.hint(`Public proof: ${studioUrl(`/r/${onChainId ?? '<onchain-id>'}`)}`);
   });
