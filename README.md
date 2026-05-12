@@ -6,7 +6,7 @@
 [ Drop a document ]  ──▶  [ 0G Compute TEE ]  ──▶  [ 0G Chain anchor ]  ──▶  [ Public Proof URL ]
    contract.pdf            specialist runs           receipt signed +          /r/<id> renders
    never leaves            inside attested           hash anchored on          evidence anyone
-   unencrypted             hardware enclave          ReceiptRegistryV2         can re-verify
+   unencrypted             hardware enclave          ReceiptRegistry V2/V3     can re-verify
 ```
 
 ## How it works
@@ -14,7 +14,7 @@
 1. **Drop a document.** Studio's drop-zone or `ivaronix doc ask <file>`.
 2. **The specialist runs in a 0G Compute TEE.** Plaintext is invisible outside the run — the Router sees the request, but the inference output never leaves the TEE unencrypted.
 3. **A receipt is signed and hashed.** Every claim ties back to verifiable evidence; the receipt's canonical hash is byte-equal across TS / Python / Rust reference implementations.
-4. **The receipt anchors on `ReceiptRegistryV2`.** Chain confirms the signer, the hash, and the exact moment the audit happened.
+4. **The receipt anchors on `ReceiptRegistryV2` or `ReceiptRegistryV3`** (V3 for the canonical-slot-10/11/12 types post-B-V2-32; V2 for slots 0-9). Chain confirms the signer, the hash, and the exact moment the audit happened.
 5. **Anyone replays the verification.** From any machine, in any of three languages, without an account.
 
 > AI review for documents you can't paste into ChatGPT. Burn-Mode encrypts; the session key dies after the run. Every audit anchors a verifiable receipt on 0G Chain. Anyone can re-verify it from any machine, in any language.
@@ -54,9 +54,9 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
 | 0G primitives integrated | **6** | Chain · Compute · Storage · Router · AgentID · Memory KV |
 | Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->** | <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
-| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1657<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` |
-| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + Guard + Capability + Skill + Subscription |
-| Deployed contracts | **<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed -->** | Receipt V1 + V2 · Passport V1 + V2 · Verifier · Capability · Skill · Subscription on Galileo |
+| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1657<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` + `ReceiptRegistryV3` |
+| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + V3 + Guard + Capability + Skill + Subscription |
+| Deployed contracts | **<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed -->** | Receipt V1 + V2 + V3 · Passport V1 + V2 · Capability V1 + V2 · Memory V1 + V2 · Skill V1 + V2 · Subscription V1 + V2 · Verifier on Galileo |
 | Packages typecheck-clean | **<!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean -->** | `pnpm -r --filter "@ivaronix/*" run typecheck` green |
 | First-party test files | **<!-- numbers:auto:packages.testFiles -->21<!-- /numbers:auto:packages.testFiles -->** | `*.test.ts` under `packages/` + `apps/` (excludes `_design`, `opencode-*`, compiled output) |
 | Polyglot canonical hash | **<!-- numbers:auto:polyglotHash.languages -->3<!-- /numbers:auto:polyglotHash.languages --> languages** | TS + Python + Rust byte-equal in `.github/workflows/jcs-roundtrip.yml` (29/29 vectors) |
@@ -90,7 +90,7 @@ Receipt-gated fee splits, on-chain creator wallet, marketplace primitive on ever
 Why receipt-gated splits, not a static registry? A creator only earns when:
 1. The run completes inside a TEE-attested 0G Compute provider, AND
 2. The receipt's signature recovers to an `AgentPassport`-resolvable wallet, AND
-3. The receipt anchors on `ReceiptRegistryV2` with the correct fee-split block.
+3. The receipt anchors on `ReceiptRegistryV2` or `ReceiptRegistryV3` (per slot · V3 for canonical 10/11/12) with the correct fee-split block.
 
 No receipt → no payment. No TEE → no green badge. Trustless monetisation, not a self-claimed leaderboard.
 
