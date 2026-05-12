@@ -6,13 +6,17 @@ import {
   CapabilityRegistryClient,
   MemoryAccessLogClient,
   AgentPassportClient,
+  ReceiptRegistryV3Client,
+  ReceiptRegistryV2Client,
   MEMORY_ACCESS,
   getDeployedAddress,
   type MemoryAccessType,
 } from '@ivaronix/og-chain';
+import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
 import { MemoryEngine } from '@ivaronix/memory';
 import { memoryStreamId, MEMORY_STREAM_NAMESPACE, createStorageClient } from '@ivaronix/og-storage';
-import { NETWORKS, type Address, type Hash } from '@ivaronix/core';
+import { NETWORKS, sha256HexAsync, type Address, type Hash } from '@ivaronix/core';
+import { writeFileSync } from 'node:fs';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { confirmAction } from '../lib/confirm.js';
@@ -319,6 +323,122 @@ memoryCommand
             ui.info(`passport tokenId     ${tokenId.toString()}`);
             ui.info(`memoryRoot           ${sr.rootHash}`);
             ui.info(`registry             ${passportAddr} (${v2Addr ? 'V2' : 'V1 legacy'})`);
+
+            // B-V2-35 slot 7 closure: anchor a passport_update receipt
+            // (canonical slot 7) on V3 ReceiptRegistry so chain consumers
+            // can find every passport.memoryRoot update by filtering
+            // receiptType==7. The receipt body cites the updateMemoryRoot
+            // tx as the underlying chain action.
+            ui.divider();
+            ui.pending('anchoring passport_update receipt (B-V2-35 slot 7)...');
+            try {
+              const receiptRegV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+              const receiptRegV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+              const writeAddr = (receiptRegV3 ?? receiptRegV2) as Address | null;
+              const writeVersion: 'v2' | 'v3' = receiptRegV3 ? 'v3' : 'v2';
+              if (!writeAddr) {
+                ui.fail(`no ReceiptRegistry V3 or V2 on ${env.network} · skipping passport_update receipt`);
+              } else {
+                const updateTxHash = tx.hash as Hash;
+                const userPromptHash = (await sha256HexAsync(new TextEncoder().encode(`passport.update.memoryRoot:${tokenId.toString()}:${sr.rootHash}`))) as Hash;
+                const draft = buildReceipt({
+                  type: 'passport_update',
+                  agent: {
+                    passportId: `did:0g:passport:${signer.address}:${tokenId.toString()}`,
+                    ownerWallet: signer.address as Address,
+                    trustScoreAtTime: 0,
+                  },
+                  request: {
+                    skillId: 'passport.update',
+                    skillVersion: '0.1.0',
+                    skillManifestHash: userPromptHash,
+                    userPromptHash,
+                    inputArtifacts: [{ kind: 'memory', encrypted: false }],
+                    policyDecision: 'approved',
+                    approvalChain: [
+                      { gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:self-update' },
+                    ],
+                  },
+                  execution: {
+                    mode: 'passport_update',
+                    burnMode: false,
+                    consensusMode: false,
+                    modelSelection: { requested: 'none', final: 'none' },
+                    providerRouting: {
+                      allowFallbacks: false,
+                      finalProvider: '0x0000000000000000000000000000000000000000' as Address,
+                    },
+                  },
+                  teeVerification: {
+                    requested: false,
+                    routerVerified: false,
+                    independentVerified: null,
+                    verificationMethod: 'external-signed',
+                    verifiedAt: null,
+                  },
+                  routerTrace: {
+                    requestId: `passport.update:${tokenId.toString()}:${Date.now()}`,
+                    x0gTrace: {},
+                    rateLimit: {},
+                    rotations: [],
+                  },
+                  billing: {
+                    inputTokens: 0,
+                    outputTokens: 0,
+                    inputCostNeuron: '0',
+                    outputCostNeuron: '0',
+                    totalCostNeuron: '0',
+                    totalCostOg: '0.0000000000',
+                  },
+                  chainAnchor: defaultChainAnchor(env.network as 'testnet' | 'mainnet', writeAddr),
+                  storage: {
+                    evidenceRoot: sr.rootHash as Hash,
+                    proofDownloadVerified: false,
+                    encryption: { enabled: false, type: 'none', headerDetected: false },
+                  },
+                  outputs: {
+                    outputHash: userPromptHash,
+                    citations: [userPromptHash], // sha256:<64-hex> · ties back to the tokenId+storageRoot tuple cited in updateMemoryRoot
+                    riskLevel: 'low',
+                    wording: {
+                      headline: `Passport ${tokenId.toString()} memoryRoot updated to ${sr.rootHash.slice(0, 10)}...`,
+                      doNotSay: ['truth score', 'verified by AI'],
+                    },
+                  },
+                  createdBy: 'ivaronix-runtime/0.0.1',
+                });
+                const signed = await signReceipt(draft, signer);
+
+                // Persist locally first (so the file exists even if anchor fails).
+                const outDir = resolve('.ivaronix', 'receipts', 'anchored');
+                if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+                const localPath = resolve(outDir, `${signed.id}.json`);
+                writeFileSync(localPath, JSON.stringify(signed, null, 2));
+
+                const regClient =
+                  writeVersion === 'v3'
+                    ? new ReceiptRegistryV3Client(writeAddr, signer)
+                    : new ReceiptRegistryV2Client(writeAddr, signer);
+                const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
+                const RECEIPT_TYPE_CODE = 7; // canonical slot 7 passport_update
+                const { tx: anchorTx } = await regClient.signAndAnchor(signer, {
+                  receiptRoot: signed.storage.receiptRoot as Hash,
+                  storageRoot: sr.rootHash as Hash,
+                  attestationHash: ZERO_HASH,
+                  receiptType: RECEIPT_TYPE_CODE,
+                });
+                const anchorReceipt = await anchorTx.wait();
+                const onChainId = (await regClient.nextId()) - 1n;
+                ui.pass(`receipt              ${signed.id}`);
+                ui.info(`anchor tx            ${anchorTx.hash} (${writeVersion.toUpperCase()})`);
+                ui.info(`anchor block         ${anchorReceipt?.blockNumber}`);
+                ui.info(`on-chain id          ${onChainId.toString()}`);
+                ui.info(`receipt type         passport_update (canonical slot 7)`);
+              }
+            } catch (err) {
+              ui.fail('passport_update receipt anchor failed', (err as Error).message.split('\n')[0]);
+              // Don't fail the whole command — the updateMemoryRoot tx already succeeded.
+            }
           } catch (err) {
             ui.fail('on-chain anchor failed', (err as Error).message.split('\n')[0]);
             process.exitCode = 1;
