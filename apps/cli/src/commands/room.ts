@@ -291,10 +291,17 @@ roomCommand
           providerRouting: { allowFallbacks: true, finalProvider: '0x0000000000000000000000000000000000000000' as Address },
         },
         teeVerification: {
+          // Room create is a chain-write + storage-upload flow. No
+          // inference runs, no Router call, no TEE attestation. Honest
+          // method per docs/RECEIPT_SCHEMA.md §35 is 'external-signed'
+          // (signed + chain-anchored but NOT TEE-verified). Pre-iter-113
+          // this claimed 'router_flag' which would over-render as TIER 1
+          // on /r/<id> despite no TEE involvement — caught by iter-113
+          // verification-method audit per plan row 1041.
           requested: false,
           routerVerified: false,
           independentVerified: null,
-          verificationMethod: 'router_flag',
+          verificationMethod: 'external-signed',
           verifiedAt: null,
         },
         routerTrace: {
@@ -559,10 +566,12 @@ roomCommand
         providerRouting: { allowFallbacks: true, finalProvider: '0x0000000000000000000000000000000000000000' as Address },
       },
       teeVerification: {
+        // Same honesty fix as room create above (iter-113). Room read
+        // is chain-read + capability check + chain-anchor; no TEE.
         requested: false,
         routerVerified: false,
         independentVerified: null,
-        verificationMethod: 'router_flag',
+        verificationMethod: 'external-signed',
         verifiedAt: null,
       },
       routerTrace: {

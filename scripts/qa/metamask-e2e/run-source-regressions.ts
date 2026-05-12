@@ -58,6 +58,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
       /^verify-receipt-types-have-producers/, // B-V2-35 closure · every RECEIPT_TYPES slot has at least 1 producer in shipped code
       /^verify-no-dead-domain-fallbacks/, // iter-103/104 closure · no 'ivaronix.studio' hardcodes + no localhost-only fallbacks without Vercel-env chain
+      /^verify-tee-verification-method-honesty/, // iter-113 closure · routerVerified=false + TIER-1 verificationMethod is a brand overclaim
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
