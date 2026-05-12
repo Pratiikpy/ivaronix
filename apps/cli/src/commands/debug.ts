@@ -1,4 +1,5 @@
 // v3-lookup-allow: debug reader inspects V1+V2 chain state for diagnostic depth; V3 receipts are visible via `ivaronix receipt show <id>` (V2-first lookup includes V3 since iter-92). V3-aware debug surfaces tracked in USER_TODO §B-V2-37.
+// v1-passport-allow: debug reader inspects V1 passport state for diagnostic depth; V2 passport inspection via `ivaronix passport show` (V2-first since iter-121). V2-aware debug surfaces tracked in USER_TODO §B-V2-38.
 /**
  * `ivaronix debug …` — diagnostic depth (PASS 77 F-7, A2 path).
  *

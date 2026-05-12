@@ -1,3 +1,4 @@
+// v1-passport-allow: stats reads V1 passport tokenId for the operator wallet; V2-first migration tracked in USER_TODO §B-V2-38.
 /**
  * `ivaronix stats` — usage telemetry on real on-chain + local data (F-stats, A2).
  *

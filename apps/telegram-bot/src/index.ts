@@ -1,3 +1,4 @@
+// v1-passport-allow: telegram bot exposes V1 passport state for chat-style queries; V2-first migration tracked in USER_TODO §B-V2-38.
 /**
  * Ivaronix Telegram thin client (PASS 76 S-3).
  *

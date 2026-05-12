@@ -57,7 +57,15 @@ passportCommand
       return;
     }
 
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first WRITE per .claude/rules/og-chain.md + iter-120 V3-blindness audit
+    // (this iteration extends the same pattern from ReceiptRegistry to AgentPassportINFT).
+    // V2 contract carries K-1 (multi-mint protection) + K-4 (trustScore manipulation)
+    // + K-6 (memoryRoot poisoning) security fixes. New mints MUST target V2; V1 stays
+    // live for legacy tokenIds 1-4 only.
+    const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+    const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+    const passportAddr = passportAddrV2 ?? passportAddrV1;
+    const passportVersion: 'v1' | 'v2' = passportAddrV2 ? 'v2' : 'v1';
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -68,18 +76,41 @@ passportCommand
     const wallet = new Wallet(env.privateKey, provider);
     const passport = new AgentPassportClient(passportAddr, wallet);
 
-    // One-passport-per-wallet check
-    const existing = await passport.passportOf(wallet.address as Address);
-    if (existing !== 0n) {
-      ui.fail(`Wallet ${wallet.address} already has a passport (tokenId ${existing})`);
-      ui.hint(`Run 'ivaronix passport show' to inspect, or 'ivaronix passport restore --wallet ${wallet.address}' to fetch state.`);
-      process.exitCode = 1;
-      return;
+    // Cross-contract one-passport-per-wallet check. V1 and V2 have separate
+    // passportOf mappings — a wallet with a V1 passport could still pass V2's
+    // own check. We refuse mint if EITHER contract already returns non-zero.
+    if (passportAddrV2 && passportAddrV1 && passportAddrV2 !== passportAddrV1) {
+      const v1Client = new AgentPassportClient(passportAddrV1, provider);
+      const v2Client = new AgentPassportClient(passportAddrV2, provider);
+      const [existingV1, existingV2] = await Promise.all([
+        v1Client.passportOf(wallet.address as Address),
+        v2Client.passportOf(wallet.address as Address),
+      ]);
+      if (existingV1 !== 0n) {
+        ui.fail(`Wallet ${wallet.address} already has a V1 passport (tokenId ${existingV1})`);
+        ui.hint(`Run 'ivaronix passport show' to inspect, or 'ivaronix passport restore --wallet ${wallet.address}' to fetch state.`);
+        process.exitCode = 1;
+        return;
+      }
+      if (existingV2 !== 0n) {
+        ui.fail(`Wallet ${wallet.address} already has a V2 passport (tokenId ${existingV2})`);
+        ui.hint(`Run 'ivaronix passport show' to inspect, or 'ivaronix passport restore --wallet ${wallet.address}' to fetch state.`);
+        process.exitCode = 1;
+        return;
+      }
+    } else {
+      const existing = await passport.passportOf(wallet.address as Address);
+      if (existing !== 0n) {
+        ui.fail(`Wallet ${wallet.address} already has a passport (tokenId ${existing})`);
+        ui.hint(`Run 'ivaronix passport show' to inspect, or 'ivaronix passport restore --wallet ${wallet.address}' to fetch state.`);
+        process.exitCode = 1;
+        return;
+      }
     }
 
     ui.title('Minting Agent Passport (ERC-7857)');
     ui.info(`network              ${env.network}`);
-    ui.info(`contract             ${passportAddr}`);
+    ui.info(`contract             ${passportAddr} (${passportVersion.toUpperCase()})`);
     ui.info(`owner wallet         ${wallet.address}`);
     ui.info(`name                 ${opts.name}`);
     ui.info(`handle               ${opts.handle}`);
@@ -181,8 +212,11 @@ passportCommand
   .option('--wallet <address>', 'inspect a different wallet')
   .action(async (opts: { wallet?: string }) => {
     const env = loadEnv();
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-    if (!passportAddr) {
+    // V2-first read pattern. V2 carries K-1/K-4/K-6 security fixes; V1 stays
+    // live for legacy tokenIds 1-4. Query V2 first, fall back to V1.
+    const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+    const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+    if (!passportAddrV2 && !passportAddrV1) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       return;
     }
@@ -194,8 +228,19 @@ passportCommand
     }
 
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const passport = new AgentPassportClient(passportAddr, provider);
-    const data = await passport.getPassportByWallet(target);
+    let data = null;
+    let foundOn: 'v1' | 'v2' | null = null;
+    let foundAddr: Address | null = null;
+    if (passportAddrV2) {
+      const passportV2 = new AgentPassportClient(passportAddrV2, provider);
+      data = await passportV2.getPassportByWallet(target);
+      if (data) { foundOn = 'v2'; foundAddr = passportAddrV2; }
+    }
+    if (!data && passportAddrV1) {
+      const passportV1 = new AgentPassportClient(passportAddrV1, provider);
+      data = await passportV1.getPassportByWallet(target);
+      if (data) { foundOn = 'v1'; foundAddr = passportAddrV1; }
+    }
 
     if (!data) {
       ui.fail(`No passport for ${target}`);
@@ -203,10 +248,12 @@ passportCommand
       return;
     }
 
-    ui.title(`Passport for ${target}`);
+    const versionTag = foundOn === 'v2' ? 'V2' : 'V1 LEGACY';
+    ui.title(`Passport for ${target} · ${versionTag}`);
     ui.divider();
     ui.info(`tokenId              ${data.tokenId}`);
     ui.info(`owner                ${data.owner}`);
+    ui.info(`contract             ${foundAddr} (${versionTag})`);
     ui.info(`metadataRoot         ${data.metadataRoot}`);
     ui.info(`memoryRoot           ${data.memoryRoot === '0x0000000000000000000000000000000000000000000000000000000000000000' ? '(none yet)' : data.memoryRoot}`);
     ui.info(`skillManifestRoot    ${data.skillManifestRoot === '0x0000000000000000000000000000000000000000000000000000000000000000' ? '(none yet)' : data.skillManifestRoot}`);
@@ -223,7 +270,7 @@ passportCommand
     ui.info(`mintedAt             ${data.mintedAt}  (${new Date(Number(data.mintedAt) * 1000).toISOString()})`);
     ui.info(`lastEvolutionAt      ${data.lastEvolutionAt}  (${new Date(Number(data.lastEvolutionAt) * 1000).toISOString()})`);
     ui.divider();
-    ui.hint(`Explorer: ${NETWORKS[env.network].chainExplorer}/address/${passportAddr}`);
+    ui.hint(`Explorer: ${NETWORKS[env.network].chainExplorer}/address/${foundAddr}`);
   });
 
 // ─── restore ─────────────────────────────────────────────────────────────────

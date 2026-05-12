@@ -1,4 +1,5 @@
 // v3-lookup-allow: writer emits slots 0-9 only (doc_ask/consensus/burn/skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// v1-passport-allow: doc anchorer reads V1 passport for trust-score gating; V2-first migration tracked in USER_TODO §B-V2-38. (pipeline.ts trust read IS V2-first since iter-121 · this file's read is the redundant sandbox-decision path.)
 import { Command } from 'commander';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename } from 'node:path';

@@ -1,3 +1,4 @@
+// v1-passport-allow: writes delegate ops against V1 passport; V2-first migration tracked in USER_TODO §B-V2-38 (delegate flow does not yet exercise K-1/K-4/K-6 V2 fixes).
 import { Command } from 'commander';
 import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';

@@ -1,4 +1,5 @@
 // v3-lookup-allow: serve API exposes V1+V2 receipts via /v1/receipt/<id>; V3 receipts resolve via the V2-first read path in apps/cli/src/commands/receipt.ts (which IS V3-aware). serve.ts V3 lookup tracked in USER_TODO §B-V2-37.
+// v1-passport-allow: serve API exposes V1 passport state via /v1/passport/<addr>; V2-first migration tracked in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve, dirname } from 'node:path';

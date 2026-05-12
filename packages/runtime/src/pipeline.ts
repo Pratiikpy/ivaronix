@@ -176,14 +176,25 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     else log.info(tag(`registry scan        not registered (local-only)`));
   }
 
-  // 2. Trust score
+  // 2. Trust score — V2-first read per iter-121. V2 passport carries the
+  // K-4 trustScore-manipulation fix. If a wallet has a V2 passport, its
+  // trustScore is authoritative; pre-fix's V1-only read silently returned
+  // 0 for V2-passport wallets, downgrading sandbox decisions.
   let callerTrust = 0;
   try {
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-    if (passportAddr && env.walletAddress) {
-      const pc = new AgentPassportClient(passportAddr, provider);
-      const profile = await pc.getPassportByWallet(env.walletAddress as `0x${string}`);
-      if (profile) callerTrust = Number(profile.trustScore ?? 0);
+    if (env.walletAddress) {
+      const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+      const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+      if (passportAddrV2) {
+        const pcV2 = new AgentPassportClient(passportAddrV2, provider);
+        const profile = await pcV2.getPassportByWallet(env.walletAddress as `0x${string}`);
+        if (profile) callerTrust = Number(profile.trustScore ?? 0);
+      }
+      if (callerTrust === 0 && passportAddrV1) {
+        const pcV1 = new AgentPassportClient(passportAddrV1, provider);
+        const profile = await pcV1.getPassportByWallet(env.walletAddress as `0x${string}`);
+        if (profile) callerTrust = Number(profile.trustScore ?? 0);
+      }
     }
   } catch { /* best-effort */ }
 
@@ -934,14 +945,30 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
 
   log.pass(tag(`receipt              ${signed.id}  block=${txReceipt?.blockNumber}  on-chain id=${onchainId}`));
 
-  // Best-effort passport update
+  // Best-effort passport update. V2-first per iter-121: V2 carries the
+  // K-4 (trustScore manipulation) + K-6 (memoryRoot poisoning) security
+  // fixes. If the wallet has a V2 passport, recordReceipt against V2.
+  // If only V1 passport exists (legacy tokenIds 1-4), fall back to V1.
+  // Pre-fix: V1-only — silently skipped recordReceipt for any V2-passport
+  // wallet, so V2 passport receiptCount stayed at 0 even after anchors.
   try {
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-    if (passportAddr) {
-      const passport = new AgentPassportClient(passportAddr, wallet);
-      const tokenId = await passport.passportOf(wallet.address as `0x${string}`);
-      if (tokenId !== 0n) {
-        const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
+    const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+    const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+    let recorded = false;
+    if (passportAddrV2) {
+      const passportV2 = new AgentPassportClient(passportAddrV2, wallet);
+      const tokenIdV2 = await passportV2.passportOf(wallet.address as `0x${string}`);
+      if (tokenIdV2 !== 0n) {
+        const ptx = await passportV2.recordReceipt(tokenIdV2, signed.storage.receiptRoot as Hash, typeCode, 1);
+        await ptx.wait();
+        recorded = true;
+      }
+    }
+    if (!recorded && passportAddrV1) {
+      const passportV1 = new AgentPassportClient(passportAddrV1, wallet);
+      const tokenIdV1 = await passportV1.passportOf(wallet.address as `0x${string}`);
+      if (tokenIdV1 !== 0n) {
+        const ptx = await passportV1.recordReceipt(tokenIdV1, signed.storage.receiptRoot as Hash, typeCode, 1);
         await ptx.wait();
       }
     }

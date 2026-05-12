@@ -1,4 +1,5 @@
 // v3-lookup-allow: model writer emits slots 0-9 only (consensus + skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// v1-passport-allow: model fine-tune reads V1 passport for trust score; V2-first migration tracked in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';

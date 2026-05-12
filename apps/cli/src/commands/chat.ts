@@ -1,3 +1,4 @@
+// v1-passport-allow: reads V1 passport for chat session context; V2-first migration tracked in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';

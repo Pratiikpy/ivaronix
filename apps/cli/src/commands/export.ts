@@ -1,3 +1,4 @@
+// v1-passport-allow: export reader bundles V1 passport state for portability; V2 passport export tracked in USER_TODO §B-V2-38.
 /**
  * `ivaronix export` and `ivaronix import` — portable bundle (F-export, A2).
  *

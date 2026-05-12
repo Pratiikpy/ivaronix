@@ -1,3 +1,4 @@
+// v1-passport-allow: consolidator writes memory snapshot against V1 passport (updateMemoryRoot); V2-first migration tracked in USER_TODO §B-V2-38. K-6 memoryRoot-poisoning fix is on V2 only.
 import { Command } from 'commander';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
