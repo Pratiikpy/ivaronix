@@ -394,15 +394,22 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
-### B-V2-34 · `numbers.json` `skills.creatorEarningsOG/Label` are hand-frozen across refreshes
-- **Source:** iter-63 cron drove `ivaronix skill earn-history private-doc-review` and got `36 runs · 0.001810629 OG` creator earnings. `docs/numbers.json` says `0.0014 OG · 26 paid runs` (~30% stale). Inspecting `scripts/diag/numbers-refresh.ts:400-401` shows the values are preserved from `existing.skills.creatorEarningsOG` / `existing.skills.creatorEarningsLabel` rather than recomputed from chain. CLAUDE.md §15 explicitly bans this pattern: "Don't preserve a hand-frozen number across refreshes — the value silently drifts when the underlying source changes (cron-sweep findings · 2026-05-10)."
-- **Why it matters:** every cron run that drives `ivaronix skill earn-history` would show drift between the CLI output (current chain state) and the rendered docs (hand-frozen value). README + PITCH cite this number; both ship a stale claim to judges/users until the next manual edit. Iter-63 manually updated to `0.0018 OG · 36 paid runs` as an immediate fix; the structural fix is below.
+### B-V2-34 · `numbers.json` 4 fields hand-frozen across refreshes (creatorEarnings + polyglotHash)
+- **Source:** iter-63 cron drove `ivaronix skill earn-history private-doc-review` and got `36 runs · 0.001810629 OG` creator earnings. `docs/numbers.json` said `0.0014 OG · 26 paid runs` (~30% stale). Inspecting `scripts/diag/numbers-refresh.ts` revealed 4 fields preserved from `existing.<path>` rather than recomputed. CLAUDE.md §15 explicitly bans this pattern: "Don't preserve a hand-frozen number across refreshes — the value silently drifts when the underlying source changes (cron-sweep findings · 2026-05-10)."
+- **The 4 hand-frozen fields** (per iter-64 grep `existing\.` in numbers-refresh.ts):
+  - line 400: `creatorEarningsOG` (caught iter-63 · drift 0.0014 → 0.0018)
+  - line 401: `creatorEarningsLabel` (caught iter-63)
+  - line 412: `polyglotHash` (subtree spread · current values: `languages: 3` + `languageList`)
+  - line 420: `polyglotHash.tests` (subtree spread · current values: `ts: 17, python: 14, rust: 11, crossImplVectors: 29`)
+- **Polyglot values still current as of iter-48 + iter-49 measurement** (Python 14/14 + Rust 11/11 + cross-impl 29/29). But the same drift class as creatorEarnings — if someone adds a 15th Python test, the count stays at 14 in numbers.json until manual edit.
+- **Why it matters:** every cron run that drives `ivaronix skill earn-history` or runs the polyglot suites would show drift between the CLI/test output (current state) and the rendered docs (hand-frozen value). README + PITCH cite these numbers via PROSE (not numbers:auto markers), so docs:check/render misses them. Iter-63 manually updated creatorEarnings to `0.0018 OG · 36 paid runs`; the structural fix below covers all 4.
 - **Action:**
-  1. Implement a `countCreatorEarnings(skillId)` helper in `numbers-refresh.ts` that mirrors the `earn-history` aggregation logic (scan local anchored receipts + sum `billing.feeSplit.creatorNeuron` by skill id + format as OG).
-  2. Replace `existing.skills.creatorEarningsOG/Label` at line 400-401 with calls to the new helper.
-  3. Bake into the existing `pnpm numbers:refresh` so refresh becomes idempotent for these fields.
-  4. Add a regression test that fails if any field in `numbers.json` is preserved-from-existing without an explicit `count<X>()` call — meta-protection against this drift class.
-- **Effort:** ~2-3h (helper + integration + regression test).
+  1. Implement `countCreatorEarnings(skillId)` helper in `numbers-refresh.ts` that mirrors earn-history aggregation (scan local anchored receipts + sum `billing.feeSplit.creatorNeuron` by skill id + format as OG).
+  2. Implement `countPolyglotTests()` helper that runs/parses `pnpm --filter @ivaronix/core test` (TS) + `python verifier-py -m unittest test_jcs.py` (Py) + `cargo test --release` in ivaronix-verifier-rs (Rust) + `python cross_check.py` (29-vector cross-impl), extracts counts from each, returns the polyglotHash subtree.
+  3. Replace `existing.skills.creatorEarningsOG/Label` (lines 400-401) AND `...existing.polyglotHash`/`...existing.polyglotHash.tests` (lines 412/420) with the new helpers.
+  4. Add regression `verify-numbers-refresh-no-existing-preserves.ts` that fails if any new `existing.<countable-field>` is added without explicit recomputation. Meta-protection against this drift class recurring.
+  5. Optional follow-on: add `verify-no-bare-numbers-in-rendered-docs.ts` to also catch numeric claims in prose (not just inside numbers:auto markers) — currently only the latter is gated.
+- **Effort:** ~3-4h total (3 helpers + integration + regression + optional prose-numbers gate).
 
 ### B-V2-33 · CLI commands don't write `chainAnchor.id` / `txHash` / `blockNumber` back to the local receipt JSON
 - **Source:** Iteration-16 cron drove `ivaronix room read 01KR66C1GJVR57MHQPJCW1HQQY`. Receipt anchored on chain (tx `0xfb445f16…d331` block 32919713), printed to stdout, but the local receipt file at `.ivaronix/receipts/anchored/rcpt_01KRE1BKV68S235P86PNZG6R43.json` has `chainAnchor: { network, chainId, rpcUrlHash, registryAddress }` only — no `id`, `txHash`, `blockNumber`. Same pattern in `apps/cli/src/commands/room.ts:581` (writes file before anchor) and `apps/cli/src/commands/passport-consolidate.ts:366-396` (same write-before-anchor flow). Iteration-15 code_change receipt #6 has the same gap.
