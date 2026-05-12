@@ -582,3 +582,41 @@ Cron `*/2 * * * *` (job `b0970f32`) continues for the next mission round.
 - Regression suite `packages/skills/src/sandbox.test.ts`: 9/9 cases green. Includes a source-file guard that re-fails if `&& false /* placeholder */` returns to the file.
 - Typecheck clean across `@ivaronix/skills`, `@ivaronix/runtime`, `@ivaronix/cli`.
 - Effect: a NIM-routed run against a TEE-required skill (e.g. `private-doc-review`) now blocks at the sandbox layer with a structured violation. Previous behavior silently downgraded to TIER 2 attestation while the skill manifest declared TEE required.
+
+## 2026-05-12 · ReceiptRegistryV3 chain-cap raise (B-V2-32) — FULLY CLOSED across iter-76 → iter-80
+
+Source: iter-16 cron found that `room.ts` + `passport-consolidate.ts` were coercing `doc_room_create` (canonical slot 10), `doc_room_read` (slot 11), and `memory_consolidation` (slot 12) to type-4 (`memory_access`) on chain because `ReceiptRegistryV2.sol` capped admitted types at slot 9 (`subscription_skill_exec`). The off-chain receipt body always carried the canonical type name; the on-chain field was a known coercion. This created an honesty gap: a chain reader filtering `receiptType == 11` found zero results even though three iterations produced doc_room_read receipts.
+
+### B-V2-32 · ReceiptRegistryV3 → ✅ DEPLOYED `0x7396D536594e2BE833070c7EB441A10906046257` (tx `0x513acfa90473807c00423c97cf55897d04f2fa61c38668958b364985e934bda5`) block 32934123 · 14-step closure chain
+
+Per §12.4 evidence-folder rule + §15 ship-X-discover-X rule, all artefacts:
+
+- **Source (iter-76 · commits c008943):**
+  - `contracts/src/ReceiptRegistryV3.sol` — fresh deploy per `.claude/rules/contracts.md` "V2 = new contract, not upgrade". Adds `TYPE_DOC_ROOM_CREATE=10` · `TYPE_DOC_ROOM_READ=11` · `TYPE_MEMORY_CONSOLIDATION=12`. EIP-712 domain version bumped "2" → "3" so V2 signatures cannot replay on V3.
+  - `contracts/test/ReceiptRegistryV3.t.sol` — 6 Foundry tests · all green · covers all 3 new slots + legacy 0-9 + out-of-range (13) revert + domain-separator distinction.
+  - Foundry suite 167 → 173 PASS.
+- **TS client (iter-77 · commit a7b5ee9):**
+  - `packages/og-chain/src/contracts/ReceiptRegistryV3.ts` — full client (signAndAnchor / getReceipt / findByReceiptRoot / findByAgent / nextId / nonces / agentReceiptCount). EIP-712 domain version "3". Re-export from `packages/og-chain/src/index.ts`.
+- **Deploy (iter-78 · commit 13cabe5):**
+  - Operator deployed via `forge create` after the TRY-BEFORE-SKIP audit caught a forge default gotcha — chainId 16602 not EIP-1559-recognised → bypass with `ETH_GAS_PRICE=5000000000` + `ETH_PRIORITY_GAS_PRICE=2500000000` env vars. Gas burn ≈0.001 OG.
+  - Chainscan link: `https://chainscan-galileo.0g.ai/tx/0x513acfa90473807c00423c97cf55897d04f2fa61c38668958b364985e934bda5`.
+  - `contracts/deployments/testnet.json` updated · `KNOWN_RECEIPT_REGISTRIES.testnet` Set updated · `numbers.json` auto-refreshed (sweep 36 helper).
+- **Studio chain wiring (iter-79 · commit 34ef283):**
+  - `apps/studio/src/lib/chain.ts` — `getReceiptRegistryV3()` helper. `UnifiedRegistries = {v3, v2, v1}`. `UnifiedReceipt.registryVersion: 'v1' | 'v2' | 'v3'`. `unifiedNextId()` returns `{v3, v2, v1, total}`. All read helpers V3-first → V2 → V1 fallback chain.
+  - `scripts/qa/metamask-e2e/verify-a13-studio-v2-first.ts` regex updated to assert `{v3, v2, v1, total}` shape. All 59 studio regressions PASS.
+- **CLI canonical-slot anchoring (iter-80 · commit 4cb4fd1):**
+  - `apps/cli/src/commands/room.ts` — `room create` flow anchors slot 10 on V3, coerces to slot 5 on V2/V1. `room read` flow anchors slot 11 on V3, coerces to slot 4 on V2/V1.
+  - `apps/cli/src/commands/passport-consolidate.ts` — anchors slot 12 on V3, coerces to slot 4 on V2/V1.
+  - Both files use V3 → V2 → V1 nullish-coalescing registry selection. CLI typecheck DONE; 59 studio regressions PASS.
+- **Bookkeeping (iter-81 · commit a53e05e):**
+  - `docs/USER_TODO.md` PENDING list replaced with 14-step iter-by-iter closure log. B-V2-32 marked FULLY CLOSED 2026-05-12.
+
+**Why this matters for §12.4:** new anchors on canonical slots 10/11/12 now record their canonical slot on chain (not coerced to type-4). V1+V2 receipts keep legacy encoding (chain history is immutable). A chain reader filtering `receiptType == 11` will now find every post-2026-05-12 doc_room_read receipt anchored on V3, closing the honesty gap iter-16 found.
+
+**Reproducer for a stranger:**
+```
+ivaronix doctor                                # confirms V3 in deployed contracts list
+ivaronix room create --file ./sample.pdf       # anchors slot 10 on V3
+ivaronix room read --id <onChainId> --wallet B # anchors slot 11 on V3
+forge test --root contracts                    # 173/173 PASS including ReceiptRegistryV3.t.sol
+```
