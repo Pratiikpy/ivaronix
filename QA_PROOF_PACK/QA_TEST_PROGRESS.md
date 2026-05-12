@@ -1,25 +1,36 @@
-# QA Test Progress · ivaronix.vercel.app · commit `8004943`
+# QA Test Progress · ivaronix.vercel.app · commit `53a98e5`
 
 ```
-PASS:    471 / ~908 rows
+PASS:    476 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections · 1 stale-cache cleanup)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
-First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 50 iters
+First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 51 iters
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
 Local delegates: 1 · separate passport chain from operator
-Skills: 156 canonical · runtime list aligned post-cleanup
+Skills: 156 canonical · runtime list aligned
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 61
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 61)
+Cron iterations completed: 62
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 62)
 ```
+
+## Iteration 62 — `ivaronix skill inspect` full manifest verified on 0g-integration-auditor
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 404 | `ivaronix skill inspect 0g-integration-auditor` returns comprehensive 5-section output | Header: version 0.1.1 (iter-11 republish) · license Apache-2.0 · manifestHash sha256:0dfc3d63… · rootPath seed-skills/0g-integration-auditor. § PERMISSIONS (8 fields) · § REPUTATION (3 fields) · § CONSENSUS + BURN (3 fields) · § PROMPT BODY (first 600 chars). Every field a runtime/contract/judge needs is visible. | ✅ PASS · operator-grade introspection | CLI | shell |
+| 405 | Skill PERMISSIONS matrix · 0g-integration-auditor case · CLAUDE.md §7 compliant | `memory_access: project_only · network_access: api.github.com + github.com + router-api-testnet.integratenetwork.work + router-api.0g.ai · wallet_access: no · writes_files: no · shell_access: none · receipt_required: true · compute_tee_required: true · passport_min_trust: 0`. Receipt-required AND TEE-required both true — matches CLAUDE.md §7 + planning-003 §A.3.6 every-first-party-skill receipt-required rule. | ✅ PASS · §7 enforced | CLI | shell |
+| 406 | Skill REPUTATION curve · 0g-integration-auditor is higher-trust than baseline | `on_pass: trustScore +2, receiptCount +1` (note: +2 trust delta vs default +1 — higher-trust skill earns more reputation per successful run). `on_fail: trustScore -1`. `on_violation: trustScore -10, locked=false`. Per-skill reputation curves let the registry surface trust signals at different rates for different skill complexity classes. | ✅ PASS · per-skill curve | CLI | shell |
+| 407 | The ±100 trustScoreDelta cap at the AgentPassportINFTV2 level enforces an UPPER bound on these curves | iter-22 confirmed `test_K1_DeltaCapEnforced_*` Foundry suite proves the contract caps trust deltas at ±100 per call. So even if a skill manifest declared `on_pass: trustScore +101`, the chain would refuse. The skill-level curves (e.g. +2) sit comfortably below this cap. Defense-in-depth across two layers. | ✅ PASS · 2-layer defense | iter 22 + this | aggregate |
+| 408 | Skill prompt body inspection ships · operator can preview before running | `§ PROMPT BODY (FIRST 600 CHARS)` shows the actual skill prompt's opening — "You are auditing a GitHub repository for the *quality* of its 0G integration..." + score-each-dimension-0-2 grading rubric for 4 dimensions. Operators can audit prompts before running them; matches CLAUDE.md §7 "every action generates a receipt" + the inspection-before-execution discipline. | ✅ PASS · operator-friendly | CLI | shell |
+| 409 | The manifestHash returned matches the iter-42 on-chain MATCH check | Inspect output: `manifestHash: sha256:0dfc3d631c2a1bc6084706c0e49740f27f95c73da824526ed069c89a40c7db73`. Iter-42 `skill verify 0g-integration-auditor` returned MATCH against on-chain. The inspect view and verify view agree on the same sha256 — two CLI surfaces, one cryptographic anchor. | ✅ PASS · cross-CLI parity | CLI | aggregate |
 
 ## Iteration 61 — Stale plan-step-clones removed · skill list count now 156 (matches numbers.json)
 
