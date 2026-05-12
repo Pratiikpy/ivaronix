@@ -311,7 +311,7 @@ During QA and fixing, maintain separate files so progress, fixes, and real user 
 PASS:    XX / 60+
 FAIL:    XX
 PENDING: XX
-BLOCKED: XX (with §B-V2-2, §A-2 etc. references)
+BLOCKED: XX (with §B-V2-N, §A-N etc. references — illustrative placeholders, not literal IDs)
 Last updated: YYYY-MM-DD HH:MM
 ```
 
@@ -419,7 +419,7 @@ Before running QA, record the exact environment.
 | Faucet | Galileo faucet → fund Wallet B/C from `https://faucet.0g.ai/`. Confirm balance via `/api/dashboard/<addr>`. |
 | Storage indexer | `https://indexer-storage-testnet-turbo.0g.ai` (live testnet endpoint — every `/api/run` anchor uploads to this). |
 | Official 0G SDK lineage | Confirm `packages/og-storage/` uses `@0gfoundation/0g-ts-sdk` (the official 0G TS SDK — cross-reference `oglabs resources/0g-storage-ts-sdk/`). Compute via `openai` SDK + custom `baseURL` at `compute-network-*.integratenetwork.work` (third-party Router fronting 0G Compute). No forks, no hand-rolled storage. |
-| 8 deployed contracts | Read all from `contracts/deployments/testnet.json`. **Live on Galileo:** `ReceiptRegistry` (V1, legacy), `ReceiptRegistryV2` (0xf675...90ab), `Erc7857Verifier` (0xEAd6...d938), `AgentPassportINFT` (V1), `AgentPassportINFTV2` (0x85e9...494d), `CapabilityRegistry` (0x3783...6a8D), `MemoryAccessLog`, `SkillRegistry`. Every chainscan link must open. V2 redeploys for the last 4 queued in `§B-V2-15/16/17/18` — test against V1 today; mark V2-of-each as `PENDING` until deployed. |
+| <!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed --> deployed contracts | Read all from `contracts/deployments/testnet.json`. **Live on Galileo (all V2 redeploys SHIPPED 2026-05-12):** `ReceiptRegistry` V1+V2+V3 (V3 admits slots 10/11/12), `Erc7857Verifier`, `AgentPassportINFT` V1+V2 (K-1/K-4/K-6 fix), `CapabilityRegistry` V1+V2 (B-V2-15 social-graph fix), `MemoryAccessLog` V1+V2 (B-V2-16 log-spoofing fix), `SkillRegistry` V1+V2 (B-V2-17 squatter fix), `SubscriptionEscrowV2` (B-V2-18 AGENT_AUTO accountability fix). Every chainscan link must open. |
 | API keys | Only record whether present/missing, never the secret value. |
 | Compute provider | 0G Router/Private Compute (default TIER 1), NVIDIA NIM (TIER 2 fallback). |
 | Storage mode | Real 0G Storage (wired into `/api/run` end-to-end since commit `7b1addc`). |
@@ -820,7 +820,7 @@ memory-grant-2wallets-desktop-2026-05-11.png
 | Memory | Memory grant | 2 | Wallet A grants memory/project access to Wallet B. | Memory grant command if available. | Grant appears in UI/log and on-chain/event proof if supported. | Video + tx link. |
 | Memory | Memory revoke | 2 | Wallet A revokes Wallet B access. Refresh as Wallet B. | Memory revoke command if available. | Wallet B no longer has access. UI shows revoked state. | Video + tx link. |
 | Memory | MemoryAccessLog spoofing defense | 2 | Wallet B tries to write a log entry into Wallet A's namespace (directly via ABI `log` call). | `cast send` against `MemoryAccessLog`. | Tx reverts — only the namespace owner (or active grantee) can write to that namespace's log. No log-spoofing. | Reverted tx + reason. |
-| Memory | Snapshot updates passport.memoryRoot | 1 | After `memory snapshot`, check passport's `memoryRoot` field on chain. | `ivaronix memory snapshot` then `ivaronix passport show`. | Snapshot uploads to 0G Storage, returns rootHash, and updates passport on-chain. (Queued in §B-V2-24; if not yet shipped, mark `PENDING` with that reference.) | CLI output + chainscan. |
+| Memory | Snapshot updates passport.memoryRoot | 1 | After `memory snapshot --anchor-on-chain`, check passport's `memoryRoot` field on chain. | `ivaronix memory snapshot --anchor-on-chain` then `ivaronix passport show`. | ✅ Shipped (§B-V2-24 SHIPPED 2026-05-13 · proof tx `0x2175670c...` block 32967060). Snapshot uploads to 0G Storage, returns rootHash, and updates passport on-chain via `updateMemoryRoot`. | CLI output + chainscan. |
 | Data room | Create room | 1 | Open `/data-room`, create room with document/evidence. | `ivaronix room create ...` | Room exists and shows owner/access state. | Screenshot/video. |
 | Data room | Share room | 2 | Wallet A shares room with Wallet B. Wallet B opens it. | `ivaronix room grant ...` | Wallet B can access only what was granted. | Video with both wallets. |
 | Data room | Revoke room | 2 | Wallet A revokes Wallet B. Wallet B refreshes. | `ivaronix room revoke ...` | Access is removed and UI explains why. | Video. |
@@ -975,7 +975,7 @@ CORS, rate-limit, auth-vs-anon behavior, JSON content-type, and error sanitizati
 
 | # | Open disclosure | Why it's NOT a bug |
 |---|---|---|
-| 2 | SubscriptionEscrow deployed, no CLI / Studio surface yet | Contract is live; surfaces queued in `§B-V2-18`. Recurring `subscription_skill_exec` receipts are PENDING. |
+| 2 | SubscriptionEscrowV2 deployed + CLI surface shipped, live verify needs 2nd wallet | ✅ Contract live (§B-V2-18 SHIPPED 2026-05-12 · `0x74235b70...`). ✅ CLI surface shipped iter-100 (§B-V2-35 slot-9 · `apps/cli/src/commands/subscribe.ts` ships `create/fund/check-in`). Live `subscription_skill_exec` receipt anchor remains <span data-marker="qa-plan-pending-allow:live-anchor-needs-second-wallet">PENDING</span> until a second test wallet plays the agent role (`SubscriptionEscrowV2` enforces `agent != msg.sender`). |
 | 3 | `/global` "OG spent" reads only local filesystem (not chain-derived) | Surface honesty: page shows local data, not a chain aggregation. Should NOT be claimed as a global feed in pitch copy. |
 | 4 | `/data-room/[id]` reads only local manifest | Cross-machine works via `?storage=<rootHash>` query param fallback (planning-002 W6). |
 | 5 | `fee_split` recorded but no on-chain payout | Receipt shape correct; actual settlement is `§B-V2-15` (CapabilityRegistryV2) or follow-on payout contract. |
@@ -1104,11 +1104,11 @@ Every security-sensitive contract has a `Threat model:` NatSpec block listing wh
 | `AgentPassportINFTV2` | ±100 `trustScoreDelta` cap per call. | Authorized recorder pushes delta = 200. | Tx reverts at the cap. |
 | `AgentPassportINFTV2` | `executorVersion` bumps on transfer (prevents executor-state carryover). | Transfer a passport between wallets; observe `executorVersion`. | Increments on each transfer. |
 | `AgentPassportINFTV2` | `passportOf` set BEFORE `_safeMint` + `nonReentrant`. | Re-entrancy on mint callback. | Re-entrant call reverts. |
-| `CapabilityRegistryV2` | Social-graph leak fix + K-22 `consumeRead` DoS protection. | Read consume above the burst quota. | DoS-style read floods are rejected. Marked `PENDING` if V2 not yet deployed (`§B-V2-15`). |
-| `MemoryAccessLogV2` | Log-spoofing defense (only namespace owner or active grantee writes). | Wallet B writes into Wallet A's log namespace. | Tx reverts. `PENDING` if V2 not yet deployed (`§B-V2-16`). |
-| `SkillRegistryV2` | Squatter-risk fix — name reservation gated. | Re-register an existing skill name. | Tx reverts. `PENDING` if V2 not yet deployed (`§B-V2-17`). |
+| `CapabilityRegistryV2` | Social-graph leak fix + K-22 `consumeRead` DoS protection. | Read consume above the burst quota. | DoS-style read floods are rejected. ✅ V2 deployed (§B-V2-15 SHIPPED 2026-05-12 · `0x1351CD87...`). |
+| `MemoryAccessLogV2` | Log-spoofing defense (only namespace owner or active grantee writes). | Wallet B writes into Wallet A's log namespace. | Tx reverts. ✅ V2 deployed (§B-V2-16 SHIPPED 2026-05-12 · `0xCbfE1f52...`). |
+| `SkillRegistryV2` | Squatter-risk fix — name reservation gated. | Re-register an existing skill name. | Tx reverts. ✅ V2 deployed (§B-V2-17 SHIPPED 2026-05-12 · `0xF05113E8...`). |
 | `IvaronixReceiptGuard` | Library-level guards against double-anchor + replay. | Library unit tests via `GuardCaller` helper. | All `*.t.sol` Foundry tests green. |
-| `SubscriptionEscrowV2` | AGENT_AUTO accountability fix — agent address recorded on every drain. | Drain without agent-address claim. | Tx reverts. `PENDING` if V2 not yet deployed (`§B-V2-18`). |
+| `SubscriptionEscrowV2` | AGENT_AUTO accountability fix — agent address recorded on every drain. | Drain without agent-address claim. | Tx reverts. ✅ V2 deployed (§B-V2-18 SHIPPED 2026-05-12 · `0x74235b70...`). |
 
 Run `cd contracts && forge test -vvv` and confirm every `*.t.sol` test passes. The plan should record total Foundry test count (current: see `docs/numbers.json`).
 
@@ -1123,13 +1123,13 @@ Run `cd contracts && forge test -vvv` and confirm every `*.t.sol` test passes. T
 | Mixed (canonical wins) | Set both canonical AND legacy to different values. | Canonical value used; legacy is silently ignored. |
 | All 10 chains | Repeat for each: `*_SIGNER_KEY`, `*_READ_PROXY_KEY`, `*_RPC_URL`, `*_NETWORK`, `*_CHAIN_ID`, `*_WALLET_ADDRESS`, `*_ROUTER_KEY`, `*_ROUTER_URL`, `*_ROUTER_PROVIDER`, `*_DEFAULT_MODEL`. | Every chain resolves; `pnpm env:check` returns all green. |
 
-## Source-File Regression Suite (<!-- regressions:auto:total -->105<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->86<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
+## Source-File Regression Suite (<!-- regressions:auto:total -->106<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->87<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
 
-`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->105<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->86<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
+`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->106<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->87<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
 
 | Suite | Command | Pass condition |
 |---|---|---|
-| Studio offline regressions (<!-- regressions:auto:studio -->69<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->69<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
+| Studio offline regressions (<!-- regressions:auto:studio -->70<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->70<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
 | CLI regressions (<!-- regressions:auto:cli -->13<!-- /regressions:auto:cli -->) | `pnpm --filter qa-metamask-e2e run regressions:cli` | All <!-- regressions:auto:cli -->13<!-- /regressions:auto:cli --> PASS. |
 | Contract regressions (<!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts -->) | `pnpm --filter qa-metamask-e2e run regressions:contracts` | All <!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts --> PASS. |
 | Live-server regressions (~<!-- regressions:auto:live -->19<!-- /regressions:auto:live -->) | `pnpm --filter qa-metamask-e2e run regressions:studio-live` after `pnpm --filter @ivaronix/studio dev` | Run before merging Studio changes that touch live-state behavior. |
@@ -1165,13 +1165,13 @@ The codebase defines **13 typed receipts** in `packages/core/src/types.ts:70`. E
 | 5 | `skill_exec` | Any skill run (UI or CLI). | Run `0g-integration-auditor`. | `type: 'skill_exec'`, references skill manifest hash. |
 | 6 | `code_change` | `ivaronix code "..."` with `--apply`. | Apply a tiny safe edit. | `type: 'code_change'`, diff hash recorded. |
 | 7 | `passport_update` | Passport mint, trust-score delta, executor-version bump. | Mint via V2. | `type: 'passport_update'`, executor version increments on transfer. |
-| 8 | `swarm` | `ivaronix swarm ...` multi-agent orchestration. | Iteration-14 cron drove a 1-task quick-tier swarm: receipt #5 anchored on V2 (block 32918394) but with `type: 'doc_ask'` not `'swarm'`. `apps/cli/src/commands/swarm.ts:157` hardcodes `receiptType: 'doc_ask'` for every dispatched task and no parent aggregate receipt is anchored. `PENDING` until the swarm CLI is updated to anchor a parent `swarm` receipt (`§B-V2-31`). | `type: 'swarm'`, plan + result + role list. |
-| 9 | `subscription_skill_exec` | One recurring billing tick under `SubscriptionEscrow`. | `PENDING` until `SubscriptionEscrowV2` is deployed (`§B-V2-18`). Mark `PENDING` with that reference; do not try until deployed. | Receipt records escrow id, drain amount, period. |
-| 10 | `doc_room_create` | `ivaronix room create` / `/data-room` create flow. | Create a confidential room. | `type: 'doc_room_create'`, manifest hash + parties + encrypted blob root. |
-| 11 | `doc_room_read` | Reader opens granted room. | Wallet B reads after grant. | `type: 'doc_room_read'`, auto-Burn-Mode (per `og.burn.auto_enable`), reader wallet + capability grant id + AI summary hash. |
-| 12 | `memory_consolidation` | `ivaronix passport-consolidate` (day/month/year rollup). | Run consolidation against ≥3 recent receipts. | `type: 'memory_consolidation'`, `request.priorReceiptIds` lists the consolidated sources. Lineage verifiable. |
+| 8 | `swarm` | `ivaronix swarm ...` multi-agent orchestration. | ✅ Fixed iter-72 (§B-V2-31 SHIPPED 2026-05-12 · commit `3220e40-then-iter72`). `apps/cli/src/commands/swarm.ts:157` now emits `receiptType: 'swarm'` per task. Iter-94 anchor: V2 id=8. | `type: 'swarm'`, plan + result + role list. |
+| 9 | `subscription_skill_exec` | One recurring billing tick under `SubscriptionEscrowV2`. | ✅ CODE-COMPLETE iter-100 (§B-V2-35 slot-9 closure). SubscriptionEscrowV2 deployed (§B-V2-18 SHIPPED 2026-05-12 · `0x74235b70...`). `apps/cli/src/commands/subscribe.ts` ships `create/fund/check-in` subcommands; `check-in` anchors slot-9 receipt on V3. Live verify deferred — `agent != msg.sender` rule needs a SECOND test wallet (operator can only be client today). | Receipt records escrow id, drain amount, period; `chainAnchor.registryAddress` = V3. |
+| 10 | `doc_room_create` | `ivaronix room create` / `/data-room` create flow. | Create a confidential room. Anchors on **V3** (slots 10/11/12 require V3 per B-V2-32 — V1/V2 reject). | `type: 'doc_room_create'`, manifest hash + parties + encrypted blob root; `chainAnchor.registryAddress` = V3. |
+| 11 | `doc_room_read` | Reader opens granted room. | Wallet B reads after grant. Anchors on **V3**. | `type: 'doc_room_read'`, auto-Burn-Mode (per `og.burn.auto_enable`), reader wallet + capability grant id + AI summary hash; `chainAnchor.registryAddress` = V3. |
+| 12 | `memory_consolidation` | `ivaronix passport-consolidate` (day/month/year rollup). | Run consolidation against ≥3 recent receipts. Anchors on **V3**. | `type: 'memory_consolidation'`, `request.priorReceiptIds` lists the consolidated sources. Lineage verifiable; `chainAnchor.registryAddress` = V3. |
 
-Receipt-type integrity sweep: at the end of QA, dump every receipt produced in `QA_PROOF_PACK/receipts/` and confirm at least one of each type 0-12 (except 9 which stays `PENDING` until SubscriptionEscrowV2 deploys).
+Receipt-type integrity sweep: at the end of QA, dump every receipt produced in `QA_PROOF_PACK/receipts/` and confirm at least one of each type 0-12. Slot 9 (subscription_skill_exec) is the only remaining slot needing a live anchor — the code path ships, but exercising it needs a 2-wallet setup (client + agent) since `SubscriptionEscrowV2` enforces `agent != msg.sender`.
 
 ## Receipt State Lifecycle (`ReceiptState`)
 
