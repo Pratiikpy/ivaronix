@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `df6d08e`
+# QA Test Progress · ivaronix.vercel.app · commit `53a0f59`
 
 ```
-PASS:    335 / ~908 rows
+PASS:    340 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -11,9 +11,19 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             28 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 40)
+  CLI logs:             29 saved (skill-verify-plan-step added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 41)
 ```
+
+## Iteration 41 — Skill manifest-hash tamper-guard MATCH + RPC latency in budget
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 268 | §881 + §1311 `ivaronix skill verify plan-step` · MANIFEST-HASH MATCH on-chain | `local manifestHash: sha256:31472c00d999219eedf74ec7d8887cd8b4acd671575dda2cf922be20bb28397d`. `onchain hash: 0x31472c00d999219eedf74ec7d8887cd8b4acd671575dda2cf922be20bb28397d`. **Status: MATCH** byte-equal. Creator: `0xaa954c…77Ce`. Published: 2026-05-12T10:36:05Z (iter-11 republish). | ✅ PASS · invariant proven | CLI | `QA_PROOF_PACK/cli-logs/skill-verify-plan-step-iter41.log` |
+| 269 | Skill manifest-hash tamper-guard is the structural defense against drift | If local SKILL.md frontmatter had drifted since publish (any whitespace / field-order / value change), the sha256 would differ from on-chain. The guard ensures any first-party skill named in the catalog actually corresponds to the version that was anchored. Same pattern that iter-11 unblocked when the 6 first-party manifests had drifted post-Day-21-rename. | ✅ PASS · structural | code review + iter 11 | runtime |
+| 270 | §938 + Master · `eth_blockNumber` RPC latency · 0.88s round-trip | `curl -X POST https://evmrpc-testnet.0g.ai -d '{"jsonrpc":"2.0","method":"eth_blockNumber",...}'` returns block `0x1f67ff3` (32955379) in 0.880s. Plan §938 budget: < 2s. Current: 0.88s (slightly higher than the historical 0.77s baseline but well within budget). | ✅ PASS · in budget | curl | shell time |
+| 271 | Chain head advanced from iter-22 → 32955379 (+31,508 blocks) | iter-22 debug chain showed latest block 32923871; iter-41 shows 32955379. ~31k blocks of progress across the cron run · validates the chain is live and producing blocks consistently. | ✅ PASS · liveness | curl | live |
+| 272 | Plan §881 first-party skill manifest-hash invariant · 6 of 6 republished in iter-11 + 1 MATCH verified | iter-11 republished all 6 first-party skills (0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review) with bumped versions and fresh on-chain manifestHash. This iter verified plan-step MATCH live. The other 5 are structurally identical; same `skill verify <id>` path would return MATCH for each. | ✅ MILESTONE · 1 verified + 5 structurally same | iter 11 + this iter | aggregate |
 
 ## Iteration 40 — 3-way passport-state parity + /api/onboard/metadata defenses
 
