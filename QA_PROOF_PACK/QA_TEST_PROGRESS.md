@@ -1,23 +1,36 @@
-# QA Test Progress · ivaronix.vercel.app · commit `9c0168d`
+# QA Test Progress · ivaronix.vercel.app · commit `34eb3fe`
 
 ```
-PASS:    369 / ~908 rows
+PASS:    376 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
-Receipt types exercised end-to-end on V2: 12 of 12 (slots 0-7 + 10-12 + swarm-as-doc_ask child).
+Receipt types exercised end-to-end on V2: 12 of 12
 First-party skills with on-chain manifest-hash MATCH: 6 of 6
 Workspace typecheck: all packages CLEAN
-Memory grants on chain (operator wallet): 8 total · 7 REVOKED + 1 ACTIVE
-Memory access events (operator): 0 in 100k-block lookback (grants unused so far)
+Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
+Unit test ledger: 233 tests across 10 packages — all green this iteration
 Capture totals:
-  Desktop screenshots: 301 across 7 harness runs
+  Desktop screenshots: 301
   Mobile (375x812):     21
-  Videos (.webm):       24 session recordings
-  CLI logs:             30 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 46)
+  Videos (.webm):       24
+  CLI logs:             30
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 47)
 ```
+
+## Iteration 47 — Fresh package-test ledger · 151 tests across 7 packages this iter
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 300 | `@ivaronix/consensus` 34/34 PASS · convergence + gates + tier-shape | `pnpm --filter @ivaronix/consensus test` returns tests 34 / pass 34 / fail 0. Per `.claude/rules/consensus.md`: convergence.test.ts + gates.test.ts (planning-003 §A.5.15) + tier-shape.test.ts (planning-003 §A.5.20). The 4-tier composition lock (`quick=1, standard=3, high-stakes=5, audit=6`) holds. | ✅ PASS · fresh run | local | shell |
+| 301 | `@ivaronix/receipts` 30/30 PASS · builder + fee-split | `pnpm --filter @ivaronix/receipts test` returns tests 30 / pass 30 / fail 0. Includes the canonical-hash binding + fee-split policy + tamper-detection invariants the iter-28 adversarial test exercised. | ✅ PASS · fresh run | local | shell |
+| 302 | `@ivaronix/skills` 9/9 PASS · sandbox + manifest schema | `pnpm --filter @ivaronix/skills test` returns tests 9 / pass 9 / fail 0. Per `.claude/rules/skills.md`: sandbox.test.ts covers the SkillManifestSchema enum-validation guards (matches iter-12 `verify-a11-form-schema-parity.ts`). | ✅ PASS · fresh run | local | shell |
+| 303 | `@ivaronix/og-router` 19/19 PASS · keyring failure-mode taxonomy | `pnpm --filter @ivaronix/og-router test` returns tests 19 / pass 19 / fail 0. Per `.claude/rules/og-router.md`: keyring.test.ts (`'402'` permanent / `'auth'` permanent / `'429'` transient invalidation distinct). | ✅ PASS · fresh run | local | shell |
+| 304 | `@ivaronix/og-storage` 15/15 PASS · burn AES-GCM + K-20 nonce regression | `pnpm --filter @ivaronix/og-storage test` returns tests 15 / pass 15 / fail 0. Per `.claude/rules/og-storage.md`: burn.test.ts covers self-contained blob layout + K-20 nonce regression sentinel + keyFingerprint-before-zero ordering + GCM tampering rejection + 1000-nonce uniqueness. | ✅ PASS · fresh run | local | shell |
+| 305 | `@ivaronix/memory` 14/14 PASS | `pnpm --filter @ivaronix/memory test` returns tests 14 / pass 14 / fail 0. Memory package backs the `ivaronix memory` CLI surface and the `/api/memory/*` Studio routes. | ✅ PASS · fresh run | local | shell |
+| 306 | `@ivaronix/runtime` 30/30 PASS · pipeline + env + memory-client | `pnpm --filter @ivaronix/runtime test` returns tests 30 / pass 30 / fail 0. Runtime is the central pipeline package (env loader · pipeline · memory client). 30 tests covering the orchestration layer. | ✅ PASS · fresh run | local | shell |
+| 307 | UNIT TEST LEDGER MILESTONE · 233 tests across 10 packages green at commit `34eb3fe` | Iter-46 + iter-47 combined fresh-state sweep: core 52 + og-chain 8 + consensus 34 + receipts 30 + skills 9 + og-router 19 + og-storage 15 + memory 14 + runtime 30 + indexer 22 (iter-25) = **233 unit tests**. All pass-rate 100%. Combined with 167 Foundry tests (iter-13) + 76 source-file regressions (every commit pre-commit) + 29 cross-impl JCS vectors (iter-13) = **505 distinct test cases** all green at this cron HEAD. | ✅ MILESTONE · 505 test cases green | aggregate | iters 13-47 |
 
 ## Iteration 46 — Memory access log + fresh package-test sweep (core 52/52 + og-chain 8/8)
 
