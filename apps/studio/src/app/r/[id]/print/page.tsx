@@ -76,8 +76,17 @@ export default async function PrintableReceipt({ params }: { params: Promise<{ i
   const issuedAt = local?.chainAnchor?.anchorTimestamp
     ? new Date(local.chainAnchor.anchorTimestamp * 1000).toISOString().replace('T', ' ').slice(0, 19) + 'Z'
     : 'n/a';
-  const printUrl = `https://ivaronix.studio/r/${onChain.id}`;
-  const studioOrigin = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://ivaronix.studio';
+  // Resolve the canonical public origin (NEXT_PUBLIC_BASE_URL override →
+  // Vercel production → Vercel preview → localhost dev). Pre-iter-103
+  // both lines hardcoded 'https://ivaronix.studio' which is a dead
+  // domain that never got registered; printed PDFs would show a verify
+  // URL no one could open. Same fix shape as layout.tsx metadataBase.
+  const studioOrigin =
+    process.env.NEXT_PUBLIC_BASE_URL
+    ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null)
+    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    ?? 'http://localhost:3300';
+  const printUrl = `${studioOrigin}/r/${onChain.id}`;
   const verifyUrl = `${studioOrigin}/r/${onChain.id}`;
 
   return (
