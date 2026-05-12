@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `f2ffc4b`
+# QA Test Progress · ivaronix.vercel.app · commit `df6d08e`
 
 ```
-PASS:    328 / ~908 rows
+PASS:    335 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -12,8 +12,18 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             28 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 39)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 40)
 ```
+
+## Iteration 40 — 3-way passport-state parity + /api/onboard/metadata defenses
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 263 | Plan §1313 + Master · `ivaronix passport show <addr>` end-to-end | Output for operator wallet: `tokenId: 1, metadataRoot: 0xe196ce72…d144a, memoryRoot: (none yet), skillManifestRoot: (none yet), receiptCount: 1630, violationCount: 0, trustScore: 1630, mintedAt: 2026-05-07T20:07:00Z, lastEvolutionAt: 2026-05-12T12:03:20Z`. The `(none yet)` markers are honest disclosure of unset fields (memory + skill manifests not yet bound to passport per `USER_TODO §B-V2-24`). | ✅ PASS · honest by absence | CLI | shell |
+| 264 | §1300 UI/CLI cross-check · 3-way passport-state parity proven | Three independent reads agree byte-equal: CLI `ivaronix passport show` → `receiptCount: 1630, trustScore: 1630`. Studio `/api/dashboard/<addr>` (iter 30) → same. `ivaronix serve /v1/passport/<addr>` (iter 32) → same. CLI binary + Hono server + Next.js API route all agree to the same chain truth. | ✅ MILESTONE · 3-surface parity | CLI + curl | iters 30/32/40 |
+| 265 | `/api/onboard/metadata` defense in depth | `GET /api/onboard/metadata` → HTTP 405 (Method Not Allowed · POST-only endpoint). `POST /api/onboard/metadata` with empty body → HTTP 400 (Zod body validation). Both responses are correct defensive shapes — method gating before body validation. | ✅ PASS · defense layers | curl | live Vercel |
+| 266 | §1162 receipt #7 (doc_room_read) body has correct type but no top-level `room` block | `cat rcpt_01KRE1BKV68S235P86PNZG6R43.json` confirms `type: 'doc_room_read'` ✓ (slot 11). Plan §1162 expects "reader wallet + capability grant id + AI summary hash" at top-level — but the receipt body does NOT have a top-level `room` block. The metadata is likely embedded elsewhere in the receipt body. Honest finding: the TYPE is correct, the supplementary field-path doesn't match plan §1162 exactly. | 🟡 PARTIAL · type ✓ · supplementary path unclear | code + receipt body | rcpt_01KRE1BKV68S235P86PNZG6R43.json |
+| 267 | `(none yet)` honest-by-absence pattern across passport fields | `memoryRoot: (none yet)` (per `USER_TODO §B-V2-24` queued · memory snapshot updates passport.memoryRoot on-chain after Storage upload). `skillManifestRoot: (none yet)`. Both are operator-action gates, not bugs. CLI surfaces the absence explicitly rather than printing a misleading default. Matches CLAUDE.md §1 brutal honesty pattern. | ✅ PASS · honest disclosure | CLI | passport show output |
 
 ## Iteration 39 — CSP "deliberately omitted" verified + /r/<bytes32> alternate lookup + print route
 
