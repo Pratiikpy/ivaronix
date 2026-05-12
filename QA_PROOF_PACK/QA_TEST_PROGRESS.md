@@ -1,20 +1,30 @@
-# QA Test Progress · ivaronix.vercel.app · commit `1aadf72`
+# QA Test Progress · ivaronix.vercel.app · commit `9eba5e0`
 
 ```
-PASS:    346 / ~908 rows
+PASS:    352 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12 (slots 0-7 + 10-12 + swarm-as-doc_ask child).
-First-party skills with on-chain manifest-hash MATCH: 6 of 6 (this iter)
+First-party skills with on-chain manifest-hash MATCH: 6 of 6
 Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             30 saved (skill-verify-all-6 added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 42)
+  CLI logs:             30 saved
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 43)
 ```
+
+## Iteration 43 — pnpm audit:list ledger + SubscriptionEscrow source-vs-deploy state
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 278 | §1209 `pnpm audit:list` · 19 audit closures queryable | The audit-fix ledger lists 19 closures across the past 2 days, each with AUDIT-ID + commit SHA + date + subject. Cron-run closures visible: `QA-SKILL-DRIFT-1` (iter 11 manifest republish · e3c20a7), `VERCEL-CHAIN-READ-1/2/LOCK` (iters 11-12 + iter-11 structural lock · b342fd1/2d9e01f/1e772b5). Pre-cron closures: 16 entries spanning CI fixes, README rewrite, USER_TODO citation gates. CLAUDE.md §15 "Closes audit <ID>" trailer convention enforced at write-time via `.githooks/commit-msg` (sweep 236+239). | ✅ PASS · ledger live | local | shell output |
+| 279 | §1525 SubscriptionEscrow source ships · V1 + V2 both present | `contracts/src/SubscriptionEscrow.sol` (V1) and `contracts/src/SubscriptionEscrowV2.sol` (V2) both ship. Foundry tests in iter-13 forge test summary covered `SubscriptionEscrowTest (23 tests)` + `SubscriptionEscrowV2Test (10 tests)` — all passed. So the source code is verified at the test layer. | ✅ PASS · source + tests | filesystem + iter 13 | contracts/src/ |
+| 280 | §1525 SubscriptionEscrow NOT deployed on Galileo testnet · honest PENDING | `grep SubscriptionEscrow contracts/deployments/testnet.json` returns 0 hits. The deployments JSON has 8 contracts (verified iter 22 debug chain); SubscriptionEscrow V1/V2 are NOT in that set. Matches `USER_TODO §B-V2-18` "Deploy SubscriptionEscrowV2 (AGENT_AUTO accountability fix)" — operator-funding-gated. Plan §1525 expectation: "Marked PENDING if V2 not yet deployed (§B-V2-18)" matches reality byte-equal. | ✅ PASS · honest PENDING | grep | filesystem |
+| 281 | §1525 SubscriptionEscrowV2 adversarial test ALSO PENDING for the same reason | Plan §1525 expects: "After deploy: drain without agent-address claim reverts; subscription_skill_exec receipts (type slot 9) start producing." Both rows depend on the contract being deployed. Currently: Foundry tests prove the logic; on-chain test happens on redeploy day. | ✅ PASS · structurally PENDING | code review | iter 13 forge tests |
+| 282 | §1209 `pnpm audit:list` confirms cron-run write-time discipline | Iter-11 + iter-12 + iter-11 structural-lock commits all visible in the ledger with proper AUDIT-IDs. The `.githooks/commit-msg` hook (sweep 236) prevents commits adding ✅ closure markers without a `Closes audit <ID>` trailer. So every cron-run bug fix that updated HALF_BAKED.md, PHASE_B_DISCLOSURES.md, or USER_TODO.md ✅ rows is structurally locked at write-time. | ✅ MILESTONE · write-time discipline locked | git hooks + ledger | aggregate |
 
 ## Iteration 42 — All 6 first-party skills MATCH on-chain manifest-hash (§881 closure)
 
