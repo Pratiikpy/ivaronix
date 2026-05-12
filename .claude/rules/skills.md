@@ -68,7 +68,7 @@ og:
 
 ## Hooks taxonomy
 
-`packages/skills/src/hooks/types.ts`. Each hook stage is an array of named hook strings. Unknown hooks are dropped with a warning at load time. Built-in hooks: `redact_pii`, `balance_check`, `log_tokens`, `print_passport`, `log_anchor`, `safety_filter`.
+`packages/skills/src/hooks/types.ts`. Each hook stage is an array of named hook strings. Unknown hooks are dropped with a warning at load time. Built-in hooks: `redact_pii`, `balance_check`, `log_tokens`, `print_passport`, `log_anchor` (5 shipped — `BUILTIN_HOOKS` in `packages/skills/src/hooks/registry.ts:9-15`).
 
 ## Tests
 
