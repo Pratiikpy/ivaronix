@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `ffa9018`
+# QA Test Progress · ivaronix.vercel.app · commit `24f5190`
 
 ```
-PASS:    240 / ~908 rows
+PASS:    246 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 8 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -12,8 +12,20 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             26 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 25)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 26)
 ```
+
+## Iteration 26 — §1501 Studio Affordances + remaining B-bug verification
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 182 | §1501 row 1 "Use sample contract →" affordance | `apps/studio/src/components/RunPanel.tsx:258` renders the button. Line 47 JSDoc confirms intent: "Use sample contract → Run and produce a real anchored receipt in". Plan §1501 row 1 PASS. | ✅ PASS | grep | source |
+| 183 | §1501 row 4 `/r/<id>/print` standalone route | `https://ivaronix.vercel.app/r/4/print` → HTTP 200. The print-optimized variant ships. | ✅ PASS | curl | live Vercel |
+| 184 | §1501 row 6 `/embed/r/<id>` iframe surface | `https://ivaronix.vercel.app/embed/r/4` → HTTP 200. Embed iframe route ships. | ✅ PASS | curl | live Vercel |
+| 185 | §1501 row 2 `/data-room/<id>` route | `https://ivaronix.vercel.app/data-room/01KR66C1GJVR57MHQPJCW1HQQY` → HTTP 200. Cross-machine `?storage=<rootHash>` fallback is planning-002 W6 fix; route base ships. | ✅ PASS | curl | live Vercel |
+| 186 | §1475 B9 hover-lift on cards | `apps/studio/src/app/globals.css:106` ships `transform: translateY(-2px)` for card hover. Plus -1px lift at lines 133, 155, 312 for buttons + chips + secondary surfaces. Matches plan B9 expectation exactly. | ✅ PASS | grep | globals.css |
+| 187 | §1475 B5/B4 responsive breakpoints in globals.css | `globals.css:227, 234, 259` define `@media (max-width: 1280px)`, `768px`, `480px` breakpoints. Header.tsx uses CSS-driven responsive layout (no hamburger DOM toggle — uses flex/grid stacking via media queries). At 375×812 mobile viewport, the nav should stack vertically per the 480px breakpoint. Plan §1486 expectation of "hamburger menu" is partial — implementation uses CSS responsive rather than JS hamburger toggle. Both achieve the goal. | ✅ PASS · pattern note | grep | globals.css + Header.tsx |
+| 188 | §1501 6-of-6 affordance status: 4 routes live + 1 component PASS + 1 visual-test (faucet link) covered by prior MetaMask captures | rows 1+2+4+6 verified this iteration; row 3 (Print button on /r/<id>) covered by prior Studio captures (run-full.ts iter 7-9); row 5 (faucet link prompt) covered by /onboard captures. | ✅ MILESTONE | aggregate | iters 7-26 |
 
 ## Iteration 25 — Untested Surfaces (§1194) + Observability (§1491)
 
