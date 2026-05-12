@@ -98,6 +98,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-known-registries-vs-deployments/, // sweep 219 · HALF_BAKED §K-17 closure · KNOWN_RECEIPT_REGISTRIES in core stays in sync with contracts/deployments/{network}.json
       /^verify-b-v2-crossref-status/, // sweep 228 · code + docs §B-V2-N references must agree with USER_TODO.md ✅ SHIPPED status (catches sweep 227 drift class structurally)
       /^verify-vercel-transpile-packages/, // VERCEL-DEPLOY-AUDIT-1 · every @ivaronix/* package Studio imports must be in next.config.ts transpilePackages (else production `next build` on Vercel fails)
+      /^verify-no-og-chain-deployments-import-in-studio/, // VERCEL-CHAIN-READ-1/2 · apps/studio MUST NOT import loadDeployments/getDeployedAddress from @ivaronix/og-chain (fails on Vercel cwd walk-up); use @/lib/deployments-bundle instead. Closes b342fd1 + 2d9e01f drift class structurally.
     ],
   },
   'studio-live': {
