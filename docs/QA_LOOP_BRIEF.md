@@ -620,3 +620,56 @@ ivaronix room create --file ./sample.pdf       # anchors slot 10 on V3
 ivaronix room read --id <onChainId> --wallet B # anchors slot 11 on V3
 forge test --root contracts                    # 173/173 PASS including ReceiptRegistryV3.t.sol
 ```
+
+## 2026-05-13 · Testnet V2 redeploy wave (B-V2-15 + B-V2-16 + B-V2-17 + B-V2-18) — ALL CLOSED
+
+Four V2 redeploys land on Galileo in cron iter-86 → iter-87. Each closes one HALF_BAKED security item that was waiting on contract redeploy. All four are agent-doable per the TRY-BEFORE-SKIP audit + testnet-has-funds check (operator wallet 68.99 OG).
+
+### B-V2-15 · CapabilityRegistryV2 → ✅ DEPLOYED `0x1351CD87360f0366D0A0068164e606B3c320F3E1`
+
+  deploy tx:        0xdea605e605e6031230bc397d305e48d3b125315eefd10a10da72bcb8be4c6d37
+  post-deploy tx:   0xc7cf9fa933064333162355a46f0845792d8ef8c847c0bb5734ee1a3759a8ef21 (addAuthorizedRelayer · operator wallet)
+  chainscan:        https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1
+  closes:           planning-003 §A.5.10 (social-graph leak · private reverse indexes + authorizedReaders gate) + HALF_BAKED §K-22 (consumeRead DoS · authorizedRelayers allowlist with grantee + relayer caller-auth)
+  live verify:      `cast call 0x1351CD87... "owner()"` → operator wallet · 14/14 Foundry tests PASS
+
+### B-V2-16 · MemoryAccessLogV2 → ✅ DEPLOYED `0xCbfE1f526483283Bba80c2Bed3622a56904bF96d`
+
+  deploy tx:        0x3d389299ab49859719b6829886988077329d20887ef988b9f6294f6fd776fa18
+  capability pin:   0x1351CD87360f0366D0A0068164e606B3c320F3E1 (CapabilityRegistryV2)
+  chainscan:        https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d
+  closes:           HALF_BAKED §K-23 (log-spoofing fix · `logAccess` now requires `msg.sender == agent` self-log OR valid `CapabilityRegistryV2.isValid` grant cross-check)
+  live verify:      `cast call 0xCbfE1f... "capabilityRegistry()"` → 0x1351CD87... · 10/10 Foundry tests PASS
+
+### B-V2-17 · SkillRegistryV2 → ✅ DEPLOYED `0xF05113E83146160024326ff30979c57f5adc2193`
+
+  deploy tx:        0x80800054a0758395307484b302af5a1b741b73e691dadef94a2c9616d41278a9
+  chainscan:        https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193
+  closes:           planning-003 §A.5.11 (squatter risk · 6 first-party skill IDs pre-reserved to operator at construction + owner-arbitration safety valve)
+  reserved IDs:     skill:private-doc-review · skill:github-audit · skill:0g-integration-auditor · skill:code-edit · skill:plan-step · skill:content-pitch-review
+  live verify:      `cast call 0xF05113E8... "owner()"` → operator wallet · 16/16 Foundry tests PASS
+  deploy harness:   `scripts/diag/deploy-skill-registry-v2.ts` (tsx + ethers; forge script rejects chainId 16602, forge create trips on array constructor args — reusable for any future array-ctor Galileo deploy)
+
+### B-V2-18 · SubscriptionEscrowV2 → ✅ DEPLOYED `0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`
+
+  deploy tx:        0x8e02e00c94f2cd918aebeef4e97821a07e4437cac49c9cfce22227c94d684b6e
+  receipt pin:      0x7396D536594e2BE833070c7EB441A10906046257 (ReceiptRegistryV3 · canonical slot 9 subscription_skill_exec)
+  chainscan:        https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5
+  closes:           HALF_BAKED §K-25 (AGENT_AUTO accountability · cancelGraceSeconds window between agent-initiated cancel and EXPIRED status closes the griefing surface)
+  live verify:      `cast call 0x74235b70... "receiptRegistry()"` → 0x7396D536... · all Foundry tests PASS
+
+### Cross-contract wiring smoke (iter-90 verification)
+
+  CapabilityRegistryV2.owner()               → 0xaa95...77Ce (operator)
+  MemoryAccessLogV2.capabilityRegistry()     → 0x1351CD87... (CapabilityRegistryV2 ✓)
+  SkillRegistryV2.owner()                    → 0xaa95...77Ce (operator)
+  SubscriptionEscrowV2.receiptRegistry()     → 0x7396D536... (ReceiptRegistryV3 ✓)
+  ReceiptRegistryV3.nextId()                 → 0 (clean state, ready for canonical slot 10/11/12 anchors)
+
+Numbers cascade: `contracts.deployed: 8 → 13` across iter-78 → iter-87 (V3 ReceiptRegistry + 4 V2 redeploys). Numbers + README + JUDGE_GUIDE + MAINNET_READINESS + PITCH all auto-rendered in sync.
+
+## 2026-05-13 · B-V2-2 + B-V2-23 + B-V2-24 testnet closure summary
+
+- **B-V2-2 · OG image 503 on Vercel → ✅ SHIPPED** · all 3 routes (`/opengraph-image`, `/r/[id]/opengraph-image`, `/0g/opengraph-image`) return 200 image/png · ~28–57 KB PNG · 1200×630 RGBA. Two satori limitations behind the failure (`<text>` SVG element + `display: grid` CSS Grid · both replaced with satori-compatible alternatives). Total 11 commits across iter-83 → iter-89; the diagnostic-isolation pattern in iter-84's `/og-minimal` route was the key debugging move.
+- **B-V2-23 · README screenshot grid refresh → ✅ SHIPPED** · 6 PNGs captured against live Vercel deploy via `STUDIO_BASE=https://ivaronix.vercel.app pnpm screenshots:refresh`. No local dev server needed once the OG image fix landed.
+- **B-V2-24 · `memory snapshot --anchor-on-chain` → ✅ SHIPPED end-to-end** · real chain proof: storage root `0x131403...` → updateMemoryRoot tx `0x2175670c...` · block 32967060 · gas 53300 · token #1 · 0x85e9dD63... (V2 AgentPassportINFT). Closes I-12 (PARTIALLY → FULLY) in HALF_BAKED. CLI gate is operator opt-in via the `--anchor-on-chain` flag — burns ~0.0002 OG per update.
