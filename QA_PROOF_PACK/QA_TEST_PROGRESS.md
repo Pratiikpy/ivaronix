@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `81ffef2`
+# QA Test Progress · ivaronix.vercel.app · commit `4142f60`
 
 ```
-PASS:    202 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 3 plan-drift fixes · 1 env-check fix)
+PASS:    210 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 5 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,22 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             23 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 20)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 21)
 ```
+
+## Iteration 21 — Marketplace fee-split + Receipt JSON field-by-field
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 145 | Plan §1400 fee-split categories verified in first-party SKILL.md manifests | 5 of 6 first-party use **90/10** Differentiated specialty (0g-integration-auditor, code-edit, github-audit, plan-step, private-doc-review). 1 of 6 uses **70/30** Commoditised (content-pitch-review). 80/20 Trust-critical and 50/50 categories declared in schema but unused — both PENDING per plan §1408 + §1410. | ✅ PASS | grep | seed-skills/*/SKILL.md |
+| 146 | Plan §1064 receipt JSON · `id` matches `rcpt_<ULID>` regex | receipt #6 id `rcpt_01KRE13F38EBQKQ0ZN2M62PE7S` matches `^rcpt_[0-9A-Z]{26}$` | ✅ PASS | regex | receipt body |
+| 147 | Plan §1064 receipt JSON · `type` is one of 13 enum values | receipt #6 has `type: 'code_change'` (slot 6) | ✅ PASS | enum check | receipt body |
+| 148 | Plan §1064 receipt JSON · `agent.ownerWallet` is EIP-55 checksummed | `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` — mixed case, valid checksum | ✅ PASS | regex | receipt body |
+| 149 | Plan §1064 receipt JSON · `chainAnchor.registryAddress` is a known registry | `0xf675d4183b34fe8d1981FA9c117065aAcff690ab` = ReceiptRegistryV2 in `contracts/deployments/testnet.json` | ✅ PASS | cross-check | KNOWN_RECEIPT_REGISTRIES |
+| 150 | Plan §1064 receipt JSON · `teeVerification.verificationMethod` is one of 3 sub-types | `router_flag` (TIER 1 path) — matches schema enum at `packages/receipts/src/schema.ts:251-256` | ✅ PASS | enum | receipt body |
+| 151 | Plan §1064 receipt JSON · `billing.feeSplit` complete + accurate | all 10 fields populated: declaredCreatorBps=9000, declaredTreasuryBps=1000, tier='TIER_1', tierMultiplierBps=10000, creatorBps=9000, treasuryBps=1000, creatorNeuron='68310000000000', treasuryNeuron='7590000000000', creatorPassport='did:0g:passport:0xaa954c…77Ce:1', policyApplied='flat'. 90/10 matches code-edit SKILL.md declared split; tier multiplier 10000 (= 100%) for TIER 1. | ✅ PASS | inspect | receipt body |
+| 152 | 🔧 Plan §1072 wrong: claimed V2 receipts carry `schemaVersion: 2.0+` | Reality: `packages/receipts/src/builder.ts:56` hardcodes `version: '1.0' as const`. ALL receipts have `version: '1.0'` regardless of which registry contract anchors them. The "V2" in `ReceiptRegistryV2` is the ON-CHAIN CONTRACT version, NOT the receipt-body schema version. JCS+keccak hash path is selected separately. Plan was conflating two concepts. | 🔧 PLAN DRIFT FIXED | code review + edit | this commit |
+| 153 | 🔧 Plan §1083 wrong field path: claimed `execution.consensus.policyApplied` | Reality: receipt body has `execution.consensusMode: boolean` (did consensus run?) — no nested `execution.consensus` object. `billing.feeSplit.policyApplied: 'flat'` is the fee-split policy (different concept). The 4-policy enum (unanimous/majority/first-objection/weighted) is queued in `planning-003 §A.4.4` Efficiency Game — not at the receipt-body layer yet. | 🔧 PLAN DRIFT FIXED | code review + edit | this commit |
 
 ## Iteration 20 — TIER 1 sub-types + SIWE TTLs + UI/CLI cross-check
 

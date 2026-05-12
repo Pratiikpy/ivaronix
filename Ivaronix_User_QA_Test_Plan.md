@@ -1069,7 +1069,7 @@ The receipt body has a specific shape. Every field must serialize, sign, and rou
 |---|---|---|
 | `id` (ULID) | `rcpt_*` prefix per `@ivaronix/core` `newId('rcpt')`. | Regex check on every produced receipt. |
 | `type` | One of the 13 from `RECEIPT_TYPES`. | Cross-check vs Receipt Type Coverage section above. |
-| `schemaVersion` | `1.0` or `2.0+`. | V2 receipts carry `2.0+`; V1 fixture carries `1.x`. |
+| `version` | Today: `z.literal('1.0')` (hardcoded in `packages/receipts/src/builder.ts:56`). All receipts — anchored on `ReceiptRegistry` V1 OR `ReceiptRegistryV2` — carry `version: '1.0'`. The "V2" in `ReceiptRegistryV2` refers to the on-chain CONTRACT version, not the receipt-body schema version. JCS+keccak hash path (per `packages/core/src/jcs.ts` and `docs/HASH_FUNCTION.md`) is selected separately, not by this field. Plan claim "V2 receipts carry 2.0+" was conflating these two concepts. | Every produced receipt has `version: '1.0'` exactly. Fixture `v1-anchored-id-8.json` and live anchored receipts both carry `'1.0'`. |
 | `agent.ownerWallet` | EIP-55 checksummed `0x...` address. | Regex check + checksum validation. |
 | `agent.signedBy` | `'operator' \| 'operator-on-behalf-of-user' \| 'user-direct'`. | Tested in Delegation section. |
 | `outputs.wording.headline` | Plain-language headline shown on `/r/<id>` and OG image. | Cannot leak `PRIVATE_TEST_PHRASE_DO_NOT_LEAK`. |
@@ -1080,7 +1080,7 @@ The receipt body has a specific shape. Every field must serialize, sign, and rou
 | `teeVerification.verificationMethod` | One of three sub-types above. | Tested in TIER 1 Sub-Types section. |
 | `billing.feeSplit.creatorNeuron` | Wallet receiving the creator share. | Matches the skill manifest's `creator.fee_split` declared neuron. |
 | `billing.feeSplit.treasury` | Wallet receiving the treasury share. | Same source-of-truth check. |
-| `execution.consensus.policyApplied` | One of `'unanimous' \| 'majority' \| 'first-objection' \| 'weighted'` or skill default. | Tested in Consensus section. |
+| `execution.consensusMode` | `boolean` — did consensus run? Today: live receipts carry `consensusMode: false` for quick-tier runs. Plan claim of `execution.consensus.policyApplied` was wrong path: there's no `execution.consensus` object in the schema; `consensusMode` is a top-level boolean under `execution`. The 4-policy enum (`'unanimous' \| 'majority' \| 'first-objection' \| 'weighted'`) is queued in `planning-003 §A.4.4` (Efficiency Game) — not shipped at the receipt-body layer yet. `billing.feeSplit.policyApplied: 'flat'` is the fee-split policy (a sibling concept). | Receipt body has `execution.consensusMode: true/false` matching whether the tier ran consensus. |
 | Tamper detection | Mutating ANY signed field breaks signature recovery. | Tamper a fixture; `ivaronix receipt verify` returns INVALID with the exact field that broke. |
 | Freshness window | `RECEIPT_SCHEMA.md §126` defines max-age before re-verify is suggested. | Verify a fresh receipt + a stale fixture; UI/CLI surface the freshness state. |
 
