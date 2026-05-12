@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `8a5b26f`
+# QA Test Progress · ivaronix.vercel.app · commit `2906429`
 
 ```
-PASS:    439 / ~908 rows
+PASS:    444 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -16,9 +16,20 @@ Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equalit
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 55
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 55)
+Cron iterations completed: 56
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 56)
 ```
+
+## Iteration 56 — audit + doc + plan + openclaw verify
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 371 | `ivaronix audit` ships with rich flag set | Options: `--skill <id>` (default github-audit) · `--ext <exts>` filter · `--max-files <n>` (default 10) · `--quick`/`--consensus`/`--high-stakes` tier flags · `--no-receipt` skip · `--out-dir <dir>`. The code-audit CLI surface per plan §890 golden-buggy-repo expectations. | ✅ PASS · structural | CLI | help |
+| 372 | `ivaronix doc` ships 2 subcommands (ask + bulk) per plan §889 | `doc ask <file> <question>`: single-doc private Q&A → Action Receipt. `doc bulk <dir>`: run skill across every matching file in a directory → one receipt per file plus one aggregate receipt. Plan §1444 (DD analyst bulk audit) maps to `doc bulk`. | ✅ PASS · structural | CLI | help |
+| 373 | `ivaronix plan` ships with planning-skill execution + optional anchor | `goal <free-form text>` + `-f --files <paths...>` context + `--skill <id>` (default plan-step) + `--quick`/`--consensus`/`--high-stakes` + `--receipt` (default false). Mirrors the iter-42 plan-step skill verify flow. | ✅ PASS · structural | CLI | help |
+| 374 | `ivaronix openclaw verify` PASS on plan-step SKILL.md | Driven with absolute path: `name: plan-step · description chars: 195 · install specs: 1 (node/? → @ivaronix/cli) · og: extension ✓ · PASS · 1 install spec(s) valid · 0 warning(s)`. The OpenClaw frontmatter contract is honored by plan-step SKILL.md. | ✅ PASS · invariant proven | CLI | shell |
+| 375 | OpenClaw integration surface ships with single-purpose validator | `apps/openclaw-skill/SKILL.md` is the "install Ivaronix as an OpenClaw skill" entry point per plan §1205; `ivaronix openclaw verify` is the validation surface. Plan §1205 expected: "If OpenClaw CLI installed, downstream `openclaw run ivaronix.ask` works" — the OPENCLAW side is operator-action-gated, but our SIDE (validate the SKILL.md frontmatter) is verified. | ✅ PASS · our-side complete | CLI | shell |
+| 376 | First-party SKILL.md frontmatter contract verified across OpenClaw + Ivaronix layers | The plan-step SKILL.md parses cleanly under BOTH (a) `@ivaronix/skills SkillManifestSchema` (iter-19 `verify-seed-skill-manifests.ts` regression) AND (b) `openclaw verify` (this iter). Two independent validators agree the frontmatter is valid — cross-validator parity proves the SKILL.md is a stable contract across multiple consumers. | ✅ MILESTONE · cross-validator parity | regression + CLI | iter 19 + this |
 
 ## Iteration 55 — `ivaronix stats` 5-section telemetry + pr/export CLI surfaces
 
