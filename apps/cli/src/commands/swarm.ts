@@ -154,7 +154,16 @@ swarmCommand
           tier,
           receipt: opts.receipt,
           outDir: opts.outDir,
-          receiptType: 'doc_ask',
+          // B-V2-31 fix (✅ SHIPPED iter-72) · swarm-dispatched tasks anchor
+          // as receipt-type 'swarm' (slot 8 in RECEIPT_TYPES + TYPE_SWARM=8 on
+          // ReceiptRegistryV2). Pre-fix the tasks were typed 'doc_ask' (slot 0),
+          // so RECEIPT_TYPES.swarm was enum-only with no on-chain producer.
+          // Iter-14 cron drove `ivaronix swarm run` and caught the gap.
+          // This is the option-A flip (per-task type) — minimal scope.
+          // A future option-B variant (parent aggregate receipt with
+          // priorReceiptIds lineage of every child task) is queued separately
+          // as a UX enhancement, not a bug fix.
+          receiptType: 'swarm',
           label,
         });
         ui.divider();
