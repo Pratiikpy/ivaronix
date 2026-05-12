@@ -41,9 +41,36 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..');
+
+/**
+ * Filter out files git would refuse to track. Without this, gitignored
+ * scratch files at repo root (e.g. user strategy notes, generated
+ * proof packs) trigger banned-word hits that don't ship anywhere.
+ * `git check-ignore -z --stdin` returns the ignored subset; we drop
+ * those from the scan list.
+ */
+function filterGitIgnored(paths: string[]): string[] {
+  if (paths.length === 0) return paths;
+  try {
+    const stdin = paths.map((p) => relative(REPO_ROOT, p)).join('\0');
+    const out = execFileSync('git', ['check-ignore', '-z', '--stdin'], {
+      cwd: REPO_ROOT,
+      input: stdin,
+      stdio: ['pipe', 'pipe', 'ignore'],
+    }).toString();
+    const ignored = new Set(out.split('\0').filter((s) => s.length > 0).map((rel) => resolve(REPO_ROOT, rel)));
+    return paths.filter((p) => !ignored.has(p));
+  } catch {
+    // `git check-ignore` exits 1 when *no* paths are ignored, which
+    // execFileSync surfaces as a throw. Treat that as "nothing to drop"
+    // and return the input unchanged. Also covers the no-git case.
+    return paths;
+  }
+}
 
 let asserts = 0;
 const fail = (msg: string): never => {
@@ -126,7 +153,7 @@ function listMarkdownFiles(): string[] {
     if (stat.isFile() && entry.endsWith('.md')) out.push(path);
   }
   walk(resolve(REPO_ROOT, 'docs'));
-  return out;
+  return filterGitIgnored(out);
 }
 
 // Strip fenced code blocks + inline code spans from a markdown string.

@@ -113,3 +113,4 @@ test-targets/*
 # was self-contradicting drift; removed.
 
 .vercel
+cowork-opinion.md
