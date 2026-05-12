@@ -343,7 +343,7 @@ receiptCommand
       return;
     }
 
-    const versionTag = anchoredOn === 'v2' ? 'V2' : 'V1 LEGACY';
+    const versionTag = anchoredOn === 'v3' ? 'V3' : anchoredOn === 'v2' ? 'V2' : 'V1 LEGACY';
     ui.pass(
       `chain anchor          PASS  (id=${onChain.id} block≈${onChain.timestamp}) · ${versionTag}`,
     );
