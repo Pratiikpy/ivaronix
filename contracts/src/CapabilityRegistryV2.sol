@@ -62,6 +62,17 @@ contract CapabilityRegistryV2 is Ownable2Step {
     /// @notice Operator-vetted indexers that may read the reverse indexes for any wallet.
     mapping(address => bool) public authorizedReaders;
 
+    /// @notice Operator-vetted relayers authorised to decrement a grant's
+    ///         readsRemaining on behalf of a grantee. Without this gate, an
+    ///         attacker scraping grantIds from the public GrantIssued event log
+    ///         could call consumeRead from any wallet and deplete the grantee's
+    ///         read budget — a clean Denial-of-Service surface. With this map,
+    ///         only the grantee themselves OR an owner-allowlisted relayer can
+    ///         consume reads. The relayer pattern preserves the off-chain memory
+    ///         engine (operator signs on behalf of users) while removing the
+    ///         open-call DoS path.
+    mapping(address => bool) public authorizedRelayers;
+
     event GrantIssued(
         bytes32 indexed grantId,
         address indexed owner,
@@ -74,6 +85,8 @@ contract CapabilityRegistryV2 is Ownable2Step {
     event GrantConsumed(bytes32 indexed grantId, uint32 readsRemaining);
     event IndexerAccessGranted(address indexed indexer, address indexed grantedBy);
     event IndexerAccessRevoked(address indexed indexer, address indexed revokedBy);
+    event RelayerAdded(address indexed relayer, address indexed addedBy);
+    event RelayerRemoved(address indexed relayer, address indexed removedBy);
 
     constructor(address initialOwner) Ownable(initialOwner) {}
 
@@ -92,6 +105,26 @@ contract CapabilityRegistryV2 is Ownable2Step {
         require(authorizedReaders[indexer], "CapabilityRegistryV2: not authorized");
         authorizedReaders[indexer] = false;
         emit IndexerAccessRevoked(indexer, msg.sender);
+    }
+
+    // ─── Authorized-relayer management (consumeRead DoS gate) ───────────────
+
+    /// @notice Owner-only. Add a relayer wallet that may call consumeRead on behalf
+    ///         of grantees. The operator's signing wallet is typically the first
+    ///         relayer added post-deploy so the off-chain memory engine continues
+    ///         to function.
+    function addAuthorizedRelayer(address relayer) external onlyOwner {
+        require(relayer != address(0), "CapabilityRegistryV2: zero relayer");
+        require(!authorizedRelayers[relayer], "CapabilityRegistryV2: already relayer");
+        authorizedRelayers[relayer] = true;
+        emit RelayerAdded(relayer, msg.sender);
+    }
+
+    /// @notice Owner-only. Remove a relayer.
+    function removeAuthorizedRelayer(address relayer) external onlyOwner {
+        require(authorizedRelayers[relayer], "CapabilityRegistryV2: not relayer");
+        authorizedRelayers[relayer] = false;
+        emit RelayerRemoved(relayer, msg.sender);
     }
 
     // ─── Grant lifecycle (same surface as V1) ────────────────────────────────
@@ -134,9 +167,23 @@ contract CapabilityRegistryV2 is Ownable2Step {
         emit GrantRevoked(grantId, msg.sender);
     }
 
+    /// @notice Decrements the grant's readsRemaining budget by one.
+    ///
+    ///         Caller authorisation: only the grantee themselves OR an
+    ///         owner-allowlisted relayer can consume reads. Without this gate,
+    ///         any wallet could deplete any grantee's budget by scraping
+    ///         grantIds from the public GrantIssued event log — a clean DoS.
+    ///         The grantee can always self-call; the relayer pattern lets the
+    ///         off-chain memory engine (operator signs on behalf of users)
+    ///         continue to function. Anyone else reverts cleanly.
     function consumeRead(bytes32 grantId) external returns (bool ok) {
         Grant storage g = grants[grantId];
         if (g.owner == address(0)) return false;
+        // Caller-authorisation gate before any state read/write.
+        require(
+            msg.sender == g.grantee || authorizedRelayers[msg.sender],
+            "CapabilityRegistryV2: not grantee or relayer"
+        );
         if (g.revoked) return false;
         if (g.expiresAt != 0 && block.timestamp > g.expiresAt) return false;
         if (g.readsRemaining == 0) return false;

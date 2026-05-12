@@ -145,13 +145,62 @@ contract CapabilityRegistryV2Test is Test {
 
         assertTrue(reg.isValid(grantId, bob, SCOPE_WORK));
 
-        // consumeRead returns true while reads remain.
+        // K-22 fix: consumeRead now requires grantee-or-relayer caller. Bob is the grantee.
+        vm.prank(bob);
         assertTrue(reg.consumeRead(grantId));
 
         // Revocation works.
         vm.prank(alice);
         reg.revokeGrant(grantId);
         assertFalse(reg.isValid(grantId, bob, SCOPE_WORK));
+        vm.prank(bob);
         assertFalse(reg.consumeRead(grantId));
+    }
+
+    // ─── K-22 fix: consumeRead is gated to grantee + allowlisted relayer ──────
+
+    /// @dev Stranger scrapes a grantId from the GrantIssued event log and tries to
+    ///      consume reads on someone else's grant — the V1 DoS surface. K-22 reverts
+    ///      cleanly with "not grantee or relayer", preserving the grantee's budget.
+    function test_K22_StrangerCannotConsumeRead() public {
+        bytes32 grantId = _issue(alice, bob, SCOPE_WORK);
+
+        vm.prank(stranger);
+        vm.expectRevert(bytes("CapabilityRegistryV2: not grantee or relayer"));
+        reg.consumeRead(grantId);
+    }
+
+    /// @dev The off-chain memory engine calls consumeRead on behalf of grantees
+    ///      as the operator's signing wallet (relayer pattern). After
+    ///      `addAuthorizedRelayer`, that wallet can consume normally.
+    function test_K22_AuthorizedRelayerCanConsumeRead() public {
+        address relayer = address(0xE1AE4); // "relayer" mnemonic, valid hex
+        vm.prank(owner);
+        reg.addAuthorizedRelayer(relayer);
+
+        bytes32 grantId = _issue(alice, bob, SCOPE_WORK);
+
+        vm.prank(relayer);
+        assertTrue(reg.consumeRead(grantId));
+    }
+
+    function test_K22_OnlyOwnerCanAddRelayer() public {
+        vm.prank(stranger);
+        vm.expectRevert();
+        reg.addAuthorizedRelayer(stranger);
+    }
+
+    function test_K22_RemoveRelayerRevokesConsumeRights() public {
+        address relayer = address(0xE1AE4); // "relayer" mnemonic, valid hex
+        vm.startPrank(owner);
+        reg.addAuthorizedRelayer(relayer);
+        reg.removeAuthorizedRelayer(relayer);
+        vm.stopPrank();
+
+        bytes32 grantId = _issue(alice, bob, SCOPE_WORK);
+
+        vm.prank(relayer);
+        vm.expectRevert(bytes("CapabilityRegistryV2: not grantee or relayer"));
+        reg.consumeRead(grantId);
     }
 }
