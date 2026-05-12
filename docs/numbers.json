@@ -29,7 +29,7 @@
   },
   "contracts": {
     "deployed": 8,
-    "foundryTests": 167,
+    "foundryTests": 173,
     "list": [
       "AgentPassportINFT",
       "AgentPassportINFTV2",

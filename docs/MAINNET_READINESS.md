@@ -116,7 +116,7 @@ CLAUDE.md §1 ("The only blocker is money") — mainnet promotion requires the
 deployer wallet to be funded on chainId 16661 with enough OG to redeploy all
 <!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
 script is the same `forge script` used on testnet, with `--rpc-url
-https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->
+https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->173<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->173<!-- /numbers:auto:contracts.foundryTests -->
 Foundry tests.
 
 Once the deployer wallet receives mainnet OG, run:

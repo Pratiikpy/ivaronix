@@ -420,18 +420,23 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - `doc ask / run` via pipeline (iter-70): 9 fields ✓
 - **Verification on each commit:** `pnpm --filter @ivaronix/runtime typecheck` + `pnpm --filter @ivaronix/cli typecheck` + `pnpm --filter @ivaronix/studio test` (59 PASS) + 4 contracts PASS.
 
-### B-V2-32 · ReceiptRegistryV2 caps `receiptType` at 9 · slots 10/11/12 coerced to type 4 on-chain
+### B-V2-32 · ReceiptRegistryV2 caps `receiptType` at 9 · V3 source + tests ✅ SHIPPED 2026-05-12 · commit pending-this-iter · DEPLOY pending operator OG
 - **Source:** Iteration-16 cron drove `ivaronix room read` which anchored a `doc_room_read` (off-chain type 11) receipt. `apps/cli/src/commands/room.ts:584-588` explicitly hardcodes `RECEIPT_TYPE_CODE = 4` on the anchor call because `contracts/src/ReceiptRegistryV2.sol:135` requires `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC` (= 9). The contract has constants for slots 0-9 only; no `TYPE_DOC_ROOM_CREATE` (10), `TYPE_DOC_ROOM_READ` (11), or `TYPE_MEMORY_CONSOLIDATION` (12). `passport-consolidate.ts:366` does the same coercion for slot 12.
 - **Why this matters:** `packages/core/src/types.ts:70` defines 13 receipt types and `numbers.json` claims `receiptTypes.count: 13`. The enum count is accurate, but on-chain only 10 distinct receipt-type values are emitted faithfully — slots 10, 11, 12 all anchor as type 4 (memory_access). A reader querying chain events filtered by `receiptType == 11` finds zero results, even though three of the iterations (#4 memory_consolidation, this iteration #7 doc_room_read, and any prior data-room create) actually produced those types in the off-chain receipt body. Honest-by-absence: the off-chain body records the correct type; the on-chain field has a known coercion. NOT documented in `docs/RECEIPT_SCHEMA.md` or `docs/HALF_BAKED.md`.
-- **Action:**
-  1. Add constants `TYPE_DOC_ROOM_CREATE = 10`, `TYPE_DOC_ROOM_READ = 11`, `TYPE_MEMORY_CONSOLIDATION = 12` to `ReceiptRegistryV2.sol`.
-  2. Extend the type-cap require: `require(p.receiptType <= TYPE_MEMORY_CONSOLIDATION, "ReceiptRegistryV2: invalid type");`
-  3. Test against the new range (add Foundry tests `test_K2_TYPE_DOC_ROOM_*` mirroring the K2 pattern).
-  4. Deploy `ReceiptRegistryV3` at a new address (V2 stays live for back-compat per `.claude/rules/contracts.md` "V2 = new contract, NOT upgrade"). Update `contracts/deployments/testnet.json`.
-  5. Remove the `RECEIPT_TYPE_CODE = 4` coercion from `room.ts:588` and `passport-consolidate.ts:366`.
-  6. Document the migration in `CHANGELOG.md` + `docs/RECEIPT_SCHEMA.md` + `docs/HALF_BAKED.md`.
-- **Effort:** ~3-4h for the contract redeploy + CLI cleanup + docs. Per CLAUDE.md §1 "the only blocker is money" — needs ≈0.001 OG to deploy V3 on testnet.
-- **Honest disclosure today:** documented in this USER_TODO entry + the iteration-16 finding in `QA_PROOF_PACK/QA_TEST_PROGRESS.md`. Should also land a one-line note in `docs/HALF_BAKED.md` and `docs/RECEIPT_SCHEMA.md` so a reader of those docs alone doesn't miss it.
+- **What shipped iter-76 (source-side):**
+  1. ✅ `contracts/src/ReceiptRegistryV3.sol` — new fresh-deploy contract per `.claude/rules/contracts.md` "V2 = new contract, NOT upgrade". Adds `TYPE_DOC_ROOM_CREATE = 10`, `TYPE_DOC_ROOM_READ = 11`, `TYPE_MEMORY_CONSOLIDATION = 12` constants. Extends type-cap require: `require(p.receiptType <= TYPE_MEMORY_CONSOLIDATION, "ReceiptRegistryV3: invalid type");`. EIP-712 version bumped to "3" so V2 signatures cannot replay on V3 (domain separator differs).
+  2. ✅ `contracts/test/ReceiptRegistryV3.t.sol` — 6 Foundry tests covering all 3 new slots + legacy 0-9 still works + out-of-range (13) rejection + domain separator distinction. All 6 PASS.
+  3. ✅ Full Foundry suite now 173 tests (was 167) all green.
+- **What's still PENDING (operator-action):**
+  - Deploy `ReceiptRegistryV3` to Galileo testnet. Per CLAUDE.md §1 "the only blocker is money" — needs operator-funded gas (≈0.001-0.005 OG). Same class as A-2 mainnet promotion gate.
+  - Update `contracts/deployments/testnet.json` with V3 address.
+  - Add V3 to `KNOWN_RECEIPT_REGISTRIES` in `packages/core/src/types.ts`.
+  - Write `packages/og-chain/src/contracts/ReceiptRegistryV3.ts` client (mirrors V2 client; trivial diff).
+  - Update `apps/studio/src/lib/chain.ts` to V3-first → V2 → V1 fallback chain.
+  - Remove `RECEIPT_TYPE_CODE = 4` coercion from `room.ts:588` + `passport-consolidate.ts:366` (replace with V3 client direct anchor of slots 10/11/12).
+  - Document migration in `CHANGELOG.md` + `docs/RECEIPT_SCHEMA.md` + `docs/HALF_BAKED.md`.
+- **Effort remaining:** ~30min OG deploy + ~1h source-side cleanup post-deploy.
+- **The chain-cap coercion of slots 10/11/12 to type-4 on-chain is now a known-but-fixable gap** — the V3 source + tests are ready, the deploy is the only gate. Iter-16's finding led to iter-72's swarm.ts fix for slot 8 (which V2 already admits) + iter-76's V3 source for slots 10/11/12.
 
 ### B-V2-31 · `RECEIPT_TYPES.swarm` (slot 8) now produced by swarm CLI · ✅ SHIPPED 2026-05-12 · commit 3220e40-then-iter72
 - **Source:** QA plan §1145 row 8 + iteration-14 cron drive of `ivaronix swarm run`. The plan expected every swarm task to anchor a receipt with `type: 'swarm'`. Pre-iter-72 the code at `apps/cli/src/commands/swarm.ts:157` hardcoded `receiptType: 'doc_ask'` for every dispatched task, so `RECEIPT_TYPES.swarm` was enum-only with no on-chain producer.
