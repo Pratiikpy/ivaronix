@@ -673,3 +673,56 @@ Numbers cascade: `contracts.deployed: 8 → 13` across iter-78 → iter-87 (V3 R
 - **B-V2-2 · OG image 503 on Vercel → ✅ SHIPPED** · all 3 routes (`/opengraph-image`, `/r/[id]/opengraph-image`, `/0g/opengraph-image`) return 200 image/png · ~28–57 KB PNG · 1200×630 RGBA. Two satori limitations behind the failure (`<text>` SVG element + `display: grid` CSS Grid · both replaced with satori-compatible alternatives). Total 11 commits across iter-83 → iter-89; the diagnostic-isolation pattern in iter-84's `/og-minimal` route was the key debugging move.
 - **B-V2-23 · README screenshot grid refresh → ✅ SHIPPED** · 6 PNGs captured against live Vercel deploy via `STUDIO_BASE=https://ivaronix.vercel.app pnpm screenshots:refresh`. No local dev server needed once the OG image fix landed.
 - **B-V2-24 · `memory snapshot --anchor-on-chain` → ✅ SHIPPED end-to-end** · real chain proof: storage root `0x131403...` → updateMemoryRoot tx `0x2175670c...` · block 32967060 · gas 53300 · token #1 · 0x85e9dD63... (V2 AgentPassportINFT). Closes I-12 (PARTIALLY → FULLY) in HALF_BAKED. CLI gate is operator opt-in via the `--anchor-on-chain` flag — burns ~0.0002 OG per update.
+
+## 2026-05-13 · B-V2-35 orphan receipt-type closure (5 slots · structural lock)
+
+iter-96 audit surfaced 5 of 13 declared types in `RECEIPT_TYPES` had ZERO producers in shipped code. The catalog overclaimed what the codebase emitted. Same pattern as B-V2-31 (slot 8 swarm, fixed iter-72) but at 5x scale.
+
+iter-96 → iter-101 closed all 5 orphan slots end-to-end:
+
+| Iter | Slot | Producer added | Status | V3 chain proof |
+|---:|---:|---|---|---|
+| iter-96 | 3 burn | `doc.ts` ternary: `burnMode ? 'burn'` (CLI + Studio /api/run) | ✅ code-complete | awaits next `--burn` run |
+| iter-97 | 7 passport_update | `memory snapshot --anchor-on-chain` now also anchors a slot-7 receipt | ✅ LIVE | V3 id=3 · tx `0xe614af6e...` · block 32976932 |
+| iter-98 | 4 memory_access | `memory grant <grantee>` now also anchors a slot-4 receipt | ✅ LIVE | V3 id=4 · tx `0x8489681d...` · block 32977452 |
+| iter-99 | 5 skill_exec | `doc.ts` ternary: `skill.id !== 'private-doc-review' ? 'skill_exec'` | ✅ code-complete | awaits `--skill <non-default>` run |
+| iter-100 | 9 subscription_skill_exec | NEW `ivaronix subscribe` CLI (create + fund + check-in) | ✅ code-complete | awaits 2-wallet setup |
+
+V3 ReceiptRegistry post-closure state:
+  `nextId() = 5` — 5 anchors across canonical slots 4, 7, 10, 11, 12
+  (slot 10 from iter-95 doc_room_create · slot 11 from iter-95 doc_room_read · slot 12 from iter-92 memory_consolidation)
+
+### iter-101 · Structural lock via new regression
+
+`scripts/qa/metamask-e2e/verify-receipt-types-have-producers.ts` (NEW · 60th studio regression) parses `RECEIPT_TYPES` from `packages/core/src/types.ts` and walks `apps/` + `packages/` for any TypeScript file containing a producer literal for each type. Fails CI if any canonical type has zero producers.
+
+The regression uses 5 regex patterns to handle the various producer shapes:
+  - `type: '<name>'`              buildReceipt input shape
+  - `receiptType: '<name>'`       pipeline input shape
+  - `? '<name>'`                  ternary branch (multi-line)
+  - `: '<name>'`  (line start)    ternary else branch (multi-line)
+  - `= '<name>'`                  assignment shape
+
+The broader patterns catch doc.ts's multi-line ternary which a strict `type:\s*'<name>'` regex misses. Without the broader patterns the regression would false-fail on slots 2/3/5.
+
+Coverage report from the regression run (iter-101):
+  every canonical slot 0-12 has ≥1 producer in shipped code
+  25 producer file references across 13 types
+  all 60 studio source-file regressions pass
+
+### Write-side + read-side guards combined
+
+  - **Write-side** (iter-96 → iter-100 · 5 commits)
+      Added actual producer code for each orphan slot. Each closure
+      uses a slightly different shape: separate-receipt-anchor (slots 4/7),
+      type-flip (slots 3/5), or new-CLI scaffold (slot 9).
+
+  - **Read-side** (iter-101 · 1 commit)
+      Regression blocks any future PR that adds a `RECEIPT_TYPES`
+      entry without a producer. The catalog-vs-code drift pattern
+      can never silently regress.
+
+  - **Plan row 1150 receipt-type coverage** moves from 8/13 verified-on-chain
+      (entering iter-92) to 10/13 verified-on-chain + 3 code-complete-awaiting-exercise
+      (iter-101). All 13 slots have producers; 10 have live testnet anchors;
+      the remaining 3 await trivially-cheap runs of their producer paths.
