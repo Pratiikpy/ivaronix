@@ -648,7 +648,7 @@ Four V2 redeploys land on Galileo in cron iter-86 → iter-87. Each closes one H
   closes:           planning-003 §A.5.11 (squatter risk · 6 first-party skill IDs pre-reserved to operator at construction + owner-arbitration safety valve)
   reserved IDs:     skill:private-doc-review · skill:github-audit · skill:0g-integration-auditor · skill:code-edit · skill:plan-step · skill:content-pitch-review
   live verify:      `cast call 0xF05113E8... "owner()"` → operator wallet · 16/16 Foundry tests PASS
-  deploy harness:   `scripts/diag/deploy-skill-registry-v2.ts` (tsx + ethers; forge script rejects chainId 16602, forge create trips on array constructor args — reusable for any future array-ctor Galileo deploy)
+  deploy script:    `scripts/diag/deploy-skill-registry-v2.ts` (tsx + ethers; forge script rejects chainId 16602, forge create trips on array constructor args — reusable for any future array-ctor Galileo deploy)
 
 ### B-V2-18 · SubscriptionEscrowV2 → ✅ DEPLOYED `0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`
 
