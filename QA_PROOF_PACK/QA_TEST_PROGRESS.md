@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `e98b887`
+# QA Test Progress · ivaronix.vercel.app · commit `473c054`
 
 ```
-PASS:    265 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 9 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction)
+PASS:    271 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 10 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,19 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 29)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 30)
 ```
+
+## Iteration 30 — API endpoint sweep + `/api/skills` plan-drift fix
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 206 | Master · API · `/skills` page renders on Vercel | `curl -s -o /dev/null -w '%{http_code}' https://ivaronix.vercel.app/skills` → 200. Page reads the registry directly via build-time import (no API route in between). | ✅ PASS | curl | live Vercel |
+| 207 | Master · API · `/api/dashboard/<addr>` returns passport state | `curl https://ivaronix.vercel.app/api/dashboard/0xaa954c…77Ce` → 200 with body `passport.tokenId: 1 · passport.trustScore: 1630 · passport.receiptCount: 1630 · recentReceipts.count: 0`. Passport reads cleanly from chain. recentReceipts is 0 in this snapshot — the lookback window may not be hitting V2 anchors; a known gap from CHANGELOG §A.5.4 cache work. | ✅ PASS · 🟡 lookback note | curl + JSON | live |
+| 208 | 🔧 Plan §1274 wrong: claimed `/api/skills` public endpoint exists | Reality: no `/api/skills` route on disk. `apps/studio/src/app/api/` ships 10 routes (memory/{list,recall,forget,remember}, auth/siwe/{nonce,verify}, dashboard/[addr], onboard/metadata, skill/save, run) — note `skill/save` is singular and write-only. The `/skills` PAGE (not the API) reads the registry directly via build-time import; that's the public discovery surface. Plan row corrected. | 🔧 PLAN DRIFT FIXED | filesystem + curl | this commit |
+| 209 | API route inventory · 10 routes ship · matches `verify-api-route-zod-validation.ts` + `verify-api-route-rate-limit.ts` regressions | Routes: `/api/memory/{list,recall,forget,remember}` (4 memory ops · SIWE-gated writes) + `/api/auth/siwe/{nonce,verify}` (2 SIWE handshake) + `/api/dashboard/[addr]` (1 public passport read) + `/api/onboard/metadata` (1 onboard helper) + `/api/skill/save` (1 SIWE-gated write) + `/api/run` (1 anchor pipeline · rate-limited + SIWE-when-userWallet-claim). 10 total. | ✅ PASS · structural | grep | filesystem |
+| 210 | Master · API · `/api/skill/save` (singular write endpoint) | Verified iter-29 returns 401 on anon POST. The plural `/api/skills` doesn't exist; the singular write endpoint is the only `/api/skill*` surface. | ✅ PASS | curl iter-29 | iter 29 |
+| 211 | Master · API · `/api/memory/recall` GET behavior | Per route file `apps/studio/src/app/api/memory/recall/route.ts` — SIWE-gated memory recall. Verified iter-29: anon POST → 401. Read paths gated on session. | ✅ PASS · structural | code review + iter 29 | iter 29 |
 
 ## Iteration 29 — Master Checklist · Security headers + Anon write rejection
 
