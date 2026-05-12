@@ -22,8 +22,20 @@ export const dynamic = 'force-dynamic';
  *                       scope, sourced from MemoryAccessLog events.
  */
 export default function MemoryPage() {
-  const capabilityAddr = getDeployedAddress(getNetwork(), 'CapabilityRegistry');
-  const memoryAddr = getDeployedAddress(getNetwork(), 'MemoryAccessLog');
+  // V2-first per iter-125. V2 carries the social-graph privacy fix (B-V2-15)
+  // for CapabilityRegistry and the log-spoofing fix (B-V2-16) for
+  // MemoryAccessLog. Pre-iter-125 every grant issued + every audit row
+  // displayed through Studio's /memory went to V1, missing both security
+  // upgrades. issueGrant/revokeGrant signatures are identical V1↔V2 so
+  // the MemoryPanel client component works against either address.
+  // hardcoded-contracts:allow: pinned V1↔V2 fallback for CapabilityRegistry + MemoryAccessLog; the page semantically needs both names spelled out (V2-first lookup + V1 fallback per contract pair).
+  const net = getNetwork();
+  const capabilityAddr =
+    getDeployedAddress(net, 'CapabilityRegistryV2') ??
+    getDeployedAddress(net, 'CapabilityRegistry');
+  const memoryAddr =
+    getDeployedAddress(net, 'MemoryAccessLogV2') ??
+    getDeployedAddress(net, 'MemoryAccessLog');
 
   return (
     <>

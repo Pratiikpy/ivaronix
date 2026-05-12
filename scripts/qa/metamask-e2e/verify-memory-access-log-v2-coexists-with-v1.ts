@@ -45,6 +45,7 @@ const SCAN_DIRS = [
   resolve(REPO_ROOT, 'apps/cli/src'),
   resolve(REPO_ROOT, 'apps/mcp-server/src'),
   resolve(REPO_ROOT, 'packages/runtime/src'),
+  resolve(REPO_ROOT, 'apps/studio/src'), // iter-125: extended scope to lock the Studio side of the V2 cascade
 ];
 const SKIP_DIRS = new Set(['node_modules', '.next', '.turbo', 'dist', 'out']);
 const SKIP_SUFFIXES = ['.test.ts', '.test.tsx', '.spec.ts'];
@@ -70,7 +71,7 @@ function listTsFiles(dir: string): string[] {
 
 const files: string[] = [];
 for (const dir of SCAN_DIRS) files.push(...listTsFiles(dir));
-ok(`scanned ${files.length} TypeScript source files across CLI + MCP + runtime`);
+ok(`scanned ${files.length} TypeScript source files across CLI + MCP + runtime + studio`);
 
 const V1_LOOKUP_RE = /getDeployedAddress\([^)]*['"]MemoryAccessLog['"]\s*\)/;
 const V2_LOOKUP_RE = /getDeployedAddress\([^)]*['"]MemoryAccessLogV2['"]\s*\)/;

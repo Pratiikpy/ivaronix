@@ -78,8 +78,9 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       name: 'Agent ID · ERC-7857',
       status: 'live',
       what: 'Every receipt is bound to a passport tokenId. A delegated agent (planning-01 §2A) gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an AgentPassport-resolvable wallet — the chain confirms the signer matches.',
-      endpoint: { label: 'AgentPassportINFT — custom ERC-7857 implementation' },
+      endpoint: { label: 'AgentPassportINFT — custom ERC-7857 implementation (V1 legacy + V2 K-1/K-4/K-6 fix)' },
       addresses: [
+        ...(addr('AgentPassportINFTV2') ? [{ label: 'AgentPassportINFTV2', address: addr('AgentPassportINFTV2'), explorer: linkOf(addr('AgentPassportINFTV2')) }] : []),
         { label: 'AgentPassportINFT', address: addr('AgentPassportINFT'), explorer: linkOf(addr('AgentPassportINFT')) },
       ],
       seeItLive: { label: 'See a delegated agent', href: '/delegate/01KR67PT76V9AQTHN413PYWB1J' },

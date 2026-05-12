@@ -28,19 +28,34 @@ interface GlobalSnapshot {
 
 async function loadSnapshot(): Promise<GlobalSnapshot> {
   const localReceipts = loadAllLocalReceipts(50);
-  const memoryAddr = getDeployedAddress(getNetwork(), 'MemoryAccessLog');
+  // V2-first per iter-125 (B-V2-16 log-spoofing fix). Pre-iter-125, /global
+  // showed V1 memory events only — V2-anchored audit events were invisible.
+  // Merge V1 + V2 event scans, sort by timestamp, take latest 5.
+  const memoryAddrV2 = getDeployedAddress(getNetwork(), 'MemoryAccessLogV2');
+  const memoryAddrV1 = getDeployedAddress(getNetwork(), 'MemoryAccessLog');
+
+  const memEventsPromise = (async () => {
+    type Ev = Awaited<ReturnType<MemoryAccessLogClient['listGlobal']>>[number];
+    const all: Ev[] = [];
+    // silent-catch-allow: /global is a best-effort dashboard — RPC failures
+    // on one registry shouldn't blank the whole feed; the empty array just
+    // means "no V2 events visible right now" (the V1 read still tried).
+    if (memoryAddrV2) {
+      try { all.push(...await new MemoryAccessLogClient(memoryAddrV2, getProvider()).listGlobal(200_000)); } catch { /* silent-catch-allow: best-effort */ }
+    }
+    if (memoryAddrV1) {
+      try { all.push(...await new MemoryAccessLogClient(memoryAddrV1, getProvider()).listGlobal(200_000)); } catch { /* silent-catch-allow: best-effort */ }
+    }
+    all.sort((a, b) => Number(a.timestamp - b.timestamp));
+    return all.slice(-5).reverse();
+  })();
 
   // V2-first cross-registry sum so /global counts post-K-2 anchors too.
   // Sweep 187: passport count via the shared livePassportCount helper.
   const [unifiedIds, passportCount, memEvents] = await Promise.all([
     unifiedNextId().catch(() => null),
     livePassportCount().catch(() => null),
-    memoryAddr
-      ? new MemoryAccessLogClient(memoryAddr, getProvider())
-          .listGlobal(200_000)
-          .then((events) => events.slice(-5).reverse())
-          .catch(() => [])
-      : [],
+    memEventsPromise.catch(() => [] as Awaited<typeof memEventsPromise>),
   ]);
 
   const recentMemoryEvents = memEvents.map((ev) => ({

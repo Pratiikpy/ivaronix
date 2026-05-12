@@ -115,14 +115,39 @@ export interface UnifiedReceipt {
  * Returns 0n for an empty registry (no passports minted).
  */
 export async function livePassportCount(): Promise<bigint | null> {
-  const p = getPassportClient();
-  if (!p) return null;
-  try {
-    const next = await p.nextTokenId();
-    return next > 0n ? next - 1n : 0n;
-  } catch {
-    return null;
+  // V2-aware sum per iter-125. V1 stays live for legacy tokenIds 1-4.
+  // V2 was deployed (B-V2-1 · K-1/K-4/K-6 fix) but pre-iter-125 the
+  // home + /agents + /global + /thesis surfaces undercounted by every
+  // V2-minted passport because livePassportCount only read V1.
+  const net = getNetwork();
+  const v2Addr = getDeployedAddress(net, 'AgentPassportINFTV2');
+  const v1Addr = getDeployedAddress(net, 'AgentPassportINFT');
+  if (!v2Addr && !v1Addr) return null;
+  const provider = getProvider();
+  let total = 0n;
+  let hadFailure = false;
+  let hadSuccess = false;
+  if (v2Addr) {
+    try {
+      const c = new AgentPassportClient(v2Addr, provider);
+      const next = await c.nextTokenId();
+      total += next > 0n ? next - 1n : 0n;
+      hadSuccess = true;
+    } catch {
+      hadFailure = true;
+    }
   }
+  if (v1Addr) {
+    try {
+      const c = new AgentPassportClient(v1Addr, provider);
+      const next = await c.nextTokenId();
+      total += next > 0n ? next - 1n : 0n;
+      hadSuccess = true;
+    } catch {
+      hadFailure = true;
+    }
+  }
+  return hadSuccess ? total : (hadFailure ? null : 0n);
 }
 
 /**
@@ -265,13 +290,21 @@ export async function unifiedFindByAgent(
 }
 
 export function getPassportClient(): AgentPassportClient | null {
-  const addr = getDeployedAddress(getNetwork(), 'AgentPassportINFT');
+  // V2-first per iter-125 (K-1/K-4/K-6 security fix). V1 stays live for
+  // legacy passports; V2 is canonical for new mints. Callers that need
+  // explicit V1 access should use the V1-tagged helper below.
+  const net = getNetwork();
+  const addr = getDeployedAddress(net, 'AgentPassportINFTV2') ?? getDeployedAddress(net, 'AgentPassportINFT');
   if (!addr) return null;
   return new AgentPassportClient(addr, getProvider());
 }
 
 export function getSkillRegistry(): SkillRegistryClient | null {
-  const addr = getDeployedAddress(getNetwork(), 'SkillRegistry');
+  // V2-first per iter-125 (B-V2-17 squatter-fix). V2 carries canonical
+  // first-party skill IDs (6 pre-reserved on deploy); V1 is legacy
+  // fallback. publishVersion + getVersion signatures are identical V1↔V2.
+  const net = getNetwork();
+  const addr = getDeployedAddress(net, 'SkillRegistryV2') ?? getDeployedAddress(net, 'SkillRegistry');
   if (!addr) return null;
   return new SkillRegistryClient(addr, getProvider());
 }
