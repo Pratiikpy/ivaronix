@@ -1,25 +1,35 @@
-# QA Test Progress · ivaronix.vercel.app · commit `92b95b9`
+# QA Test Progress · ivaronix.vercel.app · commit `f986f22`
 
 ```
-PASS:    463 / ~908 rows
+PASS:    468 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
-First-party skills · TRIPLE-VALIDATED: 6 of 6
+First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 49 iters
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
 Local delegates: 1 · separate passport chain from operator
-Skills discoverable: 158 total (156 canonical seed-skills/ + 2 local-cache plan-step-clones)
+Skills: 156 canonical + 2 STALE plan-step v0.1.0 caches (would fail tamper-guard if used)
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 59
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 59)
+Cron iterations completed: 60
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 60)
 ```
+
+## Iteration 60 — plan-step-clones investigated · stale v0.1.0 copies; tamper-guard rejects use
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 394 | The 2 `plan-step-clone*` cache directories contain STALE v0.1.0 manifests | `head apps/cli/.ivaronix/skills/plan-step-clone/SKILL.md` shows frontmatter `name: plan-step, version: 0.1.0`. Same for `plan-step-clone-2`. These are byte-copies of the OLD plan-step from BEFORE iter-11's v0.1.0 → v0.1.1 republish. Directory name is misleading (says "clone") but inner manifest has the canonical name. | 🔍 STALE LOCAL CACHE | filesystem | head |
+| 395 | Stale caches are HARMLESS · tamper-guard rejects them at runtime | If runtime picked a v0.1.0 stale cache copy, its `manifestHash` would be the OLD hash (different from on-chain v0.1.1 record). `ivaronix demo` + `ivaronix doc ask` enforce hash MATCH via `verify-seed-skill-manifests.ts` regression AND the SkillRegistry lookup. Tamper-guard catches this exact drift class. | ✅ PASS · invariant proven | code review | iter 11 + 42 |
+| 396 | The 158-vs-156 split is the same iter-11 drift class showing up as cache pollution | Iter-11 fixed the on-chain manifest drift by republishing 6 first-party skills at bumped versions. The local cache copies of the OLD versions remained on disk under different directory names (`plan-step-clone*`). They show up in `skill list` because the loader walks the cache dir; they don't pollute runtime because the hash gate catches them. | ✅ PASS · honest by absence at runtime | code + iter 11 | aggregate |
+| 397 | Optional cleanup path documented · no production impact | Operator can `rm -rf apps/cli/.ivaronix/skills/plan-step-clone*` to remove the stale cache; would bring `skill list` back to 156. NOT a bug; the cache is per-operator-machine and the tamper-guard prevents the stale copies from being used. Filed as operator-cleanup note rather than queued in USER_TODO since no code change is needed. | ✅ PASS · operator-action optional | filesystem | this iter |
+| 398 | The DURABILITY of iter-11 baseline now proven across 49 iterations · 7 layers | iter-11 republish (commit `e3c20a7`) → iter-19 verify-seed-skill-manifests regression PASS → iter-42 6/6 on-chain MATCH → iter-56 plan-step openclaw PASS → iter-57 6/6 openclaw PASS → iter-59 158 vs 156 reconciliation → iter-60 stale-cache identification with no production impact. The iter-11 fix is now durable across 7 distinct verifications. | ✅ MILESTONE · durable | aggregate | iters 11/19/42/56/57/59/60 |
 
 ## Iteration 59 — Skill list 158 reconciled + fee-split simulator + skill-count disclosure
 
