@@ -1,3 +1,4 @@
+// v3-lookup-allow: indexer mirrors V1+V2 ReceiptAnchored events; V3 indexing requires the new event signature ReceiptAnchored(uint256 indexed,bytes32,bytes32,bytes32,address indexed,uint8). V3 backfill tracked in USER_TODO §B-V2-37.
 /**
  * `ivaronix indexer ...` — receipt indexer (PASS 76 S-5).
  *

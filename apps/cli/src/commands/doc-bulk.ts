@@ -1,3 +1,4 @@
+// v3-lookup-allow: bulk writer emits slots 0-9 only (doc_ask/consensus/burn/skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
 import { Command } from 'commander';
 import { writeFileSync, readdirSync, mkdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname, basename, extname } from 'node:path';

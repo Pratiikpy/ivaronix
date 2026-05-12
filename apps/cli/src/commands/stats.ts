@@ -20,7 +20,7 @@ import { Command } from 'commander';
 import { JsonRpcProvider } from 'ethers';
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
-import { ReceiptRegistryClient, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, ReceiptRegistryV3Client, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
 import { IndexerDb } from '@ivaronix/indexer';
 import { RECEIPT_TYPES, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
@@ -52,18 +52,22 @@ export const statsCommand = new Command('stats')
 
     const recAddr = getDeployedAddress(env.network, 'ReceiptRegistry');
     const recV2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
-    if (!recAddr && !recV2Addr) {
-      ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
+    const recV3Addr = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+    if (!recAddr && !recV2Addr && !recV3Addr) {
+      ui.fail(`No ReceiptRegistry (V1, V2, or V3) deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
 
-    // 1. On-chain authoritative counters · V1 + V2 split. Total
-    //    anchored receipts = (v1.nextId - 1) + (v2.nextId - 1) since
-    //    both are 1-indexed. Sweep 56 caught the V2-blindness in
-    //    doctor; stats had the same drift class.
+    // 1. On-chain authoritative counters · V1 + V2 + V3 split. Total
+    //    anchored receipts = (v1.nextId - 1) + (v2.nextId - 1) + (v3.nextId - 1)
+    //    since all three are 1-indexed. V3 added for slots 10/11/12
+    //    (doc_room_create, doc_room_read, memory_consolidation) per
+    //    B-V2-32. Previously: V1 + V2 only — undercounted by every V3
+    //    receipt (5+ at this snapshot).
     let v1NextId = 0n;
     let v2NextId = 0n;
+    let v3NextId = 0n;
     if (recAddr) {
       try {
         const c = new ReceiptRegistryClient(recAddr as Address, provider);
@@ -74,15 +78,24 @@ export const statsCommand = new Command('stats')
     }
     if (recV2Addr) {
       try {
-        const c = new ReceiptRegistryClient(recV2Addr as Address, provider);
+        const c = new ReceiptRegistryV2Client(recV2Addr as Address, provider);
         v2NextId = await c.nextId();
       } catch (err) {
         ui.fail('on-chain V2 nextId() read failed', (err as Error).message);
       }
     }
+    if (recV3Addr) {
+      try {
+        const c = new ReceiptRegistryV3Client(recV3Addr as Address, provider);
+        v3NextId = await c.nextId();
+      } catch (err) {
+        ui.fail('on-chain V3 nextId() read failed', (err as Error).message);
+      }
+    }
     const v1Anchored = v1NextId > 0n ? v1NextId - 1n : 0n;
     const v2Anchored = v2NextId > 0n ? v2NextId - 1n : 0n;
-    const onchainNextId = v1Anchored + v2Anchored; // semantically: total anchored across V1 + V2
+    const v3Anchored = v3NextId > 0n ? v3NextId - 1n : 0n;
+    const onchainNextId = v1Anchored + v2Anchored + v3Anchored; // semantically: total anchored across V1 + V2 + V3
 
     // 2. Local indexer stats
     let local: ReturnType<IndexerDb['stats']> | null = null;
@@ -97,13 +110,30 @@ export const statsCommand = new Command('stats')
     }
 
     // 3. Wallet-specific (if env wallet is set)
+    // Sum agentReceiptCount across V1 + V2 + V3 — operator wallet's receipts
+    // are split across the three registries by anchor-time slot routing.
+    // Previously: V1-only — undercount for any wallet that anchored on V2/V3.
     let walletReceipts = 0n;
     let passportTokenId = 0n;
     if (env.walletAddress) {
-      try {
-        const client = new ReceiptRegistryClient(recAddr as Address, provider);
-        walletReceipts = await client.agentReceiptCount(env.walletAddress as Address);
-      } catch {/* ignore */}
+      if (recAddr) {
+        try {
+          const client = new ReceiptRegistryClient(recAddr as Address, provider);
+          walletReceipts += await client.agentReceiptCount(env.walletAddress as Address);
+        } catch {/* ignore */}
+      }
+      if (recV2Addr) {
+        try {
+          const client = new ReceiptRegistryV2Client(recV2Addr as Address, provider);
+          walletReceipts += await client.agentReceiptCount(env.walletAddress as Address);
+        } catch {/* ignore */}
+      }
+      if (recV3Addr) {
+        try {
+          const client = new ReceiptRegistryV3Client(recV3Addr as Address, provider);
+          walletReceipts += await client.agentReceiptCount(env.walletAddress as Address);
+        } catch {/* ignore */}
+      }
       const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
       if (passportAddr) {
         try {
@@ -146,7 +176,14 @@ export const statsCommand = new Command('stats')
         chainId: env.chainId,
         onchain: {
           receiptRegistry: recAddr,
+          receiptRegistryV2: recV2Addr,
+          receiptRegistryV3: recV3Addr,
           totalReceipts: Number(onchainNextId),
+          totalReceiptsByVersion: {
+            v1: Number(v1Anchored),
+            v2: Number(v2Anchored),
+            v3: Number(v3Anchored),
+          },
           chainHead: head,
         },
         wallet: env.walletAddress ? {
@@ -178,8 +215,9 @@ export const statsCommand = new Command('stats')
 
     ui.section('01 · On-chain');
     if (recAddr) ui.pass(`ReceiptRegistry      ${recAddr}  (V1 legacy)`);
-    if (recV2Addr) ui.pass(`ReceiptRegistryV2    ${recV2Addr}  (V2 active)`);
-    ui.pass(`total receipts       ${onchainNextId}  (V1: ${v1Anchored} + V2: ${v2Anchored})`);
+    if (recV2Addr) ui.pass(`ReceiptRegistryV2    ${recV2Addr}  (V2 active · slots 0-9)`);
+    if (recV3Addr) ui.pass(`ReceiptRegistryV3    ${recV3Addr}  (V3 active · slots 10/11/12)`);
+    ui.pass(`total receipts       ${onchainNextId}  (V1: ${v1Anchored} + V2: ${v2Anchored} + V3: ${v3Anchored})`);
     ui.info(`chain head           ${head}`);
 
     if (env.walletAddress) {

@@ -508,13 +508,31 @@ receiptCommand
       return;
     }
 
-    // V2-first WRITE per .claude/rules/og-chain.md
+    // Type-aware WRITE routing per packages/runtime/src/pipeline.ts.
+    // Slots 10/11/12 (doc_room_create, doc_room_read, memory_consolidation)
+    // require V3 — V1/V2 contracts reject these type codes at the contract
+    // layer. For legacy slots 0-9, V2 is preferred with V3 as fallback.
+    // Previously: V2 ?? V1 only — would have silently failed at the contract
+    // when handed a slot-10+ signed receipt.
+    const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
     const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
     const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-    const registryAddr = registryAddrV2 ?? registryAddrV1;
-    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+    const SLOTS_REQUIRING_V3 = new Set(['doc_room_create', 'doc_room_read', 'memory_consolidation']);
+    const requiresV3 = SLOTS_REQUIRING_V3.has(receipt.type);
+    const registryAddr = requiresV3
+      ? (registryAddrV3 ?? registryAddrV2 ?? registryAddrV1)
+      : (registryAddrV2 ?? registryAddrV3 ?? registryAddrV1);
+    const registryVersion: 'v1' | 'v2' | 'v3' =
+      registryAddr && registryAddr === registryAddrV3 ? 'v3'
+      : registryAddr && registryAddr === registryAddrV2 ? 'v2'
+      : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
+      return;
+    }
+    if (requiresV3 && registryVersion !== 'v3') {
+      ui.fail(`receiptType '${receipt.type}' requires ReceiptRegistryV3 (slots 10/11/12 not admitted by V1/V2). Deploy V3 first.`);
       process.exitCode = 1;
       return;
     }
@@ -539,7 +557,26 @@ receiptCommand
       let blockNumber: number;
       let gasUsed: bigint;
       let onChain: { id: bigint } | null = null;
-      if (registryVersion === 'v2') {
+      if (registryVersion === 'v3') {
+        const registryV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+        const { tx: v3Tx } = await registryV3.signAndAnchor(wallet, {
+          receiptRoot: receipt.storage.receiptRoot as Hash,
+          storageRoot,
+          receiptType: typeCode,
+          attestationHash,
+        });
+        txHash = v3Tx.hash;
+        ui.info(`tx hash              ${txHash}`);
+        ui.pending('Waiting for confirmation...');
+        const r = await v3Tx.wait();
+        if (!r) { ui.fail('Transaction did not return a receipt'); return; }
+        blockNumber = r.blockNumber;
+        gasUsed = r.gasUsed;
+        try {
+          const found = await registryV3.findByReceiptRoot(receipt.storage.receiptRoot as Hash, 50);
+          if (found) onChain = { id: found.id };
+        } catch { /* not fatal */ }
+      } else if (registryVersion === 'v2') {
         const registryV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
         const { tx: v2Tx } = await registryV2.signAndAnchor(wallet, {
           receiptRoot: receipt.storage.receiptRoot as Hash,
@@ -712,7 +749,9 @@ receiptCommand
     ui.divider();
     for (const r of filtered) {
       const iso = new Date(Number(r.timestamp) * 1000).toISOString().replace('T', ' ').slice(0, 19);
-      const tag = r.registryVersion === 'v2' ? 'V2' : 'V1';
+      const tag = r.registryVersion === 'v3' ? 'V3'
+        : r.registryVersion === 'v2' ? 'V2'
+        : 'V1';
       ui.pass(
         `#${r.id.toString().padStart(3, ' ')}  ${tag}  type=${r.receiptType}  ${iso}  ${r.receiptRoot.slice(0, 10)}…${r.receiptRoot.slice(-6)}`,
       );
