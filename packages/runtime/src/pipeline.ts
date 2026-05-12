@@ -14,6 +14,7 @@ import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   AgentPassportClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
@@ -575,16 +576,41 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
   const wallet = new Wallet(env.privateKey, provider);
 
-  // Prefer V2 registry when deployed (HALF_BAKED K-2 fix). V1 stays live
-  // forever for the existing anchored receipts; new anchors land
-  // on V2 if present so the agentAddress on chain is the recovered
-  // EIP-712 signer instead of `msg.sender`.
+  // Registry selection per receipt type:
+  //   - V3 admits slots 0-12 (canonical · B-V2-32) — REQUIRED for slots
+  //     10 (doc_room_create), 11 (doc_room_read), 12 (memory_consolidation).
+  //     V2 caps at slot 9 and would revert for slot ≥ 10.
+  //   - V2 admits slots 0-9 (K-2 EIP-712 path) — used for legacy slots
+  //     when V3 unavailable.
+  //   - V1 (legacy) admits slots 0-9 — used only when V2/V3 not deployed.
+  //
+  // Today's pipeline producers emit slots 0/1/2/3/5/6/8 (all ≤ 9), so V2
+  // is sufficient when deployed. But routing through V3 for those slots
+  // is also fine (V3 is a superset). Forward-compat: if a future
+  // pipeline producer emits slot 10-12 (e.g. embedded doc_room_create
+  // flow), the type-aware routing picks V3 automatically without
+  // requiring a follow-up commit.
+  const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
   const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
   const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-  const registryAddr = registryAddrV2 ?? registryAddrV1;
-  const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+  // Per-receipt-type slot codes (from packages/core/src/types.ts RECEIPT_TYPES).
+  // Slot 10/11/12 REQUIRE V3.
+  const SLOTS_REQUIRING_V3 = new Set(['doc_room_create', 'doc_room_read', 'memory_consolidation']);
+  const requiresV3 = SLOTS_REQUIRING_V3.has(receiptType);
+  const registryAddr = requiresV3
+    ? (registryAddrV3 ?? registryAddrV2 ?? registryAddrV1)
+    : (registryAddrV2 ?? registryAddrV3 ?? registryAddrV1);
+  const registryVersion: 'v1' | 'v2' | 'v3' =
+    registryAddr === registryAddrV3 ? 'v3'
+    : registryAddr === registryAddrV2 ? 'v2'
+    : 'v1';
   if (!registryAddr) {
     throw new Error(`No ReceiptRegistry deployed on ${env.network}`);
+  }
+  if (requiresV3 && registryVersion !== 'v3') {
+    throw new Error(
+      `receiptType '${receiptType}' requires ReceiptRegistryV3 (slots 10/11/12 not admitted by V1/V2). Deploy V3 first.`,
+    );
   }
 
   const evidenceDigest = await sha256HexAsync(activeContext);
@@ -848,7 +874,26 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   let txHash: string;
   let txBlockNumber: number | null = null;
 
-  if (registryVersion === 'v2') {
+  if (registryVersion === 'v3') {
+    // B-V2-32 path: same EIP-712 anchor shape as V2 but the chain-cap
+    // raise admits canonical slots 10/11/12. Required for receipt types
+    // doc_room_create/read + memory_consolidation; superset-fine for
+    // legacy slots 0-9 too.
+    const registryV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+    const { tx } = await registryV3.signAndAnchor(wallet, {
+      receiptRoot: signed.storage.receiptRoot as Hash,
+      storageRoot: evidenceBytes32,
+      receiptType: typeCode,
+      attestationHash: onChainAttestationHash,
+    });
+    const txReceipt = await tx.wait();
+    txHash = tx.hash;
+    txBlockNumber = txReceipt?.blockNumber ?? null;
+    try {
+      const onChain = await registryV3.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+      if (onChain) onchainId = onChain.id;
+    } catch { /* not fatal */ }
+  } else if (registryVersion === 'v2') {
     // K-2 path: EIP-712 sign + anchor through V2. The recorded
     // agentAddress is the recovered signer (this wallet); msg.sender
     // is the relayer (also this wallet today; future flows split them).
@@ -867,7 +912,7 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       if (onChain) onchainId = onChain.id;
     } catch { /* not fatal */ }
   } else {
-    // Legacy V1 path. Kept for chains where V2 has not been deployed yet.
+    // Legacy V1 path. Kept for chains where V2/V3 have not been deployed yet.
     const registryV1 = new ReceiptRegistryClient(registryAddr, wallet);
     const tx = await registryV1.anchor(
       signed.storage.receiptRoot as Hash,
