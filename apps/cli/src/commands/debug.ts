@@ -2,6 +2,7 @@
 // v1-passport-allow: debug reader inspects V1 passport state for diagnostic depth; V2 passport inspection via `ivaronix passport show` (V2-first since iter-121). V2-aware debug surfaces tracked in USER_TODO §B-V2-38.
 // v1-capability-allow: debug reader inspects V1 CapabilityRegistry grant state for diagnostic depth (V1's listGrantsByOwner is unrestricted; V2's getGrantsByOwner is access-controlled). V2-aware debug surfaces tracked in USER_TODO §B-V2-39.
 // v1-skill-registry-allow: debug reader inspects V1 SkillRegistry state for diagnostic depth; V2-aware debug surfaces tracked in USER_TODO §B-V2-40.
+// v1-memory-access-log-allow: debug reader inspects V1 MemoryAccessLog events for diagnostic depth; V2-aware debug surfaces tracked in USER_TODO §B-V2-41.
 /**
  * `ivaronix debug …` — diagnostic depth (PASS 77 F-7, A2 path).
  *

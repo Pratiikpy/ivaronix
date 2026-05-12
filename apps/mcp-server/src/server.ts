@@ -1,6 +1,7 @@
 // v3-lookup-allow: MCP server exposes receipt verify/anchor against V1+V2; slot 10+ MCP flows (doc_room_*, memory_consolidation) must add V3 lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
 // v1-passport-allow: MCP exposes V1 passport state via the passport tool; V2-first migration tracked in USER_TODO §B-V2-38.
 // v1-capability-allow: MCP exposes V1 CapabilityRegistry grant state via the memory-grant tools; V2-first migration tracked in USER_TODO §B-V2-39.
+// v1-memory-access-log-allow: MCP exposes V1 MemoryAccessLog events; V2-first migration tracked in USER_TODO §B-V2-41.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,

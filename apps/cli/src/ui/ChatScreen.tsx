@@ -1,4 +1,5 @@
 // v1-capability-allow: ChatScreen displays V1 CapabilityRegistry grant state; V2-first migration tracked in USER_TODO §B-V2-39.
+// v1-memory-access-log-allow: ChatScreen displays V1 MemoryAccessLog events; V2-first migration tracked in USER_TODO §B-V2-41.
 /**
  * Ink TUI for the `chat` command — iteration 2.
  *

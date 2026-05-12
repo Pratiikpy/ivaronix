@@ -764,13 +764,17 @@ memoryCommand
   .option('--lookback <blocks>', 'how far back to scan (default 50000)', '50000')
   .action(async (opts: { agent?: string; lookback: string }) => {
     const env = loadEnv();
-    const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
-    if (!logAddr) {
+    // V2-first read per iter-124 (B-V2-16 log-spoofing fix). V2 events have
+    // identical shape to V1, so the same client decodes both. Merge results
+    // across V1 + V2 for a complete audit trail; V1 stays live for historical
+    // events anchored before V2 deploy.
+    const logAddrV2 = getDeployedAddress(env.network, 'MemoryAccessLogV2');
+    const logAddrV1 = getDeployedAddress(env.network, 'MemoryAccessLog');
+    if (!logAddrV2 && !logAddrV1) {
       ui.fail(`MemoryAccessLog not deployed on ${env.network}`);
       return;
     }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const accessLog = new MemoryAccessLogClient(logAddr, provider);
 
     const target = (opts.agent ?? env.walletAddress) as Address | undefined;
     if (!target) {
@@ -780,7 +784,28 @@ memoryCommand
 
     ui.title(`Memory access log for ${target}`);
     ui.divider();
-    const events = await accessLog.listForAgent(target, Number(opts.lookback));
+    const lookback = Number(opts.lookback);
+    type EventRow = Awaited<ReturnType<MemoryAccessLogClient['listForAgent']>>[number] & { source: 'v1' | 'v2' };
+    const events: EventRow[] = [];
+    if (logAddrV2) {
+      try {
+        const logV2 = new MemoryAccessLogClient(logAddrV2, provider);
+        const v2Events = await logV2.listForAgent(target, lookback);
+        for (const ev of v2Events) events.push({ ...ev, source: 'v2' });
+      } catch (err) {
+        ui.info(`V2 scan skipped (${(err as Error).message.split('\n')[0]})`);
+      }
+    }
+    if (logAddrV1) {
+      try {
+        const logV1 = new MemoryAccessLogClient(logAddrV1, provider);
+        const v1Events = await logV1.listForAgent(target, lookback);
+        for (const ev of v1Events) events.push({ ...ev, source: 'v1' });
+      } catch (err) {
+        ui.info(`V1 scan skipped (${(err as Error).message.split('\n')[0]})`);
+      }
+    }
+    events.sort((a, b) => Number(b.timestamp - a.timestamp));
     if (events.length === 0) {
       ui.hint('(no events found)');
       return;
@@ -793,7 +818,8 @@ memoryCommand
     };
     for (const ev of events) {
       const ts = new Date(Number(ev.timestamp) * 1000).toISOString();
-      ui.info(`[${ts}] ${typeLabels[ev.accessType] ?? ev.accessType}  grant ${ev.grantId.slice(0, 14)}…  memRoot ${ev.memoryRoot.slice(0, 14)}…  block ${ev.blockNumber}`);
+      const tag = ev.source === 'v2' ? 'V2' : 'V1';
+      ui.info(`[${ts}] ${tag} ${typeLabels[ev.accessType] ?? ev.accessType}  grant ${ev.grantId.slice(0, 14)}…  memRoot ${ev.memoryRoot.slice(0, 14)}…  block ${ev.blockNumber}`);
     }
     ui.divider();
     ui.pass(`${events.length} events`);

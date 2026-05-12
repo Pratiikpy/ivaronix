@@ -64,6 +64,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-agent-passport-v2-coexists-with-v1/, // iter-121 closure · AgentPassportV1 lookup must have sibling V2 lookup (K-1/K-4/K-6 security-fix coverage)
       /^verify-capability-registry-v2-coexists-with-v1/, // iter-122 closure · CapabilityRegistry V1 lookup must have sibling V2 lookup (B-V2-15 social-graph leak fix coverage)
       /^verify-skill-registry-v2-coexists-with-v1/, // iter-123 closure · SkillRegistry V1 lookup must have sibling V2 lookup (B-V2-17 squatter-fix coverage)
+      /^verify-memory-access-log-v2-coexists-with-v1/, // iter-124 closure · MemoryAccessLog V1 lookup must have sibling V2 lookup (B-V2-16 log-spoofing fix coverage · completes V2-rollout cascade)
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
