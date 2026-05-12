@@ -948,16 +948,18 @@ This section checks whether each feature gives the right result, not only whethe
 
 Mainnet promotion gate (per `docs/MAINNET_READINESS.md §109`): all 13 items GREEN on mainnet (chainId 16661) with mainnet wallet + mainnet contracts before declaring mainnet-READY. Each item gets re-run against the new chain.
 
-## `ivaronix serve` HTTP API (4 routes)
+## `ivaronix serve` HTTP API (6 routes · 4 GET + 2 POST)
 
-The `ivaronix serve` command boots a local HTTP server on port 4243 (Hono per `docs/build/BUILD.md §11`). Test every route.
+The `ivaronix serve` command boots a local HTTP server on port **8788** (Hono per `docs/build/BUILD.md §11`; plan originally claimed 4243 — corrected iter-32 against actual default). Test every route.
 
 | Route | Wallets | Expected response |
 |---|---|---|
-| `GET /healthz` | 0 | `200 { ok: true, network, blockNumber }`. |
-| `GET /v1/skills` | 0 | `200` array of catalog skills (matches `ivaronix skill list`). |
-| `GET /v1/passport/<addr>` | 0 | `200` passport state for the address (matches `ivaronix passport show`). |
-| `GET /v1/receipt/<id>` | 0 | `200` receipt body (matches `ivaronix receipt show`). 404 on unknown id. |
+| `GET /healthz` | 0 | `200 { ok: true, network, receipts, receiptsV1, receiptsV2, passports }` — iter-32 live: `network: 'testnet', receipts: 1651, receiptsV1: 1644, receiptsV2: 7, passports: 4`. Includes aggregate chain reads beyond the plan's original `blockNumber`-only claim. |
+| `GET /v1/skills[?q=...]` | 0 | `200` array of catalog skills (matches `ivaronix skill list`). Optional `?q=` substring filter. |
+| `GET /v1/passport/<wallet>` | 0 | `200` passport state for the address (matches `ivaronix passport show`). Iter-32 live: `{tokenId: '1', wallet: '0xaa954c…77Ce', trustScore: '1630', receiptCount: '1630', violationCount: '0', network: 'testnet'}`. |
+| `GET /v1/receipt/<id-or-root>` | 0 | `200` receipt body (matches `ivaronix receipt show`). Iter-32 live: receipt #4 → 200; receipt #999999 → 404. Accepts both numeric id and 0x bytes32 receiptRoot. |
+| `POST /v1/run` | 1 | (added iter-32 plan fix) `{skillId, context, userPrompt, tier?, receipt?}` body → runs the skill and anchors the receipt. Same surface as Studio `/api/run`. |
+| `POST /v1/chat/completions` | 1 | (added iter-32 plan fix) OpenAI-compatible single-shot endpoint for direct AI calls without the receipt-anchoring pipeline. |
 
 CORS, rate-limit, auth-vs-anon behavior, JSON content-type, and error sanitization all apply equally to `serve` as to the Studio `/api/*` routes.
 
