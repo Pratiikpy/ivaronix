@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `6b911b7`
+# QA Test Progress · ivaronix.vercel.app · commit `ffa9018`
 
 ```
-PASS:    234 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 6 plan-drift fixes · 1 env-check fix)
+PASS:    240 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 8 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,19 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             26 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 24)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 25)
 ```
+
+## Iteration 25 — Untested Surfaces (§1194) + Observability (§1491)
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 176 | Plan §1206 `@ivaronix/indexer` 22-test suite | `pnpm --filter @ivaronix/indexer test` → `tests 22 / pass 22 / fail 0 / duration_ms 467.58`. Exact match to plan claim. Covers CRUD + filters + stats + worker-thread paths. | ✅ PASS | local test | green |
+| 177 | Plan §1203 Telegram bot smoke (offline) | `IVARONIX_TG_TEST=1 pnpm --filter @ivaronix/telegram-bot exec tsx src/smoke.ts` → `SMOKE OK · bot wired · commands registered without errors`. Exact match to plan claim. The bot wiring + command registration paths work without a BotFather token (live behavior remains BLOCKED for real phone). | ✅ PASS | local | shell output |
+| 178 | Plan §1202 MCP server `tools/list` (offline) | `pnpm --filter @ivaronix/mcp-server dev` boots stdio server. JSON-RPC `{"jsonrpc":"2.0","id":1,"method":"tools/list"}` over stdin returns all 5 tools: `ivaronix_ask`, `ivaronix_verify_receipt`, `ivaronix_search_memory`, `ivaronix_install_skill`, `ivaronix_passport_show`. Each has a valid JSON Schema with required fields. Full Claude Desktop integration stays BLOCKED-with-reason. | ✅ PASS | stdin | server response |
+| 179 | 🔧 Plan §1202 wrong tool naming convention: claimed dot-notation `ivaronix.ask` etc | Actual names use **snake_case** per MCP convention: `ivaronix_ask`, `ivaronix_verify_receipt`, `ivaronix_search_memory`, `ivaronix_install_skill`, `ivaronix_passport_show`. Plan row corrected with the real names + iter-25 evidence. | 🔧 PLAN DRIFT FIXED | edit | this commit |
+| 180 | 🔧 Plan §1496 Sentry grep claim slightly wrong: said "0 hits today" | Reality: `grep -ri 'sentry' apps/studio/src/` returns 1 hit at `apps/studio/src/lib/error-sanitize.ts:36` — a regex pattern `\b(?:IVARONIX\|OG\|EVM\|ZG\|NVIDIA\|SENTRY\|UPSTASH)_[A-Z0-9_]+\b` that strips env-var leaks from error messages (false positive). No `@sentry/*` package imports. Plan SPIRIT is correct (no actual Sentry wiring) but the literal grep count was 0 → 1. Row updated. | 🔧 PLAN DRIFT FIXED | edit | this commit |
+| 181 | Plan §1491 observability state · 4 rows walked | Sentry DSN: PENDING per §B-V2-26 (no SDK wiring; only env-var regex false positive). Vercel runtime logs: live (already used in OG-image B-V2-2 diagnosis). Upstash Redis: external configuration. Correlation ID across UI/CLI/logs: PENDING. | ✅ PARTIAL · 1 PASS + 3 PENDING per design | sweep | code review |
 
 ## Iteration 24 — /onboard claim + Visual B1-B9 + Privacy Invariants
 
