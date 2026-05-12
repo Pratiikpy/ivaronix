@@ -37,7 +37,7 @@ The product is one concrete user flow. Drop a contract. Get an audit. Share a pu
 **Track positioning:**
 
 - **Track 1 — Agentic Infrastructure (primary).** Ivaronix is the cognitive backbone: skills, memory, receipts, hooks, scanner, sandbox. Five first-party skills, all on chain.
-- **Track 3 — Agentic Economy (automatic secondary).** SkillRegistry + `og.creator.fee_split` is a receipt-gated marketplace. Creators earn only when a TIER 1 TEE receipt anchors. `ivaronix skill earn-history` shows real numbers: private-doc-review = 26 runs, creator earned 0.0014009400 OG, exact 90/10 split.
+- **Track 3 — Agentic Economy (automatic secondary).** SkillRegistry + `og.creator.fee_split` is a receipt-gated marketplace. Creators earn only when a TIER 1 TEE receipt anchors. `ivaronix skill earn-history` shows real numbers: private-doc-review = 36 runs, creator earned 0.0018106290 OG, ~90/10 split (iter-63 refresh · numbers.json B-V2-34 fix queued).
 - **Track 5 — Privacy & Sovereign Infrastructure (the upcoming Confidential Data Room hero).** Multi-party document review where every read is a receipt and every counterparty is a named wallet on-chain. None of the 24 competitors in the field claim Track 5 with this depth.
 
 ---

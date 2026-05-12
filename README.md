@@ -84,8 +84,8 @@ Receipt-gated fee splits, on-chain creator wallet, marketplace primitive on ever
 |---|---|---|
 | `SkillRegistry` (skill catalog + creator + fee-split) | `0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1` | [chainscan-galileo](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
 | `og.creator.fee_split` per skill manifest | `seed-skills/<skill>/SKILL.md` frontmatter | `private-doc-review` 90/10 · `content-pitch-review` 70/30 (per-skill economic policy) |
-| Paid creator runs of `private-doc-review` | **26** | `ivaronix skill earn-history --skill private-doc-review` returns chain numbers |
-| Creator earnings (testnet) | **0.0014 OG** | exact 90/10 split per receipt, settled on anchor |
+| Paid creator runs of `private-doc-review` | **36** | `ivaronix skill earn-history private-doc-review` returns chain numbers |
+| Creator earnings (testnet) | **0.0018 OG** | exact 90/10 split per receipt, settled on anchor (iter-63 cron refresh · numbers.json B-V2-34 fix queued) |
 
 Why receipt-gated splits, not a static registry? A creator only earns when:
 1. The run completes inside a TEE-attested 0G Compute provider, AND
