@@ -139,7 +139,10 @@ export async function POST(req: Request) {
       ...(body.policy ? { policy: body.policy } : {}),
       receipt: !!body.receipt,
       burn: !!body.burn,
-      receiptType: 'doc_ask',
+      // B-V2-35 slot 3 closure: burn-mode runs anchor as type 'burn'
+      // (canonical slot 3). The CLI doc-ask path uses the same logic
+      // (apps/cli/src/commands/doc.ts).
+      receiptType: body.burn ? 'burn' : 'doc_ask',
       logger,
       ...(userWallet ? { delegatedOwnerWallet: userWallet } : {}),
     });

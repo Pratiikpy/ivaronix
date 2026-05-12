@@ -495,7 +495,13 @@ docCommand
     const primaryAtt = consensusResult.attestations.find((a) => a.role === primaryRole);
 
     const draft = buildReceipt({
-      type: tier === 'quick' ? 'doc_ask' : 'consensus',
+      // B-V2-35 slot 3 closure: burn-mode runs anchor as type 'burn'
+      // (canonical slot 3). Non-burn quick-tier runs stay 'doc_ask';
+      // multi-role runs stay 'consensus'. The burn sub-field
+      // (storage.encryption + burn.sessionKeyDestroyedAt) is still
+      // populated; only the top-level type flips so chain consumers
+      // can filter on receiptType==3 to find burn-mode runs.
+      type: burnMode ? 'burn' : tier === 'quick' ? 'doc_ask' : 'consensus',
       agent: {
         passportId: `did:0g:passport:${wallet.address}:1`,
         ownerWallet: wallet.address as `0x${string}`,
