@@ -394,6 +394,16 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-31 · `RECEIPT_TYPES.swarm` (slot 8) is enum-only · never produced by code
+- **Source:** QA plan §1145 row 8 + iteration-14 cron drive of `ivaronix swarm run`. The plan expects every swarm task to anchor a receipt with `type: 'swarm'` plus plan + result + role list. The code at `apps/cli/src/commands/swarm.ts:157` hardcodes `receiptType: 'doc_ask'` for every dispatched task. No parent/aggregate `swarm` receipt is anchored at the end of the run. So `RECEIPT_TYPES.swarm` exists in the enum (`packages/core/src/types.ts:70`) but no code path produces it.
+- **Why this matters:** the receipt-type sweep promised by the plan (§1145 "confirm at least one of each type 0-12") cannot pass for slot 8 today. `numbers.json` says `receiptTypes.count: 13` — accurate for the enum, but only 11 of the 13 types are actually generatable by shipped code (slots 9 + 11 also require SubscriptionEscrowV2 + a Wallet-B data-room reader). The receipt-type catalog overclaims what the codebase actually emits.
+- **Action:**
+  1. Decide the design: either (a) flip each swarm-dispatched task's `receiptType` to `'swarm'`, or (b) keep per-task `doc_ask` and add a parent aggregate `swarm` receipt at the end of the run that lists `request.priorReceiptIds` of every child receipt + the plan body + the role list. Option (b) matches the plan §1159 expected shape (plan + result + role list) and is consistent with how `memory_consolidation` (slot 12) works today — a child-aggregating receipt with lineage in `priorReceiptIds`.
+  2. Update `apps/cli/src/commands/swarm.ts` action handler to anchor the parent receipt after the child loop closes.
+  3. Add a Foundry / source-file regression that fails if `RECEIPT_TYPES.swarm` has zero on-chain producers (or update the plan to mark slot 8 PENDING with this `B-V2-31` reference).
+- **Effort:** ~1-2h.
+- **Pattern source:** the iteration-14 `ivaronix passport consolidate --day --no-compute` run worked correctly — it produced receipt #4 with `type: 'memory_consolidation'` + `request.priorReceiptIds: ['3', '2', '1']`. Same shape applies here.
+
 ### B-V2-30 · Split operator anchoring key from signing key (K-21 hardening)
 - **Source:** HALF_BAKED §K-21 (High). Today one operator wallet signs receipts, anchors, calls `recordReceipt`, uploads to Storage, pays gas. Compromise forges every Studio-anchored receipt and drains every funded contract.
 - **Why queued not shipped:** the structural fix is SIWE handshake (sweep 245e017 already shipped `signedBy: 'user-direct'` support), which makes the operator's key not load-bearing for *signing* receipts — the user signs in the browser via wagmi, operator only anchors. Production rollout needs the SIWE flow promoted from optional to required for receipt creation. Threat-model JSDoc in `delegate.ts:34-49` documents the current operator-machine-custody boundary.

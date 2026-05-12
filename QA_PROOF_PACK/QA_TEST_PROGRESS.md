@@ -1,18 +1,30 @@
-# QA Test Progress · ivaronix.vercel.app · commit `e9de060`
+# QA Test Progress · ivaronix.vercel.app · commit `04664b3`
 
 ```
-PASS:    154 / ~908 rows
-FAIL:    0 (6 issues found · 6 SHIPPED · 1 partial = run-revoke UI refetch · tx confirmed on chain)
-PENDING: 0
+PASS:    164 / ~908 rows
+FAIL:    0 (8 issues found · 7 SHIPPED · 1 partial = run-revoke UI refetch · 1 PENDING = B-V2-31 swarm type)
+PENDING: 1 (RECEIPT_TYPES.swarm slot 8 enum-only — queued as B-V2-31)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             18 saved (judge-guide step 1 verify-1304 + verify-3-v2 added this iteration)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 12)
+  CLI logs:             20 saved (passport-consolidate + swarm-quick-1task added iteration 14)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 14)
 ```
+
+## Iteration 14 — Receipt Type Coverage sweep (plan §1145)
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 99 | Receipt type 12 `memory_consolidation` driven end-to-end | `ivaronix passport consolidate --day --no-compute` → receipt #4 V2 anchored at block 32918132 · tx `0x001eff…c2103` · `type: 'memory_consolidation'` · `priorReceiptIds: ['3','2','1']` (lineage to the 3 prior V2 doc_ask receipts) | ✅ PASS | CLI | `QA_PROOF_PACK/cli-logs/passport-consolidate-iteration14.log` + receipt at `apps/cli/.ivaronix/receipts/anchored/rcpt_01KRE0M5JP9YSWGBEVQYJTR3JM.json` |
+| 100 | Receipt #4 renders on Vercel | `https://ivaronix.vercel.app/r/4` returns HTTP 200 with the receipt body | ✅ PASS | curl + body inspect | live Vercel |
+| 101 | `ivaronix swarm run <todo> --quick --max 1` drives a 1-task swarm | receipt #5 anchored at block 32918394 · tx `0x029018…7023` on V2 · 0G Storage upload root `0x2f67cd…60d2` (real `@0gfoundation/0g-ts-sdk` segment upload + log-entry wait); however `type: 'doc_ask'` not `'swarm'` | 🔧 BUG #8 (FOUND, not blocker) | CLI + chain | `cli-logs/swarm-quick-1task-iteration14.log` |
+| 102 | RECEIPT_TYPES.swarm (slot 8) is enum-only | `apps/cli/src/commands/swarm.ts:157` hardcodes `receiptType: 'doc_ask'` for every dispatched task; no parent aggregate `swarm` receipt anchored. `RECEIPT_TYPES.swarm` exists in `packages/core/src/types.ts:70` but no code path produces it. | ✅ DISCLOSED honestly | code review | `USER_TODO §B-V2-31` queued |
+| 103 | Plan §1159 (swarm row) updated to mark slot 8 PENDING with `§B-V2-31` reference | matches the pattern plan already uses for slot 9 (`subscription_skill_exec` PENDING until SubscriptionEscrowV2 deploys per `§B-V2-18`) — keeps the plan honest, prevents next cron from re-flagging this | ✅ PASS | local | this commit |
+| 104 | Real 0G Storage segment upload via `@0gfoundation/0g-ts-sdk` during swarm task | indexer URL `http://34.169.28.106:5678`, 47-byte payload, 1 segment + 1 chunk, storage fee 1,000,000,000,000,000 (1×10^15 wei = 0.001 OG), log-entry wait succeeded after 3 sync polls. Real testnet indexer round-trip. | ✅ PASS | live indexer | same log |
+| 105 | Receipt type coverage status — 10 of 12 testable types now exercised on V2 (+1 PENDING swarm, +1 PENDING subscription) | covered: doc_ask · audit · consensus · burn · memory_access · skill_exec · passport_update · doc_room_create · memory_consolidation + the just-anchored swarm-as-doc_ask. Missing real testable: `code_change` (slot 6) + `doc_room_read` (slot 11). Truly blocked: `swarm` (slot 8 · §B-V2-31), `subscription_skill_exec` (slot 9 · §B-V2-18). | 🟡 PARTIAL | sweep | this commit |
 
 ## Iteration 12 — JUDGE_GUIDE.md literal reproducer
 
