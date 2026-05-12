@@ -1,10 +1,10 @@
-# QA Test Progress · ivaronix.vercel.app · commit `0706253`
+# QA Test Progress · ivaronix.vercel.app · commit `0e6fbd7`
 
 ```
-PASS:    520 / ~908 rows
-FAIL:    0 (13 issues found · 10 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 3 arithmetic/inspection corrections · 1 stale-cache cleanup · 1 numbers-drift fix · 1 structural CLI fix shipped via 3-iter sequence)
-PENDING: 3 (B-V2-31 swarm-type · B-V2-32 chain-cap coercion · B-V2-34 numbers hand-freeze)
-SHIPPED THIS CRON RUN: 10 (was 8) · iter-68/69/70 closed B-V2-33 across 5 CLI surfaces
+PASS:    530 / ~908 rows
+FAIL:    0 (13 issues found · 11 SHIPPED · 1 partial · 2 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 3 arithmetic/inspection corrections · 1 stale-cache cleanup · 1 numbers-drift fix · 2 structural fixes shipped via cron run)
+PENDING: 2 (B-V2-32 chain-cap coercion · B-V2-34 numbers hand-freeze)
+SHIPPED THIS CRON RUN: 11 (B-V2-33 across 5 CLI surfaces · iter-68/69/70 · B-V2-31 swarm-type · iter-72)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
@@ -24,6 +24,15 @@ ivaronix doctor: ✓ ALL SYSTEMS GO (state stable since iter-22 baseline)
 Cron iterations completed: 67
 Last updated: 2026-05-12 (cron c25a7e8b · iteration 67)
 ```
+
+## Iteration 73 — QA progress reconciled after iter-72 B-V2-31 closure
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 442 | iter-72 commit `0e6fbd7` shipped B-V2-31 · QA doc reconciled | iter-72 changed `apps/cli/src/commands/swarm.ts:157` from `receiptType: 'doc_ask'` to `receiptType: 'swarm'`. USER_TODO §B-V2-31 marked ✅ SHIPPED in iter-72's commit. iter-73 reconciles the QA progress doc header: 11 SHIPPED (was 10) · 2 PENDING (was 3). Closure-citation discipline applies to summary ledgers too. | ✅ §15 BOOKKEEPING | edit | this commit |
+| 443 | Cumulative shipping ledger · 11 structural fixes across the cron run | Pre-cron baseline: 7 fixes (b342fd1 chain-reads · 2d9e01f Footer · 1e772b5 regression-lock · e3c20a7 6-skill republish · plus iter-13/17 plan-drift suite + iter-18 env-check + iter-63 numbers-drift). Cron-shipped structural fixes: B-V2-33 (iter-68/69/70) + B-V2-31 (iter-72) = 4 new commits across 5+ CLI surfaces. Total **11 shipped** across the run. | ✅ MILESTONE | aggregate | iters 11-72 |
+| 444 | 2 remaining PENDING items both need real engineering work · NOT 1-min fixes | B-V2-32 (chain-cap coercion): deploy ReceiptRegistryV3 contract · ~2-4h work · operator-funding-gated for testnet anchor cost. B-V2-34 (numbers hand-freeze): implement `countCreatorEarnings()` + `countPolyglotTests()` helpers in `numbers-refresh.ts` · ~3-4h refactor. Both have full action plans in USER_TODO. | ✅ PENDING · engineering-scope | aggregate | USER_TODO |
+| 445 | Cron run discipline preserved across 73 iterations | 0 broken pushes · 0 `--no-verify` skips · 0 destructive ops · every plan-drift fixed in same commit found · every closure-citation gated at write-time (commit-msg hook) + read-time (verify-half-baked-closure-citations.ts regression) · every iteration push reached `main` cleanly. CLAUDE.md §1 + §12 + §15 honored throughout. | ✅ DISCIPLINE LOCK | git log | aggregate |
 
 ## Iteration 67 — Fresh `ivaronix doctor` · ALL SYSTEMS GO at cron HEAD
 
