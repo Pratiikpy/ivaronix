@@ -23,11 +23,41 @@ import { ReceiptV1Schema, type ReceiptV1, type UnsignedReceiptV1 } from './schem
  * Verification re-runs the storage/chain/TEE checks from scratch each time;
  * it does NOT mutate these fields in the receipt JSON.
  */
+/**
+ * Keys excluded from the canonical hash. Two categories:
+ *
+ *   (1) Signature: `signature` is by definition computed AFTER the
+ *       receiptRoot hash, so the body it signs cannot contain itself.
+ *
+ *   (2) Post-anchor metadata: every field written into the receipt body
+ *       by the anchoring path AFTER the receiptRoot is computed.
+ *       Including any of these in the hash means the verifier (who sees
+ *       the post-anchor body) can never recompute the pre-anchor hash.
+ *
+ *       Today's post-anchor writes:
+ *         - chainAnchor.anchorTxHash    (set after the anchor tx confirms)
+ *         - chainAnchor.anchorBlockNumber
+ *         - chainAnchor.anchorTimestamp
+ *         - chainAnchor.onChainId       (B-V2-33 · written back to the
+ *                                        local receipt JSON so 'verify' can
+ *                                        navigate to chainscan without
+ *                                        re-scanning events)
+ *         - chainAnchor.status          (B-V2-33 · 'anchored' marker
+ *                                        for the same reason)
+ *         - receiptTxHash               (legacy alias kept for older receipts)
+ *
+ * If a new post-anchor field lands without being added here, every
+ * receipt written after the change will fail hash verify. The
+ * `receipts/builder.test.ts` "post-anchor metadata excluded" regression
+ * is the read-side guard against this regression.
+ */
 const HASH_EXCLUDE = new Set([
   'signature',
   'anchorTxHash',
   'anchorBlockNumber',
   'anchorTimestamp',
+  'onChainId',
+  'status',
   'receiptTxHash',
 ]);
 

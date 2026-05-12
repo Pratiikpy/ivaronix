@@ -6,6 +6,7 @@ import { verifyClaimed, ReceiptV1Schema, type ReceiptV1 } from '@ivaronix/receip
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { NETWORKS, RECEIPT_TYPES, type Hash, type ReceiptType } from '@ivaronix/core';
@@ -22,6 +23,7 @@ import { ui } from '../lib/ui.js';
  * every V2 receipt anchored after the K-2 mainnet redeploy.
  */
 type RegistryEntry =
+  | { client: ReceiptRegistryV3Client; version: 'v3'; address: string }
   | { client: ReceiptRegistryV2Client; version: 'v2'; address: string }
   | { client: ReceiptRegistryClient; version: 'v1'; address: string };
 
@@ -33,13 +35,17 @@ interface OnChainReadRow {
   agentAddress: string;
   timestamp: bigint;
   receiptType: number;
-  registryVersion: 'v1' | 'v2';
+  registryVersion: 'v1' | 'v2' | 'v3';
 }
 
 function buildReadRegistries(
   network: 'testnet' | 'mainnet',
   runner: ContractRunner,
 ): RegistryEntry[] {
+  const v3Addr = getDeployedAddress(network, 'ReceiptRegistryV3') as
+    | `0x${string}`
+    | null
+    | undefined;
   const v2Addr = getDeployedAddress(network, 'ReceiptRegistryV2') as
     | `0x${string}`
     | null
@@ -49,6 +55,13 @@ function buildReadRegistries(
     | null
     | undefined;
   const out: RegistryEntry[] = [];
+  if (v3Addr) {
+    out.push({
+      client: new ReceiptRegistryV3Client(v3Addr, runner),
+      version: 'v3',
+      address: v3Addr,
+    });
+  }
   if (v2Addr) {
     out.push({
       client: new ReceiptRegistryV2Client(v2Addr, runner),
@@ -238,7 +251,7 @@ receiptCommand
     }
 
     let onChain: OnChainReadRow | null = null;
-    let anchoredOn: 'v1' | 'v2' | null = null;
+    let anchoredOn: 'v1' | 'v2' | 'v3' | null = null;
 
     // Three-tier chain-anchor lookup strategy (sweep 62):
     //
@@ -587,7 +600,7 @@ receiptCommand
     }
 
     let row: OnChainReadRow | null = null;
-    let foundOn: 'v1' | 'v2' | null = null;
+    let foundOn: 'v1' | 'v2' | 'v3' | null = null;
     for (const r of registries) {
       try {
         const found = await r.client.getReceipt(BigInt(id));
@@ -611,7 +624,7 @@ receiptCommand
       return;
     }
 
-    const versionTag = foundOn === 'v2' ? 'V2' : 'V1 LEGACY';
+    const versionTag = foundOn === 'v3' ? 'V3' : foundOn === 'v2' ? 'V2' : 'V1 LEGACY';
     ui.title(`Receipt ${row.id} · ${versionTag}`);
     ui.info(`receiptRoot          ${row.receiptRoot}`);
     ui.info(`storageRoot          ${row.storageRoot}`);
