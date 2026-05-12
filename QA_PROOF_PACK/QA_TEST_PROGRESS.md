@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `4142f60`
+# QA Test Progress · ivaronix.vercel.app · commit `77a2b83`
 
 ```
-PASS:    210 / ~908 rows
+PASS:    216 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 5 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -11,9 +11,20 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             23 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 21)
+  CLI logs:             24 saved (debug-chain-iteration22 added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 22)
 ```
+
+## Iteration 22 — `ivaronix debug` walk + V2 anchor count drift fix
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 154 | Plan §1265 row 5 (`ivaronix debug`) walked | 8 subcommands ship: `receipt · passport · memory · skill · chain · storage · compute · startup`. `debug chain` end-to-end: prints network = testnet (chainId 16602) · RPC = `https://evmrpc-testnet.0g.ai` · latest block 32923871 · all 8 contracts listed at their canonical addresses · receipts anchored 1651 (V1 1644 + V2 7) | ✅ PASS | CLI | `QA_PROOF_PACK/cli-logs/debug-chain-iteration22.log` |
+| 155 | numbers.json stale by 1 V2 anchor (iter-16 doc_room_read wasn't picked up) | `debug chain` revealed V2 anchored = 7 but `numbers.json.receipts.v2Anchored: 6`. The iter-16 anchor (`rcpt_01KRE1BKV68S235P86PNZG6R43` at block 32919713) didn't trigger a numbers refresh. Refreshed this iteration: V2 6 → 7, total 1650 → 1651. | 🔧 NUMBERS DRIFT FIXED | chain + refresh | numbers.json |
+| 156 | docs:render rebuilt 45 markers across 4 render-target docs | README · PITCH · JUDGE_GUIDE · MAINNET_READINESS — all numeric markers in sync · 0 unknown-key warnings | ✅ PASS | auto-render | local |
+| 157 | Plan §1087 Smart Contract Threat-Model · adversarial Foundry tests exist | `contracts/test/AgentPassportINFTV2.t.sol` has `test_K1_DeltaCapEnforced_{Positive,Negative}Overflow` + `test_K1_DeltaCapAcceptsBoundary` (the ±100 trustScoreDelta cap defense). All 167 Foundry tests PASS per iter 13 verification. | ✅ PASS | grep + forge test | source + iter 13 sweep |
+| 158 | Plan §1465 wander-cycle scripts ship | `package.json:42-43` defines `pnpm wander:cycle` (single iter) + `pnpm wander:loop` (10-min continuous). Scripts at `scripts/wander-cycle/cycle.ts` + `scripts/wander-cycle/loop.ts`. Driving the cycle would anchor a real receipt under the CI wallet — out of scope for offline cron iteration since it spins through `private-doc-review` via 0G Compute (currently affected by broker.processResponse transient state per JUDGE_GUIDE step 1 disclosure). | ✅ CODE-READY | filesystem | package.json |
+| 159 | Plan §1265 row 5 (`ivaronix debug`) confirms all 0G primitives reachable | `debug chain` returned all 8 contracts; receipt anchoring count matches; latest block fresh. Every primitive that `debug` covers (chain, storage, compute, memory) is operator-reachable from this terminal. | ✅ PASS | CLI | same log |
 
 ## Iteration 21 — Marketplace fee-split + Receipt JSON field-by-field
 

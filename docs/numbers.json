@@ -4,9 +4,9 @@
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
     "v1Anchored": 1644,
-    "v2Anchored": 6,
-    "total": 1650,
-    "headlineLabel": "1,650+ receipts anchored across V1 + V2 registries"
+    "v2Anchored": 7,
+    "total": 1651,
+    "headlineLabel": "1,651+ receipts anchored across V1 + V2 registries"
   },
   "receiptTypes": {
     "count": 13,
