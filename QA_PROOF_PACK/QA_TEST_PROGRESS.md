@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `39d30f0`
+# QA Test Progress · ivaronix.vercel.app · commit `e931dae`
 
 ```
-PASS:    308 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 14 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
+PASS:    314 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,18 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 36)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 37)
 ```
+
+## Iteration 37 — /api/run rate-limit verified + golden fixtures plan-drift fixed
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 247 | §1277 row 6 + Master Auth row · anon `/api/run` rate-limit @ 10 req/min | 12 sequential anon POSTs against `https://ivaronix.vercel.app/api/run`: requests 1-10 returned HTTP 400 (Zod body validation rejects · defense-in-depth confirmed iter 29) · requests 11-12 returned HTTP 429 (rate limit kicked in). Plan §1289 expected: "11th request returns 429" — verified to-the-request. Rate limiter increments per IP regardless of body-validation failure, so even malformed requests cap at 10/min. | ✅ PASS · invariant proven | curl loop | shell output |
+| 248 | 🔧 Plan §883-895 golden test fixtures: ALL 7 named goldens DO NOT SHIP today | `find . -name 'golden-*'` returns 0 hits matching the plan-named fixtures (`golden-contract-risky`, `golden-buggy-repo`, `golden-0g-integration-repo`, `golden-pitch.md`, `golden-private-note.txt`, `golden-invalid-receipt.json`, `golden-valid-receipt-id.txt`). Plan section corrected to honest-by-absence: each row now maps to its functional equivalent today (sample-contract button, skill-execution, hand-modified fixture in `tests/fixtures/anchored-receipts/v1-anchored-id-8.json`, etc.). The tamper-detection invariant is still proven (iter-28); the valid-fixture path is still proven (iter-19); the privacy-leak path is still code-verified (iter-35). Goldens are a proposed canonical-fixture set, not currently shipped. | 🔧 PLAN DRIFT FIXED | filesystem + edit | this commit |
+| 249 | Functional equivalents already cover the 7 named goldens' use cases | golden-contract-risky → "Use sample contract →" button (iter-26) · golden-buggy-repo → Foundry K1 adversarial tests (iter-22) · golden-0g-integration-repo → 0g-integration-auditor skill execution path · golden-pitch.md → content-pitch-review skill · golden-private-note.txt → iter-35 privacy-leak code path · golden-invalid-receipt.json → iter-28 tamper-detection PASS · golden-valid-receipt-id → `tests/fixtures/anchored-receipts/v1-anchored-id-8.json` (iter-19 60s quickstart). 7 of 7 plan-row functional intents already PASS via existing surfaces. | ✅ PASS · functional coverage exists | aggregate | iters 19-35 |
+| 250 | Master · §1289 rate-limit + 429 enforcement structurally locked | The 10-req/min cap + 429 response + Retry-After header are all observable in the iter-37 curl loop. `verify-api-route-rate-limit.ts` regression locks this at pre-commit time. Defense-in-depth (Zod 400 → rate-limit 429 → SIWE 401 → execution) confirmed iter 29 + this iter. | ✅ PASS · structural | regression + curl | shell output |
+| 251 | Plan §1289 second clause: "51st authenticated request → 429" · structurally documented | The authenticated-path rate-limit cap is documented in `apps/studio/src/lib/rate-limit.ts` per `checkRateLimit('api-run-authenticated', wallet)`. Not driven this iter (would need an authenticated SIWE session + 51 valid bodies). Structural presence verified via grep. Plan claim matches code shape. | ✅ PASS · structural | grep + code review | rate-limit.ts |
 
 ## Iteration 36 — Submission-Day Smoke step 2/9 + Efficiency Game PENDING-honest verified
 

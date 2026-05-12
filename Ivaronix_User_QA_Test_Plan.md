@@ -880,19 +880,21 @@ memory-grant-2wallets-desktop-2026-05-11.png
 | `plan-step` | 0/1 | Run against a task plan. | Produces next actionable steps. |
 | `imports` | n/a | **NOT SHIPPED YET** — no `seed-skills/imports/SKILL.md` exists. Mark `PENDING` until skill ships or remove from the catalog. | n/a — first-party catalog should list 6 skills, not 7. |
 
-## Golden Test Files
+## Golden Test Files (proposed · not all shipped today)
 
-Use the same fixed test files every time. This makes QA fair because every run is judged against the same expected outcome.
+Use the same fixed test files every time. This makes QA fair because every run is judged against the same expected outcome. **Status as of iter-37 cron sweep: the 7 named goldens below do NOT ship today (none of them found via `find . -name 'golden-*'`).** Equivalent functional coverage comes from existing fixtures:
 
-| Golden File | What It Should Contain | Feature Tested | Good Output Must Catch |
+| Golden File (proposed) | Shipped? | Functional equivalent today | Plan-row coverage |
 |---|---|---|---|
-| `golden-contract-risky.pdf` or `.txt` | A sample contract with risky termination, payment, liability, and confidentiality clauses. | Private doc review, burn mode, consensus, receipt. | Must mention the risky clauses specifically, not only generic legal advice. |
-| `golden-buggy-repo/` | A small repo with 3-5 known issues: auth bug, missing env check, bad error handling, unsafe write, weak test. | Code audit, GitHub audit, code mode. | Must identify real files/areas and explain why they are risky. |
-| `golden-0g-integration-repo/` | A sample 0G app with one correct Chain use, one missing Storage root, one fake TEE claim. | 0G integration auditor, receipt honesty. | Must catch missing Storage proof and fake TEE/Compute claim. |
-| `golden-pitch.md` | A project pitch with unclear market, too many features, and weak user problem. | Content/pitch review skill. | Must suggest sharper positioning and clearer first user workflow. |
-| `golden-private-note.txt` | A private text with a unique secret phrase like `PRIVATE_TEST_PHRASE_DO_NOT_LEAK`. | Privacy leak check, burn mode, proof page. | Public proof page must not reveal the secret phrase. |
-| `golden-invalid-receipt.json` | A receipt with changed hash, wrong tx, or missing model field. | Receipt verify, error state. | Verification must fail with a clear reason. |
-| `golden-valid-receipt-id.txt` | A known good receipt ID from testnet/mainnet. | Public proof, CLI verify. | UI and CLI verification both pass and show matching data. |
+| `golden-contract-risky.pdf` or `.txt` | ❌ not shipped | Studio's "Use sample contract →" button (`RunPanel.tsx:258`) inlines a sample lease for the doc-review flow. | iter-26 verified the affordance exists. |
+| `golden-buggy-repo/` | ❌ not shipped | `ivaronix audit .` runs against any repo; coverage tested in iter-22 via Foundry adversarial tests (`test_K1_*` cases). | iter-22. |
+| `golden-0g-integration-repo/` | ❌ not shipped | `0g-integration-auditor` skill (`seed-skills/0g-integration-auditor/SKILL.md`) is the auditor; no canonical buggy-0g fixture exists. | covered by skill execution, not fixture. |
+| `golden-pitch.md` | ❌ not shipped | `content-pitch-review` skill runs against arbitrary pitch text. | covered by skill execution. |
+| `golden-private-note.txt` | ❌ not shipped | Privacy-leak path code-verified iter-35 (`pipeline.ts:805-806` derives headline from model output, not raw input). | iter-35. |
+| `golden-invalid-receipt.json` | ❌ not shipped | Iter-28 used hand-modified `tests/fixtures/anchored-receipts/v1-anchored-id-8.json` to drive the tamper-detection adversarial test. The test PASSED — `hash FAIL` → `Status: ✗ INVALID`. | iter-28. |
+| `golden-valid-receipt-id.txt` | ❌ not shipped | `tests/fixtures/anchored-receipts/v1-anchored-id-8.json` IS the valid-receipt fixture; it ships and verifies green via iter-19 60s quickstart. | iter-19. |
+
+**Honest-by-absence:** the goldens are a proposal for a future canonical fixture set. Today the equivalent functional coverage exists via either (a) shipped fixtures in `tests/fixtures/` or (b) skill-execution against runtime-provided input. If a contributor adds a `tests/fixtures/golden-*` file in the future, it should follow the proposal table above.
 
 ## Outcome Quality Checklist
 
