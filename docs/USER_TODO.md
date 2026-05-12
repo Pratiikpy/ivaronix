@@ -205,7 +205,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   Add addresses to `contracts/deployments/mainnet.json` under each new V2 key.
 
-### B-V2-2 · OG-image routes 503 on Vercel — `next/og` font asset doesn't resolve in the serverless bundle · ✅ CODE-COMPLETE 2026-05-12 · option 4 (base64-inline) shipped
+### B-V2-2 · OG-image routes 503 on Vercel — `next/og` font asset doesn't resolve in the serverless bundle · ✅ SHIPPED 2026-05-12 · commit 3fbb570 · LIVE ON VERCEL (200 image/png · 28031 bytes · 1200×630 RGBA)
 - **Source:** plan-003 §A.5.5 + §B.2.3
 - **Pre-fix status (2026-05-11):** the three OG routes (`/opengraph-image`, `/0g/opengraph-image`, `/r/[id]/opengraph-image`) were DEPLOYED but returned **HTTP 503 "OG image unavailable"** in production — a deliberate graceful degrade (was a 500 crash before; an empty fonts array would throw inside satori). Locally (`pnpm --filter @ivaronix/studio dev` and `next build` artifact inspection) the routes rendered. Vercel-only failure. Every other Studio surface was fully functional.
 - **Root cause:** `next/og`'s `ImageResponse` (satori) needs a TTF/OTF/WOFF font (NOT WOFF2), and `ImageResponse` has no usable bundled default font in the Vercel function. The vendored `apps/studio/src/lib/fonts/Outfit-SemiBold.ttf` loaded via `new URL('./fonts/Outfit-SemiBold.ttf', import.meta.url)` + `fileURLToPath` threw `ERR_INVALID_ARG_TYPE` on Vercel runtime — webpack's URL-asset rewrite hands back a `URL` from a different module realm than `node:url`'s native check expects, and `fileURLToPath(url.href)` (the string form) didn't fix it either.
@@ -218,7 +218,14 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - `scripts/README.md` documents both commands.
 - **Verification (offline):** `pnpm og-font:verify` → decoded sha256 `8900df5726b5...` matches source TTF sha256 exactly · TTF magic bytes `00 01 00 00` confirmed · `pnpm --filter @ivaronix/studio typecheck` DONE · `pnpm --filter @ivaronix/studio build` clean (all three OG routes compile) · all 59 source-file regressions PASS.
 - **Cost:** ~65 KB of base64 in the serverless bundle. Trivial compared to the ML-stack weights we explicitly *exclude* from tracing in `next.config.ts` (~150 MB of onnxruntime-node / @xenova/transformers / sharp).
-- **Verify on Vercel after auto-deploy (operator hits the URL):** hit `https://ivaronix.vercel.app/opengraph-image` and `https://ivaronix.vercel.app/r/<a-real-receipt-id>/opengraph-image` — both should return 200 with `Content-Type: image/png` and render the brand mark + receipt id. Preview check via `https://cards-dev.twitter.com/validator`. Marking ✅ CODE-COMPLETE; will lock the closure marker to ✅ SHIPPED once a stranger confirms the Vercel route returns a real PNG.
+- **The actual root cause (found iter-85 via /og-minimal diagnostic isolation):** satori (`@vercel/og`'s renderer) does NOT support the SVG `<text>` element — `Error: <text> nodes are not currently supported, please convert them to <path>`. The italic-i "i" inside the brand-mark SVG was rendered as `<text x={16} y={16} font-style="italic">i</text>`. satori threw on it before the font even mattered. The three prior font-path fixes (network-fetch, URL-asset-resolution, b64-inline, fresh-AB-copy) were all valid hardening but addressed a different layer.
+- **Final fix shipped iter-85 · commit 3fbb570:** replaced each `<text>i</text>` with a satori-compatible `<path d="M17 8 L15 16" stroke="#0a0a0a" strokeWidth={1.6} />` across all 3 OG routes (`apps/studio/src/app/opengraph-image.tsx`, `r/[id]/opengraph-image.tsx`, `0g/opengraph-image.tsx`). The path approximates an italic-i stem; combined with the existing green-tittle `<circle>` at (16.6, 4.6) it still reads as a lowercase italic "i" inside the brackets. Brand fidelity intact.
+- **Cleanup in the same commit:** removed `/og-minimal` diagnostic route + the debug try/catch wrappers in both OG routes (no longer needed once the cause is fixed).
+- **Verified live on Vercel after auto-deploy:**
+  - `curl -sI https://ivaronix.vercel.app/r/9999/opengraph-image` → `HTTP/1.1 200 OK` + `Content-Type: image/png`
+  - `curl -sI https://ivaronix.vercel.app/opengraph-image` → `HTTP/1.1 200 OK` + `Content-Type: image/png`
+  - Downloaded body: 28031 bytes · `PNG image data, 1200 x 630, 8-bit/color RGBA, non-interlaced` (per `file(1)`)
+  - All three OG routes now render brand-faithful PNG previews for social-card unfurls.
 
 ### B-V2-3 · Mainnet autonomous wander-cycle
 - **Source:** plan-003 §A.4.1 (testnet) → §B.3.1 (mainnet)

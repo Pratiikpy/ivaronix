@@ -42,11 +42,14 @@ const header =
   `// Base64 size: ${b64.length} chars (~${Math.round(b64.length / 1024)} KB inline)\n` +
   `// Why inline: see apps/studio/src/lib/og-font.ts header for the Vercel ImageResponse\n` +
   `// font-load failure (\`ERR_INVALID_ARG_TYPE\` from \`fileURLToPath\` on the URL-asset-\n` +
-  `// rewritten import URL). USER_TODO §B-V2-2 documents the 4 attempted fixes.\n` +
+  `// rewritten import URL). USER_TODO §B-V2-2 (✅ SHIPPED 2026-05-12) documents the\n` +
+  `// closure chain.\n` +
   `//\n` +
   `// Trade-off: ~65 KB of inline base64 in the serverless bundle. The next-best\n` +
-  `// alternative (option 3 in USER_TODO §B-V2-2) is publishing the TTF as its own\n` +
-  `// npm package, which is more moving parts for one font.\n\n`;
+  `// alternative (publishing the TTF as its own npm package) is more moving parts\n` +
+  `// for one font. Note: the font-path fix was necessary but not sufficient — the\n` +
+  `// route 500 also required removing the satori-unsupported SVG <text> element\n` +
+  `// (commit 3fbb570).\n\n`;
 
 const body = `export const OUTFIT_SEMIBOLD_B64 =\n  ${lines.map((l) => `'${l}'`).join(' +\n  ')};\n`;
 
