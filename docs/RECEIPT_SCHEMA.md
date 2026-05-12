@@ -2,9 +2,16 @@
 
 > The receipt is the spine of Ivaronix. Every action ships one. This document
 > explains the schema, the canonical hash derivation, and the two-tier
-> verification model in detail. Pairs with the live receipts at
-> `https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`
-> (ReceiptRegistry on 0G Galileo Testnet, chainId 16602).
+> verification model in detail. Pairs with the live receipts on 0G Galileo
+> Testnet (chainId 16602) across three registry versions:
+> - **V3 (canonical · 2026-05-12 →):** `0x7396D536594e2BE833070c7EB441A10906046257`
+>   — admits all 13 receipt-type slots (0-12).
+> - **V2 (active 2026-05-09 → 2026-05-12):** `0xf675d4183b34fe8d1981FA9c117065aAcff690ab`
+>   — EIP-712 signature recovery; admits slots 0-9, coerces 10/11/12 to slot 4.
+> - **V1 (legacy):** `0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c` — original deploy,
+>   admits slots 0-9, sender-trust model.
+>
+> See §6 below for the slot-mapping table and the V3 chain-cap rationale.
 
 ---
 
@@ -186,3 +193,70 @@ The same architecture extends naturally to:
 
 A receipt is a single JSON file. A receipt anchored on chain plus the CLI
 that re-verifies it is the entire trust model.
+
+---
+
+## 6. On-chain registry versions and slot mapping
+
+Three `ReceiptRegistry*` contracts are live on 0G Galileo. The canonical
+write target advances over time; older registries stay readable forever
+because chain history is immutable. Off-chain readers query V3 first,
+fall back to V2, fall back to V1 (`apps/studio/src/lib/chain.ts`
+`unified*` helpers and `apps/cli/src/commands/receipt.ts`
+`buildReadRegistries`).
+
+### Receipt-type slot mapping
+
+`packages/core/src/types.ts` `RECEIPT_TYPES` defines 13 canonical type
+names (slots 0-12). Each registry version admits a different subset:
+
+| Slot | Canonical name | V1 admits | V2 admits | V3 admits |
+|---|---|---|---|---|
+| 0 | `doc_ask` | ✓ | ✓ | ✓ |
+| 1 | `audit` | ✓ | ✓ | ✓ |
+| 2 | `code_change` | ✓ | ✓ | ✓ |
+| 3 | `pr_review` | ✓ | ✓ | ✓ |
+| 4 | `memory_access` | ✓ | ✓ | ✓ |
+| 5 | `skill_exec` | ✓ | ✓ | ✓ |
+| 6 | `subscription_payment` | ✓ | ✓ | ✓ |
+| 7 | `subscription_pause` | ✓ | ✓ | ✓ |
+| 8 | `swarm` | ✓ | ✓ | ✓ |
+| 9 | `subscription_skill_exec` | ✓ | ✓ | ✓ |
+| 10 | `doc_room_create` | coerced → 5 | coerced → 5 | ✓ canonical |
+| 11 | `doc_room_read` | coerced → 4 | coerced → 4 | ✓ canonical |
+| 12 | `memory_consolidation` | coerced → 4 | coerced → 4 | ✓ canonical |
+
+### Why V3 was needed (B-V2-32 closure · 2026-05-12)
+
+`ReceiptRegistryV2.sol:135` required `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC`
+(= 9). The contract had constants for slots 0-9 only. New receipt types
+shipped in code (`doc_room_create`, `doc_room_read`, `memory_consolidation`)
+had no on-chain slot, so the CLI hardcoded a coercion: `room create` →
+slot 5, `room read` + `memory_consolidation` → slot 4. The off-chain
+receipt body always carried the canonical type name, but the on-chain
+`receiptType` field was a known coercion. A chain reader filtering
+`receiptType == 11` found zero results.
+
+V3 (deployed 2026-05-12 at `0x7396D536594e2BE833070c7EB441A10906046257`)
+adds the three missing constants (`TYPE_DOC_ROOM_CREATE = 10`,
+`TYPE_DOC_ROOM_READ = 11`, `TYPE_MEMORY_CONSOLIDATION = 12`) and bumps
+the type-cap to `TYPE_MEMORY_CONSOLIDATION`. EIP-712 domain version
+bumped "2" → "3" so V2 signatures cannot replay on V3.
+
+### Reading legacy V1+V2 receipts honestly
+
+V1+V2 receipts anchored before 2026-05-12 keep their legacy slot
+encoding (chain history is immutable). The off-chain receipt body —
+the source of truth — always recorded the canonical name. Reverse-map
+via `apps/studio/src/lib/chain.ts` `receiptTypeLabel(code)` which reads
+from `@ivaronix/core` `RECEIPT_TYPES`; the CLI `ivaronix receipt verify`
+honors `chainAnchor.registryAddress` to pick the right interpretation.
+
+### Verification
+
+```
+forge test --root contracts                    # 173/173 PASS (V1+V2+V3)
+ivaronix doctor                                # V3 listed in deployed contracts
+ivaronix room create --doc <file> --parties <addr>  # anchors slot 10 on V3
+ivaronix room read --id <onChainId>            # anchors slot 11 on V3
+```
