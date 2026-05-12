@@ -394,6 +394,29 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. `git add screenshots/readme/ && git commit -m "chore(screenshots): refresh README visual tour"` and push. The README grid renders automatically on GitHub.
 - **Effort:** ~5min once the dev server is up and a receipt has been anchored. Re-run after every Studio dev change that affects the captured surfaces.
 
+### B-V2-33 · CLI commands don't write `chainAnchor.id` / `txHash` / `blockNumber` back to the local receipt JSON
+- **Source:** Iteration-16 cron drove `ivaronix room read 01KR66C1GJVR57MHQPJCW1HQQY`. Receipt anchored on chain (tx `0xfb445f16…d331` block 32919713), printed to stdout, but the local receipt file at `.ivaronix/receipts/anchored/rcpt_01KRE1BKV68S235P86PNZG6R43.json` has `chainAnchor: { network, chainId, rpcUrlHash, registryAddress }` only — no `id`, `txHash`, `blockNumber`. Same pattern in `apps/cli/src/commands/room.ts:581` (writes file before anchor) and `apps/cli/src/commands/passport-consolidate.ts:366-396` (same write-before-anchor flow). Iteration-15 code_change receipt #6 has the same gap.
+- **Why this matters:** anyone reading the local receipt JSON file directly cannot verify the chain anchor — they have to separately query the contract by `id` (which isn't recorded in the file). `ivaronix receipt verify <id>` still works because the verifier reads from chain by id; but the local file is a less-trustworthy record. Studio's `/r/<id>` page reads from chain so it shows the right anchor info; the gap is only in the on-disk JSON. The hint at `room.ts:617` says "use `ivaronix indexer backfill` to resolve the on-chain id" — that's the post-hoc workaround, not a fix.
+- **Action:**
+  1. In each command's `await v2Tx.wait()` block, parse the contract's `Anchored(id, ...)` event from the tx receipt logs.
+  2. Update the in-memory receipt object with the resolved `chainAnchor.id` + `txHash` + `blockNumber`.
+  3. Re-write the receipt JSON file with the populated chainAnchor.
+  4. Add a source-file regression that fails if a CLI command's anchor path doesn't follow the write-back pattern (compare with `apps/cli/src/commands/demo.ts` which does write back correctly).
+- **Effort:** ~30min per command (3 commands today: `room read`, `room create`, `passport consolidate`, `swarm run`, `code` · ~2-3h total).
+
+### B-V2-32 · ReceiptRegistryV2 caps `receiptType` at 9 · slots 10/11/12 coerced to type 4 on-chain
+- **Source:** Iteration-16 cron drove `ivaronix room read` which anchored a `doc_room_read` (off-chain type 11) receipt. `apps/cli/src/commands/room.ts:584-588` explicitly hardcodes `RECEIPT_TYPE_CODE = 4` on the anchor call because `contracts/src/ReceiptRegistryV2.sol:135` requires `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC` (= 9). The contract has constants for slots 0-9 only; no `TYPE_DOC_ROOM_CREATE` (10), `TYPE_DOC_ROOM_READ` (11), or `TYPE_MEMORY_CONSOLIDATION` (12). `passport-consolidate.ts:366` does the same coercion for slot 12.
+- **Why this matters:** `packages/core/src/types.ts:70` defines 13 receipt types and `numbers.json` claims `receiptTypes.count: 13`. The enum count is accurate, but on-chain only 10 distinct receipt-type values are emitted faithfully — slots 10, 11, 12 all anchor as type 4 (memory_access). A reader querying chain events filtered by `receiptType == 11` finds zero results, even though three of the iterations (#4 memory_consolidation, this iteration #7 doc_room_read, and any prior data-room create) actually produced those types in the off-chain receipt body. Honest-by-absence: the off-chain body records the correct type; the on-chain field has a known coercion. NOT documented in `docs/RECEIPT_SCHEMA.md` or `docs/HALF_BAKED.md`.
+- **Action:**
+  1. Add constants `TYPE_DOC_ROOM_CREATE = 10`, `TYPE_DOC_ROOM_READ = 11`, `TYPE_MEMORY_CONSOLIDATION = 12` to `ReceiptRegistryV2.sol`.
+  2. Extend the type-cap require: `require(p.receiptType <= TYPE_MEMORY_CONSOLIDATION, "ReceiptRegistryV2: invalid type");`
+  3. Test against the new range (add Foundry tests `test_K2_TYPE_DOC_ROOM_*` mirroring the K2 pattern).
+  4. Deploy `ReceiptRegistryV3` at a new address (V2 stays live for back-compat per `.claude/rules/contracts.md` "V2 = new contract, NOT upgrade"). Update `contracts/deployments/testnet.json`.
+  5. Remove the `RECEIPT_TYPE_CODE = 4` coercion from `room.ts:588` and `passport-consolidate.ts:366`.
+  6. Document the migration in `CHANGELOG.md` + `docs/RECEIPT_SCHEMA.md` + `docs/HALF_BAKED.md`.
+- **Effort:** ~3-4h for the contract redeploy + CLI cleanup + docs. Per CLAUDE.md §1 "the only blocker is money" — needs ≈0.001 OG to deploy V3 on testnet.
+- **Honest disclosure today:** documented in this USER_TODO entry + the iteration-16 finding in `QA_PROOF_PACK/QA_TEST_PROGRESS.md`. Should also land a one-line note in `docs/HALF_BAKED.md` and `docs/RECEIPT_SCHEMA.md` so a reader of those docs alone doesn't miss it.
+
 ### B-V2-31 · `RECEIPT_TYPES.swarm` (slot 8) is enum-only · never produced by code
 - **Source:** QA plan §1145 row 8 + iteration-14 cron drive of `ivaronix swarm run`. The plan expects every swarm task to anchor a receipt with `type: 'swarm'` plus plan + result + role list. The code at `apps/cli/src/commands/swarm.ts:157` hardcodes `receiptType: 'doc_ask'` for every dispatched task. No parent/aggregate `swarm` receipt is anchored at the end of the run. So `RECEIPT_TYPES.swarm` exists in the enum (`packages/core/src/types.ts:70`) but no code path produces it.
 - **Why this matters:** the receipt-type sweep promised by the plan (§1145 "confirm at least one of each type 0-12") cannot pass for slot 8 today. `numbers.json` says `receiptTypes.count: 13` — accurate for the enum, but only 11 of the 13 types are actually generatable by shipped code (slots 9 + 11 also require SubscriptionEscrowV2 + a Wallet-B data-room reader). The receipt-type catalog overclaims what the codebase actually emits.

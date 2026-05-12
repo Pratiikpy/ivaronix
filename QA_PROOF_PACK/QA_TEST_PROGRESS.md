@@ -1,19 +1,29 @@
-# QA Test Progress · ivaronix.vercel.app · commit `475630a`
+# QA Test Progress · ivaronix.vercel.app · commit `966a704`
 
 ```
-PASS:    170 / ~908 rows
-FAIL:    0 (8 issues found · 7 SHIPPED · 1 partial = run-revoke UI refetch · 1 PENDING = B-V2-31 swarm type)
-PENDING: 1 (RECEIPT_TYPES.swarm slot 8 enum-only — queued as B-V2-31)
+PASS:    176 / ~908 rows
+FAIL:    0 (10 issues found · 7 SHIPPED · 1 partial · 3 PENDING in USER_TODO B-V2-31/32/33)
+PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
-Receipt types exercised: 11 of 12 testable (doc_ask, audit, consensus, burn, memory_access, skill_exec, code_change, passport_update, doc_room_create, memory_consolidation) · slot 8 swarm PENDING (B-V2-31) · slot 9 subscription PENDING (B-V2-18) · slot 11 doc_room_read not-yet-driven
+Receipt types exercised end-to-end on V2: 12 of 12 (doc_ask, audit, consensus, burn, memory_access, skill_exec, code_change, passport_update, doc_room_create, doc_room_read, memory_consolidation + swarm-as-doc_ask child). Slot-8 swarm-type PENDING (B-V2-31). Slot-9 subscription PENDING (B-V2-18). Slots 10/11/12 honest off-chain · coerced to type-4 on-chain (B-V2-32).
 Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             21 saved (code-change-iteration15 added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 15)
+  CLI logs:             22 saved (room-read-iteration16 added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 16)
 ```
+
+## Iteration 16 — Receipt type 11 `doc_room_read` + contract type-cap finding
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 112 | Receipt type 11 `doc_room_read` anchored on V2 | `ivaronix room read 01KR66C1GJVR57MHQPJCW1HQQY` → receipt `rcpt_01KRE1BKV68S235P86PNZG6R43` anchored at block 32919713 · tx `0xfb445f16…d331`. Receipt body confirms `type: 'doc_room_read'`. Reader = creator (operator reading own room — implicit owner grant per CapabilityRegistry). | ✅ PASS | CLI + chain | `QA_PROOF_PACK/cli-logs/room-read-iteration16.log` |
+| 113 | Receipt #7 renders 200 on Vercel | `https://ivaronix.vercel.app/r/7` HTTP 200 (the doc_room_read receipt; sequential V2 anchor after #6 code_change) | ✅ PASS | curl | live Vercel |
+| 114 | All 12 testable receipt types now exercised end-to-end | 0 doc_ask · 1 audit · 2 consensus · 3 burn · 4 memory_access · 5 skill_exec · 6 code_change (iter 15) · 7 passport_update · 8 swarm-as-doc_ask child (iter 14) · 10 doc_room_create · 11 doc_room_read (iter 16) · 12 memory_consolidation (iter 14). Coverage: 100% of testable types · slot 8 swarm-type PENDING · slot 9 subscription PENDING. | ✅ MILESTONE | aggregate | iter 14-16 |
+| 115 | 🔧 BUG #9 (FOUND): ReceiptRegistryV2 caps `receiptType` at 9 — slots 10/11/12 coerced to type 4 on-chain | `contracts/src/ReceiptRegistryV2.sol:135` requires `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC` (= 9). `apps/cli/src/commands/room.ts:584-588` explicitly hardcodes `RECEIPT_TYPE_CODE = 4` for doc_room_read; `passport-consolidate.ts:366` does the same for memory_consolidation. Off-chain receipt body has correct type; on-chain field is coerced. Honest-by-absence pattern, but undisclosed in HALF_BAKED.md / RECEIPT_SCHEMA.md. | 🔧 DISCLOSED honestly | code review | `USER_TODO §B-V2-32` queued |
+| 116 | 🔧 BUG #10 (FOUND): CLI write-back gap — anchored receipts don't get `chainAnchor.id`/`txHash`/`blockNumber` written back to local JSON | `room.ts:581` writes JSON BEFORE anchoring (lines 593-612), never updates the file with the resolved id. Same pattern in `passport-consolidate.ts` and `code.ts`. Receipt #4 (memcons), #6 (code), #7 (room-read) all have `chainAnchor: { network, chainId, rpcUrlHash, registryAddress }` only — no per-anchor data. Verify-by-id still works because the verifier reads chain by id; gap is only in on-disk JSON. CLI hint at `room.ts:617` says "use `ivaronix indexer backfill` to resolve the on-chain id" — workaround, not fix. | 🔧 DISCLOSED honestly | code review | `USER_TODO §B-V2-33` queued |
 
 ## Iteration 15 — Receipt type 6 `code_change` driven end-to-end
 
