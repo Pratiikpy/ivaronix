@@ -56,6 +56,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-typecheck-clean-count/, // sweep 200 · numbers.json packages.typecheckClean excludes echo-prefixed placeholders even if message body mentions "tsc"
       /^verify-env-template-completeness/, // §15 · every IVARONIX_* var in code is in at least one env template
       /^verify-receipt-types-three-way/, // source enum ↔ RECEIPTS_SPEC ↔ numbers.json triangle stays in sync
+      /^verify-receipt-types-have-producers/, // B-V2-35 closure · every RECEIPT_TYPES slot has at least 1 producer in shipped code
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
