@@ -57,3 +57,53 @@ export function getDeployedAddress(network: Network, contract: string, fromDir =
   const m = loadDeployments(network, fromDir);
   return m?.contracts[contract]?.address ?? null;
 }
+
+/**
+ * V2-first address lookup with V1 fallback. Pass the base contract name
+ * (e.g. `"CapabilityRegistry"`); returns the V2 address if `<base>V2`
+ * is deployed, else the V1 address, else null.
+ *
+ * Use this everywhere the caller writes to (or wants to prefer) the
+ * hardened V2 contract while still working on networks that only have
+ * V1 deployed. Matches the V2-first read pattern documented in
+ * `apps/studio/src/lib/chain.ts` (`unified*` helpers) and
+ * `apps/cli/src/commands/receipt.ts` (`buildReadRegistries`).
+ *
+ * IMPORTANT (iter-89 finding): the V1 ABI is NOT automatically
+ * compatible with V2 contracts for security-hardened V2s. For example,
+ * `CapabilityRegistryV2` made `grantsByOwner` and `grantsByGrantee`
+ * internal (privacy gate); the V1 client's `grantsByOwner(address)`
+ * call reverts against V2 because the public auto-getter no longer
+ * exists. Before pointing a V1 client at a V2 address with this helper,
+ * verify the read methods the client uses still exist with the same
+ * signature on V2. For pure write surfaces (issueGrant, revokeGrant,
+ * updateMemoryRoot), V1 client → V2 address works cleanly because V2
+ * preserved the write-method signatures.
+ *
+ * Example:
+ *   const capAddr = getActiveAddress(network, 'CapabilityRegistry');
+ *   // → V2 address on Galileo (B-V2-15 SHIPPED · 0x1351CD87...)
+ *   // → V1 address on networks where V2 hasn't deployed yet
+ */
+export function getActiveAddress(network: Network, baseName: string, fromDir = process.cwd()): Address | null {
+  return (
+    getDeployedAddress(network, `${baseName}V2`, fromDir) ??
+    getDeployedAddress(network, baseName, fromDir)
+  );
+}
+
+/**
+ * Both addresses (V1 + V2) and which version each one is. Useful for
+ * read paths that need to merge data across both registries.
+ */
+export interface VersionedAddresses {
+  v2: Address | null;
+  v1: Address | null;
+}
+
+export function getVersionedAddresses(network: Network, baseName: string, fromDir = process.cwd()): VersionedAddresses {
+  return {
+    v2: getDeployedAddress(network, `${baseName}V2`, fromDir),
+    v1: getDeployedAddress(network, baseName, fromDir),
+  };
+}
