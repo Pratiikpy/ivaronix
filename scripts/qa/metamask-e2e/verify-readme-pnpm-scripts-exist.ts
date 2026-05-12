@@ -55,6 +55,13 @@ const TARGET_DOCS = [
   'docs/MAINNET_READINESS.md',
   'apps/studio/src/app/privacy/page.tsx',
   'apps/studio/src/app/terms/page.tsx',
+  // apps/npx-cli/README.md is the surface that gets shipped to
+  // npm. Same drift-prevention discipline as the workspace README
+  // — iter-108 extended verify-readme-ivaronix-commands-exist.ts
+  // to scan this surface; this commit applies the same extension
+  // to the pnpm-scripts regression so a future README example
+  // that says `pnpm <verb>` resolves to a real script.
+  'apps/npx-cli/README.md',
 ];
 
 const violations: Array<{ file: string; line: number; cmd: string }> = [];
