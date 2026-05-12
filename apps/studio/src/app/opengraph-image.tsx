@@ -20,6 +20,25 @@ export const contentType = 'image/png';
  * per-route OG images at `/r/[id]/` and `/0g/` ship separately.
  */
 export default async function Image() {
+  try {
+    return await renderImage();
+  } catch (err: unknown) {
+    // Surface the actual failure to the response body during the B-V2-2
+    // verification window. Without this the function falls through to
+    // Next's _error fallback which doesn't tell the operator (or the
+    // judge replaying the link) what went wrong. Once a fresh receipt
+    // anchor + Vercel deploy confirms a real PNG renders, this try/catch
+    // can collapse back into the bare `return await renderImage()` form.
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    const stack = err instanceof Error && typeof err.stack === 'string' ? err.stack.split('\n').slice(0, 6).join('\n') : '';
+    return new Response(`OG image failed:\n${msg}\n\n${stack}`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+}
+
+async function renderImage(): Promise<Response> {
   const fonts = await loadBrandFont();
   if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();

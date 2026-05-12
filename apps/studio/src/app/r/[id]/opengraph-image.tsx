@@ -20,6 +20,21 @@ export const contentType = 'image/png';
  * and link unfurls. Per CLAUDE.md §9 — never AI-glossy.
  */
 export default async function Image({ params }: { params: { id: string } }) {
+  try {
+    return await renderImage({ params });
+  } catch (err: unknown) {
+    // Debug-mode error surfacing for B-V2-2. See default OG route for
+    // the rationale + cleanup-when-verified note.
+    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+    const stack = err instanceof Error && typeof err.stack === 'string' ? err.stack.split('\n').slice(0, 6).join('\n') : '';
+    return new Response(`OG image (/r/${params.id}) failed:\n${msg}\n\n${stack}`, {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+}
+
+async function renderImage({ params }: { params: { id: string } }): Promise<Response> {
   const fonts = await loadBrandFont();
   if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();
