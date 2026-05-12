@@ -1,18 +1,30 @@
-# QA Test Progress · ivaronix.vercel.app · commit `04664b3`
+# QA Test Progress · ivaronix.vercel.app · commit `475630a`
 
 ```
-PASS:    164 / ~908 rows
+PASS:    170 / ~908 rows
 FAIL:    0 (8 issues found · 7 SHIPPED · 1 partial = run-revoke UI refetch · 1 PENDING = B-V2-31 swarm type)
 PENDING: 1 (RECEIPT_TYPES.swarm slot 8 enum-only — queued as B-V2-31)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
+Receipt types exercised: 11 of 12 testable (doc_ask, audit, consensus, burn, memory_access, skill_exec, code_change, passport_update, doc_room_create, memory_consolidation) · slot 8 swarm PENDING (B-V2-31) · slot 9 subscription PENDING (B-V2-18) · slot 11 doc_room_read not-yet-driven
 Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             20 saved (passport-consolidate + swarm-quick-1task added iteration 14)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 14)
+  CLI logs:             21 saved (code-change-iteration15 added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 15)
 ```
+
+## Iteration 15 — Receipt type 6 `code_change` driven end-to-end
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 106 | Receipt type 6 `code_change` anchored on V2 | `ivaronix code "Add a trailing newline if missing at end of file" --files brand/tokens.json --quick` → receipt #6 V2 anchored at block 32919165 · tx `0x141364ba…4554dd` · receipt-on-chain id=6. `type: 'code_change'` confirmed in receipt body. | ✅ PASS | CLI + chain | `QA_PROOF_PACK/cli-logs/code-change-iteration15.log` + receipt body inspection |
+| 107 | Real 0G Storage segment upload during code_change run | indexer URL `http://34.169.28.106:5678`, content-addressed root `0x4b7faf19…faec6`, storage tx `0xfbec5f5c…849e`, 1 segment + 1 chunk, log-entry wait succeeded after 2 sync polls | ✅ PASS | live indexer | same log |
+| 108 | `log_anchor` post-consensus hook ran successfully | hook output: `log_anchor: rcpt_01KRE13F38EBQKQ0ZN2M62PE7S anchored at block 32919165 · https://chainscan-galileo.0g.ai/tx/0x141364ba…4554dd` — confirms the chainscan URL pattern + block number from the hook itself | ✅ PASS | hook log | same log |
+| 109 | Receipt #6 renders 200 on Vercel | `https://ivaronix.vercel.app/r/6` HTTP 200 | ✅ PASS | curl | live Vercel |
+| 110 | numbers.json refresh after 3 new V2 anchors (#4, #5, #6) | receipts.total 1647 → 1650 · receipts.v2Anchored 3 → 6 · receipts.v1Anchored unchanged at 1644 | ✅ PASS | chain + refresh | `docs/numbers.json` lastRefreshed = 2026-05-12 |
+| 111 | docs:render rebuilt 4 render-target docs with new counts | README · PITCH · JUDGE_GUIDE · MAINNET_READINESS — 45 markers across 4 docs, 0 unknown-key warnings | ✅ PASS | auto-render | local |
 
 ## Iteration 14 — Receipt Type Coverage sweep (plan §1145)
 
