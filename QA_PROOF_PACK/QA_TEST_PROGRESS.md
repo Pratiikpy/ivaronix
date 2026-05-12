@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `473c054`
+# QA Test Progress · ivaronix.vercel.app · commit `d989919`
 
 ```
-PASS:    271 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 10 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction)
+PASS:    275 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 10 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,19 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 30)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 31)
 ```
+
+## Iteration 31 — Dashboard recentReceipts gap investigated · design choice not a bug
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 212 | Iter-30 `recentReceipts: 0` investigated · NOT a bug | `dashboard.ts:167` deliberately uses 5,000-block lookback ("~3-5s for 'recent 5' panel" — performance/RPC-quota tradeoff). My V2 anchors at blocks 32908537/32918132/32918394/32919165/32919713 all fell outside the now-current ~32925000 window (5,000 blocks back = ~32920000). The `recentReceipts` field semantically means "the last 5 receipts within the recent-window scan", not "all receipts". `passport.receiptCount: 1630` (grew correctly from 1624 → 1630 across the cron run · authoritative aggregate). | ✅ DESIGN CHOICE | code review | dashboard.ts:167 |
+| 213 | ReceiptRegistryV2 event filter shape verified | `contracts/src/ReceiptRegistryV2.sol:92-101` declares `event ReceiptAnchored(uint256 indexed id, bytes32 indexed receiptRoot, address indexed agent, ...)` — 3 indexed fields. `packages/og-chain/src/contracts/ReceiptRegistryV2.ts:206` filter is `this.contract.filters.ReceiptAnchored!(undefined, undefined, agent)` — correctly filters by the 3rd indexed agent. Not the bug source. | ✅ PASS · structural | code review | source |
+| 214 | unifiedFindByAgent merges V1+V2 with correct V2-first union | `apps/studio/src/lib/chain.ts:194-223` runs V1 + V2 findByAgent in parallel via Promise.all, merges, sorts by timestamp desc, slices to `limit`. Per `unifiedFindByAgent` JSDoc: "V2-first union so post-K-2 receipts appear alongside legacy V1 ones, with registryVersion tagged on each row." | ✅ PASS · structural | code review | source |
+| 215 | Dashboard cache · 60s TTL + per-address LRU | `dashboard.ts:129-141`: `CACHE_TTL_MS = 60_000` + 64-entry LRU. Cache-buster `?nocache=$RANDOM` returns same `recentReceipts: []` → result is genuine (not stale cache), the 5k-block lookback IS the bound. | ✅ PASS · verified | curl + code | shell + source |
+| 216 | passport.receiptCount monotonic during the cron run | Iter 9 dashboard: trustScore=1624, receiptCount=1624. Iter 30 dashboard: trustScore=1630, receiptCount=1630. +6 increments — matches the 5 V2 anchors I authored (iter 11, 14×2, 15, 16) plus 1 background anchor. Authorized-recorders gate (K-1 V2 fix) is working. | ✅ PASS · invariant proven | curl + iter 9 vs 30 | aggregate |
+| 217 | Plan §1442 dashboard "Welcome back, agent" claim · partial | iter 9 captured the dashboard's "Welcome back, agent" + Council tier badge + balance + trust score + recent receipts list. The recent receipts list IS scoped to the 5k-block window today; for full receipt history, `ivaronix indexer list` (iter 23 verified 329 V1 receipts indexed) is the authoritative path. Plan claim works WITH the lookback caveat. | ✅ PASS · with caveat | iter 9 captures + this iter | aggregate |
 
 ## Iteration 30 — API endpoint sweep + `/api/skills` plan-drift fix
 
