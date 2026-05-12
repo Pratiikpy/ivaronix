@@ -266,7 +266,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
                 border: '1px dashed var(--color-hairline, #d4d4d4)',
                 borderRadius: 999,
               }}
-              title="Anchored on the V1 ReceiptRegistry. New receipts use V2 (EIP-712 agent recovery, K-2 fix). V1 stays live for the existing legacy receipts."
+              title="Anchored on the V1 ReceiptRegistry. New receipts use V3 (canonical slots 10/11/12 admitted · B-V2-32 fix). V2 (EIP-712 agent recovery · K-2 fix) and V3 both stay live; V1 stays live for the existing legacy receipts."
             >
               LEGACY-REGISTRY
             </span>

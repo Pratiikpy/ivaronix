@@ -31,9 +31,10 @@ export default function PrivacyPage() {
       <h2 style={{ fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 12 }}>What we record</h2>
       <p>
         Every action you run produces a <strong>receipt</strong>: a signed,
-        chain-anchored record on <code>ReceiptRegistryV2</code>. Receipts
-        are public by design — they are how a third party proves you ran
-        the work claimed.
+        chain-anchored record on a <code>ReceiptRegistry</code> contract
+        (V3 for the receipt-type slots admitted post-B-V2-32; V2 for legacy
+        slots 0-9). Receipts are public by design — they are how a third
+        party proves you ran the work claimed.
       </p>
       <p>A receipt body is canonical-hashed (RFC-8785 JCS) and contains:</p>
       <ul>
