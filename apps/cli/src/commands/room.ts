@@ -578,7 +578,6 @@ roomCommand
     const signed = await signReceipt(draft, wallet);
     const outDir = resolve(dirname(manifestPath), '..', 'receipts', 'anchored');
     mkdirSync(outDir, { recursive: true });
-    writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(signed, null, 2));
 
     ui.pending(`anchoring doc_room_read receipt on chain (${registryVersion.toUpperCase()})...`);
     // Until ReceiptRegistry is redeployed with slot 11, use semantically
@@ -610,6 +609,22 @@ roomCommand
       const r = await v1Tx.wait();
       blockNumber = r?.blockNumber ?? null;
     }
+
+    // B-V2-33 fix · iter-68: write anchorTxHash + anchorBlockNumber back to
+    // the receipt JSON AFTER the anchor tx confirms. Pre-fix, room.ts wrote
+    // the receipt JSON BEFORE anchoring and never updated it post-confirm,
+    // leaving chainAnchor missing the per-anchor metadata.
+    const anchoredReceipt = {
+      ...signed,
+      chainAnchor: {
+        ...signed.chainAnchor,
+        anchorTxHash: txHash,
+        ...(blockNumber !== null ? { anchorBlockNumber: blockNumber } : {}),
+        anchorTimestamp: Math.floor(Date.now() / 1000),
+      },
+    };
+    writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(anchoredReceipt, null, 2));
+
     ui.pass(`receipt              ${signed.id}`);
     ui.pass(`tx                   ${txHash}`);
     ui.pass(`block                ${blockNumber ?? '?'}`);
