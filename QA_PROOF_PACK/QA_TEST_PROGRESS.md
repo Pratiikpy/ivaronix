@@ -1,10 +1,10 @@
-# QA Test Progress · ivaronix.vercel.app · commit `0e6fbd7`
+# QA Test Progress · ivaronix.vercel.app · commit `3baac20`
 
 ```
-PASS:    530 / ~908 rows
-FAIL:    0 (13 issues found · 11 SHIPPED · 1 partial · 2 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 3 arithmetic/inspection corrections · 1 stale-cache cleanup · 1 numbers-drift fix · 2 structural fixes shipped via cron run)
-PENDING: 2 (B-V2-32 chain-cap coercion · B-V2-34 numbers hand-freeze)
-SHIPPED THIS CRON RUN: 11 (B-V2-33 across 5 CLI surfaces · iter-68/69/70 · B-V2-31 swarm-type · iter-72)
+PASS:    545 / ~908 rows
+FAIL:    0 (13 issues found · 12 SHIPPED · 1 partial · 1 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 4 arithmetic/inspection corrections · 1 stale-cache cleanup · 1 numbers-drift fix · 3 structural fixes shipped via cron run)
+PENDING: 1 (B-V2-32 chain-cap coercion · needs operator-funded ReceiptRegistryV3 deploy)
+SHIPPED THIS CRON RUN: 12 (B-V2-33 across 5 surfaces iter-68/69/70 · B-V2-31 swarm-type iter-72 · B-V2-34 numbers hand-freeze iter-74)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
@@ -24,6 +24,16 @@ ivaronix doctor: ✓ ALL SYSTEMS GO (state stable since iter-22 baseline)
 Cron iterations completed: 67
 Last updated: 2026-05-12 (cron c25a7e8b · iteration 67)
 ```
+
+## Iteration 75 — QA progress reconciled after iter-74 B-V2-34 closure · only B-V2-32 remains PENDING
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 446 | iter-74 commit `3baac20` shipped B-V2-34 · QA doc now reconciled | iter-74 added `countCreatorEarnings()` helper at `scripts/diag/numbers-refresh.ts:299-345` + replaced `existing.skills.creatorEarningsOG/Label` preserves at lines 400-401 with helper calls. USER_TODO §B-V2-34 marked ✅ SHIPPED. iter-75 reconciles QA progress doc header: 12 SHIPPED (was 11) · 1 PENDING (was 2). | ✅ §15 BOOKKEEPING | edit | this commit |
+| 447 | Only B-V2-32 (chain-cap coercion) remains PENDING · genuinely operator-action-gated | B-V2-32 requires deploying ReceiptRegistryV3 contract to Galileo testnet. Per CLAUDE.md §1 "the only blocker is money" — chain deploy needs operator-funded gas (≈0.001-0.005 OG estimated). The cron cannot ship operator-funded actions; B-V2-32 sits in the same class as A-2 (mainnet promotion gate). | ✅ PENDING · operator-action | aggregate | USER_TODO |
+| 448 | Cumulative shipping ledger · 12 structural fixes shipped across the cron run | Pre-cron baseline (7) + cron-shipped structural (5): B-V2-33 (3 commits · iter-68/69/70 · 5 CLI surfaces) + B-V2-31 (iter-72) + B-V2-34 (iter-74). 12 total. | ✅ MILESTONE | aggregate | iters 11-74 |
+| 449 | 4 inspection-error corrections now logged openly | (1) iter-48 → iter-49: 531 → 556 test count · (2) iter-41 → iter-53: hex 0x1f67ff3 = 32931827 not 32955379 · (3) iter-16 → iter-69: chainAnchor.id vs onChainId field-name · (4) iter-64 → iter-74: polyglotHash NOT hand-frozen (countPolyglotTests already auto-derives). Discipline: cross-iteration re-measurement catches the soft drift. | ✅ DISCIPLINE | aggregate | iters 16/41/48/53/64/69/74 |
+| 450 | Cron run discipline at iter-75 · 75 iterations · 1 PENDING (operator-action) | 75 iterations · 12 structural fixes shipped · 0 broken pushes · 0 --no-verify · 0 destructive ops · 0 delegated-to-user · 4 inspection-error retractions openly logged. The remaining 1 PENDING is the kind of work CLAUDE.md §1 names: "The only blocker is money" — B-V2-32 needs operator OG funding for V3 deploy. Source-side prep can be done; the chain anchor cannot, by design. | ✅ MILESTONE · honest gate | aggregate | iter-75 |
 
 ## Iteration 73 — QA progress reconciled after iter-72 B-V2-31 closure
 
