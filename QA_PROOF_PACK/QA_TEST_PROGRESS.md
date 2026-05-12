@@ -1,9 +1,10 @@
-# QA Test Progress · ivaronix.vercel.app · commit `b68c99c`
+# QA Test Progress · ivaronix.vercel.app · commit `0706253`
 
 ```
-PASS:    501 / ~908 rows
-FAIL:    0 (13 issues found · 8 SHIPPED · 1 partial · 4 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections · 1 stale-cache cleanup · 1 numbers-drift fix)
-PENDING: 4 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back · numbers hand-freeze)
+PASS:    520 / ~908 rows
+FAIL:    0 (13 issues found · 10 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 3 arithmetic/inspection corrections · 1 stale-cache cleanup · 1 numbers-drift fix · 1 structural CLI fix shipped via 3-iter sequence)
+PENDING: 3 (B-V2-31 swarm-type · B-V2-32 chain-cap coercion · B-V2-34 numbers hand-freeze)
+SHIPPED THIS CRON RUN: 10 (was 8) · iter-68/69/70 closed B-V2-33 across 5 CLI surfaces
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12

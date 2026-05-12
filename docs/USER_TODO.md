@@ -411,15 +411,20 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   5. Optional follow-on: add `verify-no-bare-numbers-in-rendered-docs.ts` to also catch numeric claims in prose (not just inside numbers:auto markers) — currently only the latter is gated.
 - **Effort:** ~3-4h total (3 helpers + integration + regression + optional prose-numbers gate).
 
-### B-V2-33 · CLI commands don't write `chainAnchor.id` / `txHash` / `blockNumber` back to the local receipt JSON
-- **Source:** Iteration-16 cron drove `ivaronix room read 01KR66C1GJVR57MHQPJCW1HQQY`. Receipt anchored on chain (tx `0xfb445f16…d331` block 32919713), printed to stdout, but the local receipt file at `.ivaronix/receipts/anchored/rcpt_01KRE1BKV68S235P86PNZG6R43.json` has `chainAnchor: { network, chainId, rpcUrlHash, registryAddress }` only — no `id`, `txHash`, `blockNumber`. Same pattern in `apps/cli/src/commands/room.ts:581` (writes file before anchor) and `apps/cli/src/commands/passport-consolidate.ts:366-396` (same write-before-anchor flow). Iteration-15 code_change receipt #6 has the same gap.
-- **Why this matters:** anyone reading the local receipt JSON file directly cannot verify the chain anchor — they have to separately query the contract by `id` (which isn't recorded in the file). `ivaronix receipt verify <id>` still works because the verifier reads from chain by id; but the local file is a less-trustworthy record. Studio's `/r/<id>` page reads from chain so it shows the right anchor info; the gap is only in the on-disk JSON. The hint at `room.ts:617` says "use `ivaronix indexer backfill` to resolve the on-chain id" — that's the post-hoc workaround, not a fix.
-- **Action:**
-  1. In each command's `await v2Tx.wait()` block, parse the contract's `Anchored(id, ...)` event from the tx receipt logs.
-  2. Update the in-memory receipt object with the resolved `chainAnchor.id` + `txHash` + `blockNumber`.
-  3. Re-write the receipt JSON file with the populated chainAnchor.
-  4. Add a source-file regression that fails if a CLI command's anchor path doesn't follow the write-back pattern (compare with `apps/cli/src/commands/demo.ts` which does write back correctly).
-- **Effort:** ~30min per command (3 commands today: `room read`, `room create`, `passport consolidate`, `swarm run`, `code` · ~2-3h total).
+### B-V2-33 · CLI commands write `chainAnchor.onChainId` / `anchorTxHash` / `anchorBlockNumber` back to the local receipt JSON · ✅ SHIPPED 2026-05-12 · commits 216d004 + 265a039 + 0706253
+- **Source:** Iteration-16 cron drove `ivaronix room read 01KR66C1GJVR57MHQPJCW1HQQY` and inspected the resulting receipt file. Initial finding: chainAnchor had only 4 static fields {network, chainId, rpcUrlHash, registryAddress}. Iter-69 re-inspection revealed the scope was narrower than first documented: passport-consolidate.ts was ALREADY writing back 9 fields correctly; iter-16's "missing chainAnchor.id" was a field-name mismatch (`.get('id')` returned None because the field is named `onChainId`). Real broken-write-back surfaces: only room.ts (4 fields) and the runtime pipeline (7 fields).
+- **Why it mattered:** anyone reading the local receipt JSON file directly couldn't verify the chain anchor — they had to separately query the contract. `ivaronix receipt verify <id>` still worked because the verifier reads from chain by id; but the local file was a less-trustworthy record.
+- **What shipped:**
+  - **iter-68** (commit `216d004`): added 3 anchorXxx fields (anchorTxHash + anchorBlockNumber + anchorTimestamp) to `apps/cli/src/commands/room.ts` write-back. Moved the writeFileSync from BEFORE the anchor to AFTER.
+  - **iter-69** (commit `265a039`): added `status: 'anchored'` + `onChainId` (resolved via `regV2.nextId() - 1n`) to room.ts. Brings room.ts to full 9-field parity with passport-consolidate.ts gold standard.
+  - **iter-70** (commit `0706253`): added `status: 'anchored'` + `onChainId` to `packages/runtime/src/pipeline.ts:907-918` chainAnchor write-back. This single pipeline-layer fix lands the metadata for ALL pipeline-routed commands (`ivaronix code`, `ivaronix swarm`, `ivaronix doc ask/run`).
+- **Cross-command parity after closure (5 CLI surfaces · all 9 fields):**
+  - `passport-consolidate.ts` (pre-cron baseline): 9 fields ✓
+  - `room.ts` (iter-68 + iter-69): 9 fields ✓
+  - `code.ts` via pipeline (iter-70): 9 fields ✓
+  - `swarm.ts` via pipeline (iter-70): 9 fields ✓
+  - `doc ask / run` via pipeline (iter-70): 9 fields ✓
+- **Verification on each commit:** `pnpm --filter @ivaronix/runtime typecheck` + `pnpm --filter @ivaronix/cli typecheck` + `pnpm --filter @ivaronix/studio test` (59 PASS) + 4 contracts PASS.
 
 ### B-V2-32 · ReceiptRegistryV2 caps `receiptType` at 9 · slots 10/11/12 coerced to type 4 on-chain
 - **Source:** Iteration-16 cron drove `ivaronix room read` which anchored a `doc_room_read` (off-chain type 11) receipt. `apps/cli/src/commands/room.ts:584-588` explicitly hardcodes `RECEIPT_TYPE_CODE = 4` on the anchor call because `contracts/src/ReceiptRegistryV2.sol:135` requires `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC` (= 9). The contract has constants for slots 0-9 only; no `TYPE_DOC_ROOM_CREATE` (10), `TYPE_DOC_ROOM_READ` (11), or `TYPE_MEMORY_CONSOLIDATION` (12). `passport-consolidate.ts:366` does the same coercion for slot 12.
