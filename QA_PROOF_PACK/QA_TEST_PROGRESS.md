@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `b1249f3`
+# QA Test Progress · ivaronix.vercel.app · commit `e1b301f`
 
 ```
-PASS:    188 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 1 plan-drift fix · 1 env-check fix)
+PASS:    195 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 3 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -11,9 +11,21 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             22 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 18)
+  CLI logs:             23 saved (readme-quickstart-60s added)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 19)
 ```
+
+## Iteration 19 — Plan-drift sweep + README 60s quickstart + og-toolkit publish dry-run
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 130 | Plan §1462 60s quickstart pass-condition wrong: claimed `→ FULLY VERIFIED ✓` but the command doesn't pass `--tee-independent` | Driving the literal command `pnpm exec tsx apps/cli/src/bin/ivaronix.ts receipt verify tests/fixtures/anchored-receipts/v1-anchored-id-8.json` produces `→ ANCHORED ✓` (schema + hash + signature + chain-anchor all PASS for V1 fixture id=8) in <1s. FULLY VERIFIED requires the live-broker re-verify which is the JUDGE_GUIDE step 1 path (covered with both modes in iter 12). | 🔧 PLAN DRIFT FIXED | CLI + edit | `QA_PROOF_PACK/cli-logs/readme-quickstart-60s-iteration19.log` + this commit |
+| 131 | Plan §1241 entry stale: `safety_filter` doc-drift already fixed in iter-13 (`04664b3`) | `.claude/rules/skills.md:71` now lists 5 shipped hooks with `BUILTIN_HOOKS` registry pointer; the 6th file was never shipped — drift was in the rule, not the code | 🔧 PLAN ENTRY UPDATED | grep + edit | this commit |
+| 132 | Plan §1242 entry completely wrong: claimed `seed-skills/imports/SKILL.md` does NOT exist; first-party catalog is 6 not 7 | Reality: `seed-skills/imports/` is the vendored 150-skill catalog directory (each subdir has its own SKILL.md). `find seed-skills/imports -name 'SKILL.md' \| wc -l = 150`. Matches `numbers.json.skills.vendored: 150`. First-party catalog of 6 is independently in `seed-skills/{0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review}/`. Total catalog 156 (6 + 150). | 🔧 PLAN ENTRY REWRITTEN | filesystem + edit | this commit |
+| 133 | og-toolkit `pnpm publish --dry-run` (plan §1454) | `@ivaronix/og-toolkit@0.0.1` packages cleanly: 5.4 kB tarball, 15.3 kB unpacked, 7 total files (dist/index.js + dist/index.d.ts + LICENSE + package.json + README.md + types). `files` array correctly picks up `dist/` only, no source leak. | ✅ PASS | local | `cd packages/og-toolkit && pnpm publish --dry-run` |
+| 134 | README §172 60s quickstart drives clean (the actual reproducer) | `Status: → ANCHORED ✓` in <1s after install + clone. Matches the plan's `Pass condition` after the §1462 fix. | ✅ PASS | CLI | same log |
+| 135 | `seed-skills/imports/` ships 150 SKILL.md files end-to-end (the vendored catalog) | `numbers.json.skills.vendored: 150` ↔ `find seed-skills/imports -name SKILL.md \| wc -l = 150` byte-equal | ✅ PASS | filesystem | grep |
+| 136 | First-party catalog audit · 6 skills · matches numbers.json | `ls seed-skills/` excluding imports/ + AGENTS.md = 6 (0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review) | ✅ PASS | filesystem | ls output |
 
 ## Iteration 18 — pnpm gate sweep (§1107 + §1209)
 

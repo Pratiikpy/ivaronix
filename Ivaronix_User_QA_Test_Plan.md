@@ -1238,8 +1238,8 @@ Beyond the 94 verify-\*.ts regressions, these scripts gate behavior the plan mus
 | Item | What's drifting |
 |---|---|
 | Studio CSP | `next.config.ts:53-57` says CSP "deliberately omitted — needs end-to-end app testing to draft policy that allows wagmi + Next.js inline scripts". Tracked in `docs/USER_TODO.md §B-V2`. Mark `PENDING` until CSP ships. |
-| CLAUDE.md skills.md `safety_filter` hook | Listed as a built-in but `packages/skills/src/hooks/builtin/safety-filter.ts` does NOT exist. Either ship the file or update the doc. |
-| `imports` skill | Listed in some catalogs but `seed-skills/imports/SKILL.md` does NOT exist. First-party catalog is 6 skills, not 7. |
+| CLAUDE.md skills.md `safety_filter` hook | ✅ FIXED iter-13 (commit `04664b3`). `.claude/rules/skills.md:71` now lists the 5 shipped hooks with a `BUILTIN_HOOKS` registry pointer. The 6th file `safety-filter.ts` was never shipped; the rule was the source of drift, not the codebase. |
+| `seed-skills/imports/` directory | NOT a single skill — it's the **vendored 150-skill catalog** that backs `numbers.json.skills.vendored: 150` (verified iter-19: `find seed-skills/imports -name 'SKILL.md' \| wc -l` = 150). First-party catalog is 6 (`seed-skills/{0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review}/SKILL.md`), vendored catalog is 150, total 156. Plan claim "imports skill listed in some catalogs but doesn't exist" was wrong. |
 | README screenshot grid | If brand changed since last `pnpm screenshots:refresh`, the README's grid mis-renders the product. Run before submission. |
 
 ## Authoritative Sources For Test Intent
@@ -1459,7 +1459,7 @@ The repo `README.md` has two specific quickstart blocks at §172 "Verify a real 
 
 | Block | Command(s) | Pass condition |
 |---|---|---|
-| 60s verify (no wallet) | `git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs && pnpm install && pnpm exec tsx apps/cli/src/bin/ivaronix.ts receipt verify tests/fixtures/anchored-receipts/v1-anchored-id-8.json` | Output exits 0 with FULLY VERIFIED ✓. README claim "60 seconds" — tester records actual time. |
+| 60s verify (no wallet) | `git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs && pnpm install && pnpm exec tsx apps/cli/src/bin/ivaronix.ts receipt verify tests/fixtures/anchored-receipts/v1-anchored-id-8.json` | Output exits 0 with `Status: → ANCHORED ✓` (schema + hash + signature + chain anchor all PASS for the V1 fixture id=8). The 60s command does NOT include `--tee-independent` — that's the additional check covered in JUDGE_GUIDE.md step 1. Verified iter-19 cron: ANCHORED ✓ in <1s after `pnpm install` (clone + install excluded from the per-command timing). |
 | 30s fresh receipt | `pnpm --filter @ivaronix/cli exec ivaronix demo` (after env config) | Anchors a real receipt in ~3-5s; prints proof URL + chainscan + verify command. README claim "30 seconds" — tester records actual time. |
 | `npx ivaronix` (zero-clone) | On a clean shell: `npx ivaronix receipt verify <known-id>` | Bundle downloads, verifies, exits 0. |
 
