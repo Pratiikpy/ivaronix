@@ -1123,16 +1123,16 @@ Run `cd contracts && forge test -vvv` and confirm every `*.t.sol` test passes. T
 | Mixed (canonical wins) | Set both canonical AND legacy to different values. | Canonical value used; legacy is silently ignored. |
 | All 10 chains | Repeat for each: `*_SIGNER_KEY`, `*_READ_PROXY_KEY`, `*_RPC_URL`, `*_NETWORK`, `*_CHAIN_ID`, `*_WALLET_ADDRESS`, `*_ROUTER_KEY`, `*_ROUTER_URL`, `*_ROUTER_PROVIDER`, `*_DEFAULT_MODEL`. | Every chain resolves; `pnpm env:check` returns all green. |
 
-## Source-File Regression Suite (95 verify-\*.ts files on disk · 76 automated · 19 require live server)
+## Source-File Regression Suite (<!-- regressions:auto:total -->105<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->86<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
 
-`scripts/qa/metamask-e2e/verify-*.ts` ships **95 verify-\*.ts files** as of cron iteration 17 (counted via `find scripts/qa/metamask-e2e -name 'verify-*.ts' | wc -l`). Of these, **76 run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **19 require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
+`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->105<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->86<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
 
 | Suite | Command | Pass condition |
 |---|---|---|
-| Studio offline regressions (59) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All 59 PASS. Pre-commit runs this suite on every `git commit`. |
-| CLI regressions (13) | `pnpm --filter qa-metamask-e2e run regressions:cli` | All 13 PASS. |
-| Contract regressions (4) | `pnpm --filter qa-metamask-e2e run regressions:contracts` | All 4 PASS. |
-| Live-server regressions (~19) | `pnpm --filter qa-metamask-e2e run regressions:studio-live` after `pnpm --filter @ivaronix/studio dev` | Run before merging Studio changes that touch live-state behavior. |
+| Studio offline regressions (<!-- regressions:auto:studio -->69<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->69<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
+| CLI regressions (<!-- regressions:auto:cli -->13<!-- /regressions:auto:cli -->) | `pnpm --filter qa-metamask-e2e run regressions:cli` | All <!-- regressions:auto:cli -->13<!-- /regressions:auto:cli --> PASS. |
+| Contract regressions (<!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts -->) | `pnpm --filter qa-metamask-e2e run regressions:contracts` | All <!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts --> PASS. |
+| Live-server regressions (~<!-- regressions:auto:live -->19<!-- /regressions:auto:live -->) | `pnpm --filter qa-metamask-e2e run regressions:studio-live` after `pnpm --filter @ivaronix/studio dev` | Run before merging Studio changes that touch live-state behavior. |
 | Total automated | All three offline filters above + Foundry tests + workspace typecheck + Studio build. | Everything green on the same commit being tested. |
 
 ## 0G Primitive Integration Depth (Criterion 1 — the headline judging axis)
