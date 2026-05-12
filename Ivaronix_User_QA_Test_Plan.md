@@ -942,7 +942,7 @@ This section checks whether each feature gives the right result, not only whethe
 | 2 | Env vars (9/9 required) | `IVARONIX_NETWORK`, `IVARONIX_RPC_URL`, `IVARONIX_SIGNER_KEY`, `IVARONIX_ROUTER_KEY`, `IVARONIX_ROUTER_PROVIDER`, `NVIDIA_API_KEY`, etc. all set; legacy aliases still resolve. | `pnpm env:check`. |
 | 3 | Deployer wallet funded | `≥ 0.1 OG` on Galileo. Currently 69.56 OG. | `/api/dashboard/<addr>` or `ivaronix doctor`. |
 | 4 | RPC latency | `eth_blockNumber` round-trip < 2s (current: 0.77s). | `time cast block-number --rpc-url <rpc>`. |
-| 5 | Receipt anchoring | `numbers.json receipts.total = 1651+` (V1 1644 + V2 7 · refreshed iter-22 + iter-32) matches `ReceiptRegistry.nextId() + ReceiptRegistryV2.nextId()`. | Read both contracts; sum. `ivaronix debug chain` prints the live aggregate. |
+| 5 | Receipt anchoring | `numbers.json receipts.total = <!-- numbers:auto:receipts.total -->1657<!-- /numbers:auto:receipts.total -->+` (V1 <!-- numbers:auto:receipts.v1Anchored -->1644<!-- /numbers:auto:receipts.v1Anchored --> + V2 <!-- numbers:auto:receipts.v2Anchored -->8<!-- /numbers:auto:receipts.v2Anchored --> + V3 <!-- numbers:auto:receipts.v3Anchored -->5<!-- /numbers:auto:receipts.v3Anchored -->) matches `ReceiptRegistry.nextId() + ReceiptRegistryV2.nextId() + ReceiptRegistryV3.nextId()`. | Read all three contracts; sum. `ivaronix debug chain` prints the live aggregate. |
 | 6 | Proof Explorer (`/r/<id>`) | HTTP 200 on `#994`, `#1004`, `#1014`, `#1056`, `#1069`. | `curl -o /dev/null -w '%{http_code}\n' https://ivaronix.vercel.app/r/{994,1004,1014,1056,1069}`. |
 | 7 | Passport state | tokenId 1, trust 1053+, receipts 1053+, violations 0. | `ivaronix passport show 0xaa954c...`. |
 | 8 | Memory grant/revoke lifecycle | 5+ grants on chain; ACTIVE → REVOKED proven via Studio + chain. | Tested in Memory section; cross-check chain event log. |
@@ -1020,13 +1020,13 @@ If any step diverges from the doc's expected output, FAIL the run AND fix the do
 
 | Claim | numbers.json value | Test |
 |---|---|---|
-| Receipts anchored | `1,644+` (V1 + V2) | `ivaronix receipt count` (or read chain directly via `ReceiptRegistry.nextId()` + `ReceiptRegistryV2.nextId()`). |
-| Receipt types | `13` | `wc -l packages/core/src/types.ts` grep + count. |
-| Contracts deployed | `8` | `cat contracts/deployments/testnet.json` count. |
-| Foundry tests | `167` | `cd contracts && forge test --list \| wc -l`. |
-| First-party skills | `6` (catalog of `156`) | `ls seed-skills/ \| wc -l` excluding AGENTS.md/README. |
+| Receipts anchored | `<!-- numbers:auto:receipts.total -->1657<!-- /numbers:auto:receipts.total -->+` (V1 + V2 + V3) | `ivaronix receipt count` (or read chain directly via `ReceiptRegistry.nextId()` + `ReceiptRegistryV2.nextId()` + `ReceiptRegistryV3.nextId()`). |
+| Receipt types | `<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->` | `wc -l packages/core/src/types.ts` grep + count. |
+| Contracts deployed | `<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed -->` | `cat contracts/deployments/testnet.json` count. |
+| Foundry tests | `<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->` | `cd contracts && forge test --list \| wc -l`. |
+| First-party skills | `<!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty -->` (catalog of `<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->`) | `ls seed-skills/ \| wc -l` excluding AGENTS.md/README. |
 | Creator earnings (testnet) | `0.0014 OG · 26 paid runs of private-doc-review · 90/10 split` | Sum `billing.feeSplit.creatorNeuron` across receipts of skill `private-doc-review`. |
-| Workspace packages | `25` (apps `6`, typecheck clean `21`, test files `21`) | `cat pnpm-workspace.yaml` + ls + count. |
+| Workspace packages typecheck-clean | `<!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean -->` | `pnpm -r typecheck` returns green on every package. |
 | Polyglot hash | `3 languages · 17 TS + 14 Py + 11 Rust tests · 29 cross-impl vectors` | Run all three suites and count assertions. CI workflow at `.github/workflows/jcs-roundtrip.yml`. |
 | Mainnet readiness | `13/13 checklist green · blocked on 0.1 OG to deployer wallet (§A-2)` | Read `docs/MAINNET_READINESS.md` checklist line-by-line. |
 
@@ -1247,7 +1247,7 @@ Beyond the 94 verify-\*.ts regressions, these scripts gate behavior the plan mus
 |---|---|
 | Studio CSP | `next.config.ts:53-57` says CSP "deliberately omitted — needs end-to-end app testing to draft policy that allows wagmi + Next.js inline scripts". Tracked in `docs/USER_TODO.md §B-V2`. Mark `PENDING` until CSP ships. |
 | CLAUDE.md skills.md `safety_filter` hook | ✅ FIXED iter-13 (commit `04664b3`). `.claude/rules/skills.md:71` now lists the 5 shipped hooks with a `BUILTIN_HOOKS` registry pointer. The 6th file `safety-filter.ts` was never shipped; the rule was the source of drift, not the codebase. |
-| `seed-skills/imports/` directory | NOT a single skill — it's the **vendored 150-skill catalog** that backs `numbers.json.skills.vendored: 150` (verified iter-19: `find seed-skills/imports -name 'SKILL.md' \| wc -l` = 150). First-party catalog is 6 (`seed-skills/{0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review}/SKILL.md`), vendored catalog is 150, total 156. Plan claim "imports skill listed in some catalogs but doesn't exist" was wrong. |
+| `seed-skills/imports/` directory | NOT a single skill — it's the **vendored <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->-skill catalog** that backs `numbers.json.skills.vendored: <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->` (verified iter-19: `find seed-skills/imports -name 'SKILL.md' \| wc -l` = <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->). First-party catalog is <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> (`seed-skills/{0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review}/SKILL.md`), vendored catalog is <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->, total <!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->. Plan claim "imports skill listed in some catalogs but doesn't exist" was wrong. |
 | README screenshot grid | If brand changed since last `pnpm screenshots:refresh`, the README's grid mis-renders the product. Run before submission. |
 
 ## Authoritative Sources For Test Intent
@@ -1279,7 +1279,7 @@ The master checklist already covers 28 commands. These 5 were missed — they an
 |---|---|---|---|
 | `ivaronix passport-consolidate <window>` | 1 | Consolidate last day's receipts. | Anchors a `memory_consolidation` receipt (type 12) pointing at the source ids. `request.priorReceiptIds` is populated. |
 | `ivaronix session ...` | 0/1 | Open / list / kill sessions. | Session state persists across runs; killing one wipes only that session's local state. |
-| `ivaronix skill registry export` | 0 | Export every on-chain `SkillRegistry` entry as JSON. Plan claim of top-level `ivaronix skill-registry-export` is WRONG — actual command is a sub-subcommand (3 levels: `skill → registry → export`). Per `apps/cli/src/commands/skill.ts:20` import + `apps/cli/src/commands/skill-registry-export.ts:118` registration. Driven iter-23: produced 156 entries (6 first-party + 150 imports) with sha256 manifestHashes; output at `skills/registry.json`. | Output matches what the `/skills` page renders. (Iter-30 finding: there's NO `/api/skills` public read endpoint — only `/api/skill/save` singular write endpoint. The `/skills` page reads the registry directly via build-time import.) |
+| `ivaronix skill registry export` | 0 | Export every on-chain `SkillRegistry` entry as JSON. Plan claim of top-level `ivaronix skill-registry-export` is WRONG — actual command is a sub-subcommand (3 levels: `skill → registry → export`). Per `apps/cli/src/commands/skill.ts:20` import + `apps/cli/src/commands/skill-registry-export.ts:118` registration. Driven iter-23: produced <!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal --> entries (<!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> imports) with sha256 manifestHashes; output at `skills/registry.json`. | Output matches what the `/skills` page renders. (Iter-30 finding: there's NO `/api/skills` public read endpoint — only `/api/skill/save` singular write endpoint. The `/skills` page reads the registry directly via build-time import.) |
 | `ivaronix indexer ...` | 0 | Indexer reads (receipt-by-agent, receipt-by-root, count). | Same data as the V2-first chain client + Studio dashboard. |
 | `ivaronix debug <subcommand>` | 0/1 | Each debug subcommand (storage / chain / compute / env). | Output is honest about what's missing; no `console.log` litters the live build. |
 

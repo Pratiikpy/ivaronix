@@ -49,6 +49,7 @@ const TARGET_DOCS = [
   'docs/PITCH.md',
   'docs/JUDGE_GUIDE.md',
   'docs/MAINNET_READINESS.md',
+  'Ivaronix_User_QA_Test_Plan.md', // iter-127: lock the user's QA plan against numbers.json drift (was 3 numbers stale at iter-126)
 ];
 
 // Subset of numbers.json keys we GATE on. Some leaf numbers (chainId,
