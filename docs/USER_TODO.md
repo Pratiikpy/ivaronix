@@ -365,7 +365,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 - **Post-deploy:** add address to `contracts/deployments/<network>.json` under `MemoryAccessLogV2`. Memory engine + Studio `/memory` route to V2 first via the V2-first read pattern.
 
-### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix + K-22 consumeRead DoS)
+### B-V2-15 · Deploy CapabilityRegistryV2 (social-graph leak fix + K-22 consumeRead DoS) · ✅ SHIPPED 2026-05-12 · 0x1351CD87360f0366D0A0068164e606B3c320F3E1 · tx 0xdea605e6...
 - **Source:** plan-003 §A.5.10 · code-complete today (`contracts/src/CapabilityRegistryV2.sol` + 10/10 Foundry tests pass). PLUS HALF_BAKED §K-22 — the V2 redeploy is the right vehicle for both.
 - **Why (privacy):** V1's `mapping(address => bytes32[]) public grantsByOwner` + `grantsByGrantee` auto-generated public getters; anyone could enumerate every grant ever issued for any wallet. V2 makes both reverse indexes `internal` with privacy-gated reads (caller is owner/grantee themselves OR an `authorizedReader` indexer). Closes the social-graph leak.
 - **Why (K-22 DoS — captured sweep 138):** V1's `consumeRead(grantId)` is callable by anyone, not just the grantee. An attacker scrapes grant IDs from the public `GrantIssued` event, calls `consumeRead(grantId)` from any address, and depletes the grantee's `readsRemaining` budget. The grantee's actual reads then start failing (reads remaining = 0). HALF_BAKED's "two-line patch" framing is misleading — naive `require(msg.sender == g.grantee)` breaks the off-chain memory engine which currently calls consumeRead as the operator (relayer pattern). The right shape:

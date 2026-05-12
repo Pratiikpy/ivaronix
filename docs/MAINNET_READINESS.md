@@ -12,7 +12,7 @@
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->9<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->9<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
+| 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->10<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->10<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
 | 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
@@ -32,14 +32,15 @@
 
 ### 1. Contracts deployed on Galileo (chainId 16602)
 
-All <!-- numbers:auto:contracts.deployed -->9<!-- /numbers:auto:contracts.deployed --> contracts (table auto-rendered from `contracts/deployments/testnet.json` via `pnpm docs:render` — original byte-size column dropped as the canonical record doesn't track it; run `forge inspect <name> bytecode --hex | wc -c` if you need it):
+All <!-- numbers:auto:contracts.deployed -->10<!-- /numbers:auto:contracts.deployed --> contracts (table auto-rendered from `contracts/deployments/testnet.json` via `pnpm docs:render` — original byte-size column dropped as the canonical record doesn't track it; run `forge inspect <name> bytecode --hex | wc -c` if you need it):
 
 <!-- contracts:auto:start -->
 | Contract              | Address                                                                                                                                            |
 |-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AgentPassportINFT`    | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) — stays live for 4 minted passports (tokenIds 1-4) |
 | `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) — K-1 + K-4 + K-6 fix |
-| `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) |
+| `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) — stays live for any existing grants |
+| `CapabilityRegistryV2` | [`0x1351CD87360f0366D0A0068164e606B3c320F3E1`](https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1) — B-V2-15 |
 | `Erc7857Verifier`      | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) — V1 verifier reused by AgentPassportINFTV2 |
 | `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) |
 | `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the existing anchored receipts (chain hist… |
@@ -115,9 +116,9 @@ GET /v1/receipt/1069                               HTTP 200  state=ANCHORED
 
 CLAUDE.md §1 ("The only blocker is money") — mainnet promotion requires the
 deployer wallet to be funded on chainId 16661 with enough OG to redeploy all
-<!-- numbers:auto:contracts.deployed -->9<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
+<!-- numbers:auto:contracts.deployed -->10<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
 script is the same `forge script` used on testnet, with `--rpc-url
-https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->173<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->173<!-- /numbers:auto:contracts.foundryTests -->
+https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->
 Foundry tests.
 
 Once the deployer wallet receives mainnet OG, run:

@@ -58,7 +58,15 @@
     "CapabilityRegistry": {
       "address": "0x3783f3c4834fCCBD553860e15c64C7E052646a8D",
       "txHash": "0xdc8387e0f6c5c7a5a510270ba1c9d7c568e68b17e7cde9d6e75c213911a2d151",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D",
+      "note": "V1; stays live for any existing grants. New grants land on CapabilityRegistryV2."
+    },
+    "CapabilityRegistryV2": {
+      "address": "0x1351CD87360f0366D0A0068164e606B3c320F3E1",
+      "txHash": "0xdea605e605e6031230bc397d305e48d3b125315eefd10a10da72bcb8be4c6d37",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1",
+      "deployedAt": "2026-05-12",
+      "note": "B-V2-15 · private reverse indexes (social-graph leak fix · planning-003 §A.5.10) + authorizedRelayers gate on consumeRead (HALF_BAKED §K-22 DoS fix). 14 Foundry tests all PASS. Post-deploy: operator wallet 0xaa95...77Ce must be added via addAuthorizedRelayer so the off-chain memory engine continues to function."
     },
     "MemoryAccessLog": {
       "address": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",

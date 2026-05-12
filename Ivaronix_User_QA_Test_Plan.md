@@ -665,6 +665,10 @@ Use this when fixing any bug, visual issue, broken flow, or weak feature.
 
 These rules prevent weak QA, lazy blocked states, and incomplete launch claims.
 
+### Loop Stop Rule
+
+The QA loop may not stop until every launch-critical feature is either proven with proper evidence in `QA_PROOF_PACK/` or honestly marked `PENDING`/`BLOCKED` with a real external reason. Before stopping, audit the proof pack itself: if any completed item was tested with a shortcut, weak evidence, mock-only path, missing video/screenshot/tx/CLI cross-check, or lower-effort method than the feature allows, the loop must continue.
+
 | Rule | Meaning |
 |---|---|
 | Every feature gets a row | If the product has it, the QA plan must test it. |
