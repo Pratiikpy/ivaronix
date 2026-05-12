@@ -85,7 +85,31 @@
     "SkillRegistry": {
       "address": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
       "txHash": "0x7b17d10f7fd00465660e563b4cd0e1c136a49add4ffce8e63276e5878cd12f8b",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
+      "note": "V1; stays live for existing skill registrations (chain history immutable). New publishes land on SkillRegistryV2 with the 6 first-party names pre-reserved against squatters."
+    },
+    "SkillRegistryV2": {
+      "address": "0xF05113E83146160024326ff30979c57f5adc2193",
+      "txHash": "0x80800054a0758395307484b302af5a1b741b73e691dadef94a2c9616d41278a9",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193",
+      "deployedAt": "2026-05-12",
+      "note": "B-V2-17 · squatter risk fix (planning-003 §A.5.11). Constructor pre-reserves 6 first-party skill IDs (private-doc-review, github-audit, 0g-integration-auditor, code-edit, plan-step, content-pitch-review) to the deployer wallet. Owner-arbitration safety valve (reserveSkillName) lets the contract owner reassign squatter-grabbed unreserved skillIds with off-chain evidence. 16/16 Foundry tests PASS.",
+      "reservedSkillIds": [
+        "skill:private-doc-review",
+        "skill:github-audit",
+        "skill:0g-integration-auditor",
+        "skill:code-edit",
+        "skill:plan-step",
+        "skill:content-pitch-review"
+      ]
+    },
+    "SubscriptionEscrowV2": {
+      "address": "0x74235b707194c4cc3DDb717B6D95595e8A82B7F5",
+      "txHash": "0x8e02e00c94f2cd918aebeef4e97821a07e4437cac49c9cfce22227c94d684b6e",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5",
+      "deployedAt": "2026-05-12",
+      "receiptRegistry": "0x7396D536594e2BE833070c7EB441A10906046257",
+      "note": "B-V2-18 · cancelGraceSeconds window between agent-initiated cancel and EXPIRED status closes HALF_BAKED §K-25 AGENT_AUTO griefing surface. ReceiptRegistryV3 pinned at construction (uses canonical slot 9 subscription_skill_exec receipt anchors)."
     }
   }
 }

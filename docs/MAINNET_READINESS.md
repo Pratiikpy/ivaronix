@@ -12,7 +12,7 @@
 
 | # | Item | Status | Evidence |
 |---|---|---|---|
-| 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->11<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->11<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
+| 1 | Contracts deployed (<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed -->/<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed -->) | ✓ | live addresses in `contracts/deployments/testnet.json` |
 | 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
@@ -32,7 +32,7 @@
 
 ### 1. Contracts deployed on Galileo (chainId 16602)
 
-All <!-- numbers:auto:contracts.deployed -->11<!-- /numbers:auto:contracts.deployed --> contracts (table auto-rendered from `contracts/deployments/testnet.json` via `pnpm docs:render` — original byte-size column dropped as the canonical record doesn't track it; run `forge inspect <name> bytecode --hex | wc -c` if you need it):
+All <!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed --> contracts (table auto-rendered from `contracts/deployments/testnet.json` via `pnpm docs:render` — original byte-size column dropped as the canonical record doesn't track it; run `forge inspect <name> bytecode --hex | wc -c` if you need it):
 
 <!-- contracts:auto:start -->
 | Contract              | Address                                                                                                                                            |
@@ -47,7 +47,9 @@ All <!-- numbers:auto:contracts.deployed -->11<!-- /numbers:auto:contracts.deplo
 | `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the existing anchored receipts (chain hist… |
 | `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) — K-2 fix |
 | `ReceiptRegistryV3`    | [`0x7396D536594e2BE833070c7EB441A10906046257`](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257) — B-V2-32 fix |
-| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
+| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) — stays live for existing skill registrations (chain histor… |
+| `SkillRegistryV2`      | [`0xF05113E83146160024326ff30979c57f5adc2193`](https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193) — B-V2-17 |
+| `SubscriptionEscrowV2` | [`0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`](https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5) — B-V2-18 |
 <!-- contracts:auto:end -->
 
 Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08 (V1) + 2026-05-10 (V2).
@@ -117,7 +119,7 @@ GET /v1/receipt/1069                               HTTP 200  state=ANCHORED
 
 CLAUDE.md §1 ("The only blocker is money") — mainnet promotion requires the
 deployer wallet to be funded on chainId 16661 with enough OG to redeploy all
-<!-- numbers:auto:contracts.deployed -->11<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
+<!-- numbers:auto:contracts.deployed -->13<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
 script is the same `forge script` used on testnet, with `--rpc-url
 https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->177<!-- /numbers:auto:contracts.foundryTests -->
 Foundry tests.

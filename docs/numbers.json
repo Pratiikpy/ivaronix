@@ -28,7 +28,7 @@
     "source": "packages/core/src/types.ts RECEIPT_TYPES"
   },
   "contracts": {
-    "deployed": 11,
+    "deployed": 13,
     "foundryTests": 177,
     "list": [
       "AgentPassportINFT",
@@ -41,7 +41,9 @@
       "ReceiptRegistry",
       "ReceiptRegistryV2",
       "ReceiptRegistryV3",
-      "SkillRegistry"
+      "SkillRegistry",
+      "SkillRegistryV2",
+      "SubscriptionEscrowV2"
     ],
     "addresses": {
       "AgentPassportINFT": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
@@ -54,7 +56,9 @@
       "ReceiptRegistry": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "ReceiptRegistryV2": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
       "ReceiptRegistryV3": "0x7396D536594e2BE833070c7EB441A10906046257",
-      "SkillRegistry": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1"
+      "SkillRegistry": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
+      "SkillRegistryV2": "0xF05113E83146160024326ff30979c57f5adc2193",
+      "SubscriptionEscrowV2": "0x74235b707194c4cc3DDb717B6D95595e8A82B7F5"
     }
   },
   "skills": {
