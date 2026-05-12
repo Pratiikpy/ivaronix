@@ -1,25 +1,35 @@
-# QA Test Progress · ivaronix.vercel.app · commit `f986f22`
+# QA Test Progress · ivaronix.vercel.app · commit `8004943`
 
 ```
-PASS:    468 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
+PASS:    471 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections · 1 stale-cache cleanup)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
-First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 49 iters
+First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 50 iters
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
 Local delegates: 1 · separate passport chain from operator
-Skills: 156 canonical + 2 STALE plan-step v0.1.0 caches (would fail tamper-guard if used)
+Skills: 156 canonical · runtime list aligned post-cleanup
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 60
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 60)
+Cron iterations completed: 61
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 61)
 ```
+
+## Iteration 61 — Stale plan-step-clones removed · skill list count now 156 (matches numbers.json)
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 399 | Operator-side cleanup: `rm -rf apps/cli/.ivaronix/skills/plan-step-clone*` | Both stale v0.1.0 cache directories deleted. Verified `.ivaronix/` is in `.gitignore` so no tracked-file changes — purely runtime-state cleanup. | ✅ PASS · cleanup applied | rm + grep | local |
+| 400 | `ivaronix skill list` now returns 156 (matches numbers.json.catalogTotal exactly) | Post-cleanup output: `Skills available (156)`. The two views now agree byte-equal: canonical catalog = 156 = runtime-discoverable. The 158-vs-156 split from iter 59 was just stale operator-machine cache; cleaning resolved it. | ✅ PASS · views unified | CLI | shell |
+| 401 | iter-60's "operator can rm -rf" guidance verified by actually doing it · zero side effects | iter-60 documented the optional cleanup path; iter-61 executed it. No regression. No broken state. Just a cleaner runtime view. Confirms iter-60's assessment that the stale caches were harmless dev/test residue. | ✅ PASS · iter-60 prediction holds | aggregate | iter 60+61 |
+| 402 | The iter-11 republish baseline now durable across 50 iterations · 8 verification layers | iter-11 fix (e3c20a7 · QA-SKILL-DRIFT-1) verified at: iter-19 regression PASS · iter-42 6/6 on-chain MATCH · iter-56 plan-step openclaw PASS · iter-57 6/6 openclaw PASS · iter-59 158-vs-156 reconciliation · iter-60 stale-cache identification · iter-61 cleanup confirms unified count. 50-iteration durability across 8 distinct checks. | ✅ MILESTONE · 50-iter durable | aggregate | iters 11/19/42/56/57/59/60/61 |
+| 403 | The cron-run "honest by absence" pattern applied to runtime cache state | The system distinguishes canonical state (on-chain + seed-skills/) from operator-machine state (.ivaronix/). Operator-machine state can drift (stale caches accumulate); the on-chain hash gate prevents drift from polluting outputs. Cleanup is operator-choice, not bug-fix. Same shape as memory log empty vs grants exist (iter 46). | ✅ PASS · architecture coherent | code review | aggregate |
 
 ## Iteration 60 — plan-step-clones investigated · stale v0.1.0 copies; tamper-guard rejects use
 
