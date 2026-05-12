@@ -93,7 +93,7 @@ export default async function Image({ params }: { params: { id: string } }) {
             VERIFIED ON 0G {network.toUpperCase()}
           </span>
           <span style={{ fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 16, color: '#6b6b66' }}>
-            ivaronix.app
+            ivaronix.vercel.app
           </span>
         </div>
       </div>

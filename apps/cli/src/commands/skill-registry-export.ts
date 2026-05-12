@@ -110,6 +110,13 @@ export function addRegistryExportCommand(parent: Command): void {
       });
 
       const registry: Registry = {
+        // JSON Schema $schema URIs are conventionally stable identifiers,
+        // not resolvable URLs. The Zod literal in packages/skills/src/
+        // registry-schema.ts locks this exact string. Changing it would
+        // break backwards-compat with every existing registry export.
+        // The 'ivaronix.studio' host doesn't resolve via DNS — that's
+        // expected behavior; the URI identifies the schema version, not
+        // a URL to fetch.
         $schema: 'https://ivaronix.studio/schemas/skills-registry/1.0',
         generated_at: new Date().toISOString(),
         total: skills.length,
