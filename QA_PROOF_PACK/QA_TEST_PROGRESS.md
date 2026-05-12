@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `e1b301f`
+# QA Test Progress · ivaronix.vercel.app · commit `81ffef2`
 
 ```
-PASS:    195 / ~908 rows
+PASS:    202 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 3 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -11,9 +11,22 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             23 saved (readme-quickstart-60s added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 19)
+  CLI logs:             23 saved
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 20)
 ```
+
+## Iteration 20 — TIER 1 sub-types + SIWE TTLs + UI/CLI cross-check
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 137 | Plan §1027 TIER 1 sub-types — schema enum verified | `packages/receipts/src/schema.ts:251-256` declares `verificationMethod` enum: `'router_flag'`, `'compute_sdk_process_response'`, `'external-signed'` (matches plan exactly) | ✅ PASS | code review | source |
+| 138 | Plan §1027 sub-type values verified in live receipt #6 (code_change) | receipt body has `teeVerification.verificationMethod: 'router_flag'` + `teeVerification.tier: 'tier-1-tee'` + `billing.feeSplit.tier: 'TIER_1'` — the router_flag path produced this; matches plan claim for sub-type 1 of 2 | ✅ PASS | receipt body inspect | rcpt_01KRE13F38EBQKQ0ZN2M62PE7S.json |
+| 139 | TIER routing logic in pipeline.ts:736 | `verificationMethod: a.provider === 'nvidia' ? 'external-signed' : 'router_flag'` + `tier: a.provider === 'nvidia' ? 'tier-2-external-signed' : 'tier-1-tee'`. Three sub-types branch on the provider field. `compute_sdk_process_response` is set by the `--tee-independent` verify path (the JUDGE_GUIDE step 1 covered in iter 12). | ✅ PASS | code review | pipeline.ts:730-740 |
+| 140 | Plan §1300 UI/CLI cross-check on receipt #4 (memory_consolidation) | CLI `ivaronix receipt show 4` returns receiptRoot, storageRoot, agent, timestamp, type=4 (on-chain), registry=V2. Studio `/r/4` returns 200 + renders "TIER 1" chip. The CLI shows on-chain `type: 4` (memory_access · per the B-V2-32 chain-cap coercion); off-chain body has `type: 'memory_consolidation'`. Cross-check confirms the chain-cap gap is uniform across both surfaces — neither lies, but the underlying type is encoded twice (once on-chain coerced, once off-chain honest). | ✅ PASS · 🔧 B-V2-32 live-confirmed | CLI + curl | live |
+| 141 | Plan §1422 SIWE TTL constants | `apps/studio/src/lib/siwe-session.ts:15-16` defines `SESSION_TTL_MS = 60 * 60 * 1000` (1h) and `NONCE_TTL_MS = 5 * 60 * 1000` (5min). Plan claim matches. | ✅ PASS | code review | source |
+| 142 | Plan §1431 nonce cleanup sweep on getNonce() | `siwe-session.ts:59-61` full-walks the `nonces` Map and deletes any entry whose `Date.now() - issuedAtMs > NONCE_TTL_MS` — opportunistic GC on every `issueNonce` call. No unbounded growth. | ✅ PASS | code review | line 59-61 |
+| 143 | Plan §1432 session cleanup sweep (different pattern) | `siwe-session.ts:84-87` comment: "Sweep 194: opportunistic GC matching rate-limit Map cleanup. issueNonce already walks the nonces Map fully on every call; sessions doesn't (cleanup only fires on readSession when an expired entry is encountered)". Lazy cleanup is documented + intentional. | ✅ PASS | code review | line 84-87 |
+| 144 | Plan §1433 per-instance store limitation documented | siwe-session.ts:8 comment names the production multi-instance setup as the relevant deployment path. In-process Map per Vercel function means a sign-in on one instance won't work against another — operator must wire Upstash (or equivalent) for production. Documented in code; matches plan claim. | ✅ PASS | code review | line 8 |
 
 ## Iteration 19 — Plan-drift sweep + README 60s quickstart + og-toolkit publish dry-run
 
