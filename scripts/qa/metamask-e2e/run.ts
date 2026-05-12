@@ -61,7 +61,10 @@ const SHOTS_DIR = resolve(REPO, 'screenshots', 'metamask');
 mkdirSync(SHOTS_DIR, { recursive: true });
 mkdirSync(USER_DATA_DIR, { recursive: true });
 
-const STUDIO = 'http://localhost:3300';
+// STUDIO_BASE override lets the harness drive the live Vercel deploy
+// (https://ivaronix.vercel.app) without spinning up a local dev server.
+// Default stays localhost so existing local-dev workflows are unchanged.
+const STUDIO = process.env.STUDIO_BASE ?? 'http://localhost:3300';
 
 let stepNum = 0;
 async function snap(page: Page, label: string) {
