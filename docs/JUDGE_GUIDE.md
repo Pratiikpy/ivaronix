@@ -15,18 +15,27 @@ pnpm install
 pnpm --filter @ivaronix/cli exec ivaronix receipt verify 1304 --tee-independent
 ```
 
-Expected output:
+Expected output, when the live 0G Compute provider's TEE channel is reachable:
 
 ```
 schema PASS
 hash PASS
 signature PASS                → CLAIMED
 chain anchor PASS (id=1304)   → ANCHORED
-tee:primary PASS (provider 0xa48f0128…) via broker.processResponse
+tee:primary PASS              → via broker.processResponse
 Status: → FULLY VERIFIED ✓
 ```
 
-You just verified — on your machine, against the public 0G chain, with no account — that an AI inference happened on a TEE-attested 0G Compute provider, signed by a wallet that owns an AgentPassportINFT, anchored on `ReceiptRegistry`. No competitor in the field ships a third-party-reproducible re-verifier for arbitrary inferences.
+When the provider's TEE channel is temporarily unreachable (Router rate limit, provider session rotation, or transient network), the last two lines look like this:
+
+```
+tee:primary error             getting signature error
+Status: → ANCHORED (some TEE checks failed)
+```
+
+The first four checks — `schema · hash · signature · chain anchor` — are the load-bearing authenticity proof. They confirm the receipt body is untampered, the canonical hash recovers, the signature recovers the agent address recorded on the `AgentPassportINFT`, and `ReceiptRegistry` holds the anchor at the given id. The `tee:primary` re-verify is the additional check that calls back to the live 0G Compute provider — it proves the inference itself ran inside the attested TEE when reachable, and it degrades honestly (not silently) when the channel is unreachable. Either output is real testnet state; the difference is which independent checks the live network supports at the moment the judge runs the command.
+
+You just verified — on your machine, against the public 0G chain, with no account — that an AI inference happened on a 0G Compute provider, signed by a wallet that owns an AgentPassportINFT, and anchored on `ReceiptRegistry`. The independent re-verify is a CLI command, not a screenshot.
 
 Receipt 1304 is a contract-review run on a sample lease. The headline output, model used, attestation hash, anchor block, and storage root are all in the receipt body at `apps/cli/.ivaronix/receipts/anchored/rcpt_*.json` after the verify step downloads it.
 
@@ -52,7 +61,7 @@ Two paths. CLI is fastest:
 pnpm --filter @ivaronix/cli exec ivaronix demo
 ```
 
-`ivaronix demo` anchors one real receipt on Galileo testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs. Faucet at `https://faucet.0g.ai` if `EVM_PRIVATE_KEY` in `.env` needs OG.
+`ivaronix demo` anchors one real receipt on Galileo testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs. Faucet at `https://faucet.0g.ai` if `IVARONIX_SIGNER_KEY` (legacy alias: `EVM_PRIVATE_KEY`) in `.env` needs OG.
 
 Or **drop a contract → see the receipt** in the Studio:
 - Open `http://localhost:3300/`
@@ -105,7 +114,7 @@ Every field is **honest by absence**: when the operator hasn't configured a prim
 Five judging criteria, two minutes each:
 
 1. **0G Tech Depth.** Six primitives — 0G Chain, 0G Compute, 0G Storage, 0G Router, Agent ID (ERC-7857), 0G DA — each with a code path you can read in `packages/og-{chain,compute,storage,router,da}` and `contracts/src/AgentPassportINFT.sol`. 0G Persistent Memory wired in `packages/runtime/src/memory-client.ts`. Honest stance on which require operator action vs auto-flow.
-2. **Implementation Completeness.** <!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> packages typecheck-clean · <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+ receipts on testnet · <!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> contracts deployed · mainnet-readiness 13/13 green. Mainnet promotion blocked on operator funding (documented in `docs/USER_TODO.md`).
+2. **Implementation Completeness.** <!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->167<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> packages typecheck-clean · <!-- numbers:auto:receipts.total -->1647<!-- /numbers:auto:receipts.total -->+ receipts on testnet · <!-- numbers:auto:contracts.deployed -->8<!-- /numbers:auto:contracts.deployed --> contracts deployed · mainnet-readiness 13/13 green. Mainnet promotion blocked on operator funding (documented in `docs/USER_TODO.md`).
 3. **Product Value.** Two locked personas: deal lawyer (single-doc review · `/r/1304/print`) and DD analyst (bulk audit · `ivaronix doc bulk <dir>`). Marketing-persona skill `content-pitch-review` with TIER 1 receipt fixture. <!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->-skill public registry at `skills/registry.json`. Track-3 economic teeth: TIER-1 receipts release 100% of declared creator bps; TIER-2 release 85% (the zer0Gig "Efficiency Game" pattern, in code).
 4. **UX & Demo Quality.** "Use sample contract" → receipt anchored in 30 seconds with no wallet. Live receipt counter on the home hero (server-rendered from `ReceiptRegistry.nextId()`). Editorial cream-on-black brand, mobile-clean, brand-HTML side-by-side verified.
 5. **Team & Documentation.** This guide. Plus `PITCH.md` (3 pages · non-technical), `RECEIPT_SCHEMA.md` (technical depth · sequence diagrams), `MAINNET_READINESS.md` (13/13 ops checklist), `PHASE_B_DISCLOSURES.md` (every half-baked surface named honestly), `USER_TODO.md` (operator-action items), `planning-01.md` + `planning-002.md` (every shipped feature with on-chain artefact reference).
