@@ -494,19 +494,16 @@ docCommand
     const primaryRole = consensusResult.judgement ? consensusResult.judgement.role : consensusResult.reviewerOutputs[0]?.role;
     const primaryAtt = consensusResult.attestations.find((a) => a.role === primaryRole);
 
+    // Receipt-type selection (B-V2-35 closures):
+    //   - burnMode → 'burn' (slot 3 · closed iter-96) — the
+    //     bytes-are-encrypted physical-mode signal.
+    //   - non-default skill → 'skill_exec' (slot 5 · closed iter-99)
+    //     — user explicitly invoked a named skill via --skill <id>.
+    //   - quick tier, default skill → 'doc_ask' (slot 0) — the
+    //     conversational doc-question shape.
+    //   - multi-role tier, default skill → 'consensus' (slot 2) —
+    //     the multi-role review shape.
     const draft = buildReceipt({
-      // Receipt-type selection (B-V2-35 closures):
-      //   - burnMode → 'burn' (slot 3 · closed iter-96) — the
-      //     bytes-are-encrypted physical-mode signal.
-      //   - non-default skill → 'skill_exec' (slot 5 · closed iter-99)
-      //     — user explicitly invoked a named skill via --skill <id>.
-      //   - quick tier, default skill → 'doc_ask' (slot 0) — the
-      //     conversational doc-question shape.
-      //   - multi-role tier, default skill → 'consensus' (slot 2) —
-      //     the multi-role review shape.
-      // The burn sub-field (storage.encryption + burn.sessionKeyDestroyedAt)
-      // still populates regardless; only the top-level type flips so
-      // chain consumers can filter receiptType to find each mode.
       type: burnMode
         ? 'burn'
         : skill.id !== 'private-doc-review'
