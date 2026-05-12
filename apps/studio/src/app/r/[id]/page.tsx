@@ -20,20 +20,35 @@ interface ResolvedReceipt {
   onChain: OnChainReceipt;
   local: ReceiptBody | null;
   /** Which registry served this receipt — drives the legacy chip in the UI. */
-  registryVersion: 'v1' | 'v2';
+  registryVersion: 'v1' | 'v2' | 'v3';
 }
 
 async function loadReceipt(idOrRoot: string): Promise<ResolvedReceipt | null> {
-  const { v1, v2 } = getRegistries();
+  // iter-114 V3 blindness fix: getRegistries() returns {v3, v2, v1}
+  // (per chain.ts post-iter-79). Pre-fix this destructured only {v1, v2}
+  // and silently dropped V3, so my iter-92→iter-99 V3 anchors at ids
+  // 0..4 fell through to V1 lookups (which DO have receipts at those
+  // ids but with completely different receiptRoots). Users hitting
+  // /r/0 saw the V1 legacy receipt, not the V3 memory_consolidation
+  // anchor I'd actually written.
+  const { v3, v2, v1 } = getRegistries();
   const isId = /^\d+$/.test(idOrRoot);
   const isRoot = /^0x[0-9a-f]{64}$/i.test(idOrRoot);
   if (!isId && !isRoot) return null;
 
-  // Try V2 first (K-2 fix is the active path); fall back to V1 (legacy
-  // receipts). Receipt id namespaces don't collide because V2
-  // starts at 0 with a fresh deploy; the same id can resolve in both
-  // contracts but V2 is the newer authority for fresh anchors.
-  const tries: Array<{ version: 'v1' | 'v2'; load: () => Promise<OnChainReceipt | null> }> = [];
+  // Try V3 first (canonical · slots 10/11/12 admitted), then V2 (K-2
+  // EIP-712 anchor), then V1 (legacy). Same precedence as
+  // unifiedGetReceipt + unifiedFindByReceiptRoot in lib/chain.ts.
+  const tries: Array<{ version: 'v1' | 'v2' | 'v3'; load: () => Promise<OnChainReceipt | null> }> = [];
+  if (v3) {
+    tries.push({
+      version: 'v3',
+      load: async () => {
+        if (isId) return v3.getReceipt(BigInt(idOrRoot));
+        return v3.findByReceiptRoot(idOrRoot as `0x${string}`, 200_000);
+      },
+    });
+  }
   if (v2) {
     tries.push({
       version: 'v2',
