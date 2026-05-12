@@ -73,6 +73,8 @@ pnpm docs:check              # CI gate · drift OR >24h-stale numbers.json
 pnpm audit:list              # rolling audit-closure ledger from git log
 pnpm audit:list --grep A.5   # filter by audit ID substring
 pnpm env:check               # canonical/legacy env-var diagnostic
+pnpm og-font:regenerate      # regenerate Outfit-SemiBold.b64.ts from .ttf source
+pnpm og-font:verify          # CI gate · exit 1 if b64.ts ↔ .ttf round-trip drifts
 pnpm screenshots:refresh     # capture 6 README PNGs (needs Studio dev)
 pnpm tour:refresh            # capture 30s README tour video (needs Studio dev)
 ```

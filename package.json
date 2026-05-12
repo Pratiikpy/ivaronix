@@ -37,6 +37,8 @@
     "brand:check": "tsx scripts/qa/metamask-e2e/verify-brand-token-drift.ts",
     "brand:check:update": "tsx scripts/qa/metamask-e2e/verify-brand-token-drift.ts --update-amnesty",
     "env:check": "tsx scripts/diag/env-check.ts",
+    "og-font:regenerate": "tsx scripts/diag/regenerate-og-font-b64.ts",
+    "og-font:verify": "tsx scripts/diag/verify-og-font-b64.ts",
     "docs:render": "tsx scripts/diag/docs-render.ts",
     "docs:check": "tsx scripts/diag/docs-render.ts --check",
     "wander:cycle": "tsx scripts/wander-cycle/cycle.ts",
