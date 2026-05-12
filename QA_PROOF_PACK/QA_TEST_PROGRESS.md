@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `d1b1ba9`
+# QA Test Progress · ivaronix.vercel.app · commit `2bdc8c0`
 
 ```
-PASS:    384 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
+PASS:    388 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 1 iter-48 count error fixed)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,14 +12,24 @@ Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
-TOTAL distinct test cases green at cron HEAD: 531
+TOTAL distinct test cases green at cron HEAD: 556 (iter-48 said 531 · counting error)
 Capture totals:
   Desktop screenshots: 301
   Mobile (375x812):     21
   Videos (.webm):       24
   CLI logs:             30
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 48)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 49)
 ```
+
+## Iteration 49 — Rust verifier-rs fresh-state + iter-48 counting error fixed
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 315 | Rust `ivaronix-verifier-rs` 11/11 PASS at cron HEAD (commit `2bdc8c0`) | `cd ivaronix-verifier-rs && cargo test --release` returns: `running 11 tests · test result: ok. 11 passed; 0 failed; 0 ignored`. Plus 2 sub-module slots with 0 tests (Doc-tests + integration). The iter-13 baseline of 11 PASS holds at the current cron commit; no contract/Rust source changes have landed since. | ✅ PASS · fresh run | local | shell |
+| 316 | 🔧 Iter-48 reported "531 total test cases" — actual is **556** | Iter-48's commit message + progress-doc row claimed 531. Re-summing the components: TS unit 259 + Python 14 + Rust 11 + JCS cross-impl 29 + Foundry 167 + source-file regressions 76 = **556**. Off by 25; the prior count under-counted somewhere in the arithmetic. Header row updated with the corrected total. | 🔧 ARITHMETIC FIX | re-sum | this commit |
+| 317 | COMPREHENSIVE TEST LEDGER CORRECTED · 556 distinct test cases green at cron HEAD | TS unit tests: 259 (12 packages · core 52 + og-chain 8 + consensus 34 + receipts 30 + skills 9 + og-router 19 + og-storage 15 + memory 14 + runtime 30 + indexer 22 + og-kv 12 + og-da 14) · Python verifier-py: 14 · Rust verifier-rs: 11 · JCS cross-impl byte-equality vectors: 29 · Foundry tests: 167 · Source-file regressions: 76 (59 studio + 13 CLI + 4 contracts) = **556 distinct test cases**. | ✅ MILESTONE · 556 corrected | aggregate | iters 13-49 |
+| 318 | Three-language reference coverage all fresh-state at cron HEAD | iter-46 + iter-48 + iter-49 ran the TS/Python/Rust JCS reference suites at successive commits (`9c0168d` → `2bdc8c0`). All three suites pass at every commit checked; the cross-impl 29-vector byte-equality holds. Polyglot moat per CLAUDE.md §2.1 is intact across the entire cron run. | ✅ MILESTONE · polyglot moat intact | aggregate | iters 13/46/48/49 |
+| 319 | The "Total: <N>" rule of CLAUDE.md §15 catches arithmetic drift too | The 531 → 556 correction is the same shape as the plan-drift fixes (iters 13, 19, 30, 32, etc.): a number gets cited in a doc but doesn't recompute under verification. The §15 bookkeeping rule "Update every reference in the same commit" applies to totals as well. Iter-49 catches and fixes the iter-48 arithmetic. Pattern locked into the discipline. | ✅ DISCIPLINE LOCK | re-sum | aggregate |
 
 ## Iteration 48 — Polyglot fresh-state + og-kv (12) + og-da (14) added to ledger
 
