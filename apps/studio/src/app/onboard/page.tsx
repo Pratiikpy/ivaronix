@@ -1,5 +1,5 @@
 import { OnboardClient } from './OnboardClient';
-import { getDeployedAddress } from '@ivaronix/og-chain';
+import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';

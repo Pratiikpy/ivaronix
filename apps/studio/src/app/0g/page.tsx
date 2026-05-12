@@ -1,5 +1,8 @@
 import Link from 'next/link';
-import { getDeployedAddress, loadDeployments } from '@ivaronix/og-chain';
+import {
+  getStudioDeployedAddress as getDeployedAddress,
+  getStudioDeployments as loadDeployments,
+} from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 import { CopyLinkButton } from './CopyLinkButton';

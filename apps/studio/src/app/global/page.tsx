@@ -3,7 +3,8 @@ import { Section } from '@/components/Section';
 import { unifiedNextId, livePassportCount, getProvider, getNetwork } from '@/lib/chain';
 import { loadAllLocalReceipts, totalOgSpent, topSkillsByUsage } from '@/lib/local-receipts';
 import { loadAllSkills } from '@/lib/skills';
-import { getDeployedAddress, MemoryAccessLogClient } from '@ivaronix/og-chain';
+import { MemoryAccessLogClient } from '@ivaronix/og-chain';
+import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;

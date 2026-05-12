@@ -4,9 +4,14 @@ import {
   ReceiptRegistryV2Client,
   AgentPassportClient,
   SkillRegistryClient,
-  getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { NETWORKS, RECEIPT_TYPES, type Network, type Hash, type Address } from '@ivaronix/core';
+// Studio-local address resolver — imports contracts/deployments/<network>.json at
+// build time so the JSON is traced into the Vercel function bundle. Replaces
+// @ivaronix/og-chain's `getDeployedAddress` which walks up from process.cwd()
+// (works in CLI; returns null on Vercel because contracts/ isn't bundled).
+// See apps/studio/src/lib/deployments-bundle.ts for the full diagnosis.
+import { getStudioDeployedAddress as getDeployedAddress } from './deployments-bundle';
 
 /** Reverse-map a numeric receipt type code (as stored on chain) to its canonical name. */
 const RECEIPT_TYPE_LABELS: Record<number, string> = Object.fromEntries(

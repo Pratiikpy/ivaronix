@@ -1,7 +1,7 @@
 import { Section } from '@/components/Section';
 import { MemoryPanel } from '@/components/MemoryPanel';
 import { MemoryNotesPanel } from '@/components/MemoryNotesPanel';
-import { getDeployedAddress } from '@ivaronix/og-chain';
+import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
