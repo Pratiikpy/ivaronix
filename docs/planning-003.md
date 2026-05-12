@@ -511,7 +511,7 @@ Eight items. Each closes a drift class or sprint-language fossilization.
 - **E:** 15min
 - **D:** B.2.1 (Vercel deploy URL)
 - **What:** `apps/npx-cli/README.md` is 12 lines; both taglines, broken `ivaronix.app` link, no output preview. `packages/widget/src/index.tsx:44` hardcodes `https://ivaronix.studio` (DNS NXDOMAIN today).
-- **Fix:** rewrite npx-cli README to ~30 lines: 1 tagline + install + verify-output transcript + 5-7 command bullets + license. Replace `ivaronix.app` with actual repo URL until L-7 ships. Set widget `DEFAULT_ORIGIN = 'https://ivaronix-studio.vercel.app'` (Vercel preview) until custom domain lands. Add `STUDIO_BASE` env override + iframe error-state fallback.
+- **Fix:** rewrite npx-cli README to ~30 lines: 1 tagline + install + verify-output transcript + 5-7 command bullets + license. Replace `ivaronix.app` with actual repo URL until L-7 ships. Set widget `DEFAULT_ORIGIN = 'https://ivaronix.vercel.app'` (Vercel preview) until custom domain lands. Add `STUDIO_BASE` env override + iframe error-state fallback.
 - **A:** §11.4.
 
 ## A.6 · Operator runbook updates

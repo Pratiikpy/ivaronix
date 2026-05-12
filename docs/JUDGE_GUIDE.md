@@ -119,7 +119,7 @@ Five judging criteria, two minutes each:
 4. **UX & Demo Quality.** "Use sample contract" → receipt anchored in 30 seconds with no wallet. Live receipt counter on the home hero (server-rendered from `ReceiptRegistry.nextId()`). Editorial cream-on-black brand, mobile-clean, brand-HTML side-by-side verified.
 5. **Team & Documentation.** This guide. Plus `PITCH.md` (3 pages · non-technical), `RECEIPT_SCHEMA.md` (technical depth · sequence diagrams), `MAINNET_READINESS.md` (13/13 ops checklist), `PHASE_B_DISCLOSURES.md` (every half-baked surface named honestly), `USER_TODO.md` (operator-action items), `planning-01.md` + `planning-002.md` (every shipped feature with on-chain artefact reference).
 
-If you want depth, every commit message in `git log --oneline` cites the planning-doc item it shipped. If you want a faster pitch, `docs/PITCH.md` is three pages. If you want the architecture, `README.md` "How it works" + "Built on 0G". For the live 0G primitive depth proof — six-module grid with live `getDeployedAddress` lookups + chainscan links — open **[ivaronix.app/0g](https://ivaronix-studio.vercel.app/0g)** (planning-003 §A.5.17).
+If you want depth, every commit message in `git log --oneline` cites the planning-doc item it shipped. If you want a faster pitch, `docs/PITCH.md` is three pages. If you want the architecture, `README.md` "How it works" + "Built on 0G". For the live 0G primitive depth proof — six-module grid with live `getDeployedAddress` lookups + chainscan links — open **[ivaronix.app/0g](https://ivaronix.vercel.app/0g)** (planning-003 §A.5.17).
 
 ---
 

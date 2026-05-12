@@ -29,7 +29,7 @@ $ npx ivaronix doc ask sample-lease.txt "is this auto-renew?" --quick
   → consensus  ✓ 1.8s · 1 reviewer · convergence 1.000
   → anchor     ✓ 2.1s · receipt id 1644 · tx 0xb77087ee…
 
-  Receipt:    https://ivaronix-studio.vercel.app/r/1644
+  Receipt:    https://ivaronix.vercel.app/r/1644
   Tx hash:    https://chainscan-galileo.0g.ai/tx/0xb77087ee…
   Cost:       0.0001 OG
 ```
@@ -58,7 +58,7 @@ A first run will prompt you to drop a few values into `.env` (the CLI prints exa
 
 - Source: <https://github.com/Pratiikpy/ivaronix>
 - Receipt verifier widget: `@ivaronix/widget` on npm
-- 0G primitive depth proof: <https://ivaronix-studio.vercel.app/0g> (post-rename · planning-003 §A.5.17)
+- 0G primitive depth proof: <https://ivaronix.vercel.app/0g> (post-rename · planning-003 §A.5.17)
 
 ## License
 

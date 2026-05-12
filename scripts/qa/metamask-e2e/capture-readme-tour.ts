@@ -18,7 +18,7 @@
  *
  * Usage:
  *   pnpm tour:refresh                # default: localhost:3300, 1004
- *   STUDIO_BASE=https://ivaronix-studio.vercel.app pnpm tour:refresh
+ *   STUDIO_BASE=https://ivaronix.vercel.app pnpm tour:refresh
  *   RECEIPT_ID=994 pnpm tour:refresh
  */
 

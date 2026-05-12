@@ -81,8 +81,8 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
   After publish, the Rust verifier is `cargo install ivaronix-verifier` for any third party.
 
-### A-V2-L7 · Vercel-deploy Studio · ✅ DEPLOYED 2026-05-10 · ivaronix-studio.vercel.app
-- **Status:** Studio live at `https://ivaronix-studio.vercel.app/` (referenced in docs/JUDGE_GUIDE.md ¶ on /0g). The runbook below is preserved for a custom-domain promotion (`ivaronix.app`) — buy + DNS + Vercel domain settings remain operator actions.
+### A-V2-L7 · Vercel-deploy Studio · ✅ DEPLOYED 2026-05-10 · ivaronix.vercel.app
+- **Status:** Studio live at `https://ivaronix.vercel.app/` (referenced in docs/JUDGE_GUIDE.md ¶ on /0g). The runbook below is preserved for a custom-domain promotion (`ivaronix.app`) — buy + DNS + Vercel domain settings remain operator actions.
 - **Why:** L-7 in HALF_BAKED.md — the most embarrassing competitive gap. AIsphere, Provus, Aishi, MUSASHI, Trapezohe all ship live URLs; Ivaronix Studio used to be `pnpm --filter @ivaronix/studio dev` only. A judge who didn't clone never saw Studio at all. Now resolved.
 - **Source state:** `apps/studio/.env.production.template` shipped with the full env list (chain, compute, NIM, SIWE secret, Upstash, Sentry, Studio base URL); Studio + runtime + CLI typecheck clean.
 - **Cost:** Vercel hobby tier is free. Domain `~$12/yr` (your call). Sentry + Upstash both have free tiers.
@@ -218,7 +218,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - `scripts/README.md` documents both commands.
 - **Verification (offline):** `pnpm og-font:verify` → decoded sha256 `8900df5726b5...` matches source TTF sha256 exactly · TTF magic bytes `00 01 00 00` confirmed · `pnpm --filter @ivaronix/studio typecheck` DONE · `pnpm --filter @ivaronix/studio build` clean (all three OG routes compile) · all 59 source-file regressions PASS.
 - **Cost:** ~65 KB of base64 in the serverless bundle. Trivial compared to the ML-stack weights we explicitly *exclude* from tracing in `next.config.ts` (~150 MB of onnxruntime-node / @xenova/transformers / sharp).
-- **Verify on Vercel after auto-deploy (operator hits the URL):** hit `https://ivaronix-studio.vercel.app/opengraph-image` and `https://ivaronix-studio.vercel.app/r/<a-real-receipt-id>/opengraph-image` — both should return 200 with `Content-Type: image/png` and render the brand mark + receipt id. Preview check via `https://cards-dev.twitter.com/validator`. Marking ✅ CODE-COMPLETE; will lock the closure marker to ✅ SHIPPED once a stranger confirms the Vercel route returns a real PNG.
+- **Verify on Vercel after auto-deploy (operator hits the URL):** hit `https://ivaronix.vercel.app/opengraph-image` and `https://ivaronix.vercel.app/r/<a-real-receipt-id>/opengraph-image` — both should return 200 with `Content-Type: image/png` and render the brand mark + receipt id. Preview check via `https://cards-dev.twitter.com/validator`. Marking ✅ CODE-COMPLETE; will lock the closure marker to ✅ SHIPPED once a stranger confirms the Vercel route returns a real PNG.
 
 ### B-V2-3 · Mainnet autonomous wander-cycle
 - **Source:** plan-003 §A.4.1 (testnet) → §B.3.1 (mainnet)
@@ -495,7 +495,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - **Origin/Referer allowlist** on POST `/api/run`, `/api/skill/save`, `/api/onboard/metadata`, `/api/memory/remember`. Allowed origins read from `IVARONIX_STUDIO_BASE` + Vercel preview URL pattern. Reject on mismatch with 403.
   - **Custom `X-Ivaronix-CSRF` header** required on state-changing routes; browsers can't set custom headers cross-origin without a preflight that exposes the attempt.
   - **Same-site cookie audit:** confirm no future cookie (e.g. theme preference, dashboard view) accidentally defaults to `lax` and weakens the boundary.
-- **Why queued not shipped:** production origin allowlist needs the final deployment URL (Vercel preview URLs rotate per branch; the env var pattern needs the live domain). Testnet today has only `ivaronix-studio.vercel.app` so the lock would be tight enough to break preview-branch QA. Land alongside the custom domain decision in mainnet promotion (§B-V2-2).
+- **Why queued not shipped:** production origin allowlist needs the final deployment URL (Vercel preview URLs rotate per branch; the env var pattern needs the live domain). Testnet today has only `ivaronix.vercel.app` so the lock would be tight enough to break preview-branch QA. Land alongside the custom domain decision in mainnet promotion (§B-V2-2).
 - **Effort:** ~45 min once the production origin pattern is decided.
 
 ### B-V2-26 · Production error capture (Sentry or equivalent)
