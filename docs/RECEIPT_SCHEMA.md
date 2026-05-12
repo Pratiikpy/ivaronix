@@ -214,17 +214,22 @@ names (slots 0-12). Each registry version admits a different subset:
 |---|---|---|---|---|
 | 0 | `doc_ask` | ✓ | ✓ | ✓ |
 | 1 | `audit` | ✓ | ✓ | ✓ |
-| 2 | `code_change` | ✓ | ✓ | ✓ |
-| 3 | `pr_review` | ✓ | ✓ | ✓ |
+| 2 | `consensus` | ✓ | ✓ | ✓ |
+| 3 | `burn` | ✓ | ✓ | ✓ |
 | 4 | `memory_access` | ✓ | ✓ | ✓ |
 | 5 | `skill_exec` | ✓ | ✓ | ✓ |
-| 6 | `subscription_payment` | ✓ | ✓ | ✓ |
-| 7 | `subscription_pause` | ✓ | ✓ | ✓ |
+| 6 | `code_change` | ✓ | ✓ | ✓ |
+| 7 | `passport_update` | ✓ | ✓ | ✓ |
 | 8 | `swarm` | ✓ | ✓ | ✓ |
 | 9 | `subscription_skill_exec` | ✓ | ✓ | ✓ |
 | 10 | `doc_room_create` | coerced → 5 | coerced → 5 | ✓ canonical |
 | 11 | `doc_room_read` | coerced → 4 | coerced → 4 | ✓ canonical |
 | 12 | `memory_consolidation` | coerced → 4 | coerced → 4 | ✓ canonical |
+
+Source of truth: `packages/core/src/types.ts` `RECEIPT_TYPES` mapping
++ `packages/receipts/src/schema.ts` `ReceiptTypeSchema` enum (both
+must list the same 13 names in the same order; the
+`verify-receipt-types-three-way.ts` regression enforces parity).
 
 ### Why V3 was needed (B-V2-32 closure · 2026-05-12)
 
