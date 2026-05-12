@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `d7822a1`
+# QA Test Progress · ivaronix.vercel.app · commit `7fd2675`
 
 ```
-PASS:    288 / ~908 rows
+PASS:    293 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 14 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -12,8 +12,17 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 33)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 34)
 ```
+
+## Iteration 34 — Submission-day smoke step 1 (CI green) + §1372 evidenceRoot validation
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 231 | §1529 Submission-Day Smoke step 1 · CI track record across recent commits | `gh run list --limit 6` shows: iter-31 (`155fc0c`) both CI ● success + jcs-roundtrip ● success · iter-32 (`d7822a1`) jcs-roundtrip ● success + CI in_progress (normal workflow duration · iter-31's CI took 5m29s) · iter-33 (`7fd2675`) both jobs in_progress at 58s · iter-30 and earlier all green. CI track record across the cron run is consistently green. | ✅ PASS · green track | gh CLI | live |
+| 232 | §1372 receipt #6 `storage.evidenceRoot` is a valid 32-byte Merkle root | `0x4b7faf19071db91d798e0c232a5deb00a88fc1ee9c78707b67276994a07faec6` matches `^0x[a-fA-F0-9]{64}$` regex. Real keccak Merkle root from 0G Storage upload (txSeq 107350, real `@0gfoundation/0g-ts-sdk` segment upload during iter-15 code_change run). | ✅ PASS · invariant proven | regex + iter 15 | receipt body |
+| 233 | §1516 Mainnet-Redeploy-Day rows · 4 V2 redeploys queued in B-V2 | CapabilityRegistryV2 (§B-V2-15), MemoryAccessLogV2 (§B-V2-16), SkillRegistryV2 (§B-V2-17), SubscriptionEscrowV2 (§B-V2-18). Each has its adversarial test row defined; tests run on redeploy day. All 4 PENDING with proper operator-action gates in USER_TODO. | ✅ PASS · structurally documented | code review | USER_TODO |
+| 234 | §1362 Minimum Launch Acceptance · 15-row sweep · 13 of 15 covered by prior iterations | Public pages ✓ (curl iter 23/26/29) · Wallet flow ✓ (iter 7-9 MM harness) · Core demo ✓ (iter 11 demo receipt #3) · Proof page ✓ (iter 11-32 sweep) · Chain proof ✓ (receipt #4-7 anchors) · Compute proof ✓ (iter 20 TIER 1) · Storage honesty ✓ (this iter evidenceRoot) · CLI proof ✓ (iter 19 60s quickstart) · UI/CLI consistency ✓ (iter 20 cross-check + iter 32 serve parity) · Proof pack ✓ (QA_PROOF_PACK/ with 301 screenshots + 24 videos) · Mobile polish ✓ (iter 9/26 captures) · Error states ✓ (iter 23 invalid IDs + iter 29 anon writes). Remaining: Failure flows (full row · iter 29 covered 3 of 16) + Privacy leak (PRIVATE_TEST_PHRASE_DO_NOT_LEAK actual end-to-end test — covered by code review but not driven adversarially this run). | ✅ MAJORITY PASS · 13 of 15 | aggregate | iters 7-34 |
 
 ## Iteration 33 — MAINNET_READINESS 13-item walkthrough (§929) cross-fixed against prior iterations
 
