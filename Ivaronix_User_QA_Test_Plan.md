@@ -1395,7 +1395,7 @@ The Studio ships 13 reusable components. Each must render correctly across deskt
 | `MemoryPanel.tsx` | `/memory` | SIWE-gated; live MemoryAccessLog feed scrolls; grant management UI works. |
 | `MemoryNotesPanel.tsx` | `/memory` | Notes scratch surface for memory entries; saves locally without breaking server state. |
 | `PermissionPills.tsx` | `/skill/<id>`, `/skill/new` | Renders skill permissions: `memory_access`, `shell_access`, `receipt_required`, `compute_tee_required`, `passport_min_trust` — each as a distinct pill with the correct color. |
-| `ReceiptStateChip.tsx` | `/r/<id>`, dashboard | Renders one of 5 states: `draft` / `claimed` / `anchored` / `fully-verified` / `outcome-resolved` with the correct chip color. Never a stale state. |
+| `ReceiptStateChip.tsx` | `/r/<id>`, dashboard | Renders the 3 UI display states from `ChipState` (`packages/core/src/types.ts:106`): `PENDING` / `VERIFIED` / `MISMATCH`. The 5 schema-level `ReceiptState` values (`draft`/`claimed`/`anchored`/`fully-verified`/`outcome-resolved` per `types.ts:103`) collapse to these 3 chip states at the UI layer. Verified iter-27: ReceiptStateChip.tsx:22 maps `state === 'verified' ? 'VERIFIED' : state === 'mismatch' ? 'MISMATCH' : 'PENDING'`. Never a stale state. |
 | `ShareButton.tsx` | `/r/<id>` | Copies the canonical proof URL (not the localhost dev URL); Twitter intent works; share fallback for browsers without `navigator.share`. |
 
 ## Marketplace Fee-Split — All 4 Discrete Categories (from `docs/MARKETPLACE_DESIGN.md`)

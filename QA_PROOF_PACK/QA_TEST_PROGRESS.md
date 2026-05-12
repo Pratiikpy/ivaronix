@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `24f5190`
+# QA Test Progress · ivaronix.vercel.app · commit `b36423a`
 
 ```
-PASS:    246 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 8 plan-drift fixes · 1 env-check fix)
+PASS:    253 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 9 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,19 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             26 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 26)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 27)
 ```
+
+## Iteration 27 — §1380 Studio component-level coverage + iter-26 hamburger retraction
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 189 | Plan §1380 13-component count verified | `ls apps/studio/src/components/` = 13 files exactly: Footer, FourLightRow, Header, Logo, MemoryNotesPanel, MemoryPanel, **MobileMenu**, PermissionPills, ReceiptStateChip, RunPanel, Section, ShareButton, WalletConnect. Plan claim of "13 reusable components" matches. | ✅ PASS | filesystem | ls output |
+| 190 | 🔧 ITER-26 RETRACTION: MobileMenu.tsx DOES ship a real hamburger DOM toggle | Last iteration I claimed "no JS hamburger toggle; uses CSS-driven responsive layout". Wrong. `apps/studio/src/components/MobileMenu.tsx` is a 'use client' React component with `useState(open)` toggle, ESC key handler, backdrop click close, body-scroll lock on mount/unmount, 6 nav links (Onboard/Skills/Global/Brand/Dashboard/Memory). I grep'd Header.tsx only and missed the sibling MobileMenu component. Plan §1486 was correct. | 🔧 ITER-26 retraction | grep + read | `apps/studio/src/components/MobileMenu.tsx` |
+| 191 | Plan §1398 wrong: ReceiptStateChip claimed 5 states; ships 3 chip states | Reality: `ReceiptStateChip.tsx:22` maps `state === 'verified' ? 'VERIFIED' : state === 'mismatch' ? 'MISMATCH' : 'PENDING'` — 3 UI display values. The 5 schema-level `ReceiptState` values (draft/claimed/anchored/fully-verified/outcome-resolved per `types.ts:103`) collapse to the 3 UI `ChipState` values (`types.ts:106`). Plan was conflating the data-model lifecycle states (5) with the UI display states (3). Row corrected. | 🔧 PLAN DRIFT FIXED | code review + edit | this commit |
+| 192 | §1397 PermissionPills.tsx ships compute_tee + shell-access pills with color coding | `PermissionPills.tsx:28-39` colors pills green/amber based on `compute_tee_required` and `shell_access` levels (`none` → green, `sandbox-only` → amber, `full` → red). Matches plan §1397 pattern. | ✅ PASS | code review | source |
+| 193 | §1399 ShareButton.tsx ships Twitter intent + copy fallback | `ShareButton.tsx:56`: `https://twitter.com/intent/tweet?text=...&url=...`. Line 53: error fallback `"Couldn't copy — <truncated url>"` for copy-blocked browsers. Plan §1399 patterns match. | ✅ PASS | code review | source |
+| 194 | §1380 component sweep covered structurally — all 13 components have grep-verifiable signatures | Header (sticky + nav) + Footer (multi-column · iter 11 fix) + Logo (SVG brackets) + WalletConnect (used by MetaMask harness) + MobileMenu (hamburger drawer · this iter) + RunPanel (sample contract · iter 26) + FourLightRow (4 light states · brand tokens) + Section (eyebrow + heading) + MemoryPanel + MemoryNotesPanel + PermissionPills + ReceiptStateChip (3-chip UI mapping · this iter) + ShareButton. | ✅ MILESTONE | grep | aggregate |
 
 ## Iteration 26 — §1501 Studio Affordances + remaining B-bug verification
 
