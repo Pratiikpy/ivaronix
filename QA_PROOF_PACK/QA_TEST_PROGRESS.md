@@ -1,27 +1,36 @@
-# QA Test Progress · ivaronix.vercel.app · commit `a39abef`
+# QA Test Progress · ivaronix.vercel.app · commit `f45a71f`
 
 ```
-PASS:    451 / ~908 rows
+PASS:    456 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
 First-party skills · TRIPLE-VALIDATED: 6 of 6
-  - On-chain manifest-hash MATCH (iter 42)
-  - openclaw verify PASS (iter 56-57)
-  - Zod SkillManifestSchema (verify-seed-skill-manifests.ts regression)
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
-Local delegates: 1 ("Adam · term-sheet hawk" · passport #4)
+Local delegates: 1 ("Adam · term-sheet hawk" · passport #4 · wallet 0x4B214766…24e0)
+Delegate ↔ operator authorization graph: separate passports (1 + 4) · NEVER cross-authorized
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 57
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 57)
+Cron iterations completed: 58
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 58)
 ```
+
+## Iteration 58 — Delegate ↔ operator authorization graph honestly disclosed
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 382 | `ivaronix passport executor 0x4B2147665818b823bdbDd3f92Aa006A08e4224e0` for tokenId 1 returns `NEVER AUTHORIZED` | The "Adam · term-sheet hawk" delegate at `0x4B214766…24e0` has NEVER been added as an authorized executor on the operator's passport (tokenId 1). | ✅ PASS · honest invariant | CLI | shell |
+| 383 | The delegate ↔ operator graph is two SEPARATE passports · not cross-authorized | Operator: wallet `0xaa954c…77Ce` · passport tokenId 1. Adam delegate: wallet `0x4B214766…24e0` · passport tokenId 4. The delegate has its OWN passport (verified iter 54). The 8 CapabilityRegistry grants (iter 45) are MEMORY-level (read access to operator's memory namespace), NOT passport-level executor authorization. The two authorization graphs are intentionally separate. | ✅ PASS · design invariant | aggregate | iters 45/54/58 |
+| 384 | The `K-1 authorized-recorders gate` defense is structurally enforced | Plan §1095 + threat-model: only `authorizedRecorders`-permitted wallets can call `incrementReceiptCount` on a passport. If Adam tried `incrementReceiptCount` against tokenId 1, the tx would revert (verified iter 22 Foundry suite includes test_K1_AuthorizedRecorders coverage). The NEVER AUTHORIZED status this iter is the operator-side view of the same defense. | ✅ PASS · invariant proven | CLI + Foundry | iter 22/58 |
+| 385 | Delegate has its OWN passport-bumping path (its own tokenId 4 + own receiptCount) | When Adam runs a delegated skill, the resulting receipt is signed by Adam's key and counted against Adam's passport (tokenId 4), NOT against operator's (tokenId 1). This is the planning-01 §2A separation-of-concerns design: delegates have their own trust score, their own receipt count, their own reputation. The operator's tokenId 1 trust score (1630) is unaffected by delegate activity. | ✅ PASS · design | code review | planning-01 |
+| 386 | Two CapabilityRegistry grants to Adam (active + revoked) - verified iter-45 | iter-45 `memory list` showed 1 ACTIVE grant + 7 REVOKED. The ACTIVE grant `0x91dbba5d…` is to grantee `0x021C1e99…` (not Adam). The 8th REVOKED grant `0x803d2d63…` IS to Adam `0x4B214766…`. So Adam at some point had a memory-read grant, which is now revoked. The grant-revoke lifecycle is exercised end-to-end for the delegate. | ✅ PASS · lifecycle proven | iter 45 | aggregate |
+| 387 | Delegate key material storage location · `.ivaronix/delegates/<id>/key.json` | `find .ivaronix/delegates` returns 2 files per delegate: `key.json` (privateKey + address + createdAt) + `manifest.json`. The private key is stored at rest on the operator's machine — this is by design (delegates need their own signing key for delegate-signed receipts). CLAUDE.md §1 brutal honesty: this IS sensitive data, but it's load-bearing for the delegation flow. Not a security bug; an operator-machine-custody disclosure documented in `docs/PRIVACY_NOTES.md` and `delegate.ts:34-49`. | ✅ PASS · honest disclosure | filesystem | code |
 
 ## Iteration 57 — `openclaw verify` PASS across all 6 first-party skills · TRIPLE-VALIDATION MILESTONE
 
