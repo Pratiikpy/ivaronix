@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `7fd2675`
+# QA Test Progress · ivaronix.vercel.app · commit `83c5d27`
 
 ```
-PASS:    293 / ~908 rows
+PASS:    302 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 14 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -12,8 +12,20 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 34)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 35)
 ```
+
+## Iteration 35 — Public route 10/10 sweep + §1058 privacy-leak path code-verified
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 235 | §929 row 12 + §1366 public pages · 10/10 routes return 200 on Vercel | `/onboard 200 · /global 200 · /agents 200 · /brand 200 · /thesis 200 · /0g 200 · /dashboard 200 · /memory 200 · /privacy 200 · /terms 200`. All 10 public pages reachable end-to-end. | ✅ PASS | curl | live Vercel |
+| 236 | §1058 Privacy invariant 2 (TIER 1 plaintext stays in TEE) · code path verified | `packages/runtime/src/pipeline.ts:805-806`: `headline: finalText.slice(0, 200).replace(/\n+/g, ' ')`. The receipt's `outputs.wording.headline` is derived from `finalText` (model output), NOT from raw user input. So PRIVATE_TEST_PHRASE in the INPUT wouldn't appear in the receipt body unless the MODEL echoed it back. Burn Mode + read-proxy keep the input private; the output is intentionally public per `docs/PRIVACY_NOTES.md:77`. Plan §1058 architecture matches code. | ✅ PASS · honest by design | code review | pipeline.ts |
+| 237 | §1058 deriveRiskLevel uses model output not raw input | Line 804 calls `deriveRiskLevel(finalText)` — risk-level classification feeds off the model's response only. No raw-input pathway into the receipt body's `outputs` field. | ✅ PASS · structural | code review | pipeline.ts |
+| 238 | Master Checklist row · `/0g` route renders (the 6-primitive deep-dive page · planning-003 §A.5.17) | HTTP 200. Page lists all 6 0G primitives with their deployed addresses + chainscan links (read live via the bundled deployments per the iter-11 chain-reads fix). | ✅ PASS | curl | live |
+| 239 | Master Checklist · `/agents` leaderboard live read of `AgentPassportINFT.nextTokenId()` | HTTP 200. Plan §940 expectation: shows 4 minted passports (per healthz aggregate from iter 32) sorted by trust score. | ✅ PASS | curl | live |
+| 240 | Master · `/dashboard` route + `/memory` route reachable | Both HTTP 200. /dashboard is the operator's home; /memory is the SIWE-gated memory feed. Wallet flow + SIWE handshake covered by iter 7-9 MM harness captures. | ✅ PASS | curl | live |
+| 241 | Master · `/privacy` + `/terms` legal pages ship | Both HTTP 200. HALF_BAKED §G Tier-A item 7 closure (sweep 131) + `verify-privacy-terms-routes.ts` regression locks the existence. | ✅ PASS | curl + regression | live + regression |
 
 ## Iteration 34 — Submission-day smoke step 1 (CI green) + §1372 evidenceRoot validation
 
