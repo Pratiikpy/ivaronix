@@ -28,6 +28,7 @@ import { computeCommand } from '../commands/compute.js';
 import { docCommand } from '../commands/doc.js';
 import { memoryCommand } from '../commands/memory.js';
 import { roomCommand } from '../commands/room.js';
+import { subscribeCommand } from '../commands/subscribe.js';
 import { delegateCommand } from '../commands/delegate.js';
 import { skillCommand } from '../commands/skill.js';
 import { planCommand } from '../commands/plan.js';
@@ -81,6 +82,7 @@ program.addCommand(memoryCommand);
 
 // Confidential Data Room · multi-party encrypted document workspace with per-read receipts.
 program.addCommand(roomCommand);
+program.addCommand(subscribeCommand);
 
 // Delegate · operator-side delegated agent with per-skill capability grants.
 program.addCommand(delegateCommand);
