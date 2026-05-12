@@ -19,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * brand palette. Designed to be dropped on any third-party page via:
  *
  *   <iframe
- *     src="https://ivaronix.studio/embed/r/1004"
+ *     src="https://ivaronix.vercel.app/embed/r/1004"
  *     style="border:0;width:100%;height:320px"
  *   />
  *
