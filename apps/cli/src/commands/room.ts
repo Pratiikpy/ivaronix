@@ -6,6 +6,7 @@ import {
   CapabilityRegistryClient,
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { createStorageClient, burnEncrypt } from '@ivaronix/og-storage';
@@ -253,10 +254,14 @@ roomCommand
 
     // 6. Anchor a doc_room_create receipt — V2-first per .claude/rules/og-chain.md
     try {
+      // B-V2-32 post-deploy (iter-80): V3 first (admits slots 10/11/12),
+      // V2 fallback, V1 fallback. V3 lets us anchor doc_room_create as the
+      // canonical slot 10 instead of coercing to memory_access (4).
+      const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
       const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-      const registryAddr = registryAddrV2 ?? registryAddrV1;
-      const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+      const registryAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
+      const registryVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
       if (!registryAddr) throw new Error('ReceiptRegistry not deployed');
 
       const userPromptHash = await sha256HexAsync(new TextEncoder().encode(`room.create:${roomId}:${partyList.length}`));
@@ -349,19 +354,30 @@ roomCommand
       writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(signed, null, 2));
 
       ui.pending(`anchoring doc_room_create receipt on chain (${registryVersion.toUpperCase()})...`);
-      // The deployed ReceiptRegistry contract has an allow-list at types
-      // 0-9. Until we redeploy with slot 10 (doc_room_create), we anchor
-      // semantically equivalent type 5 (skill_exec) — the room creation
-      // *is* the skill 'room.create@0.1.0' executing. The off-chain
-      // receipt body still records type 'doc_room_create' faithfully.
-      const RECEIPT_TYPE_CODE = 5;
+      // B-V2-32 post-deploy (iter-80): when V3 is active, anchor with the
+      // canonical slot 10 (doc_room_create). On V2/V1 (legacy fallback)
+      // coerce to slot 5 (skill_exec) since those contracts cap at 9.
+      // The off-chain receipt body always records type 'doc_room_create'
+      // faithfully regardless of which registry version anchors.
+      const RECEIPT_TYPE_CODE = registryVersion === 'v3' ? 10 : 5;
       const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
       const storageRoot = (blobStorageRoot.startsWith('0x') && blobStorageRoot.length === 66
         ? blobStorageRoot
         : ZERO_HASH) as Hash;
       let txHash: string;
       let blockNumber: number | null;
-      if (registryVersion === 'v2') {
+      if (registryVersion === 'v3') {
+        const regV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+        const { tx: v3Tx } = await regV3.signAndAnchor(wallet, {
+          receiptRoot: signed.storage.receiptRoot as Hash,
+          storageRoot,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v3Tx.hash;
+        const r = await v3Tx.wait();
+        blockNumber = r?.blockNumber ?? null;
+      } else if (registryVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
           receiptRoot: signed.storage.receiptRoot as Hash,
@@ -494,11 +510,13 @@ roomCommand
       ui.pass(`grant valid          ${expectedGrantId.slice(0, 18)}…`);
     }
 
-    // Anchor a doc_room_read receipt — V2-first per .claude/rules/og-chain.md
+    // B-V2-32 post-deploy (iter-80): V3-first → V2 → V1 fallback chain.
+    // V3 admits slot 11 (doc_room_read) directly without coercion.
+    const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
     const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
     const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-    const registryAddr = registryAddrV2 ?? registryAddrV1;
-    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+    const registryAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -580,11 +598,11 @@ roomCommand
     mkdirSync(outDir, { recursive: true });
 
     ui.pending(`anchoring doc_room_read receipt on chain (${registryVersion.toUpperCase()})...`);
-    // Until ReceiptRegistry is redeployed with slot 11, use semantically
-    // equivalent type 4 (memory_access) — reading a confidential blob *is*
-    // an authorized memory access against a CapabilityRegistry grant.
-    // The off-chain receipt body still records type 'doc_room_read'.
-    const RECEIPT_TYPE_CODE = 4;
+    // B-V2-32 post-deploy (iter-80): when V3 is active, anchor with canonical
+    // slot 11 (doc_room_read). On V2/V1 (legacy fallback) coerce to slot 4
+    // (memory_access) since those contracts cap at 9. The off-chain receipt
+    // body always records type 'doc_room_read' faithfully regardless.
+    const RECEIPT_TYPE_CODE = registryVersion === 'v3' ? 11 : 4;
     const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
     const storageRoot = (manifest.blobStorageRoot.startsWith('0x') && manifest.blobStorageRoot.length === 66
       ? manifest.blobStorageRoot
@@ -592,7 +610,19 @@ roomCommand
     let txHash: string;
     let blockNumber: number | null;
     let onChainId: string | null = null;
-    if (registryVersion === 'v2') {
+    if (registryVersion === 'v3') {
+      const regV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+      const { tx: v3Tx } = await regV3.signAndAnchor(wallet, {
+        receiptRoot: signed.storage.receiptRoot as Hash,
+        storageRoot,
+        receiptType: RECEIPT_TYPE_CODE,
+        attestationHash: ZERO_HASH,
+      });
+      txHash = v3Tx.hash;
+      const r = await v3Tx.wait();
+      blockNumber = r?.blockNumber ?? null;
+      try { onChainId = ((await regV3.nextId()) - 1n).toString(); } catch { onChainId = null; }
+    } else if (registryVersion === 'v2') {
       const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
       const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
         receiptRoot: signed.storage.receiptRoot as Hash,
@@ -603,9 +633,6 @@ roomCommand
       txHash = v2Tx.hash;
       const r = await v2Tx.wait();
       blockNumber = r?.blockNumber ?? null;
-      // Resolve the on-chain id by reading nextId() AFTER the anchor confirmed.
-      // This receipt's id is nextId - 1 (the latest anchored). Matches the
-      // pattern in passport-consolidate.ts:386-387 + 402-403.
       try { onChainId = ((await regV2.nextId()) - 1n).toString(); } catch { onChainId = null; }
     } else {
       const regV1 = new ReceiptRegistryClient(registryAddr, wallet);

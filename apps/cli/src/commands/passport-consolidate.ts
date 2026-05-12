@@ -6,6 +6,7 @@ import {
   AgentPassportClient,
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
@@ -147,10 +148,14 @@ export function addConsolidateCommand(parent: Command): void {
       // here used to defer the fix to a "unifiedFindByAgent migration";
       // sweep 180 inlines it because each registry's findByAgent has
       // the same shape and merging is a 5-line walk.
+      // B-V2-32 post-deploy (iter-80): V3-first → V2 → V1 fallback chain.
+      // V3 admits slot 12 (memory_consolidation) directly; V2/V1 coerce
+      // to slot 4 (memory_access) since those contracts cap at 9.
+      const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
       const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-      const writeAddr = registryAddrV2 ?? registryAddrV1;
-      const writeVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+      const writeAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
+      const writeVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
       const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
       if (!registryAddrV1 || !writeAddr) {
         ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
@@ -360,10 +365,11 @@ export function addConsolidateCommand(parent: Command): void {
       // 5. Anchor on chain
       ui.pending('anchoring on 0G Chain...');
       const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
-      // Slot 4 (memory_access) used as the chain code until ReceiptRegistry
-      // is redeployed with slot 12. Off-chain body still records the canonical
-      // 'memory_consolidation' type.
-      const RECEIPT_TYPE_CODE = 4;
+      // B-V2-32 post-deploy (iter-80): when V3 is active, anchor with canonical
+      // slot 12 (memory_consolidation). On V2/V1 (legacy fallback) coerce to
+      // slot 4 (memory_access) since those contracts cap at 9. The off-chain
+      // receipt body always records type 'memory_consolidation' faithfully.
+      const RECEIPT_TYPE_CODE = writeVersion === 'v3' ? 12 : 4;
       // The storageRoot must be non-zero per contract. We use sourceIdsHash —
       // the canonical hash of the source receipt ids this consolidation
       // consumed — as a semantically meaningful root: anyone who fetches
@@ -372,7 +378,20 @@ export function addConsolidateCommand(parent: Command): void {
       let txHash: string;
       let txBlock: number | null;
       let onChainId: string;
-      if (writeVersion === 'v2') {
+      if (writeVersion === 'v3') {
+        const regV3 = new ReceiptRegistryV3Client(writeAddr, wallet);
+        const { tx: v3Tx } = await regV3.signAndAnchor(wallet, {
+          receiptRoot: signed.storage.receiptRoot as Hash,
+          storageRoot: sourceIdsHashBytes32,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v3Tx.hash;
+        const r = await v3Tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await regV3.nextId();
+        onChainId = (nextId - 1n).toString();
+      } else if (writeVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(writeAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
           receiptRoot: signed.storage.receiptRoot as Hash,
@@ -386,9 +405,9 @@ export function addConsolidateCommand(parent: Command): void {
         const nextId = await regV2.nextId();
         onChainId = (nextId - 1n).toString();
       } else {
-        // writeVersion === 'v1' here means registryAddrV2 was unset,
+        // writeVersion === 'v1' here means registryAddrV3 + V2 were both unset,
         // so V1 is the only deployment AND regV1 is non-null per the
-        // construction above. Sweep 180 renamed reg → regV1.
+        // construction above.
         if (!regV1) throw new Error('invariant: regV1 must exist when writeVersion is v1');
         const tx = await regV1.anchor(
           signed.storage.receiptRoot as Hash,
