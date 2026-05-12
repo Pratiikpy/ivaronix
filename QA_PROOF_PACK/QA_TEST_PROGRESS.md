@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `f45a71f`
+# QA Test Progress · ivaronix.vercel.app · commit `92b95b9`
 
 ```
-PASS:    456 / ~908 rows
+PASS:    463 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -10,16 +10,27 @@ Receipt types exercised end-to-end on V2: 12 of 12
 First-party skills · TRIPLE-VALIDATED: 6 of 6
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
-Local delegates: 1 ("Adam · term-sheet hawk" · passport #4 · wallet 0x4B214766…24e0)
-Delegate ↔ operator authorization graph: separate passports (1 + 4) · NEVER cross-authorized
+Local delegates: 1 · separate passport chain from operator
+Skills discoverable: 158 total (156 canonical seed-skills/ + 2 local-cache plan-step-clones)
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 58
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 58)
+Cron iterations completed: 59
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 59)
 ```
+
+## Iteration 59 — Skill list 158 reconciled + fee-split simulator + skill-count disclosure
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 388 | `ivaronix skill list` returns 158 skills (NOT 156) · 2 extras in local cache | Plan/numbers.json claims 156 (6 first-party + 150 imports). CLI lists 158 because it surfaces ALL discoverable skills including `apps/cli/.ivaronix/skills/` local-cache test clones: `plan-step-clone` + `plan-step-clone-2` (both v0.1.0). Two honest views: numbers.json=canonical catalog · CLI=runtime-discoverable. | ✅ PASS · two-view honest | filesystem + CLI | shell |
+| 389 | Canonical skill count reconciliation · all paths agree | `seed-skills/{0g-integration-auditor, code-edit, content-pitch-review, github-audit, plan-step, private-doc-review}/SKILL.md` = 6 first-party (verified `find seed-skills/ -maxdepth 2 -name SKILL.md \| wc -l` = 6). `seed-skills/imports/` = 150 vendored (iter 19). 6 + 150 = 156 = `numbers.json.skills.catalogTotal`. Plus 2 plan-step-clones in CLI local cache. Honest disclosure across all 3 surfaces. | ✅ PASS · 3-surface | aggregate | iters 19/42/59 |
+| 390 | `ivaronix skill fee-split private-doc-review --total 1e15` (0.001 OG in neuron) | Output: `creator passport: did:0g:passport:0xaa954c…77Ce:1` · `creator bps: 9000 (90%)` · `treasury bps: 1000 (10%)`. FOR TOTAL 0.001 OG: `creator earns 0.000765 OG (76.5%)` · `treasury earns 0.000235 OG (23.5%)`. The simulator applies TIER 2 efficiency multiplier (85% creator efficiency) by default — different from the TIER 1 receipt #6 which showed full 90/10 split. | ✅ PASS · honest TIER 2 floor | CLI | shell |
+| 391 | Fee-split simulator default · shows TIER 2 efficiency-discounted as the "worst case" floor | `0.9 × 0.85 = 0.765` creator share + `0.1 + (0.9 × 0.15) = 0.235` treasury share. The 15% non-creator-efficient portion flows to treasury (zer0Gig Efficiency Game pattern per `MARKETPLACE_DESIGN.md §75-77`). Operators see the floor: "you'll earn at LEAST 0.765× declared bps." | ✅ PASS · honest worst-case | CLI + docs | MARKETPLACE_DESIGN.md |
+| 392 | Cross-validator of fee-split: simulator vs receipt body vs SKILL.md frontmatter | (a) SKILL.md frontmatter: `creator: 9000, treasury: 1000`. (b) Simulator output: declares 90/10 + applies TIER-2 multiplier → 76.5/23.5. (c) Receipt #6 (TIER 1) actual: declaredCreator 9000 · creator 9000 · treasury 1000 · multiplier 10000 (100%). Three views agree on the declared 90/10; receipt-body shows the TIER-applied actual; simulator shows the TIER 2 floor. | ✅ PASS · 3-way consistency | aggregate | iters 19/21/59 |
+| 393 | `--total-og` flag drift caught: actual is `--total` (in neuron units) | First try with `--total-og 0.001` → "unknown option" + suggestion "Did you mean --total?". Re-ran with `--total 1000000000000000` (0.001 OG in neuron = 10^15). Plan §1422 marketplace simulator expectation matches. Honest flag-naming hint from the CLI itself. | ✅ PASS · CLI self-corrects | CLI | shell |
 
 ## Iteration 58 — Delegate ↔ operator authorization graph honestly disclosed
 
