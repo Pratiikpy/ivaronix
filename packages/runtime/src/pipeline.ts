@@ -163,13 +163,24 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
 
   log.info(tag(`skill                ${skill.id}@${skill.manifest.version}  tier=${tier}  ~${TIER_COST_OG[tier]} OG  burn=${burnEnabled ? 'on' : 'off'}`));
 
-  // 1. Scanner
+  // 1. Scanner — V2-first read per iter-123 (B-V2-17 squatter fix).
+  // V2 carries the reserved-name allow-list (6 first-party skill IDs pre-
+  // reserved); skills published to V2 are invisible to V1-only scans.
+  // Try V2 first; if not registered there, fall back to V1.
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-  const skillRegistryAddr = getDeployedAddress(env.network, 'SkillRegistry');
+  const skillRegistryAddrV2 = getDeployedAddress(env.network, 'SkillRegistryV2');
+  const skillRegistryAddrV1 = getDeployedAddress(env.network, 'SkillRegistry');
   let scan: ScanResult | undefined;
-  if (skillRegistryAddr) {
-    const reg = new SkillRegistryClient(skillRegistryAddr, provider);
+  if (skillRegistryAddrV2) {
+    const reg = new SkillRegistryClient(skillRegistryAddrV2, provider);
     scan = await scanSkill(skill, reg);
+  }
+  if ((!scan || !scan.registered) && skillRegistryAddrV1) {
+    const reg = new SkillRegistryClient(skillRegistryAddrV1, provider);
+    const v1Scan = await scanSkill(skill, reg);
+    if (v1Scan.registered || !scan) scan = v1Scan;
+  }
+  if (scan) {
     if (scan.matches) log.pass(tag(`registry scan        MATCH (creator ${scan.creator})`));
     else if (scan.revoked) throw new Error(`registry: ${skill.id}@${skill.manifest.version} REVOKED on chain`);
     else if (scan.registered && !scan.matches) throw new Error(`registry: ${scan.reason}`);

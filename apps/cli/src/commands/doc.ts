@@ -94,12 +94,22 @@ docCommand
     ui.divider();
 
     // ─── 1.5. Scanner + sandbox pre-flight ────────────────────────────────
+    // V2-first read per iter-123 (B-V2-17). V2-published skills are
+    // invisible to V1-only scans; try V2 first, fall back to V1.
     const provider0 = new JsonRpcProvider(env.rpcUrl);
-    const skillRegistryAddr = getDeployedAddress(env.network, 'SkillRegistry');
+    const skillRegistryAddrV2 = getDeployedAddress(env.network, 'SkillRegistryV2');
+    const skillRegistryAddrV1 = getDeployedAddress(env.network, 'SkillRegistry');
     let scan: ScanResult | undefined;
-    if (skillRegistryAddr) {
-      const reg = new SkillRegistryClient(skillRegistryAddr, provider0);
+    if (skillRegistryAddrV2) {
+      const reg = new SkillRegistryClient(skillRegistryAddrV2, provider0);
       scan = await scanSkill(skill, reg);
+    }
+    if ((!scan || !scan.registered) && skillRegistryAddrV1) {
+      const reg = new SkillRegistryClient(skillRegistryAddrV1, provider0);
+      const v1Scan = await scanSkill(skill, reg);
+      if (v1Scan.registered || !scan) scan = v1Scan;
+    }
+    if (scan) {
       if (scan.matches) {
         ui.pass(`registry scan        MATCH (creator ${scan.creator}, block-time ${new Date(scan.publishedAt! * 1000).toISOString()})`);
       } else if (!scan.registered) {

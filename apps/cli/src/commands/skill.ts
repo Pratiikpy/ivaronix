@@ -146,7 +146,15 @@ skillCommand
     }
     const provider = new JsonRpcProvider(net.rpcUrl);
     const wallet = new Wallet(requireKey(env.privateKey), provider);
-    const registryAddr = getDeployedAddress(opts.network, 'SkillRegistry');
+    // V2-first WRITE per iter-123 (B-V2-17 squatter-risk fix). V2 ships a
+    // reserved-name allow-list (6 first-party skill IDs pre-reserved) plus
+    // owner-arbitration for squatted names. V1 stays live for legacy publishes.
+    // publishVersion signature is identical V1↔V2 so the V1 client works
+    // against V2's address.
+    const registryAddrV2 = getDeployedAddress(opts.network, 'SkillRegistryV2');
+    const registryAddrV1 = getDeployedAddress(opts.network, 'SkillRegistry');
+    const registryAddr = registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`SkillRegistry not deployed on ${opts.network}`);
       process.exitCode = 1;
@@ -159,7 +167,7 @@ skillCommand
     const manifestHash = manifestHashToBytes32(skill.manifestHash);
 
     ui.title(`skill publish ${skill.id}@${skill.manifest.version}`);
-    ui.info(`registry             ${registryAddr}`);
+    ui.info(`registry             ${registryAddr} (${registryVersion.toUpperCase()})`);
     ui.info(`skillId              ${skillId}`);
     ui.info(`versionId            ${versionId}`);
     ui.info(`manifestHash         ${manifestHash}`);
@@ -207,18 +215,39 @@ skillCommand
     }
     const net = NETWORKS[opts.network];
     const provider = new JsonRpcProvider(net.rpcUrl);
-    const registryAddr = getDeployedAddress(opts.network, 'SkillRegistry');
-    if (!registryAddr) {
+    // V2-first read per iter-123 (B-V2-17). V2 carries canonical first-party
+    // skill IDs (6 pre-reserved on deploy); V1 is legacy fallback.
+    const registryAddrV2 = getDeployedAddress(opts.network, 'SkillRegistryV2');
+    const registryAddrV1 = getDeployedAddress(opts.network, 'SkillRegistry');
+    if (!registryAddrV2 && !registryAddrV1) {
       ui.fail(`SkillRegistry not deployed on ${opts.network}`);
       process.exitCode = 1;
       return;
     }
-    const reg = new SkillRegistryClient(registryAddr, provider);
 
     ui.title(`skill verify ${skill.id}@${skill.manifest.version}`);
     ui.info(`local manifestHash   ${skill.manifestHash}`);
 
-    const scan = await scanSkill(skill, reg);
+    // Try V2 first (canonical); fall back to V1 (legacy). Use whichever
+    // returns a registered hit; if neither has it, use the V1 (or V2-only)
+    // empty result so the downstream "NOT REGISTERED" path renders.
+    let scan: Awaited<ReturnType<typeof scanSkill>>;
+    let foundOn: 'v1' | 'v2' | null = null;
+    if (registryAddrV2) {
+      const regV2 = new SkillRegistryClient(registryAddrV2, provider);
+      scan = await scanSkill(skill, regV2);
+      if (scan.registered) foundOn = 'v2';
+    } else {
+      const regV1 = new SkillRegistryClient(registryAddrV1!, provider);
+      scan = await scanSkill(skill, regV1);
+      if (scan.registered) foundOn = 'v1';
+    }
+    if (!scan.registered && registryAddrV1 && registryAddrV1 !== registryAddrV2) {
+      const regV1 = new SkillRegistryClient(registryAddrV1, provider);
+      const v1Scan = await scanSkill(skill, regV1);
+      if (v1Scan.registered) { scan = v1Scan; foundOn = 'v1'; }
+    }
+
     ui.divider();
     if (!scan.registered) {
       ui.fail(`status               NOT REGISTERED`);
@@ -226,6 +255,7 @@ skillCommand
       process.exitCode = 1;
       return;
     }
+    ui.info(`found on             ${foundOn === 'v2' ? 'V2 (canonical)' : 'V1 (legacy)'}`);
     if (scan.revoked) {
       ui.fail(`status               REVOKED`);
       ui.info(`onchain hash         ${scan.onchainManifestHash}`);
