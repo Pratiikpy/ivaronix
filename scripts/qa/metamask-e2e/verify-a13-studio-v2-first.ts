@@ -104,8 +104,8 @@ check('chain.ts exports unifiedFindByReceiptRoot', /export\s+async\s+function\s+
 check('chain.ts exports unifiedFindByAgent', /export\s+async\s+function\s+unifiedFindByAgent/.test(chainSrc));
 check('chain.ts exports UnifiedReceipt type with registryVersion', /interface\s+UnifiedReceipt[\s\S]{0,300}registryVersion/.test(chainSrc));
 check(
-  'unifiedNextId returns {v2, v1, total}',
-  /unifiedNextId\([^)]*\)[\s\S]{0,500}\{\s*v2[^}]*v1[^}]*total[^}]*\}/.test(chainSrc),
+  'unifiedNextId returns {v3, v2, v1, total}',
+  /unifiedNextId\([^)]*\)[\s\S]{0,500}\{\s*v3[^}]*v2[^}]*v1[^}]*total[^}]*\}/.test(chainSrc),
 );
 
 // 2. Each surface uses the helper and avoids the direct V1 client call.

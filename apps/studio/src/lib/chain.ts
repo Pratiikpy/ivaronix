@@ -2,6 +2,7 @@ import { JsonRpcProvider } from 'ethers';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   AgentPassportClient,
   SkillRegistryClient,
 } from '@ivaronix/og-chain';
@@ -51,18 +52,36 @@ export function getReceiptRegistryV2(): ReceiptRegistryV2Client | null {
   return new ReceiptRegistryV2Client(addr, getProvider());
 }
 
+export function getReceiptRegistryV3(): ReceiptRegistryV3Client | null {
+  const addr = getDeployedAddress(getNetwork(), 'ReceiptRegistryV3');
+  if (!addr) return null;
+  return new ReceiptRegistryV3Client(addr, getProvider());
+}
+
 /**
- * Unified registry view: V2 first, V1 fallback. The label tells the
- * caller which registry the row came from so the UI can render a
- * `LEGACY-REGISTRY` chip on V1 receipts.
+ * Unified registry view: V3 first, V2 fallback, V1 fallback. The label
+ * tells the caller which registry the row came from so the UI can
+ * render a `LEGACY-REGISTRY` chip on V1/V2 receipts when V3 is active
+ * for new anchors.
+ *
+ * B-V2-32 closure (iter-78 + iter-79): V3 deployed 2026-05-12 at
+ * 0x7396D536594e2BE833070c7EB441A10906046257 admits receipt-type slots
+ * 10/11/12 (doc_room_create · doc_room_read · memory_consolidation)
+ * that V2 capped at 9. New anchors with those slots land on V3; V2
+ * stays live for the 7 existing V2-anchored receipts.
  */
 export interface UnifiedRegistries {
+  v3: ReceiptRegistryV3Client | null;
   v2: ReceiptRegistryV2Client | null;
   v1: ReceiptRegistryClient | null;
 }
 
 export function getRegistries(): UnifiedRegistries {
-  return { v2: getReceiptRegistryV2(), v1: getReceiptRegistry() };
+  return {
+    v3: getReceiptRegistryV3(),
+    v2: getReceiptRegistryV2(),
+    v1: getReceiptRegistry(),
+  };
 }
 
 /**
@@ -80,7 +99,7 @@ export interface UnifiedReceipt {
   agentAddress: Address;
   timestamp: bigint;
   receiptType: number;
-  registryVersion: 'v1' | 'v2';
+  registryVersion: 'v1' | 'v2' | 'v3';
 }
 
 /**
@@ -123,15 +142,17 @@ export async function livePassportCount(): Promise<bigint | null> {
  * fields for callers that need them; only the `total` semantics
  * changed.
  */
-export async function unifiedNextId(): Promise<{ v2: bigint; v1: bigint; total: bigint }> {
-  const { v2, v1 } = getRegistries();
-  const [v2id, v1id] = await Promise.all([
+export async function unifiedNextId(): Promise<{ v3: bigint; v2: bigint; v1: bigint; total: bigint }> {
+  const { v3, v2, v1 } = getRegistries();
+  const [v3id, v2id, v1id] = await Promise.all([
+    v3 ? v3.nextId().catch(() => 0n) : Promise.resolve(0n),
     v2 ? v2.nextId().catch(() => 0n) : Promise.resolve(0n),
     v1 ? v1.nextId().catch(() => 0n) : Promise.resolve(0n),
   ]);
+  const v3Anchored = v3id > 0n ? v3id - 1n : 0n;
   const v2Anchored = v2id > 0n ? v2id - 1n : 0n;
   const v1Anchored = v1id > 0n ? v1id - 1n : 0n;
-  return { v2: v2id, v1: v1id, total: v2Anchored + v1Anchored };
+  return { v3: v3id, v2: v2id, v1: v1id, total: v3Anchored + v2Anchored + v1Anchored };
 }
 
 /**
@@ -141,12 +162,16 @@ export async function unifiedNextId(): Promise<{ v2: bigint; v1: bigint; total: 
  */
 export async function unifiedGetReceipt(
   id: bigint,
-  preferred?: 'v1' | 'v2',
+  preferred?: 'v1' | 'v2' | 'v3',
 ): Promise<UnifiedReceipt | null> {
-  const { v2, v1 } = getRegistries();
-  const order: Array<'v2' | 'v1'> = preferred === 'v1' ? ['v1', 'v2'] : ['v2', 'v1'];
+  const { v3, v2, v1 } = getRegistries();
+  // Default order V3 → V2 → V1; `preferred` floats the named version to front.
+  const order: Array<'v3' | 'v2' | 'v1'> =
+    preferred === 'v1' ? ['v1', 'v3', 'v2']
+    : preferred === 'v2' ? ['v2', 'v3', 'v1']
+    : ['v3', 'v2', 'v1'];
   for (const v of order) {
-    const client = v === 'v2' ? v2 : v1;
+    const client = v === 'v3' ? v3 : v === 'v2' ? v2 : v1;
     if (!client) continue;
     try {
       const r = await client.getReceipt(id);
@@ -166,7 +191,15 @@ export async function unifiedFindByReceiptRoot(
   root: Hash,
   lookbackBlocks = 200_000,
 ): Promise<UnifiedReceipt | null> {
-  const { v2, v1 } = getRegistries();
+  const { v3, v2, v1 } = getRegistries();
+  if (v3) {
+    try {
+      const r = await v3.findByReceiptRoot(root, lookbackBlocks);
+      if (r) return { ...r, registryVersion: 'v3' };
+    } catch {
+      // try V2
+    }
+  }
   if (v2) {
     try {
       const r = await v2.findByReceiptRoot(root, lookbackBlocks);
@@ -196,9 +229,18 @@ export async function unifiedFindByAgent(
   limit = 25,
   lookbackBlocks = 200_000,
 ): Promise<UnifiedReceipt[]> {
-  const { v2, v1 } = getRegistries();
+  const { v3, v2, v1 } = getRegistries();
   const merged: UnifiedReceipt[] = [];
   const tasks: Promise<void>[] = [];
+  if (v3) {
+    tasks.push(
+      v3.findByAgent(agent, limit * 2, lookbackBlocks)
+        .then((events) => {
+          for (const e of events) merged.push({ ...e, registryVersion: 'v3' });
+        })
+        .catch(() => undefined),
+    );
+  }
   if (v2) {
     tasks.push(
       v2.findByAgent(agent, limit * 2, lookbackBlocks)
