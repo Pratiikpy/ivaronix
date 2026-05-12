@@ -51,3 +51,14 @@ echo "[pre-commit] running offline regressions (studio + cli + contracts · ${GA
 pnpm --filter qa-metamask-e2e run regressions:studio
 pnpm --filter qa-metamask-e2e run regressions:cli
 pnpm --filter qa-metamask-e2e run regressions:contracts
+
+# CLAUDE.md §9 wording rules (banned tokens: delve, unlock, unleash,
+# robust, leverage, empower, seamless, harness, streamline,
+# cutting-edge, state-of-the-art, revolutionize · plus banned phrases).
+# iter-111 finding: without pre-commit gating, a 'harness' token I'd
+# introduced iter-102 sat 9 iterations in docs/QA_LOOP_BRIEF.md until
+# the manual offline-content-gates sweep caught it. Adding wording-lint
+# here closes that drift window — ~1s runtime, blocks any future
+# CLAUDE.md §9 violation before it lands.
+echo "[pre-commit] running wording-lint (CLAUDE.md §9 banned tokens)"
+pnpm wording-lint
