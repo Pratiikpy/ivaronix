@@ -33,6 +33,16 @@ export const dynamic = 'force-dynamic';
 export default async function EmbedReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const network = getNetwork();
+  // Resolve the canonical full-receipt origin (matches layout.tsx
+  // metadataBase fallback chain). Pre-iter-103 the "View full
+  // receipt" button hardcoded 'https://ivaronix.studio/r/<id>' which
+  // is a dead domain — the click landed on DNS NXDOMAIN.
+  const studioOrigin =
+    process.env.NEXT_PUBLIC_BASE_URL
+    ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null)
+    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    ?? 'http://localhost:3300';
+
   let onChain: UnifiedReceipt | null = null;
   try {
     if (/^\d+$/.test(id)) {
@@ -140,7 +150,7 @@ export default async function EmbedReceiptPage({ params }: { params: Promise<{ i
 
         <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <a
-            href={`https://ivaronix.studio/r/${onChain.id}`}
+            href={`${studioOrigin}/r/${onChain.id}`}
             target="_blank"
             rel="noopener noreferrer"
             style={primaryButtonStyle}
