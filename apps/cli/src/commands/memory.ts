@@ -543,6 +543,121 @@ memoryCommand
     }
     ui.pass(`grantId              ${grantId}`);
     ui.divider();
+
+    // B-V2-35 slot 4 closure: anchor a memory_access receipt (canonical
+    // slot 4) on V3 ReceiptRegistry. Chain consumers can now filter
+    // receiptType==4 to find every memory-grant event. The receipt body
+    // cites the CapabilityRegistry grant tx as the underlying chain action.
+    ui.pending('anchoring memory_access receipt (B-V2-35 slot 4)...');
+    try {
+      const receiptRegV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+      const receiptRegV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
+      const writeAddr = (receiptRegV3 ?? receiptRegV2) as Address | null;
+      const writeVersion: 'v2' | 'v3' = receiptRegV3 ? 'v3' : 'v2';
+      if (!writeAddr) {
+        ui.fail(`no ReceiptRegistry V3 or V2 on ${env.network} · skipping memory_access receipt`);
+      } else {
+        const userPromptHash = (await sha256HexAsync(
+          new TextEncoder().encode(`memory.grant:${grantee}:${opts.scope}:${grantId}`),
+        )) as Hash;
+        const draft = buildReceipt({
+          type: 'memory_access',
+          agent: {
+            passportId: `did:0g:passport:${wallet.address}:1`,
+            ownerWallet: wallet.address as Address,
+            trustScoreAtTime: 0,
+          },
+          request: {
+            skillId: 'memory.grant',
+            skillVersion: '0.1.0',
+            skillManifestHash: userPromptHash,
+            userPromptHash,
+            inputArtifacts: [{ kind: 'memory', encrypted: false }],
+            policyDecision: 'approved',
+            approvalChain: [
+              { gate: 'wallet-access', decision: 'auto-allow', actor: 'policy:self-grant-allowed' },
+            ],
+          },
+          execution: {
+            mode: 'memory_access',
+            burnMode: false,
+            consensusMode: false,
+            modelSelection: { requested: 'none', final: 'none' },
+            providerRouting: {
+              allowFallbacks: false,
+              finalProvider: '0x0000000000000000000000000000000000000000' as Address,
+            },
+          },
+          teeVerification: {
+            requested: false,
+            routerVerified: false,
+            independentVerified: null,
+            verificationMethod: 'external-signed',
+            verifiedAt: null,
+          },
+          routerTrace: {
+            requestId: `memory.grant:${grantId}:${Date.now()}`,
+            x0gTrace: {},
+            rateLimit: {},
+            rotations: [],
+          },
+          billing: {
+            inputTokens: 0,
+            outputTokens: 0,
+            inputCostNeuron: '0',
+            outputCostNeuron: '0',
+            totalCostNeuron: '0',
+            totalCostOg: '0.0000000000',
+          },
+          chainAnchor: defaultChainAnchor(env.network as 'testnet' | 'mainnet', writeAddr),
+          storage: {
+            evidenceRoot: sh,
+            proofDownloadVerified: false,
+            encryption: { enabled: false, type: 'none', headerDetected: false },
+          },
+          outputs: {
+            outputHash: userPromptHash,
+            citations: [userPromptHash],
+            riskLevel: 'low',
+            wording: {
+              headline: `Memory grant issued · ${grantee.slice(0, 10)}... scope=${opts.scope}`,
+              doNotSay: ['truth score', 'verified by AI'],
+            },
+          },
+          createdBy: 'ivaronix-runtime/0.0.1',
+        });
+        const signed = await signReceipt(draft, wallet);
+
+        const outDir = resolve('.ivaronix', 'receipts', 'anchored');
+        if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+        writeFileSync(resolve(outDir, `${signed.id}.json`), JSON.stringify(signed, null, 2));
+
+        const regClient =
+          writeVersion === 'v3'
+            ? new ReceiptRegistryV3Client(writeAddr, wallet)
+            : new ReceiptRegistryV2Client(writeAddr, wallet);
+        const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
+        const RECEIPT_TYPE_CODE = 4; // canonical slot 4 memory_access
+        const { tx: anchorTx } = await regClient.signAndAnchor(wallet, {
+          receiptRoot: signed.storage.receiptRoot as Hash,
+          storageRoot: sh,
+          attestationHash: ZERO_HASH,
+          receiptType: RECEIPT_TYPE_CODE,
+        });
+        const anchorReceipt = await anchorTx.wait();
+        const onChainId = (await regClient.nextId()) - 1n;
+        ui.pass(`receipt              ${signed.id}`);
+        ui.info(`anchor tx            ${anchorTx.hash} (${writeVersion.toUpperCase()})`);
+        ui.info(`anchor block         ${anchorReceipt?.blockNumber}`);
+        ui.info(`on-chain id          ${onChainId.toString()}`);
+        ui.info(`receipt type         memory_access (canonical slot 4)`);
+      }
+    } catch (err) {
+      ui.fail('memory_access receipt anchor failed', (err as Error).message.split('\n')[0]);
+      // Don't fail the whole command — the grant tx is already on chain.
+    }
+
+    ui.divider();
     ui.banner(true, '→ GRANT ISSUED ✓');
     ui.hint(`Revoke: ivaronix memory revoke ${grantId}`);
     ui.hint(`Explorer: ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
