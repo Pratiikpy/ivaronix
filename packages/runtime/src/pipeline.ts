@@ -905,6 +905,15 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   }
 
   // Persist anchor metadata back into the receipt file
+  // B-V2-33 part 3 · iter-70: add onChainId + status: 'anchored' to bring
+  // runtime pipeline write-back to full parity with passport-consolidate.ts
+  // gold-standard (9-field chainAnchor). Pre-fix the pipeline wrote 7 fields;
+  // post-fix matches the room.ts iter-69 pattern + passport-consolidate.ts
+  // iter-14 pattern. `onchainId` is already resolved at lines 866/882 via
+  // findByReceiptRoot — was reachable in scope but never written. The runtime
+  // pipeline is the common path for ivaronix code · ivaronix swarm · ivaronix
+  // doc ask + run · so this fix lands the metadata for ALL pipeline-routed
+  // receipts in one place.
   writeFileSync(
     path,
     JSON.stringify(
@@ -912,6 +921,8 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
         ...signed,
         chainAnchor: {
           ...signed.chainAnchor,
+          status: 'anchored' as const,
+          ...(onchainId !== null ? { onChainId: onchainId.toString() } : {}),
           anchorTxHash: tx.hash,
           anchorBlockNumber: txReceipt?.blockNumber ?? 0,
           anchorTimestamp: Math.floor(Date.now() / 1000),
