@@ -1,26 +1,38 @@
-# QA Test Progress · ivaronix.vercel.app · commit `16eae28`
+# QA Test Progress · ivaronix.vercel.app · commit `8c9a171`
 
 ```
-PASS:    493 / ~908 rows
+PASS:    498 / ~908 rows
 FAIL:    0 (13 issues found · 8 SHIPPED · 1 partial · 4 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections · 1 stale-cache cleanup · 1 numbers-drift fix)
 PENDING: 4 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back · numbers hand-freeze)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
 Receipt types exercised end-to-end on V2: 12 of 12
-First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 54 iters
+First-party skills · TRIPLE-VALIDATED: 6 of 6 · iter-11 baseline durable 55 iters
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
 Local delegates: 1 · separate passport chain from operator
 Skills: 156 canonical · runtime list aligned
-Marketplace earnings (operator · all skills): 42 paid runs · creator 0.00206 OG · treasury 0.00031 OG
+Marketplace earnings: 42 paid runs · creator 0.00206 OG · treasury 0.00031 OG
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
+4 gates green at cron HEAD: wording-lint · docs:check · receipt-types:check · regression-sweep
 §1348 Final Demo Script: 9 of 9 demo parts proven · §1320 Proof Pack: 15 of 15 covered
-Cron iterations completed: 65
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 65)
+Cron iterations completed: 66
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 66)
 ```
+
+## Iteration 66 — Fresh-state 4-gate sweep · iter-63 fix persisted · polyglot subtree intact
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 422 | `pnpm wording-lint` · 3/3 assertions PASS · 0 banned-word hits · 0 amnestied | 55 markdown files scanned (per iter-18 baseline); 0 new hits. CLAUDE.md §9 banned-word contract held across all cron-run doc edits. The cron has shipped ~30 commits with doc changes; none introduced banned words. | ✅ PASS · fresh | local | shell |
+| 423 | `pnpm docs:check` · 45 markers in sync across 4 render-target docs · 0 unknown-key warnings | README (22) · PITCH (8) · JUDGE_GUIDE (6) · MAINNET_READINESS (9) = 45 numeric markers all aligned with numbers.json. `numbers.json is 15.2h old · within 24h gate ✓`. | ✅ PASS · fresh | local | shell |
+| 424 | `pnpm receipt-types:check` · 13 receipt types in sync (types.ts ↔ RECEIPTS_SPEC ↔ numbers.json) | 3-way enum parity unchanged since iter 17/18 baseline. | ✅ PASS · fresh | local | shell |
+| 425 | Iter-63 `creatorEarningsOG` fix PERSISTED in numbers.json 3 commits later | `grep creatorEarnings docs/numbers.json` returns `"creatorEarningsOG": "0.0018"` + `"creatorEarningsLabel": "0.0018 OG · 36 paid runs of private-doc-review · 90/10 split"`. Iter-63's manual update held across iters 64 (B-V2-34 scope expand) + 65 (earn-history aggregate). | ✅ PASS · durable | grep | numbers.json |
+| 426 | Polyglot subtree in numbers.json still at iter-48 verified values | `polyglotHash.languages: 3` + `languageList: [TypeScript, Python, Rust]` + `tests.{ts:17, python:14, rust:11, crossImplVectors:29}`. Matches iter-48 fresh-state measurement. The B-V2-34 hand-freeze IS still present (lines 412/420 of numbers-refresh.ts) but the VALUES are currently accurate. Structurally vulnerable, currently consistent. | ✅ PASS · current state | grep | numbers.json |
+| 427 | 4 gates green at cron HEAD · 66 iterations in · CI track green throughout | `wording-lint` · `docs:check` · `receipt-types:check` · `regressions:{studio,cli,contracts}`. All 4 gates green at commit `8c9a171`. Every cron-run commit has passed pre-commit + CI throughout the run (no broken pushes per iter-34 + iter-44 verifications). | ✅ MILESTONE · 4-gate green | local | shell |
 
 ## Iteration 65 — `skill earn-history` ALL-skills aggregate · 5 distinct skills × 6 versions exercised
 
