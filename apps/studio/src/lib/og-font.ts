@@ -45,7 +45,18 @@ function decodeOnce(): ArrayBuffer | null {
   try {
     const buf = Buffer.from(OUTFIT_SEMIBOLD_B64, 'base64');
     if (buf.byteLength === 0) return null;
-    cached = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+    // Allocate a fresh standalone ArrayBuffer and copy the bytes in. This
+    // sidesteps two runtime gotchas: (1) `buf.buffer` is the underlying
+    // backing buffer which may be a pooled / shared region (Node's small-
+    // allocation pool re-uses one big ArrayBuffer across many Buffers); we
+    // don't want satori to receive bytes outside the Buffer's bounds.
+    // (2) On some Vercel function runtimes the Buffer is SharedArrayBuffer-
+    // backed and satori's `instanceof ArrayBuffer` check rejects it. The
+    // copy is ~50 KB; the cost is negligible compared to the OG-image
+    // render itself.
+    const ab = new ArrayBuffer(buf.byteLength);
+    new Uint8Array(ab).set(buf);
+    cached = ab;
     return cached;
   } catch {
     return null;
