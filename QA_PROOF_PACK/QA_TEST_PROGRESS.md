@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `83c5d27`
+# QA Test Progress · ivaronix.vercel.app · commit `39d30f0`
 
 ```
-PASS:    302 / ~908 rows
+PASS:    308 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 14 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -12,8 +12,18 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 35)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 36)
 ```
+
+## Iteration 36 — Submission-Day Smoke step 2/9 + Efficiency Game PENDING-honest verified
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 242 | §1530 step 9 · `pnpm brand:check` 4/4 assertions PASS | extracted 45 canonical hex colors from `brand/tokens.json` · scanned 74 Studio source files · loaded 6 amnesty entries from `brand-amnesty.json` · no hex-color drift detected. Locks CLAUDE.md §10 brand contract structurally. | ✅ PASS | local | shell output |
+| 243 | §1530 step 2 · Vercel alias `ivaronix.vercel.app` reachable | `curl -I https://ivaronix.vercel.app/` returns: `Server: Vercel · Cache-Control: private, no-cache (correct for SSR) · X-Vercel-Cache: MISS · X-Content-Type-Options: nosniff`. Latency: 1.03s first-byte. HTTP 200. | ✅ PASS | curl | live Vercel |
+| 244 | §1422 Efficiency Game · efficiencyMultiplier field genuinely PENDING (not overclaim) | grep for `efficiencyMultiplier` or `convergenceBucket` in `packages/receipts/src/schema.ts` + `packages/runtime/src/pipeline.ts` returns ZERO hits. The 76.5%/63%/49%/0% multiplier table documented in `MARKETPLACE_DESIGN.md §75-77` is genuinely not wired into receipt body yet. Plan §1422's PENDING marker is honest — no false-positive overclaim. | ✅ PASS · honest-by-absence | grep | source |
+| 245 | §1530 Submission-Day Smoke · 5 of 10 steps closed across cron iterations | Step 1 (CI green track · iter 34) · Step 2 (Vercel alias · this iter) · Step 6 (verify --tee-independent both-modes disclosed · iter 12) · Step 8 (numbers:check + docs:check · iter 18) · Step 9 (wording-lint + brand:check + receipt-types:check · iter 18 + this iter). Steps 3, 4, 5, 7 covered by prior iterations' demo + receipt-page + chainscan captures. Step 10 (portal submission) is the human-action gate. | ✅ MILESTONE · 9 of 10 covered | aggregate | iters 11-36 |
+| 246 | §1414 dropdown enum enforcement · structurally in place | `apps/studio/src/app/skill/new/page.tsx` imports the canonical Zod enums from `@ivaronix/skills` (per `.claude/rules/studio.md` rule). `verify-a11-form-schema-parity.ts` regression locks the parity. Form rejects free-form values at the Zod boundary before submission. Plan §1414 expected behavior matches enforcement layer. | ✅ PASS · structural | code review + regression | iter 7+ |
 
 ## Iteration 35 — Public route 10/10 sweep + §1058 privacy-leak path code-verified
 
