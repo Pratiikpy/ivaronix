@@ -21,7 +21,7 @@ const EXTENSION_PATH = resolve(HERE, 'mm', 'extension');
 const USER_DATA_DIR = resolve(HERE, 'mm', 'profile');
 const SHOTS_DIR = resolve(REPO, 'screenshots', 'brand-deep');
 mkdirSync(SHOTS_DIR, { recursive: true });
-const STUDIO = 'http://localhost:3300';
+const STUDIO = process.env.STUDIO_BASE ?? 'http://localhost:3300';
 const BRAND_STANDALONE = 'C:/Users/prate/Downloads/Ivaronix Brand Kit _standalone_.html';
 const BRAND_REPO = resolve(REPO, 'brand', 'Ivaronix.html');
 

@@ -23,7 +23,7 @@ const EXTENSION_PATH = resolve(HERE, 'mm', 'extension');
 const USER_DATA_DIR = resolve(HERE, 'mm', 'profile');
 const SHOTS_DIR = resolve(REPO, 'screenshots', 'deeper');
 mkdirSync(SHOTS_DIR, { recursive: true });
-const STUDIO = 'http://localhost:3300';
+const STUDIO = process.env.STUDIO_BASE ?? 'http://localhost:3300';
 
 let stepNum = 0;
 async function snap(page: Page, label: string): Promise<string> {

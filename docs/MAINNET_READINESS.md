@@ -16,7 +16,7 @@
 | 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
-| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry.nextId()` (V1) + `ReceiptRegistryV2.nextId()` |
+| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1647<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry.nextId()` (V1) + `ReceiptRegistryV2.nextId()` |
 | 6 | Proof Explorer (`/r/<id>`) | ✓ | HTTP 200 on #994, #1004, #1014, #1056, #1069 |
 | 7 | Passport state | ✓ | tokenId 1, trust 1053, receipts 1053, violations 0 |
 | 8 | Memory grant/revoke lifecycle | ✓ | 5 grants on chain; ACTIVE → REVOKED proven via Studio + chain |
@@ -53,7 +53,7 @@ Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08 (V1) + 20
 
 ```
 ivaronix debug chain
-  receipts anchored    <!-- numbers:auto:receipts.total -->1644<!-- /numbers:auto:receipts.total -->  (ReceiptRegistry V1 + V2 .nextId() · live)
+  receipts anchored    <!-- numbers:auto:receipts.total -->1647<!-- /numbers:auto:receipts.total -->  (ReceiptRegistry V1 + V2 .nextId() · live)
 ```
 
 ### 9. Burn-mode receipt #1069
