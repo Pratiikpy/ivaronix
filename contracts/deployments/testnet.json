@@ -15,7 +15,14 @@
       "address": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
       "txHash": "0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af",
       "explorer": "https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
-      "note": "K-2 fix · EIP-712 anchor signature recovery · agentAddress is the recovered signer (NOT msg.sender). Per-agent monotonic nonces. See HALF_BAKED.md K-2."
+      "note": "K-2 fix · EIP-712 anchor signature recovery · agentAddress is the recovered signer (NOT msg.sender). Per-agent monotonic nonces. See HALF_BAKED.md K-2. Stays live for the 7 V2-anchored receipts; new anchors with slots 10/11/12 land on ReceiptRegistryV3."
+    },
+    "ReceiptRegistryV3": {
+      "address": "0x7396D536594e2BE833070c7EB441A10906046257",
+      "txHash": "0x513acfa90473807c00423c97cf55897d04f2fa61c38668958b364985e934bda5",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257",
+      "deployedAt": "2026-05-12",
+      "note": "B-V2-32 fix · admits receipt-type slots 10 (doc_room_create), 11 (doc_room_read), 12 (memory_consolidation) that V2 capped at 9. EIP-712 version bumped to '3' so V2 signatures cannot replay (domain separator differs). 6 Foundry tests in ReceiptRegistryV3.t.sol all PASS. Deployed iter-78 of cron c25a7e8b run; closes USER_TODO §B-V2-32."
     },
     "Erc7857Verifier": {
       "address": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",

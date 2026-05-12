@@ -62,6 +62,7 @@ export const KNOWN_RECEIPT_REGISTRIES: Record<Network, ReadonlySet<string>> = {
   testnet: new Set<string>([
     '0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c'.toLowerCase(), // ReceiptRegistry V1
     '0xf675d4183b34fe8d1981FA9c117065aAcff690ab'.toLowerCase(), // ReceiptRegistryV2 (K-2 fix · EIP-712 anchor)
+    '0x7396D536594e2BE833070c7EB441A10906046257'.toLowerCase(), // ReceiptRegistryV3 (B-V2-32 fix · receipt-type slots 10/11/12)
   ]),
   mainnet: new Set<string>(),
 };
