@@ -479,25 +479,33 @@ roomCommand
     const cap = new CapabilityRegistryClient(capAddr, wallet);
 
     // Accept either: matching grantId in manifest (case-insensitive on address),
-    // or the implicit-owner sentinel for the room creator.
+    // or the implicit-owner sentinel for the room creator (creators are NOT in
+    // grantIds because CapabilityRegistry disallows self-grants — the manifest
+    // tracks the creator in `manifest.creator` separately).
     const readerLower = env.walletAddress.toLowerCase();
+    const SELF_MARKER = '0x' + 'cc'.repeat(32);
     let expectedGrantId: string | undefined;
     let isCreator = false;
-    for (const [partyAddr, grantId] of Object.entries(manifest.grantIds)) {
-      if (partyAddr.toLowerCase() === readerLower) {
-        expectedGrantId = grantId;
-        isCreator = partyAddr.toLowerCase() === manifest.creator.toLowerCase();
-        break;
+    // First check: reader === creator → implicit-owner sentinel.
+    if (readerLower === manifest.creator.toLowerCase()) {
+      expectedGrantId = SELF_MARKER;
+      isCreator = true;
+    } else {
+      // Otherwise walk the manifest.grantIds map looking for a real grant.
+      for (const [partyAddr, grantId] of Object.entries(manifest.grantIds)) {
+        if (partyAddr.toLowerCase() === readerLower) {
+          expectedGrantId = grantId;
+          break;
+        }
       }
     }
     if (!expectedGrantId) {
       ui.fail(`reader ${env.walletAddress} is not in the parties list of this room`);
       ui.info(`parties: ${manifest.parties.join(', ')}`);
+      ui.info(`creator: ${manifest.creator}`);
       process.exitCode = 1;
       return;
     }
-
-    const SELF_MARKER = '0x' + 'cc'.repeat(32);
     if (isCreator && expectedGrantId.toLowerCase() === SELF_MARKER) {
       ui.pass(`grant valid          implicit owner grant (creator reads own room)`);
     } else {

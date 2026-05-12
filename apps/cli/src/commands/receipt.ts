@@ -288,22 +288,23 @@ receiptCommand
         }
         if (!found && anchorHint) {
           // Tier 2: block-hint range. 0G testnet RPC caps eth_getLogs
-          // at <1000 blocks per query (error: "the query set is too
-          // large, please narrow down your filter condition" — empirically
-          // 500-block ranges work, 1000-block ranges fail). ±400 → 800
-          // blocks stays well within cap with margin.
+          // at <1000 blocks per query but the actual ceiling varies
+          // under load (iter-95: 800-block ranges flaked, 500-block
+          // ranges work reliably). ±300 → 600 blocks stays comfortably
+          // under the variable cap with margin.
           found = await r.client.findByReceiptRootInRange(
             receipt.storage.receiptRoot as Hash,
-            Math.max(0, anchorHint - 400),
-            anchorHint + 400,
+            Math.max(0, anchorHint - 300),
+            anchorHint + 300,
           );
         }
         if (!found) {
           // Tier 3: chunked lookback scan. Default lookback (100K
-          // blocks ≈ 3 days at 3s block time) walked back in 800-block
-          // chunks to stay safely under the 0G RPC 1000-block cap.
+          // blocks ≈ 3 days at 3s block time) walked back in 600-block
+          // chunks to stay safely under the 0G RPC <1000-block cap
+          // (iter-95 found the cap varies under load; 600 is reliable).
           const TOTAL_LOOKBACK = anchorHint ? 2_000 : 100_000;
-          const CHUNK = 800;
+          const CHUNK = 600;
           const provider = (r.client as unknown as { contract?: { runner?: { provider?: { getBlockNumber: () => Promise<number> } } } }).contract?.runner?.provider;
           if (!provider) {
             found = null;
