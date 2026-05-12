@@ -20,25 +20,6 @@ export const contentType = 'image/png';
  * per-route OG images at `/r/[id]/` and `/0g/` ship separately.
  */
 export default async function Image() {
-  try {
-    return await renderImage();
-  } catch (err: unknown) {
-    // Surface the actual failure to the response body during the B-V2-2
-    // verification window. Without this the function falls through to
-    // Next's _error fallback which doesn't tell the operator (or the
-    // judge replaying the link) what went wrong. Once a fresh receipt
-    // anchor + Vercel deploy confirms a real PNG renders, this try/catch
-    // can collapse back into the bare `return await renderImage()` form.
-    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-    const stack = err instanceof Error && typeof err.stack === 'string' ? err.stack.split('\n').slice(0, 6).join('\n') : '';
-    return new Response(`OG image failed:\n${msg}\n\n${stack}`, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
-}
-
-async function renderImage(): Promise<Response> {
   const fonts = await loadBrandFont();
   if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();
@@ -61,7 +42,8 @@ async function renderImage(): Promise<Response> {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <svg width={48} height={32} viewBox="0 0 32 20" fill="none">
             <path d="M5 2 L1 2 L1 18 L5 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
-            <text x={16} y={16} textAnchor="middle" fontFamily="'Instrument Serif', 'Times New Roman', serif" fontStyle="italic" fontSize={20} fill="#0a0a0a">i</text>
+            {/* italic-i stem · path-only (satori does not support <text> in SVG · B-V2-2 closure) */}
+            <path d="M17 8 L15 16" stroke="#0a0a0a" strokeWidth={1.6} strokeLinecap="round" fill="none" />
             <circle cx={16.6} cy={4.6} r={1.6} fill="#16a34a" />
             <path d="M27 2 L31 2 L31 18 L27 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
           </svg>

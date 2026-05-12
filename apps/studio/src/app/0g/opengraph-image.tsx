@@ -57,7 +57,8 @@ export default async function Image() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <svg width={48} height={32} viewBox="0 0 32 20" fill="none">
               <path d="M5 2 L1 2 L1 18 L5 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
-              <text x={16} y={16} textAnchor="middle" fontFamily="'Instrument Serif', 'Times New Roman', serif" fontStyle="italic" fontSize={20} fill="#0a0a0a">i</text>
+              {/* italic-i stem · path-only (satori does not support <text> in SVG · B-V2-2 closure) */}
+              <path d="M17 8 L15 16" stroke="#0a0a0a" strokeWidth={1.6} strokeLinecap="round" fill="none" />
               <circle cx={16.6} cy={4.6} r={1.6} fill="#16a34a" />
               <path d="M27 2 L31 2 L31 18 L27 18" stroke="#0a0a0a" strokeWidth={2.4} strokeLinejoin="miter" fill="none" />
             </svg>
