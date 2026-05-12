@@ -5,6 +5,7 @@ import { mkdirSync, existsSync } from 'node:fs';
 import {
   CapabilityRegistryClient,
   MemoryAccessLogClient,
+  AgentPassportClient,
   MEMORY_ACCESS,
   getDeployedAddress,
   type MemoryAccessType,
@@ -222,16 +223,17 @@ memoryCommand
 // ─── snapshot ────────────────────────────────────────────────────────────────
 memoryCommand
   .command('snapshot')
-  .description('Compute the current memory manifest (rootHash + observation count). Pass --upload to also persist the manifest JSON to 0G Storage.')
+  .description('Compute the current memory manifest (rootHash + observation count). Pass --upload to also persist the manifest JSON to 0G Storage. Pass --anchor-on-chain to also write the resulting storage rootHash into your AgentPassport.memoryRoot via updateMemoryRoot.')
   .option('--upload', 'persist manifest JSON to 0G Storage (requires IVARONIX_SIGNER_KEY in env)', false)
-  .action(async (opts: { upload: boolean }) => {
-    // HALF_BAKED §I-12 closure (sweep 201): pre-sweep this command only
-    // printed the manifest and pointed at a §B-V2 queue with no concrete
-    // path. The blob upload half is testnet-implementable today via the
-    // og-storage client, so --upload now actually writes to 0G Storage
-    // and prints the storage rootHash + tx. Updating passport.memoryRoot
-    // on-chain to point at the storage blob still needs tokenId lookup +
-    // a real-fund contract write; that half stays queued in §B-V2-24.
+  .option('--anchor-on-chain', 'after --upload, call AgentPassportINFTV2.updateMemoryRoot(tokenId, storageRoot) so the chain canonically points at the latest snapshot. Burns ~0.0002 OG per update. Requires a minted passport for the signer wallet.', false)
+  .action(async (opts: { upload: boolean; anchorOnChain: boolean }) => {
+    // HALF_BAKED §I-12 + USER_TODO §B-V2-24 (both ✅ SHIPPED 2026-05-13):
+    // pre-sweep this command only printed the manifest. With --upload it
+    // writes a JSON blob to 0G Storage and prints the storage rootHash
+    // + tx. With --anchor-on-chain it also resolves tokenId and calls
+    // AgentPassportINFTV2.updateMemoryRoot so the passport.memoryRoot
+    // field on chain canonically points at the latest storage manifest
+    // — closing the full snapshot → storage → chain lifecycle.
     const engine = buildEngine();
     if (!engine) {
       process.exitCode = 1;
@@ -248,7 +250,7 @@ memoryCommand
 
       if (!opts.upload) {
         ui.divider();
-        ui.hint('Manifest stays local until --upload is passed. With --upload it writes a JSON blob to 0G Storage; updating passport.memoryRoot on-chain stays queued in USER_TODO §B-V2-24.');
+        ui.hint('Manifest stays local until --upload is passed. With --upload it writes a JSON blob to 0G Storage; pass --anchor-on-chain to also call AgentPassportINFTV2.updateMemoryRoot (USER_TODO §B-V2-24 · ✅ SHIPPED).');
         return;
       }
 
@@ -279,8 +281,52 @@ memoryCommand
         ui.pass(`manifest on 0G Storage: ${sr.rootHash}`);
         ui.info(`upload tx            ${sr.txHash}`);
         ui.info(`bytes                ${sr.size}`);
-        ui.divider();
-        ui.hint(`Storage blob is content-addressed; anyone with the rootHash can re-fetch the manifest JSON. Updating passport.memoryRoot on-chain to ${sr.rootHash.slice(0, 10)}... stays queued in USER_TODO §B-V2-24 (needs tokenId resolution + funded write).`);
+
+        // B-V2-24 closure · optional on-chain anchor of the storage rootHash
+        // into the AgentPassport's memoryRoot field.
+        if (opts.anchorOnChain) {
+          ui.divider();
+          ui.pending('anchoring storage rootHash to AgentPassport.memoryRoot on-chain...');
+          try {
+            const netCfg = NETWORKS[env.network];
+            const provider = new JsonRpcProvider(netCfg.rpcUrl, { chainId: netCfg.chainId, name: netCfg.name });
+            const signer = new Wallet(env.privateKey, provider);
+            // Prefer V2 (current active mint target). Fall back to V1 for any
+            // wallets still on the legacy passport.
+            const v2Addr = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+            const v1Addr = getDeployedAddress(env.network, 'AgentPassportINFT');
+            const passportAddr = v2Addr ?? v1Addr;
+            if (!passportAddr) {
+              ui.fail(`no AgentPassportINFT address for network=${env.network}`);
+              process.exitCode = 1;
+              return;
+            }
+            // Read tokenId via the V1 client ABI (V2 keeps the same passportOf
+            // mapping signature; both V1 and V2 return uint256).
+            const passportRead = new AgentPassportClient(passportAddr, provider);
+            const tokenId = await passportRead.passportOf(signer.address as Address);
+            if (tokenId === 0n) {
+              ui.fail(`wallet ${signer.address} has no AgentPassport · mint one first via \`ivaronix onboard\` or Studio /onboard`);
+              process.exitCode = 1;
+              return;
+            }
+            const passportWrite = new AgentPassportClient(passportAddr, signer);
+            const tx = await passportWrite.updateMemoryRoot(tokenId, sr.rootHash as Hash);
+            ui.info(`updateMemoryRoot tx  ${tx.hash}`);
+            ui.pending('waiting for confirmation...');
+            const receipt = await tx.wait();
+            ui.pass(`anchored on chain · block ${receipt?.blockNumber} · gas ${receipt?.gasUsed.toString()}`);
+            ui.info(`passport tokenId     ${tokenId.toString()}`);
+            ui.info(`memoryRoot           ${sr.rootHash}`);
+            ui.info(`registry             ${passportAddr} (${v2Addr ? 'V2' : 'V1 legacy'})`);
+          } catch (err) {
+            ui.fail('on-chain anchor failed', (err as Error).message.split('\n')[0]);
+            process.exitCode = 1;
+          }
+        } else {
+          ui.divider();
+          ui.hint(`Storage blob is content-addressed; anyone with the rootHash can re-fetch the manifest JSON. Pass --anchor-on-chain to also write the rootHash into AgentPassport.memoryRoot (~0.0002 OG · B-V2-24).`);
+        }
       } catch (err) {
         ui.divider();
         ui.fail('manifest upload failed', (err as Error).message.split('\n')[0]);
