@@ -114,7 +114,7 @@ const config: NextConfig = {
     // CSP deliberately omitted — it needs end-to-end app testing to draft
     // a working policy that allows wagmi + Next.js inline scripts +
     // brand-token style attrs without breaking flows. Tracked in
-    // USER_TODO §B-V2 as a separate piece of work.
+    // USER_TODO §B-V2-42 as a separate piece of work.
     //
     // The four headers below are safe defaults that don't risk breaking
     // any flow:

@@ -71,6 +71,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-qa-plan-receipt-registry-v3-coverage/, // iter-130 closure · QA plan ReceiptRegistry reads must be described as V3-first (not V2-first) per iter-119 cascade
       /^verify-qa-plan-paths-exist/, // iter-131 closure · every full repo path cited in QA plan must resolve to a real file
       /^verify-burn-keyfingerprint-before-zero/, // iter-131 closure · packages/og-storage/src/burn.ts must compute keyFingerprint before key.fill(0) (CRYPTO_NOTES privacy story)
+      /^verify-b-v2-references-resolve/, // iter-132 closure · every B-V2-N reference in QA plan + code resolves to a real USER_TODO header
       /^verify-no-bare-numbers-in-rendered-docs/, // every numbers.json value (>= 100) in target docs lives inside a numbers:auto marker
       /^verify-agents-md-canonical-aliases/, // §15 · AGENTS.md leads with canonical IVARONIX_* (not legacy alias)
       /^verify-no-orphan-regressions/, // meta · every verify-*.ts is wired to a domain filter
