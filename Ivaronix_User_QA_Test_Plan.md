@@ -936,15 +936,15 @@ This section checks whether each feature gives the right result, not only whethe
 | 2 | Env vars (9/9 required) | `IVARONIX_NETWORK`, `IVARONIX_RPC_URL`, `IVARONIX_SIGNER_KEY`, `IVARONIX_ROUTER_KEY`, `IVARONIX_ROUTER_PROVIDER`, `NVIDIA_API_KEY`, etc. all set; legacy aliases still resolve. | `pnpm env:check`. |
 | 3 | Deployer wallet funded | `≥ 0.1 OG` on Galileo. Currently 69.56 OG. | `/api/dashboard/<addr>` or `ivaronix doctor`. |
 | 4 | RPC latency | `eth_blockNumber` round-trip < 2s (current: 0.77s). | `time cast block-number --rpc-url <rpc>`. |
-| 5 | Receipt anchoring | `numbers.json receipts.total = 1644+` matches `ReceiptRegistry.nextId() + ReceiptRegistryV2.nextId()`. | Read both contracts; sum. |
+| 5 | Receipt anchoring | `numbers.json receipts.total = 1651+` (V1 1644 + V2 7 · refreshed iter-22 + iter-32) matches `ReceiptRegistry.nextId() + ReceiptRegistryV2.nextId()`. | Read both contracts; sum. `ivaronix debug chain` prints the live aggregate. |
 | 6 | Proof Explorer (`/r/<id>`) | HTTP 200 on `#994`, `#1004`, `#1014`, `#1056`, `#1069`. | `curl -o /dev/null -w '%{http_code}\n' https://ivaronix.vercel.app/r/{994,1004,1014,1056,1069}`. |
 | 7 | Passport state | tokenId 1, trust 1053+, receipts 1053+, violations 0. | `ivaronix passport show 0xaa954c...`. |
 | 8 | Memory grant/revoke lifecycle | 5+ grants on chain; ACTIVE → REVOKED proven via Studio + chain. | Tested in Memory section; cross-check chain event log. |
 | 9 | Burn-mode receipt | `#1069`: AES-256-GCM, keyFingerprint `sha256:11a3f1a1…`, `destroyedAt 1778314505036`. | `ivaronix receipt show 1069` and inspect storage.encryption. |
 | 10 | Fresh user flow (one command) | `ivaronix demo` → receipt anchor tx in ~3s. | Run on a clean machine; capture the tx hash. |
-| 11 | TEE-independent verify on `#1069` | schema/hash/signature/chain-anchor PASS, tee:primary PASS via `broker.processResponse` → **FULLY VERIFIED ✓**. | `ivaronix receipt verify 1069 --tee-independent`. |
+| 11 | TEE-independent verify on `#1069` | At snapshot time: schema/hash/signature/chain-anchor PASS + tee:primary PASS via `broker.processResponse` → **FULLY VERIFIED ✓**. Today the live broker channel is transient (Router rate limit / provider session rotation per JUDGE_GUIDE step-1 disclosure from iter 12); when unreachable, the result is `Status: → ANCHORED (some TEE checks failed)` and the first four checks remain the load-bearing authenticity proof. Both outputs are real testnet state per the docs/MAINNET_READINESS.md §11 fix iter-13. | `ivaronix receipt verify 1069 --tee-independent`. |
 | 12 | Studio routes (8/8) | `/`, `/onboard`, `/skills`, `/global`, `/dashboard`, `/memory`, `/brand`, `/agent/<addr>` all HTTP 200. | Already tested in Master Checklist; cross-reference. |
-| 13 | `serve` HTTP API (4/4 on port 4243) | `/healthz`, `/v1/skills`, `/v1/passport/<addr>`, `/v1/receipt/<id>` all HTTP 200. | `ivaronix serve` then `curl localhost:4243/healthz` etc. |
+| 13 | `serve` HTTP API (4 GET + 2 POST on port **8788**) | All 4 GET routes (`/healthz`, `/v1/skills`, `/v1/passport/<addr>`, `/v1/receipt/<id>`) return HTTP 200 with valid JSON bodies (iter-32 verified). 2 POST routes (`/v1/run`, `/v1/chat/completions`) structurally present per the server's boot banner. Plan originally claimed port 4243 — corrected iter-32 against actual default. | `ivaronix serve` then `curl http://127.0.0.1:8788/healthz` etc. |
 
 Mainnet promotion gate (per `docs/MAINNET_READINESS.md §109`): all 13 items GREEN on mainnet (chainId 16661) with mainnet wallet + mainnet contracts before declaring mainnet-READY. Each item gets re-run against the new chain.
 

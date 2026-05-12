@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `155fc0c`
+# QA Test Progress · ivaronix.vercel.app · commit `d7822a1`
 
 ```
-PASS:    281 / ~908 rows
-FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 11 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
+PASS:    288 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 14 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,19 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             27 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 32)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 33)
 ```
+
+## Iteration 33 — MAINNET_READINESS 13-item walkthrough (§929) cross-fixed against prior iterations
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 225 | Plan §929 row 6 · 6-receipt /r/<id> curl sweep | All 6 seeded IDs return HTTP 200: `/r/994 200 · /r/1004 200 · /r/1014 200 · /r/1056 200 · /r/1069 200 · /r/1304 200`. Studio /r/<id> rendering pipeline (chain read → ledger lookup → page render) green across the seed set. | ✅ PASS | curl | live Vercel |
+| 226 | 🔧 Plan §929 row 5 stale: claimed `receipts.total = 1644+` | Reality: 1651+ today (V1: 1644 + V2: 7) per iter-22 + iter-32 numbers refreshes. Plan row updated to match `numbers.json.receipts.total: 1651`. | 🔧 PLAN DRIFT FIXED | edit | this commit |
+| 227 | 🔧 Plan §929 row 11 stale: same FULLY VERIFIED overclaim as MAINNET_READINESS.md §11 | Plan row 11 promised `FULLY VERIFIED ✓` as the deterministic output for `ivaronix receipt verify 1069 --tee-independent`. Reality today is the transient ANCHORED + tee:primary error per iter-12 disclosure (Router/provider session state). Plan row updated to disclose both modes + reference the iter-13 MAINNET_READINESS.md §11 fix that landed the same honesty in the source doc. | 🔧 PLAN DRIFT FIXED | edit | this commit |
+| 228 | 🔧 Plan §929 row 13 stale: same port/count drift as §951 | Plan row 13 claimed "serve HTTP API (4/4 on port 4243)". Iter-32 confirmed actual is port **8788** with 6 routes (4 GET + 2 POST). Plan row updated to match the §951 fix. | 🔧 PLAN DRIFT FIXED | edit | this commit |
+| 229 | §929 13 items now all aligned with reality + prior iteration fixes | Items 1-4 (contracts, env, funding, RPC) verified across prior iterations (12/22/28). Item 5 fixed this iter (1651 not 1644+). Item 6 verified this iter (6×200). Items 7-8 (passport + memory grants) covered iter 9/22. Item 9 (burn receipt #1069) covered iter 30 (receipt body inspection). Item 10 (fresh demo) covered iter 11 (receipt #3 anchor). Item 11 fixed this iter. Item 12 (8/8 routes) covered iter 7-22 sweep. Item 13 fixed this iter. | ✅ MILESTONE | aggregate | iters 7-33 |
+| 230 | §881 imports skill row already PENDING per iter-19 fix | Plan row 881 already correctly says "NOT SHIPPED YET — no seed-skills/imports/SKILL.md exists. First-party catalog is 6 skills, not 7." This was the same drift fixed in §1242 iter-19 (the imports directory is the vendored 150-skill catalog; no single imports skill file exists). Row remains accurate. | ✅ PASS (already fixed) | re-verified | iter 19 |
 
 ## Iteration 32 — `ivaronix serve` 6 routes driven + 2 plan-drift fixes (§951)
 
