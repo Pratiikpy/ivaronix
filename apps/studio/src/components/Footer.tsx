@@ -1,5 +1,9 @@
 import Link from 'next/link';
-import { loadDeployments } from '@ivaronix/og-chain';
+// Studio-local manifest loader — imports contracts/deployments/<network>.json at
+// build time so the JSON is traced into the Vercel function bundle. The og-chain
+// version walks up from process.cwd(), which fails on Vercel and was masking
+// the entire 6-link Network column of the footer (QA iteration 7 finding).
+import { getStudioDeployments as loadDeployments } from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
 
 /**
