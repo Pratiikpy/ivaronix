@@ -82,9 +82,10 @@ interface RunResponse {
   // TEE check requested. Gates the TEE chip on real attestation, not
   // on scan.matches.
   teeRouterVerified?: boolean | null;
-  // Storage evidence — populated when /api/run uploads to 0G Storage. Until
-  // HALF_BAKED H-3 ships real Studio-side upload, evidenceRoot is null and
-  // the Storage light stays pending honestly.
+  // Storage evidence — the run pipeline uploads the evidence blob to 0G
+  // Storage on every anchor and returns the Merkle root here; null only when
+  // the storage indexer was unreachable, in which case the Storage light
+  // stays pending honestly.
   storage?: { evidenceRoot?: string | null } | null;
   logs?: { level: 'info' | 'pass' | 'fail'; label: string; detail: string | null }[];
 }
@@ -204,10 +205,9 @@ export function RunPanel(props: RunPanelProps = {}) {
       setResult(data);
       if (data.ok) {
         setLayers({
-          // Storage gates on real evidenceRoot from the response. Until
-          // HALF_BAKED H-3 ships real Studio-side 0G Storage upload, the
-          // response carries `storage.evidenceRoot: null` and this stays
-          // pending — honest about what actually happened.
+          // Storage gates on the real evidenceRoot the pipeline got back from
+          // 0G Storage. Null (storage indexer unreachable on this run) → stays
+          // pending, honest about what actually happened.
           Storage: data.storage?.evidenceRoot ? 'verified' : 'pending',
           Compute: 'verified',
           // HALF_BAKED §I-4 closure: gate TEE light on real attestation,

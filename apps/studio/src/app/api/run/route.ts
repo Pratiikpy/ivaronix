@@ -169,11 +169,13 @@ export async function POST(req: Request) {
       // gates its TEE light on this, NOT on scan.matches (which is a
       // skill-registry hash check, unrelated to TEE).
       teeRouterVerified: result.teeRouterVerified,
-      // Storage evidence root (S-3 + future H-3): populated when /api/run
-      // uploads the encrypted blob to 0G Storage. Today the Studio path does
-      // not upload — RunPanel correctly leaves the Storage light pending when
-      // this is null. H-3 will wire real upload and populate this with the
-      // 0G Storage Merkle root.
+      // Storage evidence root. The run pipeline (`anchorReceipt`) uploads the
+      // evidence blob to 0G Storage on every anchor — Burn-Mode ciphertext if
+      // burn is on, the plaintext context bytes otherwise — and writes the
+      // returned Merkle root onto the receipt's `storage.evidenceRoot`. Null
+      // here only when the storage indexer was unreachable: the receipt
+      // honestly omits the root rather than faking one, and RunPanel leaves
+      // the Storage light pending in that case.
       storage: { evidenceRoot: result.storageEvidenceRoot ?? null },
       logs: entries,
     });
