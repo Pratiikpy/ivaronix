@@ -1,6 +1,6 @@
 ---
 name: github-audit
-version: 0.1.0
+version: 0.1.1
 description: Audit a code snippet, single file, or small repo excerpt for security issues, code-quality smells, and architectural concerns. Lightweight first-pass review — full repo audits should layer on top of this with multiple skill runs.
 license: Apache-2.0
 metadata:

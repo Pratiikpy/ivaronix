@@ -1,6 +1,6 @@
 ---
 name: plan-step
-version: 0.1.0
+version: 0.1.1
 description: Read-only planning skill — produces a numbered, executable plan for a goal given context (project README, existing code, prior decisions). Used by `ivaronix plan`. No writes, no shell, no wallet.
 license: Apache-2.0
 metadata:

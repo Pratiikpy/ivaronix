@@ -1,6 +1,6 @@
 ---
 name: code-edit
-version: 0.2.0
+version: 0.2.1
 description: Propose minimal code changes for a task given source files. Outputs a unified diff that the user can apply. Does not actually write to disk — `build` mode emits the diff and the user (or follow-up tooling) applies it.
 license: Apache-2.0
 metadata:

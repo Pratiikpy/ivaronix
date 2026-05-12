@@ -1,6 +1,6 @@
 ---
 name: 0g-integration-auditor
-version: 0.1.0
+version: 0.1.1
 description: Audit a GitHub repo's 0G integration quality. Checks chain ID correctness, SDK version pinning, encryption pattern, receipt usage, and 0G primitive coverage. Drives the post-mainnet automation that anchors batched audit receipts against public 0G OSS repos.
 license: Apache-2.0
 metadata:

@@ -1,6 +1,6 @@
 ---
 name: content-pitch-review
-version: 0.1.0
+version: 0.1.1
 description: Review a marketing artefact (pitch deck script, press release, landing-page copy, fundraising one-pager, blog draft) and surface unsupported claims, weak hooks, audience mismatches, and language that fails legal/regulatory review. Track-3 marketing-persona skill — same receipt model as private-doc-review.
 license: Apache-2.0
 metadata:
