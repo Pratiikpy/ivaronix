@@ -25,21 +25,6 @@ export const contentType = 'image/png';
  * the most-shared page in Studio.
  */
 export default async function Image() {
-  try {
-    return await renderImage();
-  } catch (err: unknown) {
-    // Debug-mode error surfacing for /0g/opengraph-image residual 500.
-    // Strip back to bare `return await renderImage()` once verified live.
-    const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
-    const stack = err instanceof Error && typeof err.stack === 'string' ? err.stack.split('\n').slice(0, 6).join('\n') : '';
-    return new Response(`/0g OG image failed:\n${msg}\n\n${stack}`, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
-  }
-}
-
-async function renderImage(): Promise<Response> {
   const fonts = await loadBrandFont();
   if (fonts.length === 0) return new Response('OG image unavailable', { status: 503 });
   const network = getNetwork();
