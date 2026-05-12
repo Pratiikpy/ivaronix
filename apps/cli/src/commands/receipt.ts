@@ -287,19 +287,40 @@ receiptCommand
           }
         }
         if (!found && anchorHint) {
-          // Tier 2: block-hint range
+          // Tier 2: block-hint range. 0G testnet RPC caps eth_getLogs
+          // at <1000 blocks per query (error: "the query set is too
+          // large, please narrow down your filter condition" — empirically
+          // 500-block ranges work, 1000-block ranges fail). ±400 → 800
+          // blocks stays well within cap with margin.
           found = await r.client.findByReceiptRootInRange(
             receipt.storage.receiptRoot as Hash,
-            Math.max(0, anchorHint - 1000),
-            anchorHint + 1000,
+            Math.max(0, anchorHint - 400),
+            anchorHint + 400,
           );
         }
         if (!found) {
-          // Tier 3: lookback scan
-          found = await r.client.findByReceiptRoot(
-            receipt.storage.receiptRoot as Hash,
-            anchorHint ? 2000 : 100_000,
-          );
+          // Tier 3: chunked lookback scan. Default lookback (100K
+          // blocks ≈ 3 days at 3s block time) walked back in 800-block
+          // chunks to stay safely under the 0G RPC 1000-block cap.
+          const TOTAL_LOOKBACK = anchorHint ? 2_000 : 100_000;
+          const CHUNK = 800;
+          const provider = (r.client as unknown as { contract?: { runner?: { provider?: { getBlockNumber: () => Promise<number> } } } }).contract?.runner?.provider;
+          if (!provider) {
+            found = null;
+          } else {
+            const latest = await provider.getBlockNumber();
+            const fromBlock = Math.max(0, latest - TOTAL_LOOKBACK);
+            for (let toBlock = latest; toBlock > fromBlock; toBlock -= CHUNK) {
+              const chunkFrom = Math.max(fromBlock, toBlock - CHUNK);
+              const hit = await r.client.findByReceiptRootInRange(
+                receipt.storage.receiptRoot as Hash,
+                chunkFrom,
+                toBlock,
+              );
+              if (hit) { found = hit; break; }
+              if (chunkFrom === fromBlock) break;
+            }
+          }
         }
         if (found) {
           // The id from the row is what makes this an authoritative
