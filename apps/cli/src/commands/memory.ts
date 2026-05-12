@@ -508,7 +508,17 @@ memoryCommand
       process.exitCode = 1;
       return;
     }
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first WRITE per iter-122. V2 closes the social-graph leak (B-V2-15
+    // / WT 12): V1's `grantsByOwner[]` mapping had a public auto-generated
+    // getter that let any attacker enumerate every grant ever issued to/from
+    // any wallet. V2 makes the reverse indexes internal + gated via
+    // `getGrantsByOwner` (access-controlled). New grants MUST issue on V2;
+    // V1 stays live for legacy grants only. issueGrant signature is identical
+    // in V1 and V2 — same client works against both addresses.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
+    const capVersion: 'v1' | 'v2' = capAddrV2 ? 'v2' : 'v1';
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       return;
@@ -526,7 +536,7 @@ memoryCommand
 
     ui.title('Issuing memory grant');
     ui.info(`network              ${env.network}`);
-    ui.info(`registry             ${capAddr}`);
+    ui.info(`registry             ${capAddr} (${capVersion.toUpperCase()})`);
     ui.info(`grantee              ${grantee}`);
     ui.info(`scope                ${opts.scope}  (${sh})`);
     ui.info(`ttl                  ${ttlSec === 0 ? 'no expiry' : `${ttlSec}s`}`);

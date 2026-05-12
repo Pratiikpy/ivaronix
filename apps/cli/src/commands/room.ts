@@ -156,7 +156,14 @@ roomCommand
     }
 
     // 3. Issue capability grants to each party (real on-chain txs)
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first WRITE per iter-122 (B-V2-15 social-graph privacy fix).
+    // V1's grantsByOwner[] mapping leaked the full party list for every
+    // doc-room to anyone with the chain RPC. V2 gates reverse-index reads.
+    // issueGrant signature is identical V1↔V2 so the existing client works.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
+    const capVersion: 'v1' | 'v2' = capAddrV2 ? 'v2' : 'v1';
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -168,6 +175,7 @@ roomCommand
 
     const grantIds: Record<string, string> = {};
     const creatorLower = (env.walletAddress as Address).toLowerCase();
+    ui.info(`grant registry       ${capAddr} (${capVersion.toUpperCase()})`);
     ui.divider();
     for (const party of partyList) {
       // Skip self-grants — the creator is implicit (owner-can-always-read).
