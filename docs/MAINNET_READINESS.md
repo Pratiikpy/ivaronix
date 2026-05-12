@@ -22,7 +22,7 @@
 | 8 | Memory grant/revoke lifecycle | ✓ | 5 grants on chain; ACTIVE → REVOKED proven via Studio + chain |
 | 9 | Burn-mode receipt | ✓ | receipt #1069: aes-256-gcm, keyFingerprint sha256:11a3f1a1…, destroyedAt 1778314505036, cleanup completed |
 | 10 | Fresh user flow (one command) | ✓ | `ivaronix demo` → receipt #1069 anchor tx `0x4d46b347…01c1261` in ≈3s |
-| 11 | TEE-independent verify | ✓ | receipt #1069: schema/hash/signature/chain-anchor PASS, tee:primary PASS via `broker.processResponse` → **FULLY VERIFIED ✓** |
+| 11 | TEE-independent verify | ✓ | receipt #1069 at snapshot: schema/hash/signature/chain-anchor PASS + tee:primary PASS via `broker.processResponse` → **FULLY VERIFIED ✓**. Re-verify of tee:primary is best-effort against the live 0G Compute provider; the first four checks are the load-bearing authenticity proof and PASS regardless of broker state. |
 | 12 | Studio routes (8/8) | ✓ | /, /onboard, /skills, /global, /dashboard, /memory, /brand, /agent/<addr> all HTTP 200 |
 | 13 | `serve` HTTP API (4/4) | ✓ | /healthz, /v1/skills, /v1/passport/<addr>, /v1/receipt/1069 all HTTP 200 |
 
@@ -80,6 +80,8 @@ ivaronix debug chain
 
 ### 11. TEE-independent verify on receipt #1069
 
+Output at snapshot time, when the live 0G Compute provider's TEE channel was reachable:
+
 ```
 schema                 PASS
 hash                   PASS
@@ -92,6 +94,8 @@ verifying 1 attestation via broker.processResponse...
 tee:primary          PASS  (provider 0xa48f0128…)
                     → FULLY VERIFIED ✓
 ```
+
+When the channel is temporarily unreachable (Router rate limit, provider session rotation, transient network), the `tee:primary` line returns `error  getting signature error` and the final status is `→ ANCHORED (some TEE checks failed)`. The first four checks (`schema · hash · signature · chain anchor`) are the load-bearing authenticity proof and PASS on any anchored receipt regardless of broker state; `tee:primary` is the additional check that calls back to the live provider.
 
 ### 13. `serve` HTTP API (port 4243)
 

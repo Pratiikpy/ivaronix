@@ -179,16 +179,25 @@ pnpm install
 pnpm --filter @ivaronix/cli exec ivaronix receipt verify 1304 --tee-independent
 ```
 
-Expected output:
+Expected output, when the live 0G Compute provider's TEE channel is reachable:
 
 ```
 schema PASS · hash PASS · signature PASS → CLAIMED
 chain anchor PASS (id=1304 block=1778334585) → ANCHORED
-tee:primary PASS (provider 0xa48f0128…) via broker.processResponse
+tee:primary PASS                          → via broker.processResponse
 Status: → FULLY VERIFIED ✓
 ```
 
-No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the TEE attestation against the public 0G Compute broker. Receipt body is on `/r/1304`; anchor tx on `chainscan-galileo.0g.ai`.
+When the provider's TEE channel is temporarily unreachable (Router rate limit, provider session rotation, transient network), the last two lines look like this:
+
+```
+tee:primary error             getting signature error
+Status: → ANCHORED (some TEE checks failed)
+```
+
+The first four checks — `schema · hash · signature · chain anchor` — are the load-bearing authenticity proof: the receipt body is untampered, the canonical hash recovers, the signature recovers the agent address recorded on the `AgentPassportINFT`, and `ReceiptRegistry` holds the anchor at the given id. `tee:primary` is the additional check that calls back to the live 0G Compute provider — it proves the inference itself ran inside the attested TEE when reachable, and it degrades honestly (not silently) when not.
+
+No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the verify against the public 0G chain. Receipt body is on `/r/1304`; anchor tx on `chainscan-galileo.0g.ai`.
 
 > A global `pnpm install -g @ivaronix/cli` install path lands once `@ivaronix/widget` and `@ivaronix/cli` are npm-published (operator action, tracked in [docs/USER_TODO.md](docs/USER_TODO.md) B-3). Today the repo-clone path above is the only honest entry point — and still verifies a real on-chain receipt in one shell command.
 
