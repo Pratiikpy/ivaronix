@@ -471,6 +471,31 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Effort:** ~1-2h.
 - **Pattern source:** the iteration-14 `ivaronix passport consolidate --day --no-compute` run worked correctly — it produced receipt #4 with `type: 'memory_consolidation'` + `request.priorReceiptIds: ['3', '2', '1']`. Same shape applies here.
 
+### B-V2-35 · 5 orphan receipt types have no producer in code · plan row 1150 unachievable for slots 3/4/5/7/9
+- **Source:** iter-96 receipt-type coverage audit. `packages/core/src/types.ts` `RECEIPT_TYPES` declares 13 canonical receipt types (slots 0-12). After exercising every CLI surface during the cron run, 5 of those types turn out to have **zero producers** anywhere in the codebase:
+  - **slot 3 `burn`** — no `type: 'burn'` literal in any source file. `--burn` mode on doc-ask produces a `doc_ask` receipt with `burn: true` field, not a separate `burn`-type receipt.
+  - **slot 4 `memory_access`** — no producer. `memory grant` issues a CapabilityRegistry tx but doesn't anchor a receipt. The runtime pipeline does NOT emit a memory_access receipt during memory reads either.
+  - **slot 5 `skill_exec`** — only `model fine-tune` (apps/cli/src/commands/model.ts:212) produces it. That path needs `0g-compute-cli` installed + a real fine-tuning task — heavy operator setup.
+  - **slot 7 `passport_update`** — no producer. The `memory snapshot --anchor-on-chain` flow (B-V2-24) calls `updateMemoryRoot` directly via the contract, NOT through the receipt-anchor pipeline. So no passport_update receipt is emitted.
+  - **slot 9 `subscription_skill_exec`** — no producer. The SubscriptionEscrowV2 contract `runCheckIn` flow is wired but no CLI command exercises it.
+- **Why this matters:** plan row 1150 ("Receipt Type Coverage · all 13 types · confirm at least one of each type 0-12 anchored") is unachievable for these 5 slots until producers are written. The receipt-type catalog overclaims what the codebase actually emits — same shape as B-V2-31 (swarm slot 8, fixed iter-72).
+- **Status:** receipt-type coverage now stands at 8/13 verified-on-chain:
+  - slot 0 doc_ask ✓ (many anchors)
+  - slot 1 audit ✓ (1471 local)
+  - slot 2 consensus ✓ (5 local · produced by pipeline consensus runs)
+  - slot 6 code_change ✓ (5 local)
+  - slot 8 swarm ✓ (iter-94 anchor: V2 id=8)
+  - slot 10 doc_room_create ✓ (iter-95 anchor: V3 id=1)
+  - slot 11 doc_room_read ✓ (iter-95 anchor: V3 id=2)
+  - slot 12 memory_consolidation ✓ (iter-92 anchor: V3 id=0)
+- **Action (per orphan slot):**
+  1. **slot 3 `burn`** — option (a) flip `--burn` mode doc-ask to anchor as `type: 'burn'` instead of `type: 'doc_ask'` with burn flag; option (b) add a parent-aggregate burn receipt similar to memory_consolidation.
+  2. **slot 4 `memory_access`** — wire the runtime pipeline's memory-read codepath to anchor a `memory_access` receipt every time a grant is consumed.
+  3. **slot 5 `skill_exec`** — flip `ivaronix doc ask <file> --skill <id>` and `ivaronix skill run` paths to anchor as `type: 'skill_exec'` instead of `type: 'doc_ask'` when a non-default skill is invoked.
+  4. **slot 7 `passport_update`** — add a `--anchor-passport-receipt` flag to the memory-snapshot anchor flow that ALSO anchors a `passport_update` receipt referencing the on-chain `updateMemoryRoot` tx.
+  5. **slot 9 `subscription_skill_exec`** — add an `ivaronix subscribe check-in` CLI that calls `SubscriptionEscrowV2.runCheckIn` and anchors a `subscription_skill_exec` receipt.
+- **Effort:** ~30min per slot · 5 slots · so ~2.5h total. Each can ship independently. Worth pairing with a `verify-orphan-receipt-types.ts` regression so the catalog stays honest going forward.
+
 ### B-V2-30 · Split operator anchoring key from signing key (K-21 hardening)
 - **Source:** HALF_BAKED §K-21 (High). Today one operator wallet signs receipts, anchors, calls `recordReceipt`, uploads to Storage, pays gas. Compromise forges every Studio-anchored receipt and drains every funded contract.
 - **Why queued not shipped:** the structural fix is SIWE handshake (sweep 245e017 already shipped `signedBy: 'user-direct'` support), which makes the operator's key not load-bearing for *signing* receipts — the user signs in the browser via wagmi, operator only anchors. Production rollout needs the SIWE flow promoted from optional to required for receipt creation. Threat-model JSDoc in `delegate.ts:34-49` documents the current operator-machine-custody boundary.
