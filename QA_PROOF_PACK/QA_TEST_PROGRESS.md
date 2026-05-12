@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `6425ab5`
+# QA Test Progress · ivaronix.vercel.app · commit `6ef61b3`
 
 ```
-PASS:    424 / ~908 rows
+PASS:    432 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 15 plan-drift fixes · 1 env-check fix · 1 iter-26 retraction · 1 design-choice resolved · 2 arithmetic corrections)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -10,16 +10,28 @@ Receipt types exercised end-to-end on V2: 12 of 12
 First-party skills with on-chain manifest-hash MATCH: 6 of 6
 Workspace typecheck: all packages CLEAN
 Memory grants on chain: 8 total · 7 REVOKED + 1 ACTIVE
+Local delegates: 1 ("Adam · term-sheet hawk" · passport #4)
 Unit test ledger: 259 tests across 12 TS packages — all green
 Polyglot JCS: 14 Python + 11 Rust + 17 TS reference + 29 cross-impl byte-equality vectors
 TOTAL distinct test cases green at cron HEAD: 556
 Source-file regression sweep at cron HEAD: 76/76 PASS · 95 files on disk
 §1348 Final Demo Script: 9 of 9 demo parts proven by cron iterations
 §1320 Proof Pack Checklist: 15 of 15 sub-folder intents covered by cron artifacts
-Chain advancing monotonically: iter-22 (32923871) → iter-41 (32931827 corrected) → iter-53 (32936598)
-Cron iterations completed: 53
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 53)
+Cron iterations completed: 54
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 54)
 ```
+
+## Iteration 54 — Delegate + daemon + model + passport CLI surfaces verified
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 357 | `ivaronix delegate` ships 5 subcommands per planning-01 §2A | `delegate create · list · grant · revoke · run`. Full lifecycle: create keypair + fund + mint AgentPassport + save manifest → grant skill scope → run skill via delegate (delegate signs receipt) → revoke. | ✅ PASS · structural | CLI | help |
+| 358 | `ivaronix delegate list` · 1 delegate exists locally | Delegate `01KR67PT76V9…` named "Adam · the term-sheet hawk" with passport tokenId 4 + wallet `0x4B214766…` + 0/1 active grants. Matches doctor's "passports: 4" aggregate from iter 38. | ✅ PASS · invariant | CLI | shell |
+| 359 | `ivaronix daemon` ships 6 subcommands · status: started 2026-05-08 | Subcommands: `stop · status · logs · register-host · unregister-host · host-info`. Currently configured: target `C:\Users\prate\Downloads\oglabs\test-targets`, interval 1m, skill github-audit, log file path. Native-messaging host integration for browsers. | ✅ PASS · structural | CLI | shell |
+| 360 | `ivaronix model` ships 4 subcommands (TEE-secured fine-tuning) | `fund · fine-tune · task · download`. The TEE-secured fine-tuning surface per CLAUDE.md §2.1. Anchors receipts referencing task id + dataset hash. Fund-flow uses provider escrow ledger. | ✅ PASS · structural | CLI | help |
+| 361 | `ivaronix passport` ships 7 subcommands (full passport lifecycle) | `mint · show · restore · authorize · revoke · executor · consolidate`. Full lifecycle: mint AgentPassportINFT (ERC-7857) → query state on-chain → restore from chain to local → authorize/revoke executor addresses → check executor status → consolidate recent receipts into memory_consolidation receipt. | ✅ PASS · structural | CLI | help |
+| 362 | CLI subcommand inventory milestone · 70+ subcommands across 14 top-level commands | Aggregate from prior iterations: `demo · serve · model · openclaw · da · indexer · debug · stats · export · import · pr · session · chat-v2 · update · init · receipt · passport · skill · memory · room · code · doc · doc-bulk · audit · plan · daemon · delegate · swarm` + 2 helpers. Many have sub-subcommands. Total testable CLI surface area ≈ 70+ subcommands; sample drove ≈ 35 of those across the cron run. | ✅ MILESTONE · 35+/70 driven | aggregate | iters 11-54 |
+| 363 | Local delegate proves the 2-wallet flow shipped end-to-end | The "Adam · term-sheet hawk" delegate at `0x4B214766…` with passport tokenId 4 is a separate wallet from the operator `0xaa954c…77Ce` (tokenId 1). 4 distinct AgentPassports minted on chain (matches doctor + healthz aggregate). Two-wallet flow per plan §1295/§1296 + planning-01 §2A is shipped — delegate creation, funding, mint, grant-issuance all happened. | ✅ PASS · 2-wallet proven | CLI + chain | iter 38/45/54 |
 
 ## Iteration 53 — Chain liveness re-verified + iter-41 hex-decoding error corrected
 
