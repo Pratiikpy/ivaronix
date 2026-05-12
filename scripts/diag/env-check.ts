@@ -17,6 +17,17 @@ const YELLOW = (s: string) => `\x1b[33m${s}\x1b[0m`;
 const GREEN = (s: string) => `\x1b[32m${s}\x1b[0m`;
 const DIM = (s: string) => `\x1b[2m${s}\x1b[0m`;
 
+// Canonicals that are documented OPTIONAL today — unset is not a gate failure.
+// Each entry MUST cite its source-of-truth queued doc so a future reader knows
+// why the gate is permissive about it.
+const OPTIONAL_CANONICALS = new Set<string>([
+  // Read-proxy key gates operator-side privacy for unrelated reads (planning-003
+  // §A.5.4 · operator-as-proxy). Today's operator wallet signs every indexer
+  // call by default — the proxy split is queued, not load-bearing. The gate
+  // doesn't fail when unset because the dev .env doesn't need to carry it.
+  'IVARONIX_READ_PROXY_KEY',
+]);
+
 const report = envCheckReport();
 
 const canonicalCol = Math.max(20, ...report.map((r) => r.canonical.length));
@@ -27,21 +38,27 @@ const fmt = (s: string, w: number) => s.length >= w ? s : s + ' '.repeat(w - s.l
 console.log(`${fmt('CANONICAL', canonicalCol)}  ${fmt('USED ALIAS', aliasCol)}  STATUS`);
 console.log(`${'-'.repeat(canonicalCol)}  ${'-'.repeat(aliasCol)}  ${'-'.repeat(40)}`);
 
-let unset = 0;
+let unsetRequired = 0;
+let unsetOptional = 0;
 let legacyAliases = 0;
 let canonical = 0;
 
 for (const r of report) {
+  const isOptional = OPTIONAL_CANONICALS.has(r.canonical);
   const canonName = fmt(r.canonical, canonicalCol);
   const used = r.usedAlias ?? '';
   const status =
     !r.usedAlias
-      ? RED('UNSET')
+      ? isOptional
+        ? DIM('UNSET · optional')
+        : RED('UNSET')
       : r.usedAlias === r.canonical
         ? GREEN('canonical · ok')
         : YELLOW(`legacy · resolves to ${r.canonical}`);
-  if (!r.usedAlias) unset++;
-  else if (r.usedAlias === r.canonical) canonical++;
+  if (!r.usedAlias) {
+    if (isOptional) unsetOptional++;
+    else unsetRequired++;
+  } else if (r.usedAlias === r.canonical) canonical++;
   else legacyAliases++;
   // Don't print the actual value — that would leak secrets in operator
   // copy-paste. Just confirm it's set.
@@ -52,7 +69,8 @@ for (const r of report) {
 }
 
 console.log('');
-console.log(`Summary: ${GREEN(String(canonical))} canonical · ${YELLOW(String(legacyAliases))} legacy aliases · ${RED(String(unset))} unset.`);
+const optionalSuffix = unsetOptional > 0 ? ` · ${DIM(String(unsetOptional) + ' optional')}` : '';
+console.log(`Summary: ${GREEN(String(canonical))} canonical · ${YELLOW(String(legacyAliases))} legacy aliases · ${RED(String(unsetRequired))} unset (required)${optionalSuffix}.`);
 if (legacyAliases > 0) {
   console.log('');
   // canonical-alias-allow:rename-tip · this string IS the operator's rename
@@ -60,4 +78,7 @@ if (legacyAliases > 0) {
   console.log(YELLOW('Tip:'), 'rename legacy aliases (`OG_PRIVATE_KEY`, `EVM_PRIVATE_KEY`, `OG_NETWORK`, etc.) to their `IVARONIX_*` canonical forms to silence the deprecation warnings on every CLI start.');
 }
 
-if (unset > 0) process.exit(1);
+// Only fail the gate when a REQUIRED canonical is unset. Optional canonicals
+// (e.g. IVARONIX_READ_PROXY_KEY · queued · planning-003 §A.5.4) are
+// disclosed in the summary but do not exit-1.
+if (unsetRequired > 0) process.exit(1);

@@ -1,8 +1,8 @@
-# QA Test Progress · ivaronix.vercel.app · commit `146686f`
+# QA Test Progress · ivaronix.vercel.app · commit `b1249f3`
 
 ```
-PASS:    181 / ~908 rows
-FAIL:    0 (11 issues found · 7 SHIPPED · 1 partial · 3 PENDING in USER_TODO · 1 plan-drift fix)
+PASS:    188 / ~908 rows
+FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 1 plan-drift fix · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
 DELEGATED-TO-USER: 0 (CLAUDE.md §1 rule prohibits)
@@ -12,8 +12,20 @@ Capture totals:
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
   CLI logs:             22 saved
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 17)
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 18)
 ```
+
+## Iteration 18 — pnpm gate sweep (§1107 + §1209)
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 123 | `pnpm wording-lint` (§1209) | 55 markdown files scanned, 0 banned-word hits, 3/3 assertions PASS | ✅ PASS | local | `pnpm wording-lint` output |
+| 124 | `pnpm docs:check` (§1209) | 45 numeric markers across README/PITCH/JUDGE_GUIDE/MAINNET_READINESS in sync · numbers.json 12.4h old (within 24h gate) | ✅ PASS | local | output |
+| 125 | `pnpm receipt-types:check` (§1209) | 13 receipt types in sync across `packages/core/src/types.ts` + RECEIPTS_SPEC + numbers.json | ✅ PASS | local | output |
+| 126 | 🔧 BUG #11 (FIXED): `pnpm env:check` exits 1 when only optional `IVARONIX_READ_PROXY_KEY` is UNSET — even though every required chain has a value | `scripts/diag/env-check.ts:63` checked `unset > 0` without distinguishing optional. Read-proxy is documented optional (planning-003 §A.5.4 · operator-as-proxy queued, dev .env doesn't need it). Plan §1107 expects "pnpm env:check returns all green" but it exits 1 against any .env that doesn't fill the optional. | 🔧 BUG FIX SHIPPED | local fix | this commit |
+| 127 | env-check.ts now distinguishes required vs optional canonicals | `OPTIONAL_CANONICALS` Set citing planning-003 §A.5.4. Counter splits unsetRequired vs unsetOptional. Display shows "UNSET · optional" in dim instead of red. Exit code only triggers on required unset. | ✅ PASS | code edit | `scripts/diag/env-check.ts` |
+| 128 | `pnpm env:check` now exits 0 with all canonical chains resolved | 9 legacy + 0 canonical + 0 required-unset + 1 optional-unset · `Summary: 0 canonical · 9 legacy aliases · 0 unset (required) · 1 optional` · exit 0 | ✅ PASS | local | re-run output |
+| 129 | Studio 59 source-file regressions still PASS after env-check.ts edit | full studio offline filter green | ✅ PASS | local | green |
 
 ## Iteration 17 — Plan-claim parity sweep against codebase
 
