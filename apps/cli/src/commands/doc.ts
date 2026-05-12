@@ -495,13 +495,25 @@ docCommand
     const primaryAtt = consensusResult.attestations.find((a) => a.role === primaryRole);
 
     const draft = buildReceipt({
-      // B-V2-35 slot 3 closure: burn-mode runs anchor as type 'burn'
-      // (canonical slot 3). Non-burn quick-tier runs stay 'doc_ask';
-      // multi-role runs stay 'consensus'. The burn sub-field
-      // (storage.encryption + burn.sessionKeyDestroyedAt) is still
-      // populated; only the top-level type flips so chain consumers
-      // can filter on receiptType==3 to find burn-mode runs.
-      type: burnMode ? 'burn' : tier === 'quick' ? 'doc_ask' : 'consensus',
+      // Receipt-type selection (B-V2-35 closures):
+      //   - burnMode → 'burn' (slot 3 · closed iter-96) — the
+      //     bytes-are-encrypted physical-mode signal.
+      //   - non-default skill → 'skill_exec' (slot 5 · closed iter-99)
+      //     — user explicitly invoked a named skill via --skill <id>.
+      //   - quick tier, default skill → 'doc_ask' (slot 0) — the
+      //     conversational doc-question shape.
+      //   - multi-role tier, default skill → 'consensus' (slot 2) —
+      //     the multi-role review shape.
+      // The burn sub-field (storage.encryption + burn.sessionKeyDestroyedAt)
+      // still populates regardless; only the top-level type flips so
+      // chain consumers can filter receiptType to find each mode.
+      type: burnMode
+        ? 'burn'
+        : skill.id !== 'private-doc-review'
+          ? 'skill_exec'
+          : tier === 'quick'
+            ? 'doc_ask'
+            : 'consensus',
       agent: {
         passportId: `did:0g:passport:${wallet.address}:1`,
         ownerWallet: wallet.address as `0x${string}`,
