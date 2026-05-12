@@ -427,16 +427,25 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   1. ✅ `contracts/src/ReceiptRegistryV3.sol` — new fresh-deploy contract per `.claude/rules/contracts.md` "V2 = new contract, NOT upgrade". Adds `TYPE_DOC_ROOM_CREATE = 10`, `TYPE_DOC_ROOM_READ = 11`, `TYPE_MEMORY_CONSOLIDATION = 12` constants. Extends type-cap require: `require(p.receiptType <= TYPE_MEMORY_CONSOLIDATION, "ReceiptRegistryV3: invalid type");`. EIP-712 version bumped to "3" so V2 signatures cannot replay on V3 (domain separator differs).
   2. ✅ `contracts/test/ReceiptRegistryV3.t.sol` — 6 Foundry tests covering all 3 new slots + legacy 0-9 still works + out-of-range (13) rejection + domain separator distinction. All 6 PASS.
   3. ✅ Full Foundry suite now 173 tests (was 167) all green.
-- **What's still PENDING (operator-action):**
-  - Deploy `ReceiptRegistryV3` to Galileo testnet. Per CLAUDE.md §1 "the only blocker is money" — needs operator-funded gas (≈0.001-0.005 OG). Same class as A-2 mainnet promotion gate.
-  - Update `contracts/deployments/testnet.json` with V3 address.
-  - Add V3 to `KNOWN_RECEIPT_REGISTRIES` in `packages/core/src/types.ts`.
-  - Write `packages/og-chain/src/contracts/ReceiptRegistryV3.ts` client (mirrors V2 client; trivial diff).
-  - Update `apps/studio/src/lib/chain.ts` to V3-first → V2 → V1 fallback chain.
-  - Remove `RECEIPT_TYPE_CODE = 4` coercion from `room.ts:588` + `passport-consolidate.ts:366` (replace with V3 client direct anchor of slots 10/11/12).
-  - Document migration in `CHANGELOG.md` + `docs/RECEIPT_SCHEMA.md` + `docs/HALF_BAKED.md`.
-- **Effort remaining:** ~30min OG deploy + ~1h source-side cleanup post-deploy.
-- **The chain-cap coercion of slots 10/11/12 to type-4 on-chain is now a known-but-fixable gap** — the V3 source + tests are ready, the deploy is the only gate. Iter-16's finding led to iter-72's swarm.ts fix for slot 8 (which V2 already admits) + iter-76's V3 source for slots 10/11/12.
+- **What shipped iter-77 (TS client):**
+  4. ✅ `packages/og-chain/src/contracts/ReceiptRegistryV3.ts` — full client mirroring V2 client (signAndAnchor, getReceipt, findByReceiptRoot, findByAgent, nextId, nonces, agentReceiptCount). EIP-712 domain version "3". Commit `a7b5ee9`.
+  5. ✅ `packages/og-chain/src/index.ts` re-exports V3 client. Commit `a7b5ee9`.
+- **What shipped iter-78 (deploy):**
+  6. ✅ Operator deployed `ReceiptRegistryV3` via `forge create` with `ETH_GAS_PRICE=5000000000` + `ETH_PRIORITY_GAS_PRICE=2500000000` env vars (forge default rejects chainId 16602 EIP-1559 detection — found via TRY-BEFORE-SKIP audit · CLAUDE.md §1 last bullet). Gas burn ≈0.001 OG. Deploy tx `0x513acfa90473807c00423c97cf55897d04f2fa61c38668958b364985e934bda5` block 32934123. Contract live at `0x7396D536594e2BE833070c7EB441A10906046257`.
+  7. ✅ `contracts/deployments/testnet.json` updated with V3 entry (address + tx + chainscan + deployedAt).
+  8. ✅ `KNOWN_RECEIPT_REGISTRIES.testnet` Set in `packages/core/src/types.ts` includes V3 address.
+  9. ✅ `pnpm numbers:refresh` auto-derived V3 into `numbers.json` contracts.list + contracts.addresses (sweep 36 helper). Commit `13cabe5`.
+- **What shipped iter-79 (Studio chain helper wiring):**
+  10. ✅ `apps/studio/src/lib/chain.ts` — added `getReceiptRegistryV3()`. `UnifiedRegistries = {v3, v2, v1}`. `UnifiedReceipt.registryVersion: 'v1' | 'v2' | 'v3'`. `unifiedNextId()` returns `{v3, v2, v1, total}`. `unifiedGetReceipt`, `unifiedFindByReceiptRoot`, `unifiedFindByAgent` all V3-first then V2 then V1.
+  11. ✅ `scripts/qa/metamask-e2e/verify-a13-studio-v2-first.ts` regex updated to assert `{v3, v2, v1, total}` shape. All 59 studio regressions PASS. Commit `34ef283`.
+- **What shipped iter-80 (CLI canonical-slot anchoring):**
+  12. ✅ `apps/cli/src/commands/room.ts` — `room create` flow anchors slot 10 (`doc_room_create`) on V3, coerces to slot 5 on V2/V1. `room read` flow anchors slot 11 (`doc_room_read`) on V3, coerces to slot 4 on V2/V1.
+  13. ✅ `apps/cli/src/commands/passport-consolidate.ts` — anchors slot 12 (`memory_consolidation`) on V3, coerces to slot 4 on V2/V1.
+  14. ✅ Both files: V3 → V2 → V1 nullish-coalescing registry selection. `pnpm --filter @ivaronix/cli typecheck` DONE; 59 studio regressions PASS. Commit `4cb4fd1`.
+- **B-V2-32 FULLY CLOSED 2026-05-12.** 14-step source + deploy + wire + cleanup chain end-to-end. The chain-cap coercion of slots 10/11/12 to type-4 is FIXED on V3 — new anchors on doc_room_create / doc_room_read / memory_consolidation now record their canonical slot on chain. V1+V2 receipts keep their legacy slot encoding (chain history is immutable).
+- **What's still queued (documentation polish, not blocking):**
+  - Update `docs/RECEIPT_SCHEMA.md` with the v2-vs-v3 slot-mapping table (note: V2 receipts produced before 2026-05-12 record slots 10/11/12 as type-4 on chain; off-chain canonical name is still in the receipt body).
+  - Update `docs/HALF_BAKED.md` to mark the chain-cap coercion as ✅ CLOSED with commit citation.
 
 ### B-V2-31 · `RECEIPT_TYPES.swarm` (slot 8) now produced by swarm CLI · ✅ SHIPPED 2026-05-12 · commit 3220e40-then-iter72
 - **Source:** QA plan §1145 row 8 + iteration-14 cron drive of `ivaronix swarm run`. The plan expected every swarm task to anchor a receipt with `type: 'swarm'`. Pre-iter-72 the code at `apps/cli/src/commands/swarm.ts:157` hardcoded `receiptType: 'doc_ask'` for every dispatched task, so `RECEIPT_TYPES.swarm` was enum-only with no on-chain producer.
