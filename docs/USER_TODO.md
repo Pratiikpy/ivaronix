@@ -347,7 +347,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 - **Post-deploy:** add address to `contracts/deployments/<network>.json` under `SkillRegistryV2`. Studio + CLI skill-publishing surfaces query V2 first via the V2-first read pattern. To reserve additional names post-deploy: `reserveSkillName(skillId, owner)` from the contract owner wallet.
 
-### B-V2-16 · Deploy MemoryAccessLogV2 (log-spoofing fix)
+### B-V2-16 · Deploy MemoryAccessLogV2 (log-spoofing fix) · ✅ SHIPPED 2026-05-12 · 0xCbfE1f526483283Bba80c2Bed3622a56904bF96d · tx 0x3d389299...
 - **Source:** plan-003 §A.5.12 · code-complete today (`contracts/src/MemoryAccessLogV2.sol` + 10/10 Foundry tests pass).
 - **Why:** V1's `MemoryAccessLog` admits in NatSpec that anyone can call `logAccess(agent=victim, grantId=anything, ...)` for ~$0.001 of gas, polluting the victim's audit trail. V2 enforces `msg.sender == agent` for self-logs OR a valid `CapabilityRegistry.isValid(grantId, msg.sender, scopeHash)` cross-check for grant-backed logs. Random wallets revert.
 - **Status:** contract + deploy script + Foundry tests (10/10 PASS) shipped. Mainnet deploy waits on §A-2 funding + B-V2-15 (V2 needs the registry address pinned at construction).

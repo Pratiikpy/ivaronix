@@ -28,7 +28,7 @@
     "source": "packages/core/src/types.ts RECEIPT_TYPES"
   },
   "contracts": {
-    "deployed": 10,
+    "deployed": 11,
     "foundryTests": 177,
     "list": [
       "AgentPassportINFT",
@@ -37,6 +37,7 @@
       "CapabilityRegistryV2",
       "Erc7857Verifier",
       "MemoryAccessLog",
+      "MemoryAccessLogV2",
       "ReceiptRegistry",
       "ReceiptRegistryV2",
       "ReceiptRegistryV3",
@@ -49,6 +50,7 @@
       "CapabilityRegistryV2": "0x1351CD87360f0366D0A0068164e606B3c320F3E1",
       "Erc7857Verifier": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
       "MemoryAccessLog": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
+      "MemoryAccessLogV2": "0xCbfE1f526483283Bba80c2Bed3622a56904bF96d",
       "ReceiptRegistry": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "ReceiptRegistryV2": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
       "ReceiptRegistryV3": "0x7396D536594e2BE833070c7EB441A10906046257",

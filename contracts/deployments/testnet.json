@@ -71,7 +71,16 @@
     "MemoryAccessLog": {
       "address": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
       "txHash": "0x3a94eee55dbf5b6a0aaba3be84453eef665f3ce960f984449f1d26d970f8eb28",
-      "explorer": "https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119"
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
+      "note": "V1; stays live for any existing log entries (chain history immutable). New writes land on MemoryAccessLogV2."
+    },
+    "MemoryAccessLogV2": {
+      "address": "0xCbfE1f526483283Bba80c2Bed3622a56904bF96d",
+      "txHash": "0x3d389299ab49859719b6829886988077329d20887ef988b9f6294f6fd776fa18",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d",
+      "deployedAt": "2026-05-12",
+      "capabilityRegistry": "0x1351CD87360f0366D0A0068164e606B3c320F3E1",
+      "note": "B-V2-16 · HALF_BAKED §K-23 fix. logAccess now enforces msg.sender == agent (self-log path) OR CapabilityRegistryV2.isValid(grantId, msg.sender, scopeHash) cross-check (grant-backed path). Random wallets revert. V2 capability registry pinned at construction; passes the cross-check for grants on the V2 registry only. 10/10 Foundry tests PASS."
     },
     "SkillRegistry": {
       "address": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
