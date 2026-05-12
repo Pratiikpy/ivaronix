@@ -44,7 +44,7 @@ The receipt URL renders the answer, the TIER 1 / TIER 2 verification chip, the o
 - `npx ivaronix receipt verify <id> --tee-independent` — re-run the TEE attestation locally; no Ivaronix infrastructure needed.
 - `npx ivaronix skill list` — first-party + community-imported skills.
 - `npx ivaronix passport mint <handle>` — claim an ERC-7857 Agent Passport.
-- `npx ivaronix mem grant <agent> --scope all` — grant a third-party agent access to your memory.
+- `npx ivaronix memory grant <agent> --scope all` — grant a third-party agent access to your memory. (Per iter-98, the grant call also anchors a canonical-slot-4 `memory_access` receipt on V3 ReceiptRegistry.)
 - `npx ivaronix subscribe create <agent>` — open a SubscriptionEscrowV2 subscription with an agent. `subscribe fund <id>` tops up, `subscribe check-in <id> <attestationReceiptId>` fires the periodic agent-side check-in and anchors a canonical-slot-9 receipt.
 
 ## Setup

@@ -60,6 +60,14 @@ const TARGET_DOCS = [
   'docs/PITCH.md',
   'docs/JUDGE_GUIDE.md',
   'docs/MAINNET_READINESS.md',
+  // apps/npx-cli/README.md is the user-facing surface that gets
+  // shipped to npm and is what new users read first on
+  // `npx ivaronix --help`. Same drift-prevention discipline as the
+  // workspace README. iter-108 found a fresh `subscribe` command
+  // ship that wasn't yet in the workspace README's Common commands
+  // list — adding npx-cli/README.md here would have caught it the
+  // moment iter-100 shipped instead of 8 iterations later.
+  'apps/npx-cli/README.md',
 ];
 
 const violations: Array<{ file: string; line: number; cmd: string }> = [];
