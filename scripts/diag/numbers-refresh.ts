@@ -298,6 +298,57 @@ function countVendoredSkills(): number {
 }
 
 /**
+ * Count paid creator runs + sum creator earnings for a specific skill by
+ * scanning all local anchored-receipt directories (same paths the
+ * `ivaronix skill earn-history` CLI walks). Closes B-V2-34 first deliverable
+ * (commit 17a2fbc · iter-63 immediate patch + this iter helper · iter-74).
+ *
+ * Mirrors apps/cli/src/commands/skill.ts:540-598 aggregation logic but
+ * scoped to a single skill id + returning {runs, creatorOG} for the
+ * numbers.json buildSnapshot to render. Pre-helper the
+ * skills.creatorEarningsOG / creatorEarningsLabel fields were hand-frozen
+ * via `existing.skills.creatorEarningsOG` preserves (caught iter-63 ·
+ * drift 0.0014 → 0.0018). Auto-derivation closes the drift class
+ * structurally.
+ *
+ * Returns { runs, creatorOG } where creatorOG is the human-readable
+ * neuron → OG conversion (sum/1e18) trimmed to 4 decimal places.
+ */
+function countCreatorEarnings(skillId: string): { runs: number; creatorOG: string } {
+  const dirs: string[] = [];
+  for (const sib of ['.ivaronix', 'apps/cli/.ivaronix', 'apps/mcp-server/.ivaronix', 'apps/studio/.ivaronix']) {
+    const d = resolve(REPO_ROOT, sib, 'receipts', 'anchored');
+    if (existsSync(d) && !dirs.includes(d)) dirs.push(d);
+  }
+  let runs = 0;
+  let creatorNeuron = 0n;
+  for (const d of dirs) {
+    let entries: string[];
+    try { entries = readdirSync(d); } catch { continue; }
+    for (const e of entries) {
+      if (!e.endsWith('.json')) continue;
+      try {
+        if (!statSync(resolve(d, e)).isFile()) continue;
+        const r = JSON.parse(readFileSync(resolve(d, e), 'utf8')) as {
+          request?: { skillId?: string };
+          billing?: { feeSplit?: { creatorNeuron?: string } };
+        };
+        if (r.request?.skillId !== skillId) continue;
+        const fs = r.billing?.feeSplit;
+        if (!fs) continue;
+        runs += 1;
+        creatorNeuron += BigInt(fs.creatorNeuron ?? 0n);
+      } catch { /* skip malformed */ }
+    }
+  }
+  // Convert neuron → OG with 4-decimal precision. BigInt math first to
+  // avoid floating-point precision loss on the large neuron values.
+  const TEN_18 = 10n ** 18n;
+  const og = Number(creatorNeuron * 10000n / TEN_18) / 10000;
+  return { runs, creatorOG: og.toFixed(4) };
+}
+
+/**
  * Count entries in the `VECTORS: list = [...]` block in
  * `scripts/verifier-py/cross_check.py`. Each entry is one byte-equality
  * test vector across TS / Python / Rust. The count drifts when test
@@ -392,13 +443,20 @@ async function buildSnapshot(): Promise<NumbersFile> {
       // hand-frozen value drifted whenever a new import landed without
       // a matching numbers.json edit (cron-sweep finding · 2026-05-10).
       const vendored = countVendoredSkills();
+      // B-V2-34 fix · iter-74: auto-derive creator earnings from local
+      // anchored receipts instead of preserving `existing.skills.creatorEarnings*`.
+      // The pre-fix hand-freeze drifted 0.0014/26 → 0.0018/36 across iters 22-63
+      // before iter-63 caught it manually. countCreatorEarnings() now recomputes
+      // every refresh so the value matches the runtime CLI's `skill earn-history
+      // private-doc-review` output byte-equal.
+      const pdr = countCreatorEarnings('private-doc-review');
       return {
         firstParty: firstPartySkills.length,
         firstPartyList: firstPartySkills,
         vendored,
         catalogTotal: firstPartySkills.length + vendored,
-        creatorEarningsOG: existing.skills.creatorEarningsOG,
-        creatorEarningsLabel: existing.skills.creatorEarningsLabel,
+        creatorEarningsOG: pdr.creatorOG,
+        creatorEarningsLabel: `${pdr.creatorOG} OG · ${pdr.runs} paid runs of private-doc-review · 90/10 split`,
       };
     })(),
     packages: {
