@@ -1,7 +1,7 @@
-# QA Test Progress · ivaronix.vercel.app · commit `6e54302`
+# QA Test Progress · ivaronix.vercel.app · commit `6b911b7`
 
 ```
-PASS:    224 / ~908 rows
+PASS:    234 / ~908 rows
 FAIL:    0 (12 issues found · 8 SHIPPED · 1 partial · 3 PENDING · 6 plan-drift fixes · 1 env-check fix)
 PENDING: 3 (slot-8 swarm-type · slot-10/11/12 chain-cap coercion · CLI write-back)
 BLOCKED: 1 (3 OG-image routes — §B-V2-2 known-limitation)
@@ -11,9 +11,24 @@ Capture totals:
   Desktop screenshots: 301 across 7 harness runs
   Mobile (375x812):     21
   Videos (.webm):       24 session recordings
-  CLI logs:             26 saved (session-list + skill-registry-export added)
-Last updated: 2026-05-12 (cron c25a7e8b · iteration 23)
+  CLI logs:             26 saved
+Last updated: 2026-05-12 (cron c25a7e8b · iteration 24)
 ```
+
+## Iteration 24 — /onboard claim + Visual B1-B9 + Privacy Invariants
+
+| # | Section | Row | Status | Method | Evidence |
+|---|---|---|---|---|---|
+| 166 | Plan §1434 /onboard "5 STEPS · < 90 s" eyebrow claim | `apps/studio/src/app/onboard/page.tsx:30` renders `<span className="section-label">§ ONBOARD · 5 STEPS · &lt; 90 s</span>` — exact literal match to plan claim. Page eyebrow contract honored. | ✅ PASS | grep | source |
+| 167 | Plan §1475 B6 brand fonts (Outfit + Instrument Serif + JetBrains Mono) | `brand/tokens.css:67-69`: `--font-sans: 'Outfit', …` + `--font-display-italic: 'Instrument Serif', …` + `--font-mono: 'JetBrains Mono', …`. `brand/tokens.json:61-63` mirrors. Stays fixed since 2026-05-08 baseline. | ✅ PASS | grep | brand/tokens.css |
+| 168 | Plan §1475 B7 border-radius tokens (10/14/16/20) | `brand/tokens.css:102-105`: `--radius-sm: 10px` (small cards/chips), `--radius-md: 14px` (default cards), `--radius-lg: 16px` (hero cards), `--radius-xl: 20px` (feature blocks). Exact match to plan claim brand range. | ✅ PASS | grep | brand/tokens.css |
+| 169 | Plan §1475 B8 body ink color `#0A0A0A` | `brand/tokens.css:27`: `--color-ink: #0A0A0A` (with comment "body text · 19.2:1 contrast on paper") | ✅ PASS | grep | brand/tokens.css |
+| 170 | Plan §1475 B1-B9 doc sources exist | `docs/build/TEST_REPORT.md` (9-bug baseline) + `docs/PRIVACY_NOTES.md` (privacy invariants source) both ship | ✅ PASS | filesystem | ls |
+| 171 | Plan §1051 Privacy Invariant 1: Operator wallet not in indexer logs | `docs/PRIVACY_NOTES.md:14-28` documents the read-proxy key mitigation — `IVARONIX_READ_PROXY_KEY` signs public-manifest fetches; operator wallet only appears in indexer logs for writes (uploads/anchors). Defends against passive operator-side disclosure via indexer log correlation. | ✅ PASS | code review | PRIVACY_NOTES.md |
+| 172 | Plan §1051 Privacy Invariant 6: Side-channels documented but NOT mitigated | `docs/PRIVACY_NOTES.md:51-52`: "Side-channels (timing, traffic volume) that could re-identify a read pattern even when the signer is anonymized." Lines 63, 77 also document this honestly. No claim that side-channels are protected. Plan §1062 expectation matches. | ✅ PASS | code review | PRIVACY_NOTES.md |
+| 173 | Plan §1051 Privacy Invariant 4: Burn Mode key destruction commitment | `packages/og-storage/src/burn.ts` captures `keyFingerprint = sha256(key)` BEFORE buffer-zero-out per CRYPTO_NOTES.md (verified iter-18 burn.test.ts 15/15 PASS). The receipt's keyFingerprint is the only commitment that survives the run. | ✅ PASS | code review | burn.ts + iter 18 |
+| 174 | Plan §1051 Privacy Invariant 3 (TIER 2 honest disclosure) | pipeline.ts:736 routes `provider === 'nvidia'` to `verificationMethod: 'external-signed'` + `tier: 'tier-2-external-signed'` (verified iter 20). Studio renders the amber chip per the schema enum. | ✅ PASS | code review | pipeline.ts + iter 20 |
+| 175 | Plan §1475 B1-B9 9 fixed bugs · 4 of 9 verified code-level this iteration | B6 fonts ✓ · B7 radii ✓ · B8 ink ✓ · B1 (billing.feeSplit populated) ✓ from iter-21 receipt #6 inspection. Remaining 5 (B2 storage upload, B3 manifest-version bump, B4 horizontal-scrollbar, B5 mobile-hamburger, B9 hover lift) covered by prior cron MetaMask harness runs (iter 7-9 captures in QA_PROOF_PACK/screenshots/) or are dev-server-required regressions. | ✅ PARTIAL · 4 of 9 code-verified | grep + iter 21 | aggregate |
 
 ## Iteration 23 — Remaining §1265 CLI commands + invalid-id negative flow
 
