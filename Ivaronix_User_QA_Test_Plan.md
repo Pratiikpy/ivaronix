@@ -882,7 +882,7 @@ memory-grant-2wallets-desktop-2026-05-11.png
 | `code-edit` | 1 | Run on a safe local test repo. | Proposes or applies controlled edits with permission. |
 | `content-pitch-review` | 0/1 | Run against pitch/landing copy. | Gives clear market/story feedback. |
 | `plan-step` | 0/1 | Run against a task plan. | Produces next actionable steps. |
-| `imports` | n/a | **NOT SHIPPED YET** — no `seed-skills/imports/SKILL.md` exists. Mark `PENDING` until skill ships or remove from the catalog. | n/a — first-party catalog should list 6 skills, not 7. |
+| `imports` | n/a | **NOT a single skill** — `seed-skills/imports/` is the <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->-skill vendored catalog directory, not a skill itself. No `seed-skills/imports/SKILL.md` exists at the top of the directory because each vendored skill lives at `seed-skills/imports/<name>/SKILL.md`. Plan claim "imports skill listed in some catalogs but doesn't exist" was confusing the directory with a singular skill. <!-- qa-plan-path-allow:imports-is-a-directory-not-a-single-skill --> | n/a — first-party catalog lists <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> skills, vendored catalog has <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->. |
 
 ## Golden Test Files (proposed · not all shipped today)
 
@@ -1053,7 +1053,7 @@ Specific cryptographic guarantees the codebase claims. Each must hold or the pri
 | Round-trip integrity over ASCII / Unicode / large strings / empty string | Run the test suite's four-shape round-trip; every case decrypts back exact. |
 | Auth-tag failure on wrong key | Decrypt with a key whose fingerprint != stored fingerprint → throws cleanly. |
 | Auth-tag failure on tampered ciphertext | Flip one byte in stored ciphertext → decrypt rejects (no silent garbage output). |
-| `keyFingerprint = sha256(realKey)` BEFORE buffer-zero-out | Source-file regression: `verify-burn-keyfingerprint-before-zero.ts` enforces ordering. Any later "I had the key" claim must produce a key whose `sha256` matches the receipt's `storage.encryption.keyFingerprint`. |
+| `keyFingerprint = sha256(realKey)` BEFORE buffer-zero-out | Source-file regression: `scripts/qa/metamask-e2e/verify-burn-keyfingerprint-before-zero.ts` enforces ordering (parses `packages/og-storage/src/burn.ts` and fails if `key.fill(0)` appears at or before the `keyFingerprint = sha256(...)` line). Any later "I had the key" claim must produce a key whose `sha256` matches the receipt's `storage.encryption.keyFingerprint`. |
 | No `createHash('sha256').update(plaintext)` patterns in `encryption.ts` | Source-file regression already enforces (line-level forbidden patterns). |
 
 ## Privacy Invariants (from `docs/PRIVACY_NOTES.md`)
@@ -1123,13 +1123,13 @@ Run `cd contracts && forge test -vvv` and confirm every `*.t.sol` test passes. T
 | Mixed (canonical wins) | Set both canonical AND legacy to different values. | Canonical value used; legacy is silently ignored. |
 | All 10 chains | Repeat for each: `*_SIGNER_KEY`, `*_READ_PROXY_KEY`, `*_RPC_URL`, `*_NETWORK`, `*_CHAIN_ID`, `*_WALLET_ADDRESS`, `*_ROUTER_KEY`, `*_ROUTER_URL`, `*_ROUTER_PROVIDER`, `*_DEFAULT_MODEL`. | Every chain resolves; `pnpm env:check` returns all green. |
 
-## Source-File Regression Suite (<!-- regressions:auto:total -->108<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->89<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
+## Source-File Regression Suite (<!-- regressions:auto:total -->110<!-- /regressions:auto:total --> verify-\*.ts files on disk · <!-- regressions:auto:automated -->91<!-- /regressions:auto:automated --> automated · <!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require live server)
 
-`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->108<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->89<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
+`scripts/qa/metamask-e2e/verify-*.ts` ships **<!-- regressions:auto:total -->110<!-- /regressions:auto:total --> verify-\*.ts files** (counted via `find scripts/qa/metamask-e2e -maxdepth 1 -name 'verify-*.ts' | wc -l`). Of these, **<!-- regressions:auto:automated -->91<!-- /regressions:auto:automated --> run automatically** (pre-commit on Studio offline · CI on all three offline filters); the remaining **<!-- regressions:auto:live -->19<!-- /regressions:auto:live --> require a running Studio dev server** and are gated behind the `studio-live` filter. The `verify-no-orphan-regressions.ts` meta-regression confirms every file is wired to at least one filter. A serious tester re-runs the whole offline suite to confirm what was tested matches what's on disk.
 
 | Suite | Command | Pass condition |
 |---|---|---|
-| Studio offline regressions (<!-- regressions:auto:studio -->72<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->72<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
+| Studio offline regressions (<!-- regressions:auto:studio -->74<!-- /regressions:auto:studio -->) | `pnpm --filter qa-metamask-e2e run regressions:studio` | All <!-- regressions:auto:studio -->74<!-- /regressions:auto:studio --> PASS. Pre-commit runs this suite on every `git commit`. |
 | CLI regressions (<!-- regressions:auto:cli -->13<!-- /regressions:auto:cli -->) | `pnpm --filter qa-metamask-e2e run regressions:cli` | All <!-- regressions:auto:cli -->13<!-- /regressions:auto:cli --> PASS. |
 | Contract regressions (<!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts -->) | `pnpm --filter qa-metamask-e2e run regressions:contracts` | All <!-- regressions:auto:contracts -->4<!-- /regressions:auto:contracts --> PASS. |
 | Live-server regressions (~<!-- regressions:auto:live -->19<!-- /regressions:auto:live -->) | `pnpm --filter qa-metamask-e2e run regressions:studio-live` after `pnpm --filter @ivaronix/studio dev` | Run before merging Studio changes that touch live-state behavior. |
