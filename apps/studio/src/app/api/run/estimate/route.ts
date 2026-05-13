@@ -183,7 +183,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const skillIdHash = keccak256(toUtf8Bytes(`skill:${body.skillId}`));
+    // skillId can arrive as either a slug ("private-doc-review") OR the
+    // already-hashed hex (0x... from /marketplace/<hex> routes). Detect
+    // and pass through unchanged when it's a hex; only hash slugs.
+    // Without this branch the marketplace flow double-hashes, yielding
+    // ownerOf=0 and a misleading "skill not published" error (P5 auto
+    // harness caught this 2026-05-13).
+    const isHex32 = /^0x[0-9a-fA-F]{64}$/.test(body.skillId);
+    const skillIdHash = isHex32
+      ? (body.skillId as `0x${string}`)
+      : keccak256(toUtf8Bytes(`skill:${body.skillId}`));
 
     // Look up pricing — use ethers v6 getFunction to satisfy strict TS.
     const pricingResult = (await ctx.contract.getFunction('getPricing')(skillIdHash)) as [bigint, number, number, boolean];
