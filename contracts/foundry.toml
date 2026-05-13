@@ -10,6 +10,19 @@ via_ir = false
 auto_detect_solc = false
 fs_permissions = [{ access = "read-write", path = "./broadcast" }]
 
+# Mainnet deploy profile. Inherits everything from `default` and flips
+# via_ir on for ~20% bytecode reduction. Activate with:
+#   FOUNDRY_PROFILE=mainnet forge build
+#   FOUNDRY_PROFILE=mainnet forge test
+#   FOUNDRY_PROFILE=mainnet forge create ...
+# The Galileo testnet deploys stay on the `default` profile (faster
+# compile, identical runtime semantics — via_ir is a code-gen pass,
+# not a behaviour change). FINAL_BUILD_PLAN.md Block K · sweep series.
+[profile.mainnet]
+via_ir = true
+optimizer = true
+optimizer_runs = 200
+
 [rpc_endpoints]
 testnet = "https://evmrpc-testnet.0g.ai"
 mainnet = "https://evmrpc.0g.ai"

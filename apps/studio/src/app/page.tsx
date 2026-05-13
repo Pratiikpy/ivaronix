@@ -135,40 +135,56 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
             <h1
               style={{
-                fontSize: 80,
-                lineHeight: 0.98,
+                fontSize: 72,
+                lineHeight: 1.0,
                 margin: 0,
                 letterSpacing: '-2px',
                 fontWeight: 700,
               }}
             >
-              <span>AI review for the documents you </span>
-              <span className="italic-display" style={{ fontWeight: 400 }}>can&apos;t paste</span>
-              <span> into ChatGPT.</span>
+              <span>A founder reviewing a term sheet shouldn&apos;t have to </span>
+              <span className="italic-display" style={{ fontWeight: 400 }}>trust the AI.</span>
             </h1>
             <p style={{ fontSize: 19, lineHeight: 1.5, color: 'var(--color-muted)', maxWidth: 580, margin: 0 }}>
-              Drop a contract, NDA, or term sheet covered by privilege or counterparty confidentiality.
-              Burn Mode encrypts it; the session key is destroyed after the run. The audit ships an
-              Action Receipt anchored on 0G Chain with the key fingerprint inside —{' '}
-              <strong style={{ color: 'var(--color-fg)', fontWeight: 600 }}>
-                anyone can independently re-verify it from any machine
-              </strong>
-              , even after the document is gone.
+              Ivaronix runs a private review of the document you can&apos;t paste into ChatGPT — a term sheet
+              under NDA, an indemnity clause, a data room before signing. Every review leaves a{' '}
+              <strong style={{ color: 'var(--color-fg)', fontWeight: 600 }}>cryptographic receipt</strong>{' '}
+              independently re-verifiable by anyone, on any machine, in 10 seconds. Paid on chain.
+              Creator credited 90%. Treasury 10%.
             </p>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <Link href="/onboard" className="btn-primary" style={{ textDecoration: 'none' }}>
-                Run a private audit →
+              <Link href="/?demo=true" className="btn-primary" style={{ textDecoration: 'none' }}>
+                Try the demo →
               </Link>
-              <Link href="/r/1004" className="btn-secondary" style={{ textDecoration: 'none' }}>
-                See a sample receipt
+              <Link href="/onboard" className="btn-secondary" style={{ textDecoration: 'none' }}>
+                Run on my own doc
               </Link>
-              {/* W12 — /thesis is the persona-locked story page. Prior nav
-                  link is "Why" but a hero CTA gets it in front of judges
-                  who never click the nav. */}
               <Link href="/thesis" className="btn-ghost" style={{ textDecoration: 'underline', alignSelf: 'center' }}>
                 Why Ivaronix →
               </Link>
+            </div>
+
+            <div
+              style={{
+                padding: '16px 18px',
+                background: 'var(--color-tonal)',
+                border: '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
+                fontFamily: 'var(--font-mono)',
+                fontSize: 13,
+                color: 'var(--color-fg)',
+                lineHeight: 1.6,
+                overflowX: 'auto',
+              }}
+            >
+              <div style={{ color: 'var(--color-muted)', fontSize: 11, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 6 }}>
+                Independent re-verify · runs on any machine
+              </div>
+              <code>$ pnpm ivaronix receipt verify rec_1004 --tee-independent</code>
+              <br />
+              <code style={{ color: '#166534', fontWeight: 600 }}>→ FULLY VERIFIED ✓</code>{' '}
+              <code style={{ color: 'var(--color-muted)' }}>schema · hash · signature · anchor · payment · TEE</code>
             </div>
 
             {/* Stat row — live numbers from chain */}
@@ -240,7 +256,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             className="section-label"
             style={{ flexShrink: 0 }}
           >
-            BUILT ON THE <span className="italic-display" style={{ textTransform: 'none', fontSize: 14, letterSpacing: 0 }}>full</span> OG STACK
+            BUILT ON THE <span className="italic-display" style={{ textTransform: 'none', fontSize: 14, letterSpacing: 0 }}>0G</span> PROOF STACK
           </span>
           <div
             style={{
@@ -288,7 +304,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="card">
             <div className="section-label">First-party skills</div>
             <div className="italic-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 8 }}>
-              5
+              {verifiedSkillsCount}
             </div>
             <div style={{ marginTop: 12, fontSize: 13, color: 'var(--color-muted)' }}>
               Each anchored on the on-chain SkillRegistry.
@@ -316,7 +332,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           .hero-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
         }
         @media (max-width: 640px) {
-          .hero-grid h1 { font-size: 56px !important; letter-spacing: -1px !important; }
+          .hero-grid h1 { font-size: 48px !important; letter-spacing: -1px !important; }
           .stat-row { grid-template-columns: 1fr 1fr !important; gap: 16px !important; }
         }
       `}</style>

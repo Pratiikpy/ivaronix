@@ -1,0 +1,8 @@
+{
+  "network": "mainnet",
+  "chainId": 16661,
+  "deployer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "deployedAt": null,
+  "note": "Mainnet (Aristotle, chainId 16661) deploy queue. Pre-flight prep complete by the agent per FINAL_BUILD_PLAN.md Block K: foundry mainnet profile shipped, all 10 deploy scripts present, all 232 forge tests pass under via_ir=true. Deploy itself is gated on the operator funding 0xaa95...77Ce with ~0.15 OG on chainId 16661 (CEX bridge — genuinely operator-action only per CLAUDE.md §1). Once funded the runbook in FINAL_BUILD_PLAN.md §9 runs in ~7 minutes; addresses + tx hashes land in this file in deploy order Erc7857Verifier → ReceiptRegistryV3 → AgentPassportINFTV2 → CapabilityRegistryV2 → MemoryAccessLogV2 → SkillRegistryV2 → SubscriptionEscrowV2 → SkillPricing → SkillRunPayment.",
+  "contracts": {}
+}
