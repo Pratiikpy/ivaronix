@@ -213,58 +213,74 @@ async function onboardIfFresh(mmPage: Page, operatorKey: string): Promise<void> 
   await clickButton(mmPage, 'button:has-text("Create password"), button:has-text("Create new password"), button:has-text("Import my wallet")', 'create password', 12_000);
   await mmPage.waitForTimeout(3_500);
 
-  // Walk through "Got it" / "Done" / "Next" / "Continue" until home
+  // Walk through "Got it" / "Done" / "Next" / "Continue" / "Skip" until done
   for (let i = 0; i < 12; i++) {
     const advanced = await clickButton(
       mmPage,
-      'button:has-text("Got it"), button:has-text("Done"), button:has-text("Next"), button:has-text("Continue"), button:has-text("Skip"), button:has-text("Open wallet")',
+      'button:has-text("Got it"), button:has-text("Done"), button:has-text("Next"), button:has-text("Continue"), button:has-text("Skip")',
       `post-onboard step ${i}`,
       3_500,
     );
     if (!advanced) break;
     await mmPage.waitForTimeout(2_000);
   }
-  await snap(mmPage, 'mm-onboarded');
+  await snap(mmPage, 'mm-onboard-done-screen');
 
-  // Import operator account
-  console.log('\n  === IMPORT OPERATOR ACCOUNT ===');
-  await mmPage.bringToFront();
-  await mmPage.waitForTimeout(2_000);
-
-  // Click account menu (avatar / name)
-  await clickButton(
-    mmPage,
-    '[data-testid="account-menu-icon"], button[aria-label*="ccount" i], button:has-text("Account")',
-    'account menu',
-    8_000,
-  );
+  // Click "Open wallet" — moves from "Your wallet is ready!" → actual wallet UI
+  // MM v13.30: the button shows gray-disabled for ~10s while wallet finishes
+  // setup. Wait for it to become enabled (not [disabled]) then force-click.
+  console.log('  waiting for "Open wallet" to become enabled');
+  const openWalletBtn = mmPage.locator('button:has-text("Open wallet"):not([disabled])').first();
+  await openWalletBtn.waitFor({ state: 'visible', timeout: 30_000 }).catch(() => {});
   await mmPage.waitForTimeout(1_500);
-  await snap(mmPage, 'mm-account-menu');
+  for (let i = 0; i < 5; i++) {
+    try {
+      await openWalletBtn.click({ force: true, delay: 70 });
+      console.log(`  ✓ clicked Open wallet (force) attempt ${i}`);
+      await mmPage.waitForTimeout(5_500);
+      const url = mmPage.url();
+      if (url.includes('#home') || url.includes('home.html#')) {
+        console.log('  ✓ wallet UI loaded');
+        break;
+      }
+      // Fallback: navigate directly to home URL hash
+      if (i === 2) {
+        const extUrl = mmPage.url().match(/chrome-extension:\/\/[a-z]+/)?.[0];
+        if (extUrl) {
+          console.log('  fallback · navigating to home.html#home directly');
+          await mmPage.goto(`${extUrl}/home.html#home`, { waitUntil: 'domcontentloaded', timeout: 15_000 });
+          await mmPage.waitForTimeout(4_500);
+          break;
+        }
+      }
+    } catch (e) {
+      console.log(`  attempt ${i} failed: ${(e as Error).message.split('\n')[0]}`);
+      await mmPage.waitForTimeout(2_500);
+    }
+  }
+  await snap(mmPage, 'mm-wallet-opened');
 
-  // Click "Add account or hardware wallet" or "Add account"
-  await clickButton(
-    mmPage,
-    'button:has-text("Add account or hardware wallet"), button:has-text("Add account"), button:has-text("Account options")',
-    'add account',
-    6_000,
-  );
-  await mmPage.waitForTimeout(1_500);
+  // Wait for the wallet home UI: any account-related testid, account text, or 0x address visible
+  console.log('  waiting for wallet home UI');
+  await mmPage
+    .waitForFunction(
+      () => {
+        const txt = document.body && document.body.innerText ? document.body.innerText : '';
+        return /Account|0x[a-f0-9]{4}|Buy|Send|Receive/i.test(txt);
+      },
+      { timeout: 30_000 },
+    )
+    .catch(() => {});
+  await mmPage.waitForTimeout(3_000);
+  await snap(mmPage, 'mm-wallet-home');
 
-  // Click "Import account"
-  await clickButton(mmPage, 'button:has-text("Import account"), text="Import account"', 'import account', 6_000);
-  await mmPage.waitForTimeout(2_500);
-  await snap(mmPage, 'mm-import-prompt');
-
-  // Paste private key
-  const keyInput = mmPage.locator('input[type="password"], input[placeholder*="private" i]').first();
-  await keyInput.waitFor({ state: 'visible', timeout: 8_000 });
-  await keyInput.click();
-  await mmPage.keyboard.type(operatorKey.replace(/^0x/, ''), { delay: 20 });
-  await snap(mmPage, 'mm-key-typed');
-
-  await clickButton(mmPage, 'button:has-text("Import")', 'import button', 8_000);
-  await mmPage.waitForTimeout(3_500);
-  await snap(mmPage, 'mm-operator-imported');
+  // SIMPLIFIED: The hardhat junk seed Account 1 is 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266.
+  // We pre-fund it from operator outside this script with 0.1 OG via cast.
+  // So we DON'T need to import a separate operator account — MM's default
+  // account (the one onboarded from DEV_SEED) is funded and ready to sign.
+  console.log('\n  hardhat junk seed Account 1 = 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
+  console.log('  pre-funded with 0.1 OG via cast send before this script ran');
+  console.log('  MM is now ready for Studio connect + paid run\n');
 }
 
 // Drive any single MM popup until it closes or no more buttons
