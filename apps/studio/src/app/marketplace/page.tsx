@@ -10,6 +10,24 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, subgraphAvailable, type SkillListing } from '@/lib/subgraph';
+import { resolveSkillSlug } from '@/lib/first-party-skills';
+import { findSkillByIdServer } from '@/lib/skills';
+
+interface EnrichedSkill extends SkillListing {
+  resolvedSlug: string | null;
+  description: string | null;
+}
+
+async function enrichSkill(skill: SkillListing): Promise<EnrichedSkill> {
+  const slug = await resolveSkillSlug(skill.skillId);
+  const knownSlug = slug !== skill.skillId;
+  const localSkill = knownSlug ? findSkillByIdServer(slug) : null;
+  return {
+    ...skill,
+    resolvedSlug: knownSlug ? slug : null,
+    description: localSkill?.manifest.description ?? null,
+  };
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -20,7 +38,11 @@ export const metadata = {
 };
 
 export default async function MarketplacePage() {
-  const skills = await skillsList({ limit: 50, sortBy: 'recent' });
+  const rawSkills = await skillsList({ limit: 50, sortBy: 'recent' });
+  // Enrich each chain listing with the canonical slug + SKILL.md
+  // description when known. The browse cards then render the human
+  // name (private-doc-review) instead of just a hex hash.
+  const skills = await Promise.all(rawSkills.map(enrichSkill));
   const subgraph = subgraphAvailable();
 
   return (
@@ -70,7 +92,7 @@ export default async function MarketplacePage() {
   );
 }
 
-function SkillCard({ skill }: { skill: SkillListing }) {
+function SkillCard({ skill }: { skill: EnrichedSkill }) {
   const priceOg = parseFloat(skill.priceOg).toFixed(4);
   const isFree = !skill.isPriced || skill.priceWei === '0';
   return (
@@ -94,10 +116,19 @@ function SkillCard({ skill }: { skill: SkillListing }) {
 
         <div>
           <h3 style={{ margin: '0 0 4px 0', fontSize: 16 }}>
-            <code style={{ fontFamily: 'var(--font-mono, monospace)', wordBreak: 'break-all' }}>
-              {skill.skillId.slice(2, 12)}…
-            </code>
+            {skill.resolvedSlug ? (
+              skill.resolvedSlug
+            ) : (
+              <code style={{ fontFamily: 'var(--font-mono, monospace)', wordBreak: 'break-all' }}>
+                {skill.skillId.slice(2, 12)}…
+              </code>
+            )}
           </h3>
+          {skill.description && (
+            <p style={{ margin: 0, fontSize: 13, opacity: 0.75, lineHeight: 1.45 }}>
+              {skill.description.length > 140 ? `${skill.description.slice(0, 137).trim()}…` : skill.description}
+            </p>
+          )}
         </div>
 
         <div style={{ fontSize: 12, opacity: 0.7, lineHeight: 1.5 }}>
