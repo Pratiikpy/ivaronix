@@ -39,7 +39,7 @@
  *     cached on server with TTL until confirm. v1.1 may move to true
  *     deterministic estimation without inference.
  */
-import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
+import { jsonSafe } from '@/lib/bigint-json';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ensureEnv } from '@/lib/boot-env';
@@ -257,7 +257,7 @@ export async function POST(req: Request) {
     // throws "Do not know how to serialize a BigInt" — the same fix that
     // subgraph.ts skillsListFromChain needed for the marketplace listing.
     // Caught by P5 auto harness 2026-05-13 iteration 12.
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       needsPayment: true,
       amount: price.toString(),
       priceWei: price.toString(),
@@ -269,7 +269,7 @@ export async function POST(req: Request) {
       payer,
       bucketSeconds,
       skillId: body.skillId,
-    });
+    }));
   } catch (err) {
     console.error('[api/run/estimate] error:', err);
     return NextResponse.json(

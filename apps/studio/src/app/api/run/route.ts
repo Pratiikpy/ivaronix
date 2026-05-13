@@ -1,4 +1,4 @@
-import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
+import { jsonSafe } from '@/lib/bigint-json';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
       ...(userWallet ? { delegatedOwnerWallet: userWallet } : {}),
     });
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       ok: true,
       finalText: result.finalText,
       consensusMs: result.consensusMs,
@@ -190,7 +190,7 @@ export async function POST(req: Request) {
       // the Storage light pending in that case.
       storage: { evidenceRoot: result.storageEvidenceRoot ?? null },
       logs: entries,
-    });
+    }));
   } catch (err) {
     // HALF_BAKED §K-11 closure (sweep 212): sanitize before responding.
     // Full err + stack stays in server logs via console.error; client

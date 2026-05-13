@@ -27,7 +27,7 @@
  *   422 PAYMENT_RECEIPT_ROOT_MISMATCH — event's receiptRoot != draftReceiptRoot
  *   500 PIPELINE_FAILED_POST_PAYMENT — inference failed; refund queued
  */
-import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
+import { jsonSafe } from '@/lib/bigint-json';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
@@ -300,7 +300,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       ok: true,
       finalText: result.finalText,
       consensusMs: result.consensusMs,
@@ -322,7 +322,7 @@ export async function POST(req: Request) {
         treasuryBps: body.treasuryBps,
       },
       logs: entries,
-    });
+    }));
   } catch (err) {
     console.error('[api/run/confirm] pipeline error AFTER payment:', err);
     // CRITICAL: refund queue. Operator must manually call refundFailedRun

@@ -10,7 +10,7 @@
  * Rate-limited per-IP (the demo wallet is a shared resource).
  * Falls back to "demo paused" 503 when the demo wallet is out of funds.
  */
-import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
+import { jsonSafe } from '@/lib/bigint-json';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
@@ -186,7 +186,7 @@ export async function POST(req: Request) {
     const balanceWei = await provider.getBalance(demoWallet.address).catch(() => null);
     const balanceOg = balanceWei != null ? parseFloat(formatUnits(balanceWei, 18)) : null;
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       ok: true,
       subsidised: true,
       demoWallet: demoWallet.address,
@@ -198,7 +198,7 @@ export async function POST(req: Request) {
       storage: { evidenceRoot: result.storageEvidenceRoot ?? null },
       payment: paymentBlock,
       logs: entries,
-    });
+    }));
   } catch (err) {
     console.error('[api/run/demo] pipeline error:', err);
     return NextResponse.json(
