@@ -1,13 +1,13 @@
 {
   "$schema": "Single source of truth for numeric claims across README, PITCH.md, JUDGE_GUIDE.md, MAINNET_READINESS.md. Refresh with: pnpm numbers:refresh. See planning-003 §A.2.7 for the auto-render pipeline (queued).",
-  "lastRefreshed": "2026-05-12",
+  "lastRefreshed": "2026-05-13",
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
     "v1Anchored": 1644,
-    "v2Anchored": 8,
-    "v3Anchored": 5,
-    "total": 1657,
-    "headlineLabel": "1,657+ receipts anchored across V1 + V2 + V3 registries"
+    "v2Anchored": 12,
+    "v3Anchored": 7,
+    "total": 1663,
+    "headlineLabel": "1,663+ receipts anchored across V1 + V2 + V3 registries"
   },
   "receiptTypes": {
     "count": 13,
@@ -74,8 +74,8 @@
     ],
     "vendored": 150,
     "catalogTotal": 156,
-    "creatorEarningsOG": "0.0018",
-    "creatorEarningsLabel": "0.0018 OG · 36 paid runs of private-doc-review · 90/10 split"
+    "creatorEarningsOG": "0.0021",
+    "creatorEarningsLabel": "0.0021 OG · 39 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
     "workspaceTotal": 25,
