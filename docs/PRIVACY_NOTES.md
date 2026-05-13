@@ -11,14 +11,16 @@ The 0G Storage indexer requires a signer for every fetch — uploads AND reads. 
 
 The receipt model does NOT defend against this — receipts attest to inference output, not to read patterns at the storage layer.
 
-### Mitigation: the read-proxy key
+### Mitigation: the read-proxy key — **PENDING (declared, no runtime consumer)**
+
+> **Honest status (cron iter-170, 2026-05-13):** the env field is declared and the alias chain is locked by 3 source-file regressions, but **no runtime path actually reads `env.readProxyPrivateKey`** today. Setting `IVARONIX_READ_PROXY_KEY` in `.env` has no effect at all in this commit. The operator wallet still signs every indexer call. Tracked in `docs/USER_TODO.md` for closure.
 
 The runtime accepts an optional separate signing key for read-only indexer auth, surfaced as either env var:
 
 - `IVARONIX_READ_PROXY_KEY` (canonical)
 - `READ_PROXY_PRIVATE_KEY` (legacy alias)
 
-Wire-up is in `packages/runtime/src/env.ts` (`readProxyPrivateKey` field on `Env`). When set, public-fetch paths sign with this key instead of the operator's `IVARONIX_SIGNER_KEY`. Recommended:
+Wire-up plan: `packages/runtime/src/env.ts` parses the value into `readProxyPrivateKey` on `Env`. When the consumer ships, public-fetch paths (`packages/og-storage/src/indexer.ts` + Studio `/r/[id]` data fetches) will sign with this key instead of the operator's `IVARONIX_SIGNER_KEY`. Recommended setup once the consumer lands:
 
 1. Generate a fresh wallet: `node -e 'const{Wallet}=require("ethers");const w=Wallet.createRandom();console.log(w.address);console.log(w.privateKey);'`
 2. **Do NOT fund it.** It needs zero balance — indexer auth doesn't pay gas, only signs the request.
@@ -27,7 +29,9 @@ Wire-up is in `packages/runtime/src/env.ts` (`readProxyPrivateKey` field on `Env
 
 The read-proxy address is still public — anyone watching the indexer sees that "this proxy fetched blob X" — but it can't be linked back to the operator unless the operator publishes the binding. Treat the read-proxy as a unique-per-operator-deployment pseudonym.
 
-### Mitigation: edge-cache public manifests
+### Mitigation: edge-cache public manifests — **PENDING (recommendation, not configured)**
+
+> **Honest status (cron iter-170, 2026-05-13):** `apps/studio/next.config.ts:headers()` ships 4 defensive security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS) but **no `cache-control` directives at all**. The recommendation below is correct in principle and worth implementing; it is not currently in effect.
 
 Public manifests are deterministic by `rootHash`. The Vercel edge cache should hold them aggressively so the indexer is hit at most once per (rootHash, cache-window) pair:
 
@@ -40,7 +44,7 @@ return new Response(body, {
 });
 ```
 
-The cache plus the read-proxy key together mean a typical reviewer hitting `/r/<id>` triggers zero indexer reads from the operator wallet on the warm-cache path.
+When wired, the cache plus the read-proxy key together would mean a typical reviewer hitting `/r/<id>` triggers zero indexer reads from the operator wallet on the warm-cache path.
 
 ### Threat model
 
