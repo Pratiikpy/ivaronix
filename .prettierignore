@@ -1,0 +1,44 @@
+# Vendored Foundry libraries — third-party code, not first-party
+# style domain. forge-std + openzeppelin-contracts ship their own
+# .prettierrc files that declare prettier-plugin-solidity, which we
+# don't install (sole bytecode source-of-truth is forge fmt). The
+# format gate must skip them entirely or it fails on a missing
+# plugin import. Cron iter-166 finding · 2026-05-13.
+contracts/lib/
+
+# Build artefacts + caches
+**/dist/
+**/.next/
+**/.turbo/
+**/node_modules/
+**/coverage/
+**/out/
+
+# Generated / vendored
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+**/*.lock
+pnpm-lock.yaml
+package-lock.json
+
+# Reference folders (sibling competitor entries + showcases) — not
+# first-party code; not our style domain.
+entries/
+new-entries/
+og-projects-showcase/
+oglabs resources/
+"CLI Open Source Project"/
+
+# Receipts + chain artefacts
+.ivaronix/
+apps/*/.ivaronix/
+
+# Screenshot + capture folders
+QA_PROOF_PACK/
+screenshots/
+videos/
+x-post-assets/
+
+# Generated docs
+docs/CODEMAPS/

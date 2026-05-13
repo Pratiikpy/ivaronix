@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "tsx run.ts",
+    "test": "tsx run-source-regressions.ts --filter studio && tsx run-source-regressions.ts --filter cli && tsx run-source-regressions.ts --filter contracts",
+    "test:e2e": "tsx run.ts",
     "regressions": "tsx run-source-regressions.ts",
     "regressions:studio": "tsx run-source-regressions.ts --filter studio",
     "regressions:studio-live": "tsx run-source-regressions.ts --filter studio-live",
