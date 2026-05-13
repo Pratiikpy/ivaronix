@@ -1,0 +1,111 @@
+# FINAL_BUILD_PLAN.md Block F · 0G KV self-host docker-compose.
+#
+# Brings up the operator-side stack that backs Ivaronix's HttpKvClient:
+#   - 0G Storage zgs_kv binary (Rust) → signs + commits to the KV log contract on chain
+#   - MongoDB / Elasticsearch / Milvus / Redis (4-tier storage for EverMemOS)
+#   - EverMemOS REST server on :1995 (the HTTP API the HttpKvClient hits)
+#
+# Total footprint: ~4GB RAM, 8GB disk for indexed data.
+#
+# Operator runbook:
+#   cp ../../.env .env.kv                  # copy IVARONIX_SIGNER_KEY for chain auth
+#   docker compose -f docker-compose.yml up -d
+#   curl http://localhost:1995/api/v1/users/register -X POST
+#   # → returns an API key. Set KV_REMOTE_URL=http://localhost:1995 + KV_API_KEY=<key>
+#   # in apps/studio/.env.local to wire Studio against the real backend.
+#
+# After bring-up, Studio's createKvClient() returns HttpKvClient
+# instead of InMemoryKvClient — memory survives process restarts,
+# cross-session reads work, and the chain-grant middleware enforces
+# CapabilityRegistryV2 grants on every read.
+
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: ivaronix-kv-mongo
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    container_name: ivaronix-kv-elastic
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx1024m
+    volumes:
+      - elastic-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      retries: 10
+
+  milvus:
+    image: milvusdb/milvus:v2.4.0
+    container_name: ivaronix-kv-milvus
+    command: ["milvus", "run", "standalone"]
+    environment:
+      ETCD_USE_EMBED: "true"
+      ETCD_DATA_DIR: /var/lib/milvus/etcd
+      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
+      COMMON_STORAGETYPE: local
+    volumes:
+      - milvus-data:/var/lib/milvus
+    ports:
+      - "19530:19530"
+
+  redis:
+    image: redis:7-alpine
+    container_name: ivaronix-kv-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+  evermemos:
+    # The EverMemOS REST server that fronts zgs_kv + the four storage tiers.
+    # Source: oglabs resources/0g-memory/0g_kv_server/Dockerfile rebuilt as
+    # an Ivaronix-tagged image. For first bring-up, build locally; v1.1 may
+    # ship a published image once the upstream version stabilises.
+    image: ivaronix/evermemos:0.1.0
+    container_name: ivaronix-kv-evermemos
+    build:
+      context: ../../oglabs\ resources/0g-memory
+      dockerfile: Dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env.kv  # IVARONIX_SIGNER_KEY for zgs_kv chain writes
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      ELASTIC_URL: http://elasticsearch:9200
+      MILVUS_URL: milvus:19530
+      REDIS_URL: redis://redis:6379
+      ZG_RPC_URL: https://evmrpc-testnet.0g.ai
+      ZG_INDEXER_URL: https://indexer-storage-testnet-turbo.0g.ai
+      ZG_KV_LOG_CONTRACT: '0x22E03a6A89B950F1c82ec5e74F8eCa321a105296'
+      EVERMEMOS_PORT: 1995
+    ports:
+      - "1995:1995"
+
+volumes:
+  mongo-data:
+  elastic-data:
+  milvus-data:
