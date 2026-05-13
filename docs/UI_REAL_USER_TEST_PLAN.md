@@ -488,6 +488,8 @@ If a flow cannot be proven from UI: mark it `NOT UI-SHIPPED` and move it out of 
 ## Order of execution (the canonical sequence)
 
 ```
+PART 1 · UI (P0–P16)
+─────────────────────
 UI Inventory Gate
   ↓
 P0 Setup
@@ -500,12 +502,34 @@ P9 Data Room → P10 Docs → P11 Mobile → P12 Final UI Pass
   ↓
 P13 Cross-tool (CLI light) → P14 Performance → P15 Vercel
   ↓
-P16 Data freshness · read-after-write · cross-user · real-source binding (systematic sweep)
+P16 Data freshness · read-after-write · cross-user · real-source binding
   ↓
-UI DONE → move to dedicated CLI test phase
+PART 1 DONE ✓
+
+PART 2 · CLI + MCP + Cross-machine
+──────────────────────────────────
+P17 CLI test phase (every ivaronix command, every behavior, every outcome)
+  ↓
+P18 MCP test phase (Claude Desktop + Cursor, every tool, every behavior)
+  ↓
+P19 Cross-machine receipt replay (fresh machine, the kill-shot)
+  ↓
+PART 2 DONE ✓
+
+POST-TEST (gated externally)
+────────────────────────────
+Mainnet smoke (after Block K operator funds deployer)
+  ↓
+Demo rehearsal (Block M · 3 intervention-free dry-runs at 1440×900 + 375×812)
+  ↓
+3-tester PMF gate (Block N · recruit 3 unaffiliated humans)
+  ↓
+HackQuest submission
 ```
 
 When a priority's items all `PASS`, mark it `DONE` in the daily checkpoint and move to the next. When a single item fails: stop, fix properly per the fail rule, re-test, then continue.
+
+**Part 2 starts ONLY after Part 1 is fully `PASS` on every priority.**
 
 ---
 
@@ -555,6 +579,207 @@ Every shipped feature mapped to the test priority that exercises it. Goal: prove
 | **3-wallet (marketplace: A creator + B buyer + C treasury)** | P5 | (a) 4 distinct txs · (b) UI as A AND B AND C · (c) CLI cross-check · (d) chainscan shows 3 senders |
 
 Every shipped feature has at least one priority covering it. Every multi-wallet shape has its 4 sub-conditions explicit. No feature is invisible to the plan.
+
+---
+
+# =================================================================
+# PART 2 · CLI + MCP + Cross-machine (after Part 1 UI is fully DONE)
+# =================================================================
+
+> Part 1 (P0–P16 above) is the UI sweep. **Part 2 starts only after Part 1 returns PASS on every priority** with full evidence in `QA_PROOF_PACK/ui/`.
+>
+> Same no-compromise rules: real CLI invocations, real Claude Desktop / Cursor sessions, real receipts, real on-chain side effects, real proof. Every command produces evidence; every behavior is verified; every outcome is checked like a real user / developer using the product.
+
+## Priority 17 · CLI test phase (every `pnpm ivaronix <cmd>`)
+
+Goal: prove the CLI is feature-equivalent to the UI. Every flow exercised from the terminal produces a receipt byte-equal to what the UI produced for the same flow.
+
+### A · Demo + run commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix demo` | (default · operator key) | Anchors a receipt on Galileo · prints receipt id + chainscan link · receipt schema-valid |
+| `pnpm ivaronix demo --pay private-doc-review` | (1 wallet · funded) | 5-check payment flow runs · receipt has `billing.payment` block with real txHash · creator + treasury bps match `SkillRunPaid` event |
+| `pnpm ivaronix demo --subsidise` | (operator key) | Receipt anchors with `billing.payment.subsidised: true` · payer = operator wallet |
+| `pnpm ivaronix demo --no-payment` | (free skill or no SkillPricing entry) | Runs without payment leg · receipt has NO `billing.payment` block |
+| `pnpm ivaronix demo --pay <skill> --consensus high-stakes` | (1 wallet) | High-stakes consensus tier triggered · receipt records consensus.tier correctly |
+| `pnpm ivaronix demo --pay <skill> --burn` | (1 wallet) | Burn Mode enabled · `execution.burnMode: true` · keyFingerprint present · session key destroyed (verify ciphertext is unreadable after run) |
+| `pnpm ivaronix demo` · insufficient funds | (wallet ≤ price · or operator < 0.001 OG) | Clear error · no half-anchored receipt · exit code non-zero |
+| `pnpm ivaronix demo` · invalid skill id | `--pay nonexistent-skill` | Clear "skill not found" error · exit code non-zero · no chain write |
+| `pnpm ivaronix run <skillId> <inputFile> --pay` | (1 wallet) | Explicit paid run · same receipt shape as `demo --pay` |
+
+### B · Receipt commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix receipt show <id>` | (valid id) | Pretty-prints receipt body · payer · creator · treasury · payment block · TEE state · chainscan link · matches UI `/r/<id>` byte-for-byte |
+| `pnpm ivaronix receipt show <id>` | (invalid id) | Clear error · exit code non-zero |
+| `pnpm ivaronix receipt verify <id>` | (valid id · no flag) | Runs schema + hash + signature + anchor checks · prints state machine (`ANCHORED` / `PAID` / etc.) · exit code 0 if PASS |
+| `pnpm ivaronix receipt verify <id> --tee-independent` | (the kill-shot) | Re-runs `broker.processResponse` against actual 0G Compute provider · returns FULLY VERIFIED ✓ all 5 checks · prints attestation summary |
+| `pnpm ivaronix receipt verify <id> --tee-independent` | (TIER 2 receipt · NVIDIA/external) | Returns ANCHORED ✓ (not TIER 1) · clearly marks external-signed · honest tier disclosure |
+| `pnpm ivaronix receipt verify <id> --tee-independent` | (tampered receipt body) | Fails closed · INVALID state · clear error message · exit code non-zero |
+| `pnpm ivaronix receipt verify <id> --tee-independent` | (fake payment.txHash) | Fails closed at PAID gate · "tx not found" or "binding mismatch" · no false positive |
+| `pnpm ivaronix receipt verify <id> --format aat` | (any receipt) | Outputs valid AAT JSON per `draft-rosenberg-aat-01` · 34 fields populated · validates against the draft schema via `ajv` |
+| `pnpm ivaronix receipt verify <id> --format aat | jq .aat_spec` | Returns `"draft-rosenberg-aat-01"` |
+
+### C · Skill commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix skill list` | (no args) | Lists all first-party + on-chain skills · matches UI `/skills` count |
+| `pnpm ivaronix skill show <id>` | (valid skill) | Prints manifest · permissions · hooks · creator · price (if set) |
+| `pnpm ivaronix skill publish <path-to-SKILL.md>` | (1 wallet · funded) | 2 chain writes (SkillRegistry.publish + optional SkillPricing.setPrice) · skill appears in marketplace within ~1 block |
+| `pnpm ivaronix skill publish <bad-manifest>` | (invalid Zod schema) | Clear validation error · no chain write |
+
+### D · Passport + identity commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix passport show` | (1 wallet) | Prints passport id · trustScore · receipt count · creator stats |
+| `pnpm ivaronix passport mint` | (1 wallet · no passport) | Mints AgentPassportINFTV2 · prints tokenId · chainscan link |
+| `pnpm ivaronix passport mint` | (1 wallet · already minted) | Clear "already minted" · no double-mint · exit code non-zero |
+
+### E · Memory commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix memory snapshot --upload` | (1 wallet · KV_REMOTE_URL set) | Uploads memory snapshot · returns snapshot root · persists across CLI restart |
+| `pnpm ivaronix memory recall <id>` | (1 wallet · prior snapshot) | Returns same content that was written · cross-session persistence proven |
+| `pnpm ivaronix memory recall <id>` | (KV_REMOTE_URL unset) | Falls back to in-memory client · clear "not durable" warning |
+| `pnpm ivaronix memory grant <bytes32-id> <addr>` | (1 wallet) | Calls CapabilityRegistryV2.grant · returns tx hash · cross-check on chain |
+| `pnpm ivaronix memory revoke <bytes32-id> <addr>` | (1 wallet) | Calls CapabilityRegistryV2.revoke · returns tx hash · grantee's next read fails |
+
+### F · System commands
+
+| Command | Args / state | Expected outcome |
+|---|---|---|
+| `pnpm ivaronix doctor` | (no args) | ALL GREEN check on every dependency: wallet balance · RPC reachable · contracts deployed · Router credential active · KV server (if configured) · subgraph (if configured) |
+| `pnpm ivaronix doctor balance` | (no args) | Prints operator wallet balance in OG |
+| `pnpm ivaronix doctor` | (broken env · no IVARONIX_SIGNER_KEY) | Clear error pointing at missing env var · exit code non-zero |
+
+### G · Cross-tool consistency (UI vs CLI byte-equality)
+
+| Action | Compare | Expected |
+|---|---|---|
+| Anchor a receipt via UI `/?demo=true` | Run `pnpm ivaronix receipt show <id>` on the resulting id | Byte-equal output to UI `/r/<id>` display |
+| Anchor a receipt via CLI `demo --pay` | Open `/r/<id>` in browser | Byte-equal display to CLI `receipt show` |
+| Verify same receipt in UI chip + CLI `verify --tee-independent` | Both return same state | UI chip "FULLY VERIFIED ✓" iff CLI exit code 0 |
+| AAT export | `verify --format aat` from CLI | Validates against `draft-rosenberg-aat-01` schema; UI doesn't ship AAT export (CLI-only feature) |
+
+### H · CLI evidence rule
+
+Each CLI command run produces:
+- Terminal screenshot OR captured output in `QA_PROOF_PACK/cli/<command>/<test-id>-stdout.txt`
+- For chain-write commands: chainscan link captured
+- For receipt-producing commands: cross-check the receipt id against UI `/r/<id>`
+- For multi-step commands: full session asciinema or screen recording
+
+PASS = every command above is exercised with valid AND invalid args; output matches expected; exit code matches expected; cross-tool consistency held with UI for the same flow.
+
+---
+
+## Priority 18 · MCP test phase (Claude Desktop / Cursor integration)
+
+The Model Context Protocol surface (`packages/mcp-server`) exposes Ivaronix as a tool to AI assistants. Test from BOTH Claude Desktop AND Cursor (they each consume MCP slightly differently).
+
+### A · Setup
+
+| Step | Expected outcome |
+|---|---|
+| Add Ivaronix MCP server to Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS; equivalent on Windows) | Server appears in Claude Desktop's MCP server list · status: connected |
+| Restart Claude Desktop | MCP tools become available in the chat tools list |
+| Add same server to Cursor (Settings → MCP) | Server connects · tools visible |
+
+### B · Tool exercise (every tool, real Claude/Cursor session)
+
+| MCP tool | Test prompt to Claude/Cursor | Expected outcome |
+|---|---|---|
+| `list_skills` | "Show me all Ivaronix skills" | AI calls `list_skills` · returns same skill list as `pnpm ivaronix skill list` · AI presents it readably |
+| `run_skill` | "Use Ivaronix's private-doc-review skill on this contract: [paste]" | AI calls `run_skill` · receipt anchors · AI shows receipt id + proof link |
+| `verify_receipt` | "Verify Ivaronix receipt 1004" | AI calls `verify_receipt` · returns FULLY VERIFIED ✓ · presents the 5 checks |
+| `show_receipt` | "Show me receipt 1004 details" | AI calls `show_receipt` · presents payer/creator/payment block readably |
+| `passport_info` (if exposed) | "What's my Ivaronix passport status?" | AI calls the tool · returns trustScore + receipt count |
+
+### C · Cross-tool consistency
+
+| Action | Compare |
+|---|---|
+| Skill run via MCP | Receipt id matches what UI + CLI would produce for same input |
+| `verify_receipt` via MCP | Same FULLY VERIFIED ✓ state as UI chip + CLI `verify` |
+| `list_skills` via MCP | Same count + names as `pnpm ivaronix skill list` + UI `/skills` |
+
+### D · Error states (real-user testing)
+
+| Scenario | Expected |
+|---|---|
+| Claude tries to call `run_skill` with no wallet funded | Tool returns clear error · AI surfaces "need funded wallet" |
+| Tool call times out (RPC slow) | AI shows timeout · doesn't claim false success |
+| Invalid skill name passed | Tool returns "skill not found" · AI re-asks user |
+
+### E · MCP evidence rule
+
+Each MCP tool call produces:
+- Screenshot of the Claude Desktop / Cursor chat showing the AI's call + result
+- Tool-call audit log from the MCP server (`packages/mcp-server` should log every invocation)
+- For tools that produce on-chain side effects: chainscan link captured
+
+PASS = every tool exercised from BOTH Claude Desktop AND Cursor with valid + invalid inputs; outputs match UI/CLI equivalents.
+
+---
+
+## Priority 19 · Cross-machine receipt replay (the kill-shot)
+
+The CLAUDE.md §17.3a baseline: a stranger on a never-touched-Ivaronix machine can re-verify any production receipt in under 10 seconds. This proves the receipt model isn't relying on local state.
+
+### A · Setup (clean machine)
+
+| Step | Expected outcome |
+|---|---|
+| Use a different physical machine OR fresh Docker container OR fresh VM | No shared state · no Ivaronix install · no cached RPC |
+| `git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix` | Repo cloned |
+| `pnpm install` | All deps install · no node_modules from prior machine |
+| Copy `.env.example` to `.env` and fill ONLY `IVARONIX_SIGNER_KEY` (any random funded wallet — Galileo faucet works) | Env minimal · no operator secrets reused |
+
+### B · Replay every receipt class
+
+| Receipt to verify | Command | Expected |
+|---|---|---|
+| Canonical demo receipt (rec_1004) | `pnpm ivaronix receipt verify 1004 --tee-independent` | FULLY VERIFIED ✓ all 5 checks |
+| Fresh receipt anchored during this test run | `pnpm ivaronix receipt verify <fresh-id> --tee-independent` | FULLY VERIFIED ✓ |
+| Burn Mode receipt | `pnpm ivaronix receipt verify <burn-id> --tee-independent` | FULLY VERIFIED ✓ · keyFingerprint matches |
+| Payment receipt with full `billing.payment` block | `pnpm ivaronix receipt verify <paid-id> --tee-independent` | FULLY VERIFIED ✓ · 5 payment-tx-binding checks pass |
+| TIER 2 (external NVIDIA) receipt | `pnpm ivaronix receipt verify <ext-id> --tee-independent` | ANCHORED ✓ but NOT TIER 1 · honestly marked external-signed |
+| Multi-wallet 3-party flow receipt | Same | FULLY VERIFIED ✓ from each of A/B/C's view |
+
+### C · Public-proof-URL replay (zero install)
+
+| Step | Expected |
+|---|---|
+| Open `https://ivaronix.vercel.app/r/1004` in incognito on the clean machine | Receipt renders without auth/wallet · all chips green |
+| Open same URL in a different browser (Firefox/Safari on the same fresh machine) | Same render · no browser-specific failure |
+| Right-click → Copy link → paste in another chat app | URL is the canonical public proof URL · works in any context |
+
+### D · Cross-machine evidence rule
+
+| Artefact | Where saved |
+|---|---|
+| Terminal recording of `pnpm ivaronix receipt verify <id> --tee-independent` on the fresh machine | `QA_PROOF_PACK/cross-machine/<machine-id>/verify-output.txt` |
+| Screenshot of incognito browser showing `/r/<id>` rendered | `QA_PROOF_PACK/cross-machine/<machine-id>/incognito-render.png` |
+| Hardware fingerprint (`uname -a` or `systeminfo`) proving distinct machine | `QA_PROOF_PACK/cross-machine/<machine-id>/machine-info.txt` |
+
+PASS = a stranger could literally clone, install, and verify in under 10 minutes. No Ivaronix-specific local state required.
+
+---
+
+## Part 2 stop condition
+
+UI test plan (Part 1) AND Part 2 (P17 + P18 + P19) all PASS with full evidence = product is **end-to-end provably correct from every surface**.
+
+After Part 2 complete:
+- Mainnet smoke test (when Block K deploys)
+- Demo rehearsal (Block M · 3 intervention-free dry-runs at 1440×900 + 375×812)
+- 3-tester PMF gate (Block N · recruit 3 unaffiliated humans)
+- Submit to HackQuest
 
 ---
 
