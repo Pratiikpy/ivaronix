@@ -55,6 +55,20 @@ const config: NextConfig = {
   // IVARONIX_MEMORY_EMBEDDER=fallback on Vercel (and degrades to the
   // hashing-trick embedder if the module is absent), so ~150 MB of weights +
   // native runtime never executes there.
+  // Include seed-skills/ in the serverless function trace. `loadAllSkills()`
+  // (apps/studio/src/lib/skills.ts) walks parent dirs from cwd looking for
+  // seed-skills/<id>/SKILL.md — those files live OUTSIDE apps/studio/ so
+  // Vercel's nft tracer doesn't pull them by default. Without this, the
+  // home page stat row shows "0 verified skills" on production (caught
+  // during P1 Landing UI test on 2026-05-13).
+  outputFileTracingIncludes: {
+    '**': [
+      '../../seed-skills/**/SKILL.md',
+      '../../seed-skills/**/prompt.md',
+      '../../seed-skills/**/manifest.json',
+      '../../seed-skills/**/tests/**',
+    ],
+  },
   outputFileTracingExcludes: {
     '**': [
       // build-time artifacts (belt — `config.cache = false` below is the
