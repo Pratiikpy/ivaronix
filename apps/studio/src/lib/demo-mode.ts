@@ -100,14 +100,28 @@ export function getDemoSampleDocument(): { text: string; question: string } {
  * paused" UI instead.
  */
 export function isDemoModeActive(): boolean {
+  // Out-of-funds flag is the ONLY thing that disables demo mode on
+  // production. Otherwise demo mode is active when a wallet key is
+  // available in env (DEMO_WALLET_KEY or operator IVARONIX_SIGNER_KEY
+  // fallback per /api/run/demo). The chain-balance check happens at
+  // run-time inside the /api/run/demo handler so the request fails
+  // with a clear "insufficient funds" error rather than the home page
+  // silently falling back to the regular RunPanel.
+  //
+  // Prior behaviour read apps/studio/.demo-wallet-status.json which
+  // doesn't exist on Vercel (writeFileSync inside a serverless lambda
+  // is ephemeral). That caused isDemoModeActive() to always return
+  // false on prod — caught by P2 UI test on 2026-05-13.
   const status = readDemoStatus();
-  // Demo wallet must exist AND not be flagged out-of-funds AND have a positive balance.
-  return Boolean(
-    status.address &&
-    !status.outOfFunds &&
-    status.balanceOg !== null &&
-    parseFloat(status.balanceOg) > 0.005, // floor: 0.005 OG buffer
+  if (status.outOfFunds) return false; // monitor explicitly disabled it
+
+  const hasKey = Boolean(
+    process.env.DEMO_WALLET_KEY ||
+    process.env.IVARONIX_SIGNER_KEY ||
+    process.env.EVM_PRIVATE_KEY ||
+    process.env.OG_PRIVATE_KEY,
   );
+  return hasKey;
 }
 
 /**

@@ -51,7 +51,7 @@ services:
       retries: 10
 
   milvus:
-    image: milvusdb/milvus:v2.4.0
+    image: milvusdb/milvus:v2.5.0
     container_name: ivaronix-kv-milvus
     command: ["milvus", "run", "standalone"]
     environment:
@@ -96,6 +96,13 @@ services:
         condition: service_healthy
     env_file:
       - .env.kv  # IVARONIX_SIGNER_KEY for zgs_kv chain writes
+    volumes:
+      # Bind-mount .env.kv as /app/.env so the Python load_env helper
+      # inside the EverMemOS image finds it (the in-container code reads
+      # /app/.env directly via dotenv; env_file alone doesn't satisfy
+      # that path). Fixes the "Environment setup failed, exiting program"
+      # bring-up failure caught during P0 testing.
+      - ./.env.kv:/app/.env:ro
     environment:
       MONGO_URL: mongodb://mongo:27017
       ELASTIC_URL: http://elasticsearch:9200
