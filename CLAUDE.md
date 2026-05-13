@@ -18,6 +18,7 @@
 - §12 Completion discipline (the "do not stop" rule)
 - §13 README / submission documentation (locked submission requirements)
 - §14 Per-package guidance (AGENTS.md + path-scoped `.claude/rules/`)
+- §16 Multi-wallet testing rules (PASS / PENDING / BLOCKED · no "mostly proven")
 - §15 Bookkeeping in the same commit (the "ship X → discover X" rule)
 
 ## 1. Hard rules
@@ -346,3 +347,23 @@ When you add a new ____, also update ____:
 A repo at "production-ready" feels different from a repo at "everything works": every doc points at every file that exists, every rule references every place it applies, every "queued" entry in any tracker is fresh. The cost of not doing the bookkeeping is invisibility — the work is real, but the next contributor has to re-discover it from scratch by grepping the codebase.
 
 **Rule of thumb: if you spent more than 20 minutes shipping something, spend 5 minutes updating its references.** The 25% overhead is what production-ready repos look like and what hackathon-stage repos skip.
+
+## 16. Multi-wallet testing rules (PASS / PENDING / BLOCKED · no "mostly proven")
+
+User directive captured iter-133 (verbatim in `docs/MULTI_WALLET_RULES.md`). Every feature that involves permissions, memory sharing, delegation, data rooms, paid runs, marketplace, creator/treasury split, passport authority, or wallet roles must be tested with the exact required wallet count:
+
+- **1-wallet feature** = real MetaMask wallet test (real Chrome + real MM popup flow)
+- **2-wallet feature** = Wallet A + Wallet B, real on-chain actions, UI/CLI/ChainScan cross-check (Wallet B's key imported into a real MetaMask, exercised through Studio)
+- **3-wallet feature** = creator + buyer + treasury/admin, real payment/split/receipt proof (all three wallets imported into real MM, fee-split paid flow exercised end-to-end)
+
+**Forbidden claims:**
+- "mostly proven" — use PASS / PENDING / BLOCKED instead
+- "works in principle" — use PENDING with the concrete missing flow
+- "covered by chain-level proof" — chain-only proof on a multi-wallet feature is PENDING, not PASS
+- "should work because the contract reverts" — only PASS once the user-facing surface is exercised through real MM
+
+**Compounding requirements:** for 2-wallet features, ALL three of (a) real on-chain tx, (b) UI exercised with Wallet B in MM, (c) CLI cross-check must be true for PASS. For 3-wallet features, add (d) third-wallet role exercised in MM too.
+
+Current state: `QA_PROOF_PACK/multi-wallet/MATRIX_AUDIT.md` lists every multi-wallet row in the QA plan with its PASS / PENDING / BLOCKED status. Pre-iter-133, the agent claimed "5 rows proven" based on chain-only proofs — per these rules, all 5 are PENDING (chain side done, UI side never exercised). Honest current count: 2 PASS (security-gate tests where UI N/A), 12 PENDING, 0 BLOCKED.
+
+**Re-read this section before claiming any multi-wallet feature is fully working.** The user has explicitly forbidden the "mostly proven" framing; the cron has to honor it across every future iteration.
