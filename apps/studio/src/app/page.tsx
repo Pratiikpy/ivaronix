@@ -43,17 +43,25 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     livePassportCount(),
   ]);
   const network = getNetwork();
-  // W11 — derive the verified-skills count from the manifest loader so it
-  // tracks reality (was hardcoded "5" and would drift silently).
+  // First-party skill set — the 6 we signed and maintain. The 150+
+  // vendored community skills under `seed-skills/imports/` are loadable
+  // but NOT first-party — they ship as a discoverability bonus, not a
+  // promise. The home stat row + live-testnet card both bind to the
+  // first-party count so the labels match reality (P1 UI test caught
+  // the prior "FIRST-PARTY SKILLS: 156" misleading-label drift).
+  const FIRST_PARTY_SKILL_IDS = new Set([
+    'private-doc-review',
+    'content-pitch-review',
+    'github-audit',
+    '0g-integration-auditor',
+    'plan-step',
+    'code-edit',
+  ]);
   const allSkills = loadAllSkills();
-  const verifiedSkillsCount = allSkills.length;
-  // Surface only first-party + manually-curated skills in the Run-panel
-  // dropdown — the 150+ vendored community skills under `imports/` would
-  // overwhelm the picker. Selection mirrors the skill ids the home page
-  // already references in marketing copy.
-  const RUN_PANEL_IDS = new Set(['private-doc-review', 'content-pitch-review', 'github-audit', '0g-integration-auditor', 'plan-step', 'code-edit']);
+  const firstPartyCount = allSkills.filter((s) => FIRST_PARTY_SKILL_IDS.has(s.id)).length;
+  const totalCatalogCount = allSkills.length;
   const runPanelSkills = allSkills
-    .filter((s) => RUN_PANEL_IDS.has(s.id))
+    .filter((s) => FIRST_PARTY_SKILL_IDS.has(s.id))
     .map((s) => ({
       id: s.id,
       label: s.id,
@@ -213,8 +221,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <span style={{ color: 'var(--color-muted)' }}>passports minted</span>
               </div>
               <div>
-                <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>{verifiedSkillsCount}</span>{' '}
-                <span style={{ color: 'var(--color-muted)' }}>verified skills</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>{firstPartyCount}</span>{' '}
+                <span style={{ color: 'var(--color-muted)' }}>first-party skills</span>
+                {totalCatalogCount > firstPartyCount && (
+                  <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
+                    {' '}· +{totalCatalogCount - firstPartyCount} community
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -304,7 +317,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="card">
             <div className="section-label">First-party skills</div>
             <div className="italic-display" style={{ fontSize: 56, lineHeight: 1, marginTop: 8 }}>
-              {verifiedSkillsCount}
+              {firstPartyCount}
             </div>
             <div style={{ marginTop: 12, fontSize: 13, color: 'var(--color-muted)' }}>
               Each anchored on the on-chain SkillRegistry.
