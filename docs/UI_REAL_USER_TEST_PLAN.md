@@ -182,14 +182,17 @@ Main flow first; out-of-funds fallback is lower-priority below.
 | Open `/r/<id>` | 0 | Receipt renders publicly without login. |
 | Verification status chip | 0 | Shows VERIFIED / ANCHORED / PAID / INVALID honestly. |
 | Payment block | 0 | Shows payer, creator, treasury, amount, tx hash if paid. |
-| TEE / model block | 0 | Shows TIER 1 + 0GM chip (green) for 0G runs; external = amber. |
+| TEE / model block (0GM badge · Block G) | 0 | Shows TIER 1 + 0GM chip (green) for 0G runs; external = amber. `execution.model.source` enum displayed. |
 | Storage evidence block | 0 | Shows evidence root/status; pending labeled pending. |
+| **Burn Mode evidence** (Block F) | 0 | When receipt has `execution.burnMode: true`: receipt page shows `storage.encryption.keyFingerprint` (sha256 of the destroyed session key) — proves the session key once existed and is now destroyed. |
+| **EIP-712 anchor signature recovery** (Block K-2 fix · V2/V3) | 0 | Verifier passes: ECDSA signature recovers to `agent.ownerWallet`; `agentAddress` on chain matches recovered signer (NOT msg.sender). |
 | Chain / explorer links | 0 | Every tx/address link opens the correct 0G chainscan. |
 | Share button | 0 | Share text/link correct; copy-to-clipboard puts the right URL. |
 | Print page `/r/<id>/print` | 0 | Readable, professional; print preview looks clean. |
 | **OG image** at `/r/<id>/opengraph-image` | 0 | Open URL directly → returns 1200×630 PNG. Paste `/r/<id>` URL into Twitter card validator + Slack + Discord — preview shows correct title/description/image. |
 | **Embed view** at `/embed/r/<id>` | 0 | Renders a compact embeddable card; works iframed in another HTML page. |
 | **Stranger-replays in incognito on different machine** | 0 | Open `/r/<id>` in fresh incognito on a non-Ivaronix machine; FULLY VERIFIED ✓ renders without auth/wallet. |
+| **V3 receipt slots 10/11/12** | 1+ | Verify receipts with `receiptType` slot 10 (doc_room_create), 11 (doc_room_read), 12 (memory_consolidation) anchor on `ReceiptRegistryV3` and render correctly on `/r/<id>` (V2 capped at slot 9; V3 admits these). |
 | Invalid receipt id | 0 | 404/error state is clean and helpful. |
 
 ---
@@ -271,9 +274,13 @@ Roles: A = memory owner · B = grantee/reader.
 | What to use | Wallets | Expected outcome |
 |---|---:|---|
 | Open data-room page | 1-2 | Room details, encrypted evidence, read-receipt UI render. |
+| **Data room keyFingerprint visible** | 1-2 | The room's encryption keyFingerprint (sha256 of the destroyed session key) shown on `/data-room/<id>`. |
+| **doc_room_create receipt (V3 slot 10)** | 1 | Creating a data room anchors a receipt with `receiptType: 10` on `ReceiptRegistryV3`. |
 | Reader access | 2 | Allowed reader can view permitted info only. |
+| **doc_room_read receipt (V3 slot 11)** | 2 | Reader's access anchors a receipt with `receiptType: 11`; reader's wallet recorded. |
 | Denied reader | 2 | Denied state clear; no sensitive data shown. |
 | Delegate page | 1-2 | Delegate identity, permissions, signer boundary clear. |
+| **Erc7857Verifier attestor flow** | 1 | If UI surfaces attestor-signature flow: add attestor → attestor signs attestation → verifier confirms. If no UI: mark `NOT UI-SHIPPED` (Erc7857 attestation is checked at receipt-verify time via the deployed contract; the verifier is a chain primitive, not a Studio surface). |
 | Delegate receipt link | 0 | Receipt proves delegate signer correctly. |
 
 ---
@@ -405,6 +412,55 @@ UI DONE → move to dedicated CLI test phase
 ```
 
 When a priority's items all `PASS`, mark it `DONE` in the daily checkpoint and move to the next. When a single item fails: stop, fix properly per the fail rule, re-test, then continue.
+
+---
+
+## Feature → priority coverage matrix
+
+Every shipped feature mapped to the test priority that exercises it. Goal: prove no feature is missed.
+
+| Shipped feature | Block | Priority covering it | Notes |
+|---|---|---|---|
+| `SkillRunPayment.sol` (pull-pattern fee split) | A | **P3** (payment-tx binding) + **P5** (marketplace buy → withdraw → refund) | 3-wallet flow exercises creator/buyer/treasury |
+| `SkillPricing.sol` (per-skill price storage) | A.1 | **P5** (skill detail price display + price editing) | Price editing covered explicitly |
+| Receipt schema · `billing.payment` block | B | **P3** + **P4** + **P13** | Payment block visible on `/r/<id>` |
+| Receipt verifier · 5-check payment binding | B | **P3** (UI display) + **P13** (CLI cross-check) | Tampered txHash fails closed |
+| Receipt schema · `execution.model.source` enum | B/G | **P4** (TEE/model block · 0GM badge) | Green chip for 0G; amber for external |
+| Receipt schema · `og.da.batched` reserved field | B | (not user-visible · roadmap) | DA integration documented, not shipped |
+| Studio `/api/run/estimate` + `/api/run/confirm` (402-style) | C | **P3** (estimate→confirm flow + 5 distinct error messages) | New payment-aware flow |
+| CLI payment (`--pay` / `--subsidise` / `--no-payment`) | D | **P13** (cross-tool consistency) | Light CLI cross-check |
+| Studio `/?demo=true` zero-friction | E | **P2** (main flow + OOF fallback) | Both paths covered |
+| Demo wallet monitor + OOF fallback UX | E | **P2** (lower priority within P2) | After main flow proven |
+| 0G KV self-host (Docker stack + HttpKvClient + chain-grant) | F | **P6** (cross-session persistence + multi-user isolation + KV-down fallback) | All 3 sub-conditions |
+| 0GM model first-class display | G | **P4** (model block) | Source enum honest tagging |
+| IETF AAT export (`--format aat`) | H | **P13** (CLI cross-check) | `pnpm ivaronix receipt verify <id> --format aat` |
+| Marketplace 5 routes (browse/detail/new/payouts/admin) | I | **P5** (entire priority) | All 5 routes |
+| 3-wallet UI flow scaffold | J | **P5** (3-wallet creator/buyer/treasury sub-flow) | Per CLAUDE.md §16 |
+| Mainnet deploy prep | K | (deferred · gated on operator OG bridge) | Tested post-deploy |
+| README persona-first hero + thesis + SECURITY + CONTRIBUTING | L | **P1** (landing) + **P10** (legal/docs/thesis) | Hero verify chip + persona h1 wrap |
+| `docs/JUDGE_REPLAY.md` + `demo-fallback.ts` | M | **P15** (Vercel verify) + cross-machine replay | Tested on clean clone |
+| Goldsky subgraph (v1.0.0 wizard · 3 events) | O | **P5** (subgraph + chain-fallback) | v2.0.0 multi-contract via CLI pending |
+| ReceiptRegistryV3 slots 10/11/12 | (B-V2-32) | **P4** + **P9** (data_room_create · data_room_read · memory_consolidation) | Slots beyond V2 cap |
+| AgentPassportINFTV2 (K-1+K-4+K-6 fix) | (planning-003) | **P7** (passport mint + trustScore) | Authorized recorders only |
+| CapabilityRegistryV2 (memory grants) | (B-V2) | **P6** (grant → revoke → access denied) | Chain-grant authoritative |
+| MemoryAccessLogV2 (self-log + grant-backed log) | (B-V2) | **P6** (multi-user isolation) | V2 enforcement |
+| Erc7857Verifier (passport attestor signatures) | (planning-003) | **P9** (if UI surfaces; else `NOT UI-SHIPPED`) | Chain primitive, not Studio surface |
+| Burn Mode AES-256-GCM (session key destruction) | (K-20 fix) | **P3** (Burn Mode toggle) + **P4** (keyFingerprint on receipt) + **P9** (data room keyFingerprint) | Threat-model defended end-to-end |
+| EIP-712 anchor signature recovery (V2/V3) | (K-2 fix) | **P4** (verifier passes; agentAddress matches recovered signer) | Implicit in FULLY VERIFIED ✓ |
+| Canonical hash (polyglot byte-equality) | (core) | **P13** (CLI cross-check verifies same hash) | TS+Python+Rust |
+| `SubscriptionEscrowV2.sol` | (B-V2) | **NOT UI-SHIPPED** (no Studio route) | Contract deployed; marketplace copy explicitly says "No subscriptions" for v1; v1.1 if needed |
+
+### Multi-wallet interaction coverage
+
+| Interaction shape | Priority | Sub-conditions per CLAUDE.md §16 |
+|---|---|---|
+| 1-wallet (operator-only flows) | P0, P3, P7, P8 | (a) real on-chain tx · (b) UI in MM · (c) CLI cross-check |
+| 2-wallet (memory grant: A owner + B grantee) | P6 | (a) tx from A · (b) UI as A AND B · (c) CLI matches · (d) chainscan |
+| 2-wallet (data room: owner + reader) | P9 | (a) tx from owner · (b) UI as owner AND reader · (c) CLI · (d) chainscan |
+| 2-wallet (delegate: principal + delegate) | P9 | (a) tx from principal · (b) UI as principal AND delegate · (c) receipt shows delegate signer |
+| **3-wallet (marketplace: A creator + B buyer + C treasury)** | P5 | (a) 4 distinct txs · (b) UI as A AND B AND C · (c) CLI cross-check · (d) chainscan shows 3 senders |
+
+Every shipped feature has at least one priority covering it. Every multi-wallet shape has its 4 sub-conditions explicit. No feature is invisible to the plan.
 
 ---
 
