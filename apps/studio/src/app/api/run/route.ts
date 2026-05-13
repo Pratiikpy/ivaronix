@@ -8,7 +8,12 @@ import { sanitizeErrorMessage } from '@/lib/error-sanitize';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60; // Vercel: cap at 60s for hobby; 300s for pro
+// Bumped 60 → 300s after P3 + P5 auto runs caught the inference-timeout
+// failure mode (Router/Compute Quick-tier latency can spike past 60s on
+// cold paths). Vercel hobby plan caps at 60s; pro plan honors 300s. The
+// 90s AbortController on the client (RunPanel.tsx, BuyAndRunButton.tsx)
+// is the user-side hard ceiling regardless.
+export const maxDuration = 300;
 
 /**
  * Runtime-validated request body. Closes HALF_BAKED §J-2 — pre-sweep-145

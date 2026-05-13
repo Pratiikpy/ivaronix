@@ -261,10 +261,16 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
         const code = confirmResult.code ?? 'CONFIRM_FAILED';
         const message = confirmResult.detail ?? confirmResult.error ?? 'Payment confirmation failed';
         if (code === 'PIPELINE_FAILED_POST_PAYMENT') {
+          // Surface the underlying inference error so the user can see WHY
+          // it failed (e.g. "Router 429" / "skill not found" / etc.) rather
+          // than just the generic "inference failed" pad — closes the
+          // §P3-line-173 "no opaque failures" gap caught by P5 auto run #3.
+          const underlying = (confirmResult.error ?? '').trim();
+          const reason = underlying ? ` Reason: ${underlying}.` : '';
           setState({
             kind: 'error',
             code,
-            message: `Payment confirmed (tx ${txHash}) but inference failed. ${confirmResult.refundQueued ? 'A refund can be claimed after 24h.' : ''}`,
+            message: `Payment confirmed (tx ${txHash}) but inference failed.${reason}${confirmResult.refundQueued ? ' A refund can be claimed after 24h.' : ''}`,
           });
         } else {
           setState({ kind: 'error', code, message });

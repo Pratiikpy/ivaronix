@@ -40,7 +40,12 @@ import { KNOWN_PAYMENT_CONTRACTS, type Network } from '@ivaronix/core';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+// 300s ceiling so the post-payment inference step (consensus call to the
+// 0G Router) doesn't get killed by the Vercel function timer. P5 auto run
+// caught this — payment landed on chain, then runPipeline hit the 60s
+// cap and the user saw PIPELINE_FAILED_POST_PAYMENT with no detail.
+// Vercel free plan caps this at 60s; Pro/Enterprise honors the full 300s.
+export const maxDuration = 300;
 
 const ConfirmBodySchema = z.object({
   skillId: z.string().min(1).max(80),
