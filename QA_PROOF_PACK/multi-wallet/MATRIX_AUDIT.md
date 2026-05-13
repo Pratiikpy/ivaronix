@@ -8,8 +8,8 @@
 | State | 2-wallet rows | 3-wallet rows | Total |
 |---|---:|---:|---:|
 | **PASS** | 0 | 0 | **0** |
-| **PENDING (chain side complete · UI side gated)** | 5 | 0 | **5** |
-| **PENDING (untested)** | 7 | 2 | **9** |
+| **PENDING (chain side complete · UI side gated)** | 8 | 0 | **8** |
+| **PENDING (untested)** | 4 | 2 | **6** |
 | **BLOCKED** | 0 | 0 | **0** |
 | **Total rows** | **12** | **2** | **14** |
 
@@ -36,12 +36,12 @@ The "NOT yet imported into MetaMask" status is the gate on every PASS classifica
 | # | Plan line | Feature | State | Chain proof | UI/MM proof | Notes |
 |---:|---:|---|:---:|:---:|:---:|---|
 | 1 | 763 | Authorized-recorders gate (V2) | PENDING | ✅ iter-132 (revert at gas-estimation) | ❌ no MM popup capture | Chain side done; UI surface for this is direct ABI call, no Studio render — the "UI proof" gate is N/A for direct contract calls. Honest re-classification: PASS (chain) + UI N/A. **Effective PASS after reclassify.** |
-| 2 | 791 | `og.burn.auto_enable` for doc-room reads | PENDING | ❌ | ❌ | Needs `ivaronix room read <id> --as <walletB>` with Wallet B's key. Wallet B funded; CLI command exists; script pending. |
+| 2 | 791 | `og.burn.auto_enable` for doc-room reads | PENDING (chain complete) | ✅ iter-134 receipt `rcpt_01KRFBKZYN7SVFKW3SSYF2VF8F` with `burnMode: true`, aes-256-gcm encryption, V3 anchor id=6 | ❌ no Studio /r/6 capture | Wallet B opened room via env-swapped read — receipt records burn=true per the skill manifest's `og.burn.auto_enable`. UI gate on /r/6 rendering from Wallet B's perspective. |
 | 3 | 820 | Memory grant | PENDING | ✅ iter-132 (`0x3eed7d81...`) | ❌ no Studio /memory capture from Wallet B | Chain side done; UI gate is Studio /memory rendering Wallet B's grants from B's MM connection. |
 | 4 | 821 | Memory revoke | PENDING | ✅ iter-133 (`0x69138595...`) | ❌ no Studio /memory capture from Wallet B post-revoke | Chain side done (isValid true→false confirmed); UI gate is Wallet B's /memory page showing the revoke. |
 | 5 | 822 | MemoryAccessLogV2 spoofing defense | PENDING | ✅ iter-133 (revert "not agent") | ❌ no MM popup capture | Direct ABI call test — UI N/A for spoofing attempt. Honest re-classification: PASS (chain) + UI N/A. **Effective PASS after reclassify.** |
-| 6 | 825 | Data room share | PENDING | ❌ (room create iter-95 was single-wallet) | ❌ | Needs `ivaronix room create` with party=[Wallet B] then Wallet B opens `/data-room/<id>` in real MM. CLI side agent-doable; UI side gated. |
-| 7 | 826 | Data room revoke | PENDING | ❌ | ❌ | Needs the row 6 prerequisite + revoke + Wallet B refresh. |
+| 6 | 825 | Data room share | PENDING (chain complete) | ✅ iter-134 — room `01KRFBG2XC8G20JDJ81CD614AX`, create tx `0xb0f3f496...` block 33009656 (V3 slot 10), Wallet B read tx `0xeb3bce64...` block 33009843 (V3 slot 11 id=6) | ❌ no /data-room/<id> capture from Wallet B's MM | Bug found + fixed iter-134: room.ts:486 read path was V1-only while write side was V2-first since iter-122. Without the fix, Wallet B's read failed with "grant no longer valid" even when the V2 grant was active. UI gate on real MM connection. |
+| 7 | 826 | Data room revoke | PENDING (chain complete) | ✅ iter-134 — revoke tx `0xe7492f5f...` block 33009932; Wallet B retry-read denied with "grant 0x1d33bab7... is no longer valid" | ❌ no /data-room/<id> post-revoke capture from Wallet B's MM | State transition (grant active → revoked → access denied) observed end-to-end. Wallet B's retry attempt after revoke explicitly rejected by the contract layer. UI gate on real MM. |
 | 8 | 827 | Create delegate | PENDING | ✅ iter-133 (`0xb491f9d0...` mint tokenId 5; fund tx `0x8e2c75c1...`) | ❌ no /delegate page capture from delegate's MM | Chain side done: delegate wallet `0xc347bCb0...` generated, funded with 0.005 OG, V1 passport minted (delegate.ts has v1-passport-allow marker; B-V2-38 tracks V2 migration). |
 | 9 | 828 | Delegate run | PENDING | ❌ | ❌ | Delegate grant issued iter-133 (`0x12ffcd01...` block 33009056 · grantId `0x7e4deb8d...`) but `delegate run` needs LLM call + receipt anchor — not driven in this iteration. |
 | 10 | 829 | Delegate receipt semantics | PENDING | ❌ | ❌ | Receipt-body verification gated on row 9 producing a real receipt. |

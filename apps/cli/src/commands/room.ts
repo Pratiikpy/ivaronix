@@ -482,8 +482,15 @@ roomCommand
     ui.info(`creator              ${manifest.creator}`);
     ui.info(`scope hash           ${manifest.scopeHash}`);
 
-    // Verify the connected wallet has a valid grant for this scope
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // Verify the connected wallet has a valid grant for this scope.
+    // V2-first per iter-134 (matches the write side at line 163 which has
+    // been V2-first since iter-122). Pre-iter-134 the read path read V1
+    // only — so any grant issued post-iter-122 (stored on V2) was
+    // invisible here and room read failed with "grant no longer valid"
+    // even when the grant was active on V2.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
