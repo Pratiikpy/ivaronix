@@ -121,3 +121,27 @@ genuinely external dependencies the agent cannot drive:
 | OG image generation | `/r/28`, `/r/29`, `/opengraph-image` → 200 image/png 28-31 KB | curl headers |
 
 **Closing observation** — `unifiedNextId().total` semantics: the "1,679 receipts anchored" headline is the SUM across V1 + V2 + V3 registries. A user clicking through to `/r/1679` correctly 404s because no single registry has id 1679. Latest V3 id observed: 32. Latest V1 LEGACY id observed: 1004. No drift between headline number and per-registry routing.
+
+### Post-iter touch-target sweep (P11 mobile)
+
+Wrote `scripts/qa/ui-test-plan/p11-touch-target-audit.ts` — Playwright sweep of every primary interactive (`<button>`, form controls, button-styled `<a>`) at 375×812 against the WCAG / Apple HIG 44×44 minimum. Filters inline footer text-links (those fall under WCAG 2.5.5 AA at 24×24 via inline-flow spacing) and label-wrapped checkboxes (effective tap area = label, not native 13px input).
+
+Initial run: **74 violations** across 14 routes.
+
+Root causes:
+1. Header `Why/0G/Agents` nav links visible on mobile at 38h (only Skills/Global/Brand/Dashboard were hidden — the 480px CSS rule missed 3 routes)
+2. `.mobile-menu-trigger` rendering 31×44 — inline `width: 44` collapsing under flex squeeze
+3. Body CTAs using `.btn-ghost` / `.btn-secondary` at 26-38h — class padding (`8px 16px`) below the 44 minimum
+4. `<a class="btn-secondary">` ignored `min-height` due to default inline display
+
+Fixes (`e155435` + `cd60f37`):
+1. Extended 480px hide rule to all header nav anchors
+2. `.mobile-menu-trigger { min-width: 44px !important; flex-shrink: 0 }`
+3. Mobile-only `min-height: 44px` on `.btn-ghost / .btn-primary / .btn-secondary / button[type]` and form inputs in `main`
+4. Mobile-only `display: inline-flex; align-items: center; justify-content: center` so anchor CTAs respect min-height
+
+Audit after first fix (live on `f3eaaf1310637217.css`): **74 → 8 violations**. Remaining 8: 6 anchor CTAs on /0g + 2 native checkboxes on / (audit subsequently fixed to skip label-wrapped checkboxes per WCAG 2.5.5).
+
+Audit after follow-up fix awaiting deploy (`504294c`): expected 0 hard violations.
+
+Proof: `QA_PROOF_PACK/ui/P11-mobile/touch-targets.md` (auto-updated by audit script).
