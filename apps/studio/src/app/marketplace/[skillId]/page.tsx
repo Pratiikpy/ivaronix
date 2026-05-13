@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, skillReceipts, subgraphAvailable } from '@/lib/subgraph';
 import { BuyAndRunButton } from '@/components/BuyAndRunButton';
+import { resolveSkillSlug } from '@/lib/first-party-skills';
+import { findSkillByIdServer } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -40,11 +42,22 @@ export default async function SkillDetailPage({ params }: PageProps) {
   const priceOg = parseFloat(skill.priceOg);
   const isFree = !skill.isPriced || skill.priceWei === '0';
 
+  // Resolve the human-readable slug + load its manifest description, so
+  // the detail page shows "private-doc-review" + the skill's description
+  // instead of just the raw hex hash. Closes the "Skill detail"-only
+  // landing-page UX gap that left users guessing what 0x0934cfc2… is.
+  const slug = await resolveSkillSlug(skill.skillId);
+  const knownSlug = slug !== skill.skillId; // not a pass-through
+  const localSkill = knownSlug ? findSkillByIdServer(slug) : null;
+  const skillTitle = knownSlug ? slug : 'Skill detail';
+  const skillDescription = localSkill?.manifest.description
+    ?? (knownSlug ? `First-party skill · run via paySkillRun → receipt anchored on chain.` : 'Run via paySkillRun → receipt anchored on chain.');
+
   return (
     <Section
       label={`§ SKILL · ${isFree ? 'FREE' : `${priceOg.toFixed(4)} OG`}`}
-      title="Skill detail"
-      description={`Run via paySkillRun → receipt anchored on chain.`}
+      title={skillTitle}
+      description={skillDescription}
     >
       <div className="card" style={{ padding: 24, marginBottom: 16 }}>
         <h2 style={{ margin: '0 0 16px 0' }}>Pricing</h2>
@@ -126,8 +139,11 @@ export default async function SkillDetailPage({ params }: PageProps) {
         )}
       </div>
 
-      <p style={{ marginTop: 24, fontSize: 13, opacity: 0.7 }}>
+      <p style={{ marginTop: 24, fontSize: 13, opacity: 0.7, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         <Link href="/marketplace">← Back to marketplace</Link>
+        {knownSlug && (
+          <Link href={`/skill/${slug}`}>Full skill profile →</Link>
+        )}
       </p>
     </Section>
   );
