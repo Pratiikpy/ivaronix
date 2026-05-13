@@ -11,22 +11,11 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, subgraphAvailable, type SkillListing } from '@/lib/subgraph';
 import { resolveSkillSlug } from '@/lib/first-party-skills';
-import { findSkillByIdServer } from '@/lib/skills';
+import { loadAllSkills } from '@/lib/skills';
 
 interface EnrichedSkill extends SkillListing {
   resolvedSlug: string | null;
   description: string | null;
-}
-
-async function enrichSkill(skill: SkillListing): Promise<EnrichedSkill> {
-  const slug = await resolveSkillSlug(skill.skillId);
-  const knownSlug = slug !== skill.skillId;
-  const localSkill = knownSlug ? findSkillByIdServer(slug) : null;
-  return {
-    ...skill,
-    resolvedSlug: knownSlug ? slug : null,
-    description: localSkill?.manifest.description ?? null,
-  };
 }
 
 export const dynamic = 'force-dynamic';
@@ -39,10 +28,31 @@ export const metadata = {
 
 export default async function MarketplacePage() {
   const rawSkills = await skillsList({ limit: 50, sortBy: 'recent' });
+
+  // Pre-load every first-party SKILL.md ONCE so the per-card enrichment
+  // is an O(1) Map lookup instead of an N-times disk scan + YAML parse.
+  // P14 caught a 300+ms FCP regression from per-card findSkillByIdServer
+  // calls when there are 6 cards on /marketplace.
+  const allLocal = loadAllSkills();
+  const descBySlug = new Map<string, string>();
+  for (const s of allLocal) {
+    descBySlug.set(s.id, s.manifest.description);
+  }
+
   // Enrich each chain listing with the canonical slug + SKILL.md
-  // description when known. The browse cards then render the human
-  // name (private-doc-review) instead of just a hex hash.
-  const skills = await Promise.all(rawSkills.map(enrichSkill));
+  // description when known. Resolve-then-lookup keeps the per-card
+  // path branch-free at render time.
+  const skills: EnrichedSkill[] = await Promise.all(
+    rawSkills.map(async (skill) => {
+      const slug = await resolveSkillSlug(skill.skillId);
+      const knownSlug = slug !== skill.skillId;
+      return {
+        ...skill,
+        resolvedSlug: knownSlug ? slug : null,
+        description: knownSlug ? (descBySlug.get(slug) ?? null) : null,
+      };
+    }),
+  );
   const subgraph = subgraphAvailable();
 
   return (
