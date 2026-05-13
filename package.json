@@ -44,7 +44,8 @@
     "wander:cycle": "tsx scripts/wander-cycle/cycle.ts",
     "wander:loop": "tsx scripts/wander-cycle/loop.ts",
     "dev:kv": "tsx scripts/dev/start-local-0g-kv.ts",
-    "dev:kv:stop": "docker rm -f ivaronix-kv-node"
+    "dev:kv:stop": "docker rm -f ivaronix-kv-node",
+    "demo-wallet:monitor": "tsx scripts/diag/demo-wallet-monitor.ts"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

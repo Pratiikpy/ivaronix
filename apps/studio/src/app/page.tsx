@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
+import { DemoPanel } from '@/components/DemoPanel';
 import { unifiedNextId, livePassportCount, getNetwork } from '@/lib/chain';
 import { loadAllSkills } from '@/lib/skills';
 
@@ -23,7 +24,20 @@ async function liveReceiptCount(): Promise<bigint | null> {
 // source-of-truth helper instead of duplicating the `nextTokenId - 1`
 // subtraction at each call site.
 
-export default async function HomePage() {
+interface HomePageProps {
+  searchParams?: Promise<{ demo?: string }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  // FINAL_BUILD_PLAN.md Block E · ?demo=true zero-friction onboarding.
+  // When set, the home page renders DemoPanel (one-button operator-subsidised
+  // run) instead of the full RunPanel. Falls back to the regular flow if the
+  // demo wallet is out of funds (per D-6 demo-wallet-monitor).
+  const params = await searchParams;
+  const demoMode = params?.demo === 'true' || params?.demo === '1';
+  const { isDemoModeActive } = await import('@/lib/demo-mode');
+  const demoActive = demoMode && isDemoModeActive();
+
   const [totalReceipts, totalPassports] = await Promise.all([
     liveReceiptCount(),
     livePassportCount(),
@@ -192,9 +206,12 @@ export default async function HomePage() {
           {/* RIGHT: live RunPanel preview card. Skill list is loaded
               server-side per planning-003 §A.2.7 so the dropdown
               tracks `seed-skills/` reality + each skill's manifest
-              default tier — no hardcoded list to drift. */}
+              default tier — no hardcoded list to drift.
+              FINAL_BUILD_PLAN.md Block E: when ?demo=true and the
+              demo wallet has funds, render DemoPanel for the one-
+              click operator-subsidised flow instead. */}
           <div className="hero-runpanel">
-            <RunPanel skills={runPanelSkills} />
+            {demoActive ? <DemoPanel /> : <RunPanel skills={runPanelSkills} />}
           </div>
         </div>
       </section>
