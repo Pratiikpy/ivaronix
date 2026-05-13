@@ -3,6 +3,7 @@ import { Section } from '@/components/Section';
 import { unifiedNextId, livePassportCount, getProvider, getNetwork } from '@/lib/chain';
 import { loadAllLocalReceipts, totalOgSpent, topSkillsByUsage } from '@/lib/local-receipts';
 import { loadAllSkills } from '@/lib/skills';
+import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
 import { MemoryAccessLogClient } from '@ivaronix/og-chain';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 
@@ -70,7 +71,7 @@ async function loadSnapshot(): Promise<GlobalSnapshot> {
     totalReceipts: unifiedIds ? Number(unifiedIds.total) : null,
     totalPassports: passportCount !== null ? Number(passportCount) : null,
     totalOg: totalOgSpent(localReceipts),
-    firstPartySkillCount: loadAllSkills().length,
+    firstPartySkillCount: loadAllSkills().filter((s) => (FIRST_PARTY_SLUGS as readonly string[]).includes(s.id)).length,
     topSkills: topSkillsByUsage(localReceipts, 5),
     recentMemoryEvents,
   };
