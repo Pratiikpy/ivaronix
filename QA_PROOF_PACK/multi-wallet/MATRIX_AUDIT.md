@@ -8,8 +8,9 @@
 | State | 2-wallet rows | 3-wallet rows | Total |
 |---|---:|---:|---:|
 | **PASS** | 0 | 0 | **0** |
-| **PENDING (chain side complete · UI side gated)** | 8 | 0 | **8** |
-| **PENDING (untested)** | 4 | 2 | **6** |
+| **PENDING (chain side complete · UI side gated)** | 9 | 0 | **9** |
+| **PENDING (untested)** | 2 | 2 | **4** |
+| **SEMANTIC MISMATCH (code-vs-plan design decision needed)** | 1 | 0 | **1** |
 | **BLOCKED** | 0 | 0 | **0** |
 | **Total rows** | **12** | **2** | **14** |
 
@@ -43,8 +44,8 @@ The "NOT yet imported into MetaMask" status is the gate on every PASS classifica
 | 6 | 825 | Data room share | PENDING (chain complete) | ✅ iter-134 — room `01KRFBG2XC8G20JDJ81CD614AX`, create tx `0xb0f3f496...` block 33009656 (V3 slot 10), Wallet B read tx `0xeb3bce64...` block 33009843 (V3 slot 11 id=6) | ❌ no /data-room/<id> capture from Wallet B's MM | Bug found + fixed iter-134: room.ts:486 read path was V1-only while write side was V2-first since iter-122. Without the fix, Wallet B's read failed with "grant no longer valid" even when the V2 grant was active. UI gate on real MM connection. |
 | 7 | 826 | Data room revoke | PENDING (chain complete) | ✅ iter-134 — revoke tx `0xe7492f5f...` block 33009932; Wallet B retry-read denied with "grant 0x1d33bab7... is no longer valid" | ❌ no /data-room/<id> post-revoke capture from Wallet B's MM | State transition (grant active → revoked → access denied) observed end-to-end. Wallet B's retry attempt after revoke explicitly rejected by the contract layer. UI gate on real MM. |
 | 8 | 827 | Create delegate | PENDING | ✅ iter-133 (`0xb491f9d0...` mint tokenId 5; fund tx `0x8e2c75c1...`) | ❌ no /delegate page capture from delegate's MM | Chain side done: delegate wallet `0xc347bCb0...` generated, funded with 0.005 OG, V1 passport minted (delegate.ts has v1-passport-allow marker; B-V2-38 tracks V2 migration). |
-| 9 | 828 | Delegate run | PENDING | ❌ | ❌ | Delegate grant issued iter-133 (`0x12ffcd01...` block 33009056 · grantId `0x7e4deb8d...`) but `delegate run` needs LLM call + receipt anchor — not driven in this iteration. |
-| 10 | 829 | Delegate receipt semantics | PENDING | ❌ | ❌ | Receipt-body verification gated on row 9 producing a real receipt. |
+| 9 | 828 | Delegate run | PENDING (chain complete) | ✅ iter-135 — re-grant tx `0x68e05bed...`, delegate run produced receipt `rcpt_01KRFBXZZ0R45YGR4DEV9QG9V4` (type=burn slot 3) anchored on V2 id=9 (tx `0x40b5d2a8...` block 33010518), delegate's passport receiptCount=1 trustScore=1 | ❌ no Studio /r/9 capture from delegate's MM | Delegate ran `private-doc-review` skill on the iter-134 test doc, signed its own receipt, anchored on chain. Storage upload fell back to sha256 (delegate has 0.005 OG, Storage tx requires ~0.009 OG — gracefully degraded). |
+| 10 | 829 | Delegate receipt semantics | **SEMANTIC MISMATCH iter-135** | ❌ | ❌ | **Code-vs-plan ambiguity surfaced iter-135.** Plan expects `agent.signedBy = 'operator-on-behalf-of-user'` and `agent.ownerWallet = user` (not delegate). Actual receipt has `signedBy = undefined` (defaults to 'operator') + `ownerWallet = delegate` (`0xc347bCb0...`). Current model treats delegate as autonomous agent with its own passport (delegate.ts mints a passport for the delegate iter-133), not as "user signs on behalf of" pattern. Either (a) the plan is documenting a future design and the code is current, or (b) the delegate flow should set `signedBy: 'operator-on-behalf-of-user'` + `ownerWallet = grantor`. Needs design decision before this row can move to PASS. |
 | 11 | 830 | Revoke delegate | PENDING | ✅ iter-133 (`0xd30accbb...` block 33009107) | ❌ no UI capture | Chain side: capability grant revoked. State transition (grant active → revoked) observed on chain. Retry-action-fails post-revoke not yet driven. |
 | 12 | 863 | Marketplace: buyer runs creator skill | PENDING | ❌ | ❌ | Wallet B (as buyer) runs a skill published by operator (as creator). `ivaronix doc ask --skill <name>` with Wallet B's key. |
 
