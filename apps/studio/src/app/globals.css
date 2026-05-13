@@ -307,6 +307,17 @@ body {
     main textarea {
       min-height: 44px;
     }
+    /* Checkbox/radio tap-target rule: WCAG 2.5.5 lets the LABEL act as
+     * the tap surface when the input is wrapped or `for=`-linked. The
+     * native input is 13×13 by default — too small alone — so the
+     * label must be ≥ 44×44 on mobile. Padding makes the box hit the
+     * target without resizing the actual checkbox glyph. */
+    main label:has(input[type="checkbox"]),
+    main label:has(input[type="radio"]) {
+      min-height: 44px;
+      padding-top: 6px;
+      padding-bottom: 6px;
+    }
   }
   /* Stack any 2-col grid */
   [style*="grid-template-columns: 2fr 1fr"],
