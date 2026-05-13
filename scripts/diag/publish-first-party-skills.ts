@@ -59,6 +59,7 @@ const PRICING_ADDR  = '0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F';
 const REGISTRY_ABI = [
   'function ownerOf(bytes32 skillId) view returns (address)',
   'function publishVersion(bytes32 skillId, bytes32 versionId, bytes32 manifestHash)',
+  'function getVersion(bytes32 skillId, bytes32 versionId) view returns (tuple(address creator, bytes32 manifestHash, uint64 publishedAt, bool revoked))',
 ];
 
 const PRICING_ABI = [
@@ -66,13 +67,17 @@ const PRICING_ABI = [
   'function setPrice(bytes32 skillId, uint256 priceWei, uint16 creatorBps, uint16 treasuryBps)',
 ];
 
-// Slugs that need publishing (private-doc-review already done)
+// All 6 first-party slugs — re-publish under canonical v-prefix versionId
+// because the first pass (and the original V2 private-doc-review publish)
+// stored entries under keccak256(version) which is unreachable by
+// versionIdFromSemver.
 const SLUGS_TO_PUBLISH = [
   '0g-integration-auditor',
   'code-edit',
   'content-pitch-review',
   'github-audit',
   'plan-step',
+  'private-doc-review',
 ] as const;
 
 // v1 launch defaults — uniform across first-party skills
@@ -105,14 +110,23 @@ async function main(): Promise<void> {
     const manifestText = manifestBytes.toString('utf8');
     const versionMatch = manifestText.match(/^version:\s*([0-9.]+)/m);
     const version = versionMatch ? versionMatch[1] : '0.1.0';
-    const versionId = keccak256(toUtf8Bytes(version));
+    // versionIdFromSemver convention: keccak256("v" + version). The first
+    // pass of this script (and the original V2 deploy of private-doc-review)
+    // used keccak256(version) without the "v" prefix, leaving orphan entries
+    // on chain that /skills + scanSkill could never look up. Re-publishing
+    // under the canonical versionId now (idempotent — old entries stay but
+    // are unreachable by the helper-pair callers).
+    const versionId = keccak256(toUtf8Bytes(`v${version}`));
 
-    // Check already-published
-    const currentOwner = (await registry.ownerOf(skillId)) as string;
-    if (currentOwner !== '0x0000000000000000000000000000000000000000') {
-      console.log(`  · ${slug}: already published (owner ${currentOwner.slice(0, 10)}…) — checking price...`);
+    // Check if the canonical-versionId entry exists. ownerOf is the
+    // skill-level mapping (set on first publish under any versionId) so
+    // it's already non-zero — but the canonical versionId record may
+    // still be missing if the original publish used the wrong encoding.
+    const canonicalVersion = (await registry.getVersion(skillId, versionId).catch(() => null)) as { creator: string } | null;
+    if (canonicalVersion && canonicalVersion.creator !== '0x0000000000000000000000000000000000000000') {
+      console.log(`  · ${slug}: canonical versionId already on chain — skip publishVersion`);
     } else {
-      console.log(`  → ${slug}: publishVersion · version=${version} · manifestHash=${manifestHash.slice(0, 18)}…`);
+      console.log(`  → ${slug}: publishVersion · version=v${version} · manifestHash=${manifestHash.slice(0, 18)}…`);
       try {
         const tx = await registry.publishVersion(skillId, versionId, manifestHash, { gasLimit: 300_000n });
         const receipt = await tx.wait();
