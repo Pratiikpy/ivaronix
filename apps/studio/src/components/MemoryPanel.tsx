@@ -93,8 +93,11 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
     query: { enabled: !!address && !!capabilityAddr },
   }) as { data: readonly Hex[] | undefined; refetch: () => void };
 
-  // Refetch after a successful write
-  if (isTxConfirmed) refetchGrantIds();
+  // Refetch after a successful write. Effect (not bare render-time call) so
+  // we don't risk re-render thrash if wagmi's refetch identity changes.
+  useEffect(() => {
+    if (isTxConfirmed) refetchGrantIds();
+  }, [isTxConfirmed, refetchGrantIds]);
 
   if (!isConnected || !address) {
     return (
