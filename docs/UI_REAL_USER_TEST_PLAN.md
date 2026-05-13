@@ -362,6 +362,98 @@ Record numbers in `QA_PROOF_PACK/ui/P14-performance/numbers.md`.
 
 ---
 
+## Priority 16 · Data freshness · read-after-write · cross-user propagation · real-source binding
+
+Catches the 5 UX bug classes that lower-priority tests miss systematically:
+
+1. Something I did on-chain, the frontend should update but doesn't.
+2. Something I did, another user should receive — they don't.
+3. Data not updating after an action that should trigger an update.
+4. UI not backing from a real source (showing stale / mocked / hardcoded data).
+5. Race conditions, double-submit, navigation-mid-tx UX failures.
+
+**This priority runs AFTER P0-P12 so every shipped flow has already been driven once. Then sweep this matrix against every action that mutates state.**
+
+### A · Read-after-write per chain write
+
+For EVERY action that produces an on-chain tx, prove the UI surface that should reflect it actually updates. Galileo block-time ~3s; allow 1-2 block buffer.
+
+| Action | UI surface that must update | Max wait |
+|---|---|---|
+| Anchor receipt (any flow) | Home receipt count · `/dashboard` receipts list · `/r/<id>` page · `/agent/<addr>` history | ~1 block |
+| `SkillRegistryV2.publish` | `/marketplace` list · `/skill/<id>` detail | ~1 block |
+| `SkillPricing.setPrice` | `/marketplace/<skillId>` price display · `/marketplace/new` form pre-fill | ~1 block |
+| `SkillRunPayment.paySkillRun` | `/r/<id>` payment block · `/marketplace/payouts` lifetime earnings · `/admin/treasury` accumulator | ~1 block |
+| `SkillRunPayment.withdrawCreator` | `/marketplace/payouts` balance → 0 · creator wallet balance increased | ~1 block |
+| `SkillRunPayment.withdrawTreasury` | `/admin/treasury` balance → 0 · treasury wallet balance increased | ~1 block |
+| `SkillRunPayment.refundFailedRun` | `/r/<id>` receipt shows `refunded: true` · payer wallet refunded | ~1 block |
+| `AgentPassportINFTV2.mint` | `/dashboard` passport state · `/agent/<handle>` profile | ~1 block |
+| `AgentPassportINFTV2.recordReputation` | `/dashboard` trustScore · `/agent/<handle>` trustScore | ~1 block |
+| `CapabilityRegistryV2.grant` | A's `/memory` shows grant · B's `/memory` shows received grant | ~1 block |
+| `CapabilityRegistryV2.revoke` | A's `/memory` grant marked revoked · B's next read fails 403 | ~1 block |
+| `MemoryAccessLogV2.logAccess` | Activity dashboard shows the access event | ~1 block |
+
+PASS = the UI surface updates within the max wait OR a clear "indexer catching up" state is shown (no fake stale data).
+
+### B · Cross-user propagation
+
+For every action that affects a DIFFERENT user, verify the second user's view updates.
+
+| Action by Wallet A | Wallet B's UI must show |
+|---|---|
+| A publishes skill | B's `/marketplace` list shows the new skill |
+| A updates skill price | B's `/marketplace/<id>` shows new price (NOT the old cached one) |
+| A grants memory to B | B's `/memory` shows the new grant |
+| A revokes B's grant | B's next read attempt → access denied |
+| A pays B's skill (B = creator) | B's `/marketplace/payouts` shows incremented lifetime earnings + withdrawable balance |
+| A anchors receipt referencing B (delegate flow) | B's `/agent/<handle>` history shows the receipt |
+
+PASS = open Wallet B's view in a SEPARATE browser session (different incognito window OR different machine) and verify the update arrived within ~1 block of A's tx.
+
+### C · Real-source binding sweep
+
+For every UI surface that displays a count, list, balance, or status — verify the value comes from chain/subgraph, NOT a hardcoded number or stale stub.
+
+| Surface | Must read from |
+|---|---|
+| Home "X receipts on-chain · live" chip | `unifiedNextId()` (chain) |
+| Home stat row · receipts | `unifiedNextId()` (chain) |
+| Home stat row · passports | `livePassportCount()` (chain) |
+| Home stat row · "First-party skills" | `loadAllSkills().length` (manifest count) — NOT hardcoded "5" (fixed `0e46e7d`) |
+| `/thesis` stat grid | Same as home — chain + manifest |
+| `/dashboard` balance | `provider.getBalance()` (chain) |
+| `/dashboard` receipts list | `unifiedFindByAgent()` (chain) |
+| `/marketplace` skill list | Goldsky subgraph + chain-fallback |
+| `/marketplace/<id>` recent receipts | Goldsky subgraph |
+| `/marketplace/payouts` lifetime earned | `SkillRunPayment.creatorLifetimeEarned[creator]` (chain) |
+| `/marketplace/payouts` withdrawable balance | `SkillRunPayment.creatorBalance[creator]` (chain) |
+| `/admin/treasury` accumulator | `SkillRunPayment.treasuryBalance()` (chain) |
+| `/agent/<handle>` profile | Passport contract reads (chain) |
+| `/r/<id>` chip status | Verifier output (computed from on-chain + storage state) |
+
+**Method:** for each surface, open DevTools network panel and verify the RPC/GraphQL call is fired. If a value renders from `numbers.json` instead of live chain — that's a fail unless the surface is explicitly labeled "snapshot from <date>" (e.g. README auto-rendered numbers).
+
+PASS = every dynamic number/list/state on every page is traceable to a real chain or subgraph call in the network tab.
+
+### D · UX race + edge cases
+
+| Edge case | Expected behavior |
+|---|---|
+| Double-click submit button mid-tx | Second click ignored OR shows "already submitting"; never produces 2 txs |
+| Click button → navigate away → tx still pending | Returning to the page shows the resolved state (success/fail); no lost result |
+| Tx in flight → switch wallet in MM | UI prompts to reconnect; doesn't claim the new wallet's address paid the previous tx |
+| Form submit → page reload | Reload doesn't resubmit (browser back/forward addressed in DT-4) |
+| Receipt anchored mid-page-view | If user is on `/marketplace` when the tx confirms, the list updates without manual refresh (or shows a "new receipt — refresh?" toast) |
+| Subgraph indexer lag (~1-2 blocks behind) | UI shows the chain-direct value with a "indexer catching up" hint, NOT a fake "no data" |
+
+PASS = every edge case behaves predictably; no silent loss of action, no two-txs-for-one-click, no claim-other-wallet's-action.
+
+### Why this priority exists
+
+The lower-priority flows test individual happy paths. Priority 16 is the SWEEP that catches "did the action propagate to every place it should." Without it, a bug like "marketplace shows old price after creator updates it" would only surface if a specific lower priority happened to drive that exact flow. P16 is the systematic answer: every chain write × every UI surface that should reflect it.
+
+---
+
 ## Priority 15 · Vercel production verification
 
 Prove the live deployment at `https://ivaronix.vercel.app` is actually serving the latest committed code, not a stale build.
@@ -407,6 +499,8 @@ P5 Marketplace → P6 Memory → P7 Agent → P8 Skills
 P9 Data Room → P10 Docs → P11 Mobile → P12 Final UI Pass
   ↓
 P13 Cross-tool (CLI light) → P14 Performance → P15 Vercel
+  ↓
+P16 Data freshness · read-after-write · cross-user · real-source binding (systematic sweep)
   ↓
 UI DONE → move to dedicated CLI test phase
 ```
