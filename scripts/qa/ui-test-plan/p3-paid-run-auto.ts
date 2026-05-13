@@ -366,6 +366,15 @@ async function main(): Promise<void> {
     recordVideo: { dir: VIDEO_DIR, size: { width: 1440, height: 900 } },
   });
 
+  // Register a context-level page listener — captures ANY new page event.
+  // This is the canonical pattern for MM popup discovery: register listener
+  // upfront, then read the captured list after click.
+  const allCreatedPages: Page[] = [];
+  ctx.on('page', (p) => {
+    allCreatedPages.push(p);
+    console.log(`  [page-event] new: ${p.url().slice(0, 100)}`);
+  });
+
   await new Promise((r) => setTimeout(r, 4_000));
 
   const extId = await findExtensionId(ctx);
@@ -393,23 +402,23 @@ async function main(): Promise<void> {
   await studio.waitForTimeout(3_000);
   await snap(studio, 'onboard-loaded');
 
-  // Strategy 5: capture popup at EXACT spawn moment via ctx.waitForEvent.
-  // Set up event listener BEFORE click; that catches popup creation precisely.
-  const popupSpawnP = ctx.waitForEvent('page', { timeout: 20_000 }).catch(() => null);
+  // Capture popups via the context-level listener registered at session start.
+  // Record snapshot of allCreatedPages count BEFORE click, then check after.
+  const beforeCount = allCreatedPages.length;
+  console.log(`  ${beforeCount} pages tracked before click`);
   await clickButton(studio, 'button:has-text("Connect wallet"), button:has-text("Connect injected")', 'Connect wallet', 10_000);
-  console.log('  awaiting popup spawn event...');
-  const connectPopup = await popupSpawnP;
-  if (connectPopup) {
-    console.log(`  ✓ caught popup at: ${connectPopup.url().slice(0, 100)}`);
-    await drivePopupOnce(connectPopup, 'mm-connect', 8);
-  } else {
-    console.log('  ⚠ no popup spawn event in 20s · falling back to page scan');
-    const allPages = ctx.pages();
-    for (const p of allPages) console.log(`    page: ${p.url().slice(0, 100)}`);
-    const popup = allPages.find((p) =>
-      p.url().includes(extId) && p !== mmPopup && p !== studio
-    );
-    if (popup) await drivePopupOnce(popup, 'mm-connect-fallback', 8);
+  // Wait 6s for popup to materialize
+  await studio.waitForTimeout(6_000);
+  const newPages = allCreatedPages.slice(beforeCount);
+  console.log(`  ${newPages.length} new page(s) since click:`);
+  for (const p of newPages) console.log(`    ${p.url().slice(0, 100)}`);
+
+  // Drive any new MM-extension page (the popup)
+  for (const p of newPages) {
+    if (p.url().includes(extId) && !p.isClosed()) {
+      console.log(`  driving popup: ${p.url().slice(0, 100)}`);
+      await drivePopupOnce(p, 'mm-connect', 8);
+    }
   }
   await studio.bringToFront();
   await studio.waitForTimeout(3_000);
