@@ -27,35 +27,50 @@ async function loadCards(): Promise<SkillCard[]> {
   const skills = loadAllSkills();
   const reg = getSkillRegistry();
 
-  // Query all skills' on-chain status in parallel — 80 sequential RPCs would
-  // make /skills load in 15+ seconds, parallel collapses to ~1 RPC roundtrip.
-  const cards = await Promise.all(
-    skills.map(async (s): Promise<SkillCard> => {
-      let registryStatus: SkillCard['registryStatus'] = 'unknown';
-      if (reg) {
-        try {
-          const skillId = skillIdFromName(s.id);
-          const versionId = versionIdFromSemver(s.manifest.version);
-          const v = await reg.getVersion(skillId, versionId);
-          if (!v) registryStatus = 'unregistered';
-          else if (v.revoked) registryStatus = 'mismatch';
-          else {
-            const localBytes32 = '0x' + s.manifestHash.replace(/^sha256:/, '').toLowerCase();
-            registryStatus = v.manifestHash.toLowerCase() === localBytes32 ? 'match' : 'mismatch';
-          }
-        } catch { /* keep 'unknown' */ }
+  // 156 parallel getVersion calls overwhelmed the Galileo RPC: ~56 of
+  // them dropped, leaving the cards in 'unknown' state (no chip rendered)
+  // — including some first-party skills like plan-step that ARE on chain.
+  // Chunked + retried serial-per-chunk fixes the silent drops without
+  // making /skills wait 30+ seconds for 156 sequential calls.
+  const CHUNK = 12;       // 12 parallel RPCs is well under Galileo throughput
+  const MAX_RETRY = 2;    // first call + 2 retries = 3 attempts per skill
+
+  async function resolveStatus(s: ReturnType<typeof loadAllSkills>[number]): Promise<SkillCard['registryStatus']> {
+    if (!reg) return 'unknown';
+    const skillId = skillIdFromName(s.id);
+    const versionId = versionIdFromSemver(s.manifest.version);
+    for (let attempt = 0; attempt <= MAX_RETRY; attempt++) {
+      try {
+        const v = await reg.getVersion(skillId, versionId);
+        if (!v) return 'unregistered';
+        if (v.revoked) return 'mismatch';
+        const localBytes32 = '0x' + s.manifestHash.replace(/^sha256:/, '').toLowerCase();
+        return v.manifestHash.toLowerCase() === localBytes32 ? 'match' : 'mismatch';
+      } catch {
+        if (attempt === MAX_RETRY) return 'unknown';
+        // Brief backoff before retry — 100ms + jitter spreads the burst
+        await new Promise((resolve) => setTimeout(resolve, 100 + Math.random() * 150));
       }
-      return {
+    }
+    return 'unknown';
+  }
+
+  const cards: SkillCard[] = [];
+  for (let i = 0; i < skills.length; i += CHUNK) {
+    const batch = skills.slice(i, i + CHUNK);
+    const batchCards = await Promise.all(
+      batch.map(async (s): Promise<SkillCard> => ({
         id: s.id,
         version: s.manifest.version,
         description: s.manifest.description,
         defaultTier: s.manifest.og.consensus.default_tier,
         burnAuto: s.manifest.og.burn.auto_enable,
         permissions: permissionsView(s.manifest.og.permissions),
-        registryStatus,
-      };
-    }),
-  );
+        registryStatus: await resolveStatus(s),
+      })),
+    );
+    cards.push(...batchCards);
+  }
   return cards;
 }
 
