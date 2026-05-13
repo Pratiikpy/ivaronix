@@ -118,6 +118,14 @@
       "deployedAt": "2026-05-13",
       "owner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
       "note": "FINAL_BUILD_PLAN.md Block A · per-skill creator/treasury bps fee-split with pull-pattern withdrawals + lifetime accumulators + admin refund w/ 24h timelock. 41 Foundry tests + 2 invariants + 3 fuzz. Closes the marketplace 'estimatedCostOg records to nothing' gap."
+    },
+    "SkillPricing": {
+      "address": "0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F",
+      "txHash": "0x527dc11f4d0f7561255927e2abdfd85cfa0a8e0bc1b8447893934ed0015caa31",
+      "explorer": "https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F",
+      "deployedAt": "2026-05-13",
+      "skillRegistry": "0xF05113E83146160024326ff30979c57f5adc2193",
+      "note": "FINAL_BUILD_PLAN.md Block A.1 · mutable per-skill pricing (priceWei + creator/treasury bps) gated by SkillRegistryV2.ownerOf(skillId). Bps invariants enforced (sum 10000, creator [5000, 9500]). 14 Foundry tests · ownership transfers via the registry transfer pricing authority too."
     }
   }
 }

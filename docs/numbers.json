@@ -29,8 +29,8 @@
     "source": "packages/core/src/types.ts RECEIPT_TYPES"
   },
   "contracts": {
-    "deployed": 14,
-    "foundryTests": 213,
+    "deployed": 15,
+    "foundryTests": 227,
     "list": [
       "AgentPassportINFT",
       "AgentPassportINFTV2",
@@ -42,6 +42,7 @@
       "ReceiptRegistry",
       "ReceiptRegistryV2",
       "ReceiptRegistryV3",
+      "SkillPricing",
       "SkillRegistry",
       "SkillRegistryV2",
       "SkillRunPayment",
@@ -58,6 +59,7 @@
       "ReceiptRegistry": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
       "ReceiptRegistryV2": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
       "ReceiptRegistryV3": "0x7396D536594e2BE833070c7EB441A10906046257",
+      "SkillPricing": "0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F",
       "SkillRegistry": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
       "SkillRegistryV2": "0xF05113E83146160024326ff30979c57f5adc2193",
       "SkillRunPayment": "0x9eA5FDba913AC94dA8833Fee21F2832827950A5C",
