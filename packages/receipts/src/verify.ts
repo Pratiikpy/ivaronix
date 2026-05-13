@@ -250,8 +250,11 @@ export async function verifyPaymentBinding(
     };
   }
 
-  // Sub-check 5: decoded SkillRunPaid event's receiptRoot matches storage.receiptRoot.
-  // Get the receipt's logs and find the event.
+  // Sub-check 5: decoded SkillRunPaid event's receiptRoot matches the
+  // payment-binding nonce stored in `billing.payment.draftReceiptRoot`.
+  // The draftReceiptRoot is what the user signed via paySkillRun before
+  // the inference ran; storage.receiptRoot is the canonical hash of the
+  // receipt body content (separate concern, used for tamper detection).
   const txReceipt = await provider.getTransactionReceipt(payment.txHash);
   if (!txReceipt) {
     return {
@@ -284,11 +287,11 @@ export async function verifyPaymentBinding(
   }
   const decoded = eventInterface.decodeEventLog('SkillRunPaid', log.data, log.topics);
   const eventReceiptRoot = (decoded.receiptRoot as string).toLowerCase();
-  if (eventReceiptRoot !== receipt.storage.receiptRoot.toLowerCase()) {
+  if (eventReceiptRoot !== payment.draftReceiptRoot.toLowerCase()) {
     return {
       name: 'payment_tx_binding',
       pass: false,
-      detail: `event receiptRoot ${eventReceiptRoot} != storage.receiptRoot ${receipt.storage.receiptRoot}`,
+      detail: `event receiptRoot ${eventReceiptRoot} != payment.draftReceiptRoot ${payment.draftReceiptRoot}`,
     };
   }
 

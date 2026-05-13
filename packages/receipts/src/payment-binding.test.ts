@@ -93,6 +93,7 @@ function buildReceipt(overrides: Partial<ReceiptV1['billing']['payment']> = {}):
         paidAt: 1_700_000_000,
         subsidised: false,
         refunded: false,
+        draftReceiptRoot: RECEIPT_ROOT,
         ...overrides,
       },
     },

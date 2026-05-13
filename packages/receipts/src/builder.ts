@@ -59,6 +59,14 @@ const HASH_EXCLUDE = new Set([
   'onChainId',
   'status',
   'receiptTxHash',
+  // FINAL_BUILD_PLAN.md Block B + D-4 · payment is post-claim side-channel
+  // metadata, layered on after the receipt body's canonical hash is computed.
+  // The 5-check verifier binds `event.receiptRoot === canonicalHash(body sans payment)`,
+  // so excluding payment from the hash means the body's hash stays stable
+  // whether or not the payment block is present (existing 1665+ receipts
+  // verify unchanged; new payment-aware receipts hash the same body before
+  // and after the payment block is added at /api/run/confirm).
+  'payment',
 ]);
 
 export interface BuildReceiptInput {

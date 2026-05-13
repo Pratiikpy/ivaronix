@@ -347,6 +347,17 @@ export const ReceiptV1Schema = z.object({
         subsidised: z.boolean().default(false),
         refunded: z.boolean().default(false),
         refundTxHash: HexHash.optional(),
+        /**
+         * The bytes32 receiptRoot the user signed in paySkillRun. This is
+         * the on-chain payment-binding nonce, deterministically derived from
+         * (skillId, contentHash, promptHash, payer, bucketSeconds) at
+         * /api/run/estimate time so the user commits to a stable value
+         * before inference runs. Distinct from `storage.receiptRoot`, which
+         * is the canonical hash of the receipt body content (used for
+         * tamper detection + signature recovery). The 5-check verifier
+         * binds event.receiptRoot === draftReceiptRoot.
+         */
+        draftReceiptRoot: HexHash,
       })
       .optional(),
   }),
