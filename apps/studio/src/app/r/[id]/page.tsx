@@ -238,11 +238,16 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   // Map verifyClaimed result + on-chain row presence to the chip state.
   // - INVALID  (mismatch): schema/hash/signature failed — receipt is forged
   //                        or corrupted regardless of chain anchor.
-  // - VERIFIED (verified): schema/hash/signature passed AND on-chain row
-  //                        exists (we're already in this branch since the
-  //                        page 404s without `onChain`).
-  // - PENDING  (pending):  no local body OR on-chain row missing.
-  let overallState: 'verified' | 'pending' | 'mismatch';
+  // - VERIFIED (verified): schema/hash/signature passed AND on-chain row exists.
+  // - ANCHORED (anchored): chain row exists but local body missing so we
+  //                        can't re-check hash + signature here. Chain is
+  //                        still the source of truth — chip is green.
+  //                        Closes P5 receipt-28 "PENDING-but-actually-OK"
+  //                        UX gap (2026-05-14).
+  // - PENDING  (pending):  no local body AND we don't even have the chain
+  //                        anchor (which would 404 us before reaching here,
+  //                        so this branch is theoretically unreachable).
+  let overallState: 'verified' | 'anchored' | 'pending' | 'mismatch';
   let invalidReason: string | null = null;
   if (claimResult && claimResult.state === 'INVALID') {
     overallState = 'mismatch';
@@ -254,7 +259,9 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     // local body present, claimResult unexpectedly null — treat as pending
     overallState = 'pending';
   } else {
-    overallState = 'pending';
+    // Chain anchor confirmed (we'd 404 without it) but no local body
+    // to re-hash. Honest state = ANCHORED.
+    overallState = 'anchored';
   }
 
   // S-2 / I-5 fix · each light reads from real evidence in the receipt body.
@@ -779,7 +786,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             {hasLocalBody
               ? 'Full body matches on-chain root. Run `ivaronix receipt verify` for a deep TEE-independent check.'
-              : 'Receipt body not found locally — chain-only view. Independent verification requires the JSON.'}
+              : 'Anchored on chain. The body JSON is needed to re-derive the hash + signature locally — request it from the operator or run `ivaronix receipt show` on a machine that has the cache.'}
           </span>
           <ShareButton url={`/r/${onChain.id.toString()}`} text={`Verified Ivaronix receipt: ${headline.slice(0, 80)}`} />
         </div>
