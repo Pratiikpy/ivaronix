@@ -10,6 +10,7 @@
  * Rate-limited per-IP (the demo wallet is a shared resource).
  * Falls back to "demo paused" 503 when the demo wallet is out of funds.
  */
+import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';

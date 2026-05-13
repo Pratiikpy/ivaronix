@@ -27,6 +27,7 @@
  *   422 PAYMENT_RECEIPT_ROOT_MISMATCH — event's receiptRoot != draftReceiptRoot
  *   500 PIPELINE_FAILED_POST_PAYMENT — inference failed; refund queued
  */
+import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';

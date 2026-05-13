@@ -39,6 +39,7 @@
  *     cached on server with TTL until confirm. v1.1 may move to true
  *     deterministic estimation without inference.
  */
+import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { ensureEnv } from '@/lib/boot-env';

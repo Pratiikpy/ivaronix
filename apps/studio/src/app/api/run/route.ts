@@ -1,3 +1,4 @@
+import '@/lib/bigint-json'; // BigInt.toJSON polyfill — must load before NextResponse
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { runPipeline, createCaptureLogger } from '@ivaronix/runtime';
