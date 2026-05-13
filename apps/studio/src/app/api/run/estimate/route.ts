@@ -251,14 +251,19 @@ export async function POST(req: Request) {
       bucketSeconds,
     });
 
+    // ethers v6 returns uint16 as BigInt at runtime despite TS `number`
+    // signature. Without explicit Number() casts, NextResponse.json
+    // throws "Do not know how to serialize a BigInt" — the same fix that
+    // subgraph.ts skillsListFromChain needed for the marketplace listing.
+    // Caught by P5 auto harness 2026-05-13 iteration 12.
     return NextResponse.json({
       needsPayment: true,
       amount: price.toString(),
       priceWei: price.toString(),
       paymentContract,
       creator,
-      creatorBps: cBps,
-      treasuryBps: tBps,
+      creatorBps: Number(cBps),
+      treasuryBps: Number(tBps),
       draftReceiptRoot,
       payer,
       bucketSeconds,
