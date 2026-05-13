@@ -179,8 +179,32 @@ receiptCommand
   .command('verify <pathOrId>')
   .description('Verify a receipt — shows CLAIMED → ANCHORED → FULLY VERIFIED')
   .option('--tee-independent', 'also run independent TEE verification via broker.processResponse')
-  .action(async (pathOrId: string, opts: { teeIndependent?: boolean }) => {
+  .option('--format <fmt>', 'output format: ivaronix (default), aat (IETF Agent Audit Trail draft-rosenberg-aat-01)', 'ivaronix')
+  .action(async (pathOrId: string, opts: { teeIndependent?: boolean; format?: string }) => {
     const env = loadEnv();
+
+    // FINAL_BUILD_PLAN.md Block H · --format aat path: skip the verifier UI
+    // and emit a clean AAT JSON document for enterprise auditors.
+    if (opts.format === 'aat') {
+      const filePath = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
+      if (!filePath) {
+        process.stderr.write(`No receipt resolves "${pathOrId}"\n`);
+        process.exitCode = 1;
+        return;
+      }
+      try {
+        const { readFileSync } = await import('node:fs');
+        const { exportReceiptAsAat } = await import('@ivaronix/receipts');
+        const body = JSON.parse(readFileSync(filePath, 'utf8'));
+        const aatDoc = exportReceiptAsAat(body);
+        process.stdout.write(JSON.stringify(aatDoc, null, 2) + '\n');
+        return;
+      } catch (err) {
+        process.stderr.write(`AAT export failed: ${(err as Error).message}\n`);
+        process.exitCode = 1;
+        return;
+      }
+    }
 
     const filePath = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
     if (!filePath) {
