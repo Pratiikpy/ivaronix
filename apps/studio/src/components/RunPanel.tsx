@@ -336,7 +336,7 @@ export function RunPanel(props: RunPanelProps = {}) {
           <select
             value={skillId}
             onChange={(e) => setSkillId(e.target.value)}
-            style={{ marginLeft: 6, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13 }}
+            style={{ marginLeft: 6, padding: '11px 12px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13, minHeight: 44 }}
           >
             {SKILLS.map((s) => (
               <option key={s.id} value={s.id}>
@@ -351,7 +351,7 @@ export function RunPanel(props: RunPanelProps = {}) {
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value as Tier)}
-            style={{ marginLeft: 6, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13 }}
+            style={{ marginLeft: 6, padding: '11px 12px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13, minHeight: 44 }}
           >
             <option value="quick">Quick</option>
             <option value="standard">Standard</option>
@@ -374,7 +374,7 @@ export function RunPanel(props: RunPanelProps = {}) {
             value={policyOverride}
             onChange={(e) => setPolicyOverride(e.target.value as PolicyOverride)}
             disabled={tier === 'quick'}
-            style={{ marginLeft: 6, padding: '6px 10px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13, opacity: tier === 'quick' ? 0.5 : 1 }}
+            style={{ marginLeft: 6, padding: '11px 12px', borderRadius: 6, border: '1px solid var(--color-hairline)', fontSize: 13, minHeight: 44, opacity: tier === 'quick' ? 0.5 : 1 }}
           >
             <option value="AUTO">Auto (skill default)</option>
             <option value="STRICT">Strict (unanimous)</option>

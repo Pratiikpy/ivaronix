@@ -56,8 +56,8 @@ export function MobileMenu() {
         className="mobile-menu-trigger"
         style={{
           display: 'none',
-          width: 36,
-          height: 36,
+          width: 44,
+          height: 44,
           alignItems: 'center',
           justifyContent: 'center',
           background: 'transparent',
