@@ -93,6 +93,20 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
 
   const inputsReady = contentText.trim().length > 0 && question.trim().length > 0;
 
+  // Cap every fetch at 90s so a hung Vercel function doesn't leave the
+  // UI in "Running…" forever — same bug class as RunPanel's pre-fix
+  // behavior (§P3 line 173 "no stuck spinner"). 90s covers normal Quick
+  // tier (~10s) + Standard (~25s) + Audit (~60s) with headroom.
+  const fetchWithTimeout = async (url: string, init: RequestInit, ms = 90_000): Promise<Response> => {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, { ...init, signal: ctrl.signal });
+    } finally {
+      clearTimeout(t);
+    }
+  };
+
   const handleClick = async () => {
     if (!isConnected || !address) {
       setState({ kind: 'error', code: 'WALLET_NOT_CONNECTED', message: 'Connect your wallet first (top right).' });
@@ -114,7 +128,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
     setState({ kind: 'estimating' });
 
     try {
-      const estimateRes = await fetch('/api/run/estimate', {
+      const estimateRes = await fetchWithTimeout('/api/run/estimate', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -146,7 +160,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
       // Free path
       if (!estimate.needsPayment) {
         setState({ kind: 'pipeline-running', estimate, txHash: '' });
-        const runRes = await fetch('/api/run', {
+        const runRes = await fetchWithTimeout('/api/run', {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -211,7 +225,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
 
       setState({ kind: 'confirming', estimate, txHash });
 
-      const confirmRes = await fetch('/api/run/confirm', {
+      const confirmRes = await fetchWithTimeout('/api/run/confirm', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -261,8 +275,11 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
       setState({ kind: 'success', receiptId: confirmResult.receiptOnchainId ?? confirmResult.receiptId ?? '', txHash });
       setTimeout(() => router.push(`/r/${confirmResult.receiptOnchainId ?? confirmResult.receiptId}`), 1500);
     } catch (err) {
-      const msg = (err as Error).message;
-      if (msg.toLowerCase().includes('user rejected')) {
+      const e = err as Error & { name?: string };
+      const msg = e.message;
+      if (e.name === 'AbortError') {
+        setState({ kind: 'error', code: 'FETCH_TIMEOUT', message: 'The server did not respond within 90 seconds. The 0G Router / Compute provider is slow or rate-limited right now. Try again in a minute.' });
+      } else if (msg.toLowerCase().includes('user rejected')) {
         setState({ kind: 'error', code: 'USER_REJECTED', message: 'Wallet popup rejected. No charge.' });
       } else if (msg.toLowerCase().includes('insufficient')) {
         setState({ kind: 'error', code: 'INSUFFICIENT_BALANCE', message: 'Insufficient OG balance. Top up at faucet.0g.ai (testnet).' });

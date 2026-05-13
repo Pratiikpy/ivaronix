@@ -199,11 +199,18 @@ export function RunPanel(props: RunPanelProps = {}) {
         useUserWallet = false; // fall through to operator-anchored
       }
     }
+    // P14 finding: a hung /api/run would leave the panel in "Running…"
+    // forever because fetch has no default timeout. Cap the wait at 90s so
+    // the user sees an honest error if the inference provider stalls —
+    // §P3 line 173 ("no stuck spinner").
+    const abortCtrl = new AbortController();
+    const timeoutHandle = setTimeout(() => abortCtrl.abort(), 90_000);
     try {
       const res = await fetch('/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        signal: abortCtrl.signal,
         body: JSON.stringify({
           skillId,
           tier,
@@ -263,9 +270,14 @@ export function RunPanel(props: RunPanelProps = {}) {
         setLayers({ Storage: 'pending', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
       }
     } catch (err) {
-      setResult({ ok: false, error: (err as Error).message });
+      const e = err as Error & { name?: string };
+      const msg = e.name === 'AbortError'
+        ? 'Run timed out after 90 seconds. The 0G Router or Compute provider is slow or rate-limited right now. Try a smaller input, a lower tier, or wait a minute.'
+        : e.message;
+      setResult({ ok: false, error: msg });
       setLayers({ Storage: 'pending', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });
     } finally {
+      clearTimeout(timeoutHandle);
       setRunning(false);
     }
   };
