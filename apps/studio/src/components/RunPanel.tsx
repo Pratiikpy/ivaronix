@@ -224,7 +224,23 @@ export function RunPanel(props: RunPanelProps = {}) {
           ...(useUserWallet && connectedAddress ? { userWallet: connectedAddress } : {}),
         }),
       });
-      const data = (await res.json()) as RunResponse;
+      // Handle non-JSON responses gracefully. Vercel can return plain-text
+      // error pages on timeouts ("An error occurred..."), Cloudflare can
+      // intercept with HTML, etc. Trying to JSON.parse those throws an
+      // ugly "Unexpected token 'A'..." that confuses users. Caught by user
+      // P3 testing on 2026-05-13 when audit tier + plan-step + burn timed
+      // out on the inference provider.
+      let data: RunResponse;
+      const rawText = await res.text();
+      try {
+        data = JSON.parse(rawText) as RunResponse;
+      } catch {
+        data = {
+          ok: false,
+          error: `Server returned non-JSON response (HTTP ${res.status}). The run may have timed out or the provider rejected the request. Try a smaller input, a lower tier, or wait a minute.`,
+          logs: [{ level: 'fail', label: `HTTP ${res.status} body: ${rawText.slice(0, 160)}…`, detail: null }],
+        } as unknown as RunResponse;
+      }
       setResult(data);
       if (data.ok) {
         setLayers({
