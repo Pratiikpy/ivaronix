@@ -105,3 +105,19 @@ genuinely external dependencies the agent cannot drive:
 3. P18 IDE-driven MCP (operator install of Claude Desktop / Cursor)
 4. F4 v1.1 body-fetch from 0G Storage (polish; ANCHORED chip + registry
    link is the v1 ship-state)
+
+### Post-closing-state iter sweep (commits f40dfda + before)
+
+| Surface | Fix | Visual proof |
+|---|---|---|
+| `/global` "FIRST-PARTY SKILLS" | 156 → 6 (whole catalog → filtered) | `QA_PROOF_PACK/ui/P10-read-pages/global.png` shows the 6 chip · 1,679 receipts · 7 passports |
+| `/marketplace` cold-cache FCP | 2128 ms → 1880 ms (loadAllSkills → 6-slug pre-load) | P14 baseline `numbers.md` desktop /marketplace |
+| `/skill/<slug>` deep profile | 6/6 first-party REGISTRY MATCH | `QA_PROOF_PACK/ui/P8-skills/slug-profiles/*.png` |
+| `/agent/<unknown>` empty state | honest "No passport for that wallet yet." | live curl shows the empty copy |
+| `/marketplace/<bogus>` | honest 404 NOT FOUND | live curl `→ 404` |
+| `/r/<bogus-id>` | honest 404 | live curl `/r/99999999 → 404` |
+| `/test-wallet` in prod | dev-only "Set NEXT_PUBLIC_TEST_WALLET=1" gate | live curl confirms |
+| `/r/28..32` latest V3 receipts | all 200 · ANCHORED chip · TIER 1 · operator owner | curl content match `0xaa954c33...` |
+| OG image generation | `/r/28`, `/r/29`, `/opengraph-image` → 200 image/png 28-31 KB | curl headers |
+
+**Closing observation** — `unifiedNextId().total` semantics: the "1,679 receipts anchored" headline is the SUM across V1 + V2 + V3 registries. A user clicking through to `/r/1679` correctly 404s because no single registry has id 1679. Latest V3 id observed: 32. Latest V1 LEGACY id observed: 1004. No drift between headline number and per-registry routing.
