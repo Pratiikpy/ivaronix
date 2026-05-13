@@ -149,12 +149,22 @@ export async function POST(req: Request) {
   }
 
   // 3. Run pipeline + anchor receipt
+  // On Vercel the serverless filesystem is read-only except /tmp, so route
+  // the receipt write there (the lambda dies after the response and /tmp
+  // is wiped, but the receipt is already anchored on-chain by then). Locally
+  // the runtime default `.ivaronix/receipts/anchored` works fine. Caught by
+  // P2 UI test on 2026-05-13: mkdir <path> ENOENT against process.cwd()-
+  // relative path that was the apps/studio/ dir on Vercel.
+  const receiptOutDir = process.env.VERCEL
+    ? '/tmp/.ivaronix/receipts/anchored'
+    : undefined;
   try {
     const result = await runPipeline({
       skillId,
       context: contentText,
       userPrompt: question,
       receipt: true,
+      outDir: receiptOutDir,
       logger,
     });
 

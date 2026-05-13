@@ -126,12 +126,15 @@ export async function POST(req: Request) {
   }
 
   const { logger, entries } = createCaptureLogger();
+  // Same Vercel-tmp routing as /api/run/demo — read-only fs except /tmp.
+  const receiptOutDir = process.env.VERCEL ? '/tmp/.ivaronix/receipts/anchored' : undefined;
   try {
     const result = await runPipeline({
       skillId: body.skillId,
       context: body.contentText,
       userPrompt: body.question,
       tier: body.tier,
+      ...(receiptOutDir ? { outDir: receiptOutDir } : {}),
       // Policy override per planning-003 §A.4.4. Threaded into
       // runConsensus → applyPolicy so the receipt's
       // `execution.consensus.policyApplied` reflects what the user

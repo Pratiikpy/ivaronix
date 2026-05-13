@@ -245,6 +245,8 @@ export async function POST(req: Request) {
 
   // 5 checks pass — proceed to run the pipeline.
   const { logger, entries } = createCaptureLogger();
+  // Vercel-tmp routing — read-only fs except /tmp on serverless.
+  const receiptOutDir = process.env.VERCEL ? '/tmp/.ivaronix/receipts/anchored' : undefined;
   try {
     const result = await runPipeline({
       skillId: body.skillId,
@@ -252,6 +254,7 @@ export async function POST(req: Request) {
       userPrompt: body.question,
       tier: body.tier,
       ...(body.policy ? { policy: body.policy } : {}),
+      ...(receiptOutDir ? { outDir: receiptOutDir } : {}),
       receipt: true,
       burn: !!body.burn,
       receiptType: body.burn ? 'burn' : 'doc_ask',
