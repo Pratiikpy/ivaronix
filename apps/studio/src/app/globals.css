@@ -257,6 +257,13 @@ body {
    * Use direct-child selectors so the drawer's own nav (rendered as
    * descendant of header → mobile-menu) is NOT hit by the hide rule. */
   @media (max-width: 480px) {
+    /* Below 480px hide ALL desktop nav links — the hamburger drawer
+     * (MobileMenu.tsx) carries every destination. Earlier sweep only
+     * hid Global/Skills/Brand/Dashboard which left Why/0G/Agents still
+     * visible at touch-target sizes (38h, below 44 minimum). */
+    header > div > nav > a[href="/thesis"],
+    header > div > nav > a[href="/0g"],
+    header > div > nav > a[href="/agents"],
     header > div > nav > a[href="/global"],
     header > div > nav > a[href="/skills"],
     header > div > nav > a[href="/brand"],
@@ -265,6 +272,34 @@ body {
     }
     header button.mobile-menu-trigger {
       display: inline-flex !important;
+      /* min-width enforces the WCAG / Apple HIG 44×44 target even when
+       * the parent flex row tries to squeeze it. Pre-sweep the audit
+       * saw the trigger render 31×44; min-width + flex-shrink:0 fixes. */
+      min-width: 44px !important;
+      flex-shrink: 0;
+    }
+    /* Touch-target ≥ 44×44 (Apple HIG / Material) for primary CTAs in
+     * body content. .btn-ghost is used both in the header (compact)
+     * AND as a body CTA (needs tap-target). At mobile breakpoints we
+     * lift body ghost buttons to 44h via min-height; the header
+     * versions are now hidden so no conflict. */
+    main .btn-ghost,
+    main .btn-primary,
+    main .btn-secondary,
+    main button[type="submit"],
+    main button[type="button"]:not(.mobile-menu-trigger):not([data-no-min-height]) {
+      min-height: 44px;
+    }
+    /* Form inputs in main content also need ≥ 44h for thumb tapping. */
+    main input[type="text"],
+    main input[type="number"],
+    main input[type="search"],
+    main input[type="email"],
+    main input[type="url"],
+    main input:not([type]),
+    main select,
+    main textarea {
+      min-height: 44px;
     }
   }
   /* Stack any 2-col grid */
