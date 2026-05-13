@@ -1,5 +1,5 @@
-import { canonicalHash } from '@ivaronix/core';
-import { verifyMessage } from 'ethers';
+import { canonicalHash, KNOWN_PAYMENT_CONTRACTS, type Network } from '@ivaronix/core';
+import { verifyMessage, JsonRpcProvider, Interface, type Provider } from 'ethers';
 import { ReceiptV1Schema, type ReceiptV1 } from './schema.js';
 import { HASH_EXCLUDE } from './builder.js';
 
@@ -9,6 +9,7 @@ export type CheckName =
   | 'signature'
   | 'storage_availability'
   | 'chain_anchor'
+  | 'payment_tx_binding'
   | 'tee_independent'
   | 'skill_manifest';
 
@@ -18,7 +19,19 @@ export interface CheckResult {
   detail?: string;
 }
 
-export type ReceiptState = 'CLAIMED' | 'ANCHORED' | 'FULLY VERIFIED';
+/**
+ * Receipt state machine per FINAL_BUILD_PLAN.md D-4:
+ *
+ *   CLAIMED         → schema + hash + signature pass
+ *   ANCHORED        → CLAIMED + chain-anchor binding present
+ *   PAID            → ANCHORED + payment-tx 5-check binding pass
+ *                     (when billing.payment block is present)
+ *   FULLY VERIFIED  → PAID + TEE re-attestation re-runs successfully
+ *
+ * Receipts pre-Block-B (no billing.payment) skip PAID and go straight
+ * to FULLY VERIFIED after TEE check (BACKWARDS_COMPAT path).
+ */
+export type ReceiptState = 'CLAIMED' | 'ANCHORED' | 'PAID' | 'FULLY VERIFIED';
 
 export interface VerificationResult {
   checks: CheckResult[];
@@ -152,3 +165,158 @@ export function verifyClaimed(receiptJson: unknown): VerificationResult {
     receiptId: receipt.id,
   };
 }
+
+/**
+ * FINAL_BUILD_PLAN.md D-4 · 5-check payment-tx binding verifier.
+ *
+ * For receipts that carry `billing.payment`, this check re-runs the
+ * binding against the live chain. All 5 sub-checks must pass:
+ *
+ *   1. Tx exists on chain at `billing.payment.txHash`.
+ *   2. `tx.to === billing.payment.paymentContract` (a known SkillRunPayment).
+ *   3. `tx.from === billing.payment.payer` (the receipt's claimed payer
+ *      matches who actually paid).
+ *   4. `tx.value === billing.payment.paidOg` (the amount claimed matches
+ *      what actually moved).
+ *   5. The decoded `SkillRunPaid` event's `receiptRoot` matches
+ *      `storage.receiptRoot` of this receipt.
+ *
+ * Returns a single CheckResult with `pass: false` and a detailed error
+ * pointing to the first failing sub-check; or `pass: true` when all 5
+ * pass. Used by the CLI verifier to advance state ANCHORED → PAID.
+ *
+ * For receipts WITHOUT `billing.payment` (legacy, free skills, or
+ * pre-Block-B), this check is N/A and returns `pass: true` with a
+ * "no payment block" detail.
+ */
+export async function verifyPaymentBinding(
+  receipt: ReceiptV1,
+  provider: Provider,
+): Promise<CheckResult> {
+  if (!receipt.billing.payment) {
+    return {
+      name: 'payment_tx_binding',
+      pass: true,
+      detail: 'no payment block — legacy receipt or free skill',
+    };
+  }
+  const payment = receipt.billing.payment;
+  const network = receipt.chainAnchor.network as Network;
+
+  // Sub-check 0: paymentContract is a known SkillRunPayment for this network.
+  const known = KNOWN_PAYMENT_CONTRACTS[network];
+  if (!known || !known.has(payment.paymentContract.toLowerCase())) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `paymentContract ${payment.paymentContract} not in KNOWN_PAYMENT_CONTRACTS for ${network}`,
+    };
+  }
+
+  // Sub-check 1: tx exists on chain.
+  const tx = await provider.getTransaction(payment.txHash);
+  if (!tx) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `tx ${payment.txHash} not found on chain (${network})`,
+    };
+  }
+
+  // Sub-check 2: tx.to === paymentContract
+  if (!tx.to || tx.to.toLowerCase() !== payment.paymentContract.toLowerCase()) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `tx.to ${tx.to} != billing.payment.paymentContract ${payment.paymentContract}`,
+    };
+  }
+
+  // Sub-check 3: tx.from === payer
+  if (!tx.from || tx.from.toLowerCase() !== payment.payer.toLowerCase()) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `tx.from ${tx.from} != billing.payment.payer ${payment.payer}`,
+    };
+  }
+
+  // Sub-check 4: tx.value === paidOg (string compare wei)
+  if (tx.value.toString() !== payment.paidOg) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `tx.value ${tx.value.toString()} != billing.payment.paidOg ${payment.paidOg}`,
+    };
+  }
+
+  // Sub-check 5: decoded SkillRunPaid event's receiptRoot matches storage.receiptRoot.
+  // Get the receipt's logs and find the event.
+  const txReceipt = await provider.getTransactionReceipt(payment.txHash);
+  if (!txReceipt) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `tx receipt for ${payment.txHash} not found on chain`,
+    };
+  }
+  const eventInterface = new Interface([
+    'event SkillRunPaid(bytes32 indexed receiptRoot, address indexed payer, address indexed creator, uint256 amount, uint256 creatorShare, uint256 treasuryShare, uint16 creatorBps, uint16 treasuryBps, uint64 timestamp)',
+  ]);
+  const fragment = eventInterface.getEvent('SkillRunPaid');
+  if (!fragment) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: 'event fragment lookup failed (internal — verifier bug)',
+    };
+  }
+  const eventTopic = fragment.topicHash;
+  const log = txReceipt.logs.find(
+    (l) => l.address.toLowerCase() === payment.paymentContract.toLowerCase() && l.topics[0] === eventTopic,
+  );
+  if (!log) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `no SkillRunPaid event found in tx ${payment.txHash} logs from ${payment.paymentContract}`,
+    };
+  }
+  const decoded = eventInterface.decodeEventLog('SkillRunPaid', log.data, log.topics);
+  const eventReceiptRoot = (decoded.receiptRoot as string).toLowerCase();
+  if (eventReceiptRoot !== receipt.storage.receiptRoot.toLowerCase()) {
+    return {
+      name: 'payment_tx_binding',
+      pass: false,
+      detail: `event receiptRoot ${eventReceiptRoot} != storage.receiptRoot ${receipt.storage.receiptRoot}`,
+    };
+  }
+
+  return {
+    name: 'payment_tx_binding',
+    pass: true,
+    detail: `5/5 checks pass · ${payment.paidOg} wei · creator ${payment.creator} ${payment.creatorBps}bps · treasury ${payment.treasuryBps}bps`,
+  };
+}
+
+/**
+ * Convenience: a single async function that returns the receipt state after
+ * the payment binding check. Wraps verifyPaymentBinding for callers that
+ * want a state transition.
+ *
+ * NOTE: this function does NOT re-check schema/hash/signature; callers
+ * should run verifyClaimed first and confirm CLAIMED before calling this.
+ */
+export async function verifyAnchoredAndPaid(
+  receipt: ReceiptV1,
+  provider: Provider,
+): Promise<{ paymentCheck: CheckResult; state: 'ANCHORED' | 'PAID' }> {
+  const paymentCheck = await verifyPaymentBinding(receipt, provider);
+  return {
+    paymentCheck,
+    state: paymentCheck.pass ? 'PAID' : 'ANCHORED',
+  };
+}
+
+// Re-export so the CLI verifier can construct a provider for the right network.
+export { JsonRpcProvider };

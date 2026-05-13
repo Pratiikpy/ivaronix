@@ -138,6 +138,23 @@ export const ReceiptV1Schema = z.object({
       requested: z.string(),
       final: z.string(),
     }),
+    /**
+     * FINAL_BUILD_PLAN.md Block G + Going_Extra.md §2 · 0GM model surface.
+     * Optional so legacy receipts pre-Block-G still verify. New receipts
+     * (post-Block-G wiring) populate based on the resolved provider:
+     *   source: '0G'       → routed through 0G Compute (TEE)
+     *   source: 'NVIDIA'   → NVIDIA NIM endpoint (TIER 2, external-signed)
+     *   source: 'OpenAI'   → OpenAI API (TIER 2)
+     *   source: 'Ollama'   → local Ollama (TIER 2, dev path)
+     * Receipt page renders green chip when source === '0G'; amber otherwise.
+     */
+    model: z
+      .object({
+        source: z.enum(['0G', 'NVIDIA', 'OpenAI', 'Ollama']),
+        computePath: z.string().optional(),
+        skillRunOn0GModel: z.boolean(),
+      })
+      .optional(),
     providerRouting: z.object({
       requestedSort: z.enum(['latency', 'price']).nullable().optional(),
       requestedProvider: HexAddress.nullable().optional(),
@@ -300,6 +317,38 @@ export const ReceiptV1Schema = z.object({
         declaredTreasuryBps: z.number().int().min(0).max(10000).optional(),
       })
       .optional(),
+    /**
+     * FINAL_BUILD_PLAN.md Block B + D-4 · on-chain payment binding.
+     * Records the SkillRunPayment.paySkillRun transaction that settled
+     * the receipt. The verifier (`verify.ts`) replays this binding with
+     * 5 checks: tx exists, tx.to === paymentContract, tx.from === payer,
+     * tx.value === paidOg, decoded SkillRunPaid event has matching
+     * receiptRoot.
+     *
+     * `subsidised: true` indicates an operator-paid run (e.g., ?demo=true
+     * onboarding); the UI surfaces this honestly.
+     *
+     * Optional during transition so legacy receipts pre-Block-B still
+     * verify. New receipts (post-Block-C wiring) MUST include this block
+     * when the run was paid (free skills with priceWei == 0 may omit).
+     */
+    payment: z
+      .object({
+        txHash: HexHash,
+        paymentContract: HexAddress,
+        payer: HexAddress,
+        paidOg: z.string(),
+        creatorPaidOg: z.string(),
+        treasuryPaidOg: z.string(),
+        creator: HexAddress,
+        creatorBps: z.number().int().min(5000).max(9500),
+        treasuryBps: z.number().int().min(500).max(5000),
+        paidAt: z.number().int(),
+        subsidised: z.boolean().default(false),
+        refunded: z.boolean().default(false),
+        refundTxHash: HexHash.optional(),
+      })
+      .optional(),
   }),
 
   storage: z.object({
@@ -415,6 +464,28 @@ export const ReceiptV1Schema = z.object({
 
   createdAt: z.number().int(),
   createdBy: z.string(),
+  /**
+   * FINAL_BUILD_PLAN.md Block B + Codex note (cowork-opinion.md lines 686-707) ·
+   * 0G DA integration is queued post-public-disperser. Schema-reserves the
+   * field so future receipts can carry the flag without breaking byte-equality
+   * with current receipts (defaults to false, omitted in canonical hash when
+   * default per Zod's default-elision behavior).
+   *
+   *   `og.da.batched: true` will indicate the receipt was bundled into a
+   *   DA blob batch with other receipts (Phase 3 marketplace scale).
+   *   v1 ships with this field absent on every receipt; the existence of
+   *   the schema slot is the architecture commitment without the vapor.
+   */
+  og: z
+    .object({
+      da: z
+        .object({
+          batched: z.boolean().default(false),
+          batchId: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   signature: z
     .object({
       method: z.literal('eth_personal_sign'),

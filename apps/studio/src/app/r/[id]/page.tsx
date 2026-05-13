@@ -190,7 +190,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   // gated on `hasLocalBody` alone, so a tampered receipt JSON whose
   // receiptRoot no longer matched its content still rendered "VERIFIED"
   // green just because the file existed.
-  let claimResult: { state: 'CLAIMED' | 'ANCHORED' | 'FULLY VERIFIED' | 'INVALID'; checks: CheckResult[] } | null = null;
+  // Block B added 'PAID' state to the receipt state machine (FINAL_BUILD_PLAN.md D-4).
+  let claimResult: { state: 'CLAIMED' | 'ANCHORED' | 'PAID' | 'FULLY VERIFIED' | 'INVALID'; checks: CheckResult[] } | null = null;
   if (local) {
     try {
       claimResult = verifyClaimed(local);
