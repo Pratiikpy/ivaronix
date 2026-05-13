@@ -30,6 +30,7 @@ import { JsonRpcProvider, Wallet, Contract, keccak256, toUtf8Bytes } from 'ether
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadSkillFromPath } from '@ivaronix/skills';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..');
@@ -98,35 +99,32 @@ async function main(): Promise<void> {
 
   for (const slug of SLUGS_TO_PUBLISH) {
     const skillId = keccak256(toUtf8Bytes(`skill:${slug}`));
-    const manifestPath = resolve(REPO, 'seed-skills', slug, 'SKILL.md');
-    if (!existsSync(manifestPath)) {
-      console.log(`  ✗ ${slug}: SKILL.md missing at ${manifestPath} — skip`);
+    const skillDir = resolve(REPO, 'seed-skills', slug);
+    if (!existsSync(resolve(skillDir, 'SKILL.md'))) {
+      console.log(`  ✗ ${slug}: SKILL.md missing at ${skillDir} — skip`);
       continue;
     }
-    const manifestBytes = readFileSync(manifestPath);
-    const manifestHash = keccak256(manifestBytes);
 
-    // Read manifest to get version
-    const manifestText = manifestBytes.toString('utf8');
-    const versionMatch = manifestText.match(/^version:\s*([0-9.]+)/m);
-    const version = versionMatch ? versionMatch[1] : '0.1.0';
-    // versionIdFromSemver convention: keccak256("v" + version). The first
-    // pass of this script (and the original V2 deploy of private-doc-review)
-    // used keccak256(version) without the "v" prefix, leaving orphan entries
-    // on chain that /skills + scanSkill could never look up. Re-publishing
-    // under the canonical versionId now (idempotent — old entries stay but
-    // are unreachable by the helper-pair callers).
+    // Use the canonical loader so manifestHash = sha256(canonical-JSON)
+    // matching what the /skills page + scanSkill compare against. The
+    // earlier passes used keccak256(file-bytes) which the scanner reads
+    // as MISMATCH (manifestHash differs from local). Both algorithm AND
+    // input have to match — that's why this is the third re-publish.
+    const loaded = loadSkillFromPath(skillDir);
+    const version = loaded.manifest.version;
     const versionId = keccak256(toUtf8Bytes(`v${version}`));
+    // manifestHash format: 'sha256:<64-hex>' → strip prefix → bytes32 hex
+    const manifestHash = '0x' + loaded.manifestHash.replace(/^sha256:/, '');
 
-    // Check if the canonical-versionId entry exists. ownerOf is the
-    // skill-level mapping (set on first publish under any versionId) so
-    // it's already non-zero — but the canonical versionId record may
-    // still be missing if the original publish used the wrong encoding.
-    const canonicalVersion = (await registry.getVersion(skillId, versionId).catch(() => null)) as { creator: string } | null;
-    if (canonicalVersion && canonicalVersion.creator !== '0x0000000000000000000000000000000000000000') {
-      console.log(`  · ${slug}: canonical versionId already on chain — skip publishVersion`);
+    // Skip when canonical versionId AND canonical manifestHash already
+    // landed (idempotency for repeat runs of this script).
+    const canonicalVersion = (await registry.getVersion(skillId, versionId).catch(() => null)) as { creator: string; manifestHash: string } | null;
+    const hashMatch = canonicalVersion?.manifestHash?.toLowerCase() === manifestHash.toLowerCase();
+    if (canonicalVersion && canonicalVersion.creator !== '0x0000000000000000000000000000000000000000' && hashMatch) {
+      console.log(`  · ${slug}: canonical versionId + manifestHash already on chain — skip publishVersion`);
     } else {
-      console.log(`  → ${slug}: publishVersion · version=v${version} · manifestHash=${manifestHash.slice(0, 18)}…`);
+      const reason = !canonicalVersion ? 'no version record' : !hashMatch ? 'manifestHash drift' : 'no creator';
+      console.log(`  → ${slug}: publishVersion · version=v${version} · manifestHash=${manifestHash.slice(0, 18)}… (${reason})`);
       try {
         const tx = await registry.publishVersion(skillId, versionId, manifestHash, { gasLimit: 300_000n });
         const receipt = await tx.wait();
