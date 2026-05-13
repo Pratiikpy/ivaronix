@@ -1,0 +1,85 @@
+# Ivaronix Goldsky subgraph schema (FINAL_BUILD_PLAN.md Block O)
+# Indexes 6 event types across Receipt + Payment + Memory + Skill + Pricing.
+
+type Skill @entity(immutable: false) {
+  id: ID! # skillIdHash (bytes32) hex
+  owner: Bytes! # current owner (transfers update this)
+  publishedAt: BigInt! # block.timestamp at first publish
+  manifestRoot: Bytes! # latest manifest root
+
+  # Pricing state (joined from SkillPricing PriceUpdated events)
+  priceWei: BigInt!
+  creatorBps: Int!
+  treasuryBps: Int!
+  isPriced: Boolean!
+  priceUpdatedAt: BigInt!
+
+  # Activity rollups (updated as events arrive)
+  receipts: [Receipt!]! @derivedFrom(field: "skill")
+  payments: [Payment!]! @derivedFrom(field: "skill")
+  totalPaidWei: BigInt!
+  totalReceipts: Int!
+}
+
+type Receipt @entity(immutable: true) {
+  id: ID! # receiptRoot (bytes32 hex) -- canonical identifier
+  agent: Bytes! # agent address that anchored
+  skill: Skill # null for receipts not tied to a skill (memory consolidation, etc.)
+  receiptType: Int! # canonical slot 0-12
+  anchoredAt: BigInt! # block.timestamp
+  txHash: Bytes! # anchor tx
+  registryVersion: String! # "V1" / "V2" / "V3"
+  onChainId: BigInt!
+}
+
+type Payment @entity(immutable: true) {
+  id: ID! # tx hash
+  receiptRoot: Bytes!
+  payer: Bytes!
+  creator: Bytes!
+  skill: Skill # joined via skillIdHash (set in mapping when skill exists)
+  amount: BigInt!
+  creatorShare: BigInt!
+  treasuryShare: BigInt!
+  creatorBps: Int!
+  treasuryBps: Int!
+  paidAt: BigInt!
+  refunded: Boolean!
+}
+
+type CreatorStats @entity(immutable: false) {
+  id: ID! # creator address
+  lifetimeEarnedWei: BigInt!
+  totalRuns: Int!
+  totalWithdrawn: BigInt!
+  latestWithdrawal: BigInt
+  latestPayment: BigInt
+}
+
+type Withdrawal @entity(immutable: true) {
+  id: ID! # tx hash + log index
+  by: Bytes!
+  amount: BigInt!
+  isTreasury: Boolean!
+  ts: BigInt!
+  txHash: Bytes!
+}
+
+type MemoryAccess @entity(immutable: true) {
+  id: ID! # tx hash + log index
+  agent: Bytes!
+  grantId: Bytes
+  kind: String!
+  ts: BigInt!
+  txHash: Bytes!
+}
+
+type GlobalStats @entity(immutable: false) {
+  id: ID! # always "global"
+  totalReceipts: Int!
+  totalPayments: BigInt!
+  totalCreatorPaid: BigInt!
+  totalTreasuryPaid: BigInt!
+  uniqueCreators: Int!
+  uniqueSkills: Int!
+}
