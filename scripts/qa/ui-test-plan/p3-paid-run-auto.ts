@@ -37,7 +37,8 @@
 import { chromium, type Page, type BrowserContext } from 'playwright';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { mkdirSync, readFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, '..', '..', '..');
@@ -480,11 +481,25 @@ async function main(): Promise<void> {
   await studio.waitForTimeout(3_500);
   await snap(studio, 'landing-connected');
 
-  const textarea = studio.locator('textarea').first();
-  if (await textarea.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    await textarea.click();
-    await textarea.fill(SAMPLE_TEXT);
+  // RunPanel uses react-dropzone with a HIDDEN <input type="file"> — not a
+  // <textarea>. Write sample text to a temp file and feed it via setInputFiles
+  // (Playwright dispatches the change event · dropzone reads + setContentText).
+  const sampleFile = resolve(tmpdir(), `p3-sample-${Date.now()}.txt`);
+  writeFileSync(sampleFile, SAMPLE_TEXT, 'utf8');
+  const fileInput = studio.locator('input[type="file"]').first();
+  try {
+    await fileInput.setInputFiles(sampleFile, { timeout: 8_000 });
+    console.log(`  ✓ doc uploaded via setInputFiles: ${sampleFile}`);
+  } catch (e) {
+    console.log(`  ⚠ setInputFiles failed: ${(e as Error).message.split('\n')[0]}`);
+    // Fallback: try textarea (unlikely but defensive)
+    const textarea = studio.locator('textarea').first();
+    if (await textarea.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await textarea.click();
+      await textarea.fill(SAMPLE_TEXT);
+    }
   }
+  await studio.waitForTimeout(1_500);
   const question = studio.locator('input[placeholder*="worst" i], input[placeholder*="question" i]').first();
   if (await question.isVisible({ timeout: 3_000 }).catch(() => false)) {
     await question.click();
