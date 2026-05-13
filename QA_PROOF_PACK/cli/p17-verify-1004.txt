@@ -1,0 +1,19 @@
+
+
+
+[1mVerifying 1004 (C:\Users\prate\Downloads\oglabs\.ivaronix\receipts\anchored\rcpt_01KR5QS6TXYST8EVGMV8A2WMXT.json)[22m
+[2m────────────────────────────────────────────────────────────[22m
+  [32m●[39m schema                 PASS
+  [32m●[39m hash                   PASS
+  [32m●[39m signature              PASS
+  [32m●[39m                     → CLAIMED
+  [90m●[39m signedBy             operator · operator-signed (legacy default)
+  [32m●[39m chain anchor          PASS  (id=1004 block≈1778309178) · V1 LEGACY
+  [32m●[39m                     → ANCHORED
+  [33m●[39m initializing 0G Compute broker...
+Detected testnet (chain ID: 16602)
+  [33m●[39m verifying 1 attestation via broker.processResponse...
+  [31m●[39m tee:primary          error  [31mgetting signature error[39m
+[2m────────────────────────────────────────────────────────────[22m
+
+[32mStatus: → ANCHORED (some TEE checks failed; see above)[39m
