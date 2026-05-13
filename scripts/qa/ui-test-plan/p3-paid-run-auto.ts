@@ -408,8 +408,12 @@ async function main(): Promise<void> {
       console.log(`    ${tag} ${p.url().slice(0, 80)}`);
     }
     // Find an undriven page that's NOT mmPopup/studio AND has extId in URL
+    // Exclude home.html (the wallet UI tab) — the connect/sign/tx popups
+    // open at notification.html or popup.html. Both contain extId.
     const popup = allPages.find((p) =>
-      p.url().includes(extId) && p !== mmPopup && p !== studio && !driven.has(p)
+      p.url().includes(extId) &&
+      !p.url().includes('home.html') &&
+      p !== mmPopup && p !== studio && !driven.has(p)
     );
     if (popup) {
       const label = drivenCount === 0 ? 'mm-connect' : drivenCount === 1 ? 'mm-siwe' : `mm-popup-${drivenCount}`;
@@ -495,7 +499,9 @@ async function main(): Promise<void> {
   let payDriven = 0;
   for (let i = 0; i < 4; i++) {
     const popup = ctx.pages().find((p) =>
-      p.url().includes(extId) && p !== mmPopup && p !== studio
+      p.url().includes(extId) &&
+      !p.url().includes('home.html') &&
+      p !== mmPopup && p !== studio
     );
     if (popup) {
       const label = payDriven === 0 ? 'mm-payment' : `mm-post-pay-${payDriven}`;
