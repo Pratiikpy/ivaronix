@@ -8,9 +8,10 @@
 | State | 2-wallet rows | 3-wallet rows | Total |
 |---|---:|---:|---:|
 | **PASS** | 0 | 0 | **0** |
-| **PENDING (chain side complete · UI side gated)** | 9 | 0 | **9** |
-| **PENDING (untested)** | 2 | 2 | **4** |
+| **PENDING (chain side complete · UI side gated)** | 11 | 1 | **12** |
+| **PENDING (chain partial · 3-wallet payout future)** | 0 | 1 | **1** |
 | **SEMANTIC MISMATCH (code-vs-plan design decision needed)** | 1 | 0 | **1** |
+| **PENDING (untested)** | 0 | 0 | **0** |
 | **BLOCKED** | 0 | 0 | **0** |
 | **Total rows** | **12** | **2** | **14** |
 
@@ -47,14 +48,14 @@ The "NOT yet imported into MetaMask" status is the gate on every PASS classifica
 | 9 | 828 | Delegate run | PENDING (chain complete) | ✅ iter-135 — re-grant tx `0x68e05bed...`, delegate run produced receipt `rcpt_01KRFBXZZ0R45YGR4DEV9QG9V4` (type=burn slot 3) anchored on V2 id=9 (tx `0x40b5d2a8...` block 33010518), delegate's passport receiptCount=1 trustScore=1 | ❌ no Studio /r/9 capture from delegate's MM | Delegate ran `private-doc-review` skill on the iter-134 test doc, signed its own receipt, anchored on chain. Storage upload fell back to sha256 (delegate has 0.005 OG, Storage tx requires ~0.009 OG — gracefully degraded). |
 | 10 | 829 | Delegate receipt semantics | **SEMANTIC MISMATCH iter-135** | ❌ | ❌ | **Code-vs-plan ambiguity surfaced iter-135.** Plan expects `agent.signedBy = 'operator-on-behalf-of-user'` and `agent.ownerWallet = user` (not delegate). Actual receipt has `signedBy = undefined` (defaults to 'operator') + `ownerWallet = delegate` (`0xc347bCb0...`). Current model treats delegate as autonomous agent with its own passport (delegate.ts mints a passport for the delegate iter-133), not as "user signs on behalf of" pattern. Either (a) the plan is documenting a future design and the code is current, or (b) the delegate flow should set `signedBy: 'operator-on-behalf-of-user'` + `ownerWallet = grantor`. Needs design decision before this row can move to PASS. |
 | 11 | 830 | Revoke delegate | PENDING | ✅ iter-133 (`0xd30accbb...` block 33009107) | ❌ no UI capture | Chain side: capability grant revoked. State transition (grant active → revoked) observed on chain. Retry-action-fails post-revoke not yet driven. |
-| 12 | 863 | Marketplace: buyer runs creator skill | PENDING | ❌ | ❌ | Wallet B (as buyer) runs a skill published by operator (as creator). `ivaronix doc ask --skill <name>` with Wallet B's key. |
+| 12 | 863 | Marketplace: buyer runs creator skill | PENDING (chain complete) | ✅ iter-136 — Wallet B ran private-doc-review · receipt `rcpt_01KRFC89GHCCKSFTJN593JSJF8` V2 id=10 (tx `0xea24bab7...` block 33011215) · ownerWallet=Wallet B · skillId=private-doc-review · skillManifestHash matched | ❌ no Studio capture from Wallet B's MM | Wallet B funded with 0.108 OG total (top-up tx `0x74b5ede0...`); ran operator's first-party skill end-to-end; receipt records both buyer (ownerWallet) and creator (creatorPassport in fee-split). |
 
 ### 3-wallet rows
 
 | # | Plan line | Feature | State | Chain proof | UI/MM proof | Notes |
 |---:|---:|---|:---:|:---:|:---:|---|
-| 13 | 757 | Fee-split variation honoring manifest | PENDING | ❌ | ❌ | Needs creator + buyer + treasury wallets all running through skill with `creator.fee_split` populated. Wallet C now funded as treasury role. |
-| 14 | 864 | Marketplace: fee split serious test | PENDING | ❌ | ❌ | Same shape as row 13 but explicitly "Creator wallet, buyer wallet, treasury/admin wallet". Roles: operator=creator, Wallet B=buyer, Wallet C=treasury. |
+| 13 | 757 | Fee-split variation honoring manifest | PENDING (chain complete) | ✅ iter-136 — TWO receipts from Wallet B in same session: `rcpt_01KRFC89...` (private-doc-review 90/10 honored: declaredCreatorBps=9000) and `rcpt_01KRFCB8...` (content-pitch-review 70/30 honored: declaredCreatorBps=7000). Default 90/10 did NOT bleed into the 70/30 skill — each receipt records the EXACT split from its own manifest. | ❌ no Studio side-by-side capture | Two skill manifests' fee-split blocks correctly enforced per-receipt. TIER_2 multiplier (8500bps) applied uniformly to both; declared bps preserved verbatim per skill. |
+| 14 | 864 | Marketplace: fee split serious test (3-wallet) | PENDING (chain partial) | ⚠️ iter-136 — fee-split RECORDED correctly per receipt (both creatorBps + treasuryBps + creatorNeuron + treasuryNeuron present). Per plan's "OR marked future if not live": treasury wallet attribution is currently implicit (no on-chain transfer to Wallet C). | ❌ | Strict 3-wallet test would attribute treasury share to Wallet C's address explicitly. Current pipeline records treasury bps + neuron amount in the receipt body but doesn't execute an on-chain transfer to a treasury wallet. Per plan note, this can be marked "future" since the split is recorded; a true 3-wallet payout flow would require a treasury wallet wired into the pipeline's billing layer. Queue in USER_TODO §B-V2-marketplace-treasury-payout (future). |
 
 ## What can be PASS-classified after one re-reading (per row 1 + 5 logic)
 
