@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
+import { ensureSiweSession } from '@/lib/siwe-client';
 
 interface StudioNote {
   id: string;
@@ -23,8 +24,10 @@ type Scope = (typeof SCOPES)[number];
  * disclosure rendered in the panel header.
  */
 export function MemoryNotesPanel() {
-  const { isConnected } = useAccount();
+  const { isConnected, address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [notes, setNotes] = useState<StudioNote[]>([]);
+  const [signingIn, setSigningIn] = useState(false);
   const [draft, setDraft] = useState('');
   const [scope, setScope] = useState<Scope>('project');
   const [recallQuery, setRecallQuery] = useState('');
@@ -38,7 +41,23 @@ export function MemoryNotesPanel() {
       const r = await fetch('/api/memory/list', { credentials: 'include' });
       if (r.status === 401) {
         setNotes([]);
-        setError('SIWE session not found — sign in to read your notes.');
+        // Auto-trigger SIWE handshake (same pattern as RunPanel) when
+        // wallet is connected but no session exists. User signs once,
+        // notes load on the next refresh.
+        if (connectedAddress && !signingIn) {
+          setSigningIn(true);
+          setError('Sign in with your wallet to read notes…');
+          const siwe = await ensureSiweSession(connectedAddress, signMessageAsync);
+          setSigningIn(false);
+          if (siwe.ok) {
+            setError(null);
+            // Retry the list call now that we have a session
+            return refresh();
+          }
+          setError(`Sign-in failed: ${siwe.error ?? 'rejected'}`);
+          return;
+        }
+        setError('Sign in with your wallet to read notes.');
         return;
       }
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
