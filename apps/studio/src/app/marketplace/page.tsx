@@ -10,8 +10,8 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, subgraphAvailable, type SkillListing } from '@/lib/subgraph';
-import { resolveSkillSlug } from '@/lib/first-party-skills';
-import { loadAllSkills } from '@/lib/skills';
+import { FIRST_PARTY_SLUGS, resolveSkillSlug } from '@/lib/first-party-skills';
+import { findSkillByIdServer } from '@/lib/skills';
 
 interface EnrichedSkill extends SkillListing {
   resolvedSlug: string | null;
@@ -29,14 +29,15 @@ export const metadata = {
 export default async function MarketplacePage() {
   const rawSkills = await skillsList({ limit: 50, sortBy: 'recent' });
 
-  // Pre-load every first-party SKILL.md ONCE so the per-card enrichment
-  // is an O(1) Map lookup instead of an N-times disk scan + YAML parse.
-  // P14 caught a 300+ms FCP regression from per-card findSkillByIdServer
-  // calls when there are 6 cards on /marketplace.
-  const allLocal = loadAllSkills();
+  // Pre-load just the 6 first-party SKILL.md files ONCE so the per-card
+  // enrichment is an O(1) Map lookup. Earlier iteration used loadAllSkills()
+  // which read every SKILL.md (including the community imports); we only
+  // need the first-party 6 for marketplace cards. The narrower scan is
+  // an order of magnitude cheaper on cold cache.
   const descBySlug = new Map<string, string>();
-  for (const s of allLocal) {
-    descBySlug.set(s.id, s.manifest.description);
+  for (const slug of FIRST_PARTY_SLUGS) {
+    const local = findSkillByIdServer(slug);
+    if (local) descBySlug.set(slug, local.manifest.description);
   }
 
   // Enrich each chain listing with the canonical slug + SKILL.md
