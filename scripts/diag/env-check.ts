@@ -10,6 +10,30 @@
  *   pnpm env:check
  */
 
+import { config as dotenvConfig } from 'dotenv';
+import { existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+
+// Walk up to find the nearest .env file before reading process.env — matches
+// the CLI's own startup loader (apps/cli/src/bin/ivaronix.ts:7-17) so the
+// gate sees the same environment the CLI does. Without this, running
+// `pnpm env:check` from the repo root shows every canonical as UNSET even
+// when .env has them defined (cron sweep iter-165 finding · 2026-05-13).
+function findEnvFile(startDir: string): string | null {
+  let dir = startDir;
+  for (let i = 0; i < 8; i++) {
+    const candidate = resolve(dir, '.env');
+    if (existsSync(candidate)) return candidate;
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return null;
+}
+
+const envPath = findEnvFile(process.cwd());
+if (envPath) dotenvConfig({ path: envPath });
+
 import { envCheckReport } from '@ivaronix/runtime/env';
 
 const RED = (s: string) => `\x1b[31m${s}\x1b[0m`;
