@@ -282,13 +282,19 @@ body {
      * body content. .btn-ghost is used both in the header (compact)
      * AND as a body CTA (needs tap-target). At mobile breakpoints we
      * lift body ghost buttons to 44h via min-height; the header
-     * versions are now hidden so no conflict. */
+     * versions are now hidden so no conflict.
+     *
+     * inline-flex is required so min-height takes effect on <a>
+     * elements (inline-by-default; min-height is ignored on inline). */
     main .btn-ghost,
     main .btn-primary,
     main .btn-secondary,
     main button[type="submit"],
     main button[type="button"]:not(.mobile-menu-trigger):not([data-no-min-height]) {
       min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     /* Form inputs in main content also need ≥ 44h for thumb tapping. */
     main input[type="text"],

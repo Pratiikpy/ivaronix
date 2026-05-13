@@ -77,7 +77,22 @@ async function auditRoute(page: Page, route: string): Promise<Violation[]> {
       };
       const elements = [];
       document.querySelectorAll('button').forEach((b) => elements.push(b));
-      document.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach((f) => elements.push(f));
+      document.querySelectorAll('input:not([type="hidden"]), select, textarea').forEach((f) => {
+        // WCAG 2.5.5 exception: native checkbox/radio with wrapping or
+        // associated <label> gets the LABEL's tap area, not the native
+        // 13×13 pseudo-element. If the input is inside a label OR has
+        // for="" reference, measure the label box instead.
+        const t = (f.getAttribute('type') || '').toLowerCase();
+        if (t === 'checkbox' || t === 'radio') {
+          let label = f.closest('label');
+          if (!label && f.id) label = document.querySelector('label[for="' + f.id + '"]');
+          if (label) {
+            const lr = label.getBoundingClientRect();
+            if (lr.width >= 44 && lr.height >= 44) return; // tap target is the label
+          }
+        }
+        elements.push(f);
+      });
       document.querySelectorAll('a').forEach((a) => {
         if (inFooter(a)) return;
         if (a.getAttribute('role') === 'button' || a.getAttribute('role') === 'tab') { elements.push(a); return; }
