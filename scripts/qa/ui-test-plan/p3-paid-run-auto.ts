@@ -393,47 +393,45 @@ async function main(): Promise<void> {
   await studio.waitForTimeout(3_000);
   await snap(studio, 'onboard-loaded');
 
-  // Click Connect → loop-drive ANY popups (connect, SIWE, chain switch).
+  // Strategy 5: capture popup at EXACT spawn moment via ctx.waitForEvent.
+  // Set up event listener BEFORE click; that catches popup creation precisely.
+  const popupSpawnP = ctx.waitForEvent('page', { timeout: 20_000 }).catch(() => null);
   await clickButton(studio, 'button:has-text("Connect wallet"), button:has-text("Connect injected")', 'Connect wallet', 10_000);
-  await studio.waitForTimeout(3_500); // wait for popup to spawn
-
-  let drivenCount = 0;
-  const driven = new Set<Page>();
-  for (let i = 0; i < 8; i++) {
-    // Dump all pages for debug
+  console.log('  awaiting popup spawn event...');
+  const connectPopup = await popupSpawnP;
+  if (connectPopup) {
+    console.log(`  ✓ caught popup at: ${connectPopup.url().slice(0, 100)}`);
+    await drivePopupOnce(connectPopup, 'mm-connect', 8);
+  } else {
+    console.log('  ⚠ no popup spawn event in 20s · falling back to page scan');
     const allPages = ctx.pages();
-    console.log(`  [iter ${i}] pages in context:`);
-    for (const p of allPages) {
-      const tag = p === mmPopup ? '(mmPopup)' : p === studio ? '(studio)' : driven.has(p) ? '(driven)' : '(candidate)';
-      console.log(`    ${tag} ${p.url().slice(0, 80)}`);
-    }
-    // Find an undriven page that's NOT mmPopup/studio AND has extId in URL
-    // Exclude home.html (the wallet UI tab) — the connect/sign/tx popups
-    // open at notification.html or popup.html. Both contain extId.
+    for (const p of allPages) console.log(`    page: ${p.url().slice(0, 100)}`);
     const popup = allPages.find((p) =>
-      p.url().includes(extId) &&
-      !p.url().includes('home.html') &&
-      p !== mmPopup && p !== studio && !driven.has(p)
+      p.url().includes(extId) && p !== mmPopup && p !== studio
     );
-    if (popup) {
-      const label = drivenCount === 0 ? 'mm-connect' : drivenCount === 1 ? 'mm-siwe' : `mm-popup-${drivenCount}`;
-      driven.add(popup);
-      await drivePopupOnce(popup, label, 6);
-      drivenCount += 1;
-      await studio.waitForTimeout(2_500);
-      continue;
-    }
-    // Check connected state
-    const txt = await studio.locator('body').innerText().catch(() => '');
-    if (/0x[a-f0-9]{4}.{0,40}0x[a-f0-9]{4}|Disconnect/i.test(txt)) {
-      console.log(`  ✓ Studio shows connected state after ${drivenCount} popups`);
-      break;
-    }
-    await studio.waitForTimeout(2_500);
+    if (popup) await drivePopupOnce(popup, 'mm-connect-fallback', 8);
   }
   await studio.bringToFront();
-  await studio.waitForTimeout(2_500);
+  await studio.waitForTimeout(3_000);
   await snap(studio, 'after-connect');
+
+  // Follow-up popups (SIWE / chain switch) — capture each via the same pattern
+  for (let i = 0; i < 3; i++) {
+    const txt = await studio.locator('body').innerText().catch(() => '');
+    if (/0x[a-f0-9]{4}.{0,40}0x[a-f0-9]{4}|Disconnect/i.test(txt)) {
+      console.log(`  ✓ Studio fully connected after ${i} follow-ups`);
+      break;
+    }
+    const followP = ctx.waitForEvent('page', { timeout: 6_000 }).catch(() => null);
+    const follow = await followP;
+    if (follow && follow.url().includes(extId)) {
+      console.log(`  follow-up popup ${i}: ${follow.url().slice(0, 100)}`);
+      await drivePopupOnce(follow, `mm-followup-${i}`, 6);
+      await studio.waitForTimeout(2_500);
+    } else {
+      await studio.waitForTimeout(2_000);
+    }
+  }
 
   // 3. Switch to Galileo network — Studio should prompt OR we can request
   console.log('\n=== 3. Switch to Galileo ===');
