@@ -82,7 +82,10 @@ services:
     image: ivaronix/evermemos:0.1.0
     container_name: ivaronix-kv-evermemos
     build:
-      context: ../../oglabs\ resources/0g-memory
+      # Path uses a literal space (not backslash-escape, which is shell
+      # syntax and breaks the Windows compose builder). The directory
+      # `oglabs resources/` is gitignored at repo root per .gitignore.
+      context: "../../oglabs resources/0g-memory"
       dockerfile: Dockerfile
     depends_on:
       mongo:

@@ -14,6 +14,12 @@ keystore/
 !.claude/rules/
 CLAUDE.md.local
 
+# Internal asset-generation tooling (X/Twitter card images for launch
+# marketing). The generator script + its non-repo output path are
+# ignored; the published card images under x-post-assets/ stay tracked
+# since they ship as actual launch artefacts.
+scripts/qa/metamask-e2e/create-hype-posts.ts
+
 # Reference / research material — kept locally only; not pushed
 # (each contains nested .git/ folders, so they'd become gitlinks if tracked)
 CLI Open Source Project/
