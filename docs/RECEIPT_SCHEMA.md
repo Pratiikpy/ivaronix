@@ -26,17 +26,20 @@ optional. Schema source: `packages/receipts/src/schema.ts`.
 |---|---|---|
 | `id` | ULID | local identifier, time-sortable, monotonic per process |
 | `type` | `'doc_ask' \| 'audit' \| 'memory_access' \| ...` | what the agent did |
-| `version` | `'1.0.0'` | schema version pin |
+| `version` | `'1.0'` | schema version pin |
+| `createdAt` | ISO-8601 string | wall-clock receipt creation time (UTC) |
 | `agent` | object | passport id, owner wallet, trust score at time of run |
 | `request` | object | skill id + version, prompt hash, input artifact list, policy decision |
 | `execution` | object | mode, burnMode, consensusMode, model, provider routing, consensus block |
-| `teeVerification` | object | requested, routerVerified, independentVerified, providerAddress, **verificationMethod** (the tier marker) |
+| `teeVerification` | object | requested, routerVerified, independentVerified, providerAddress, **verificationMethod** (the tier marker), tier, providerKind |
 | `billing` | object | input/output tokens, cost in neuron + OG, **feeSplit** (creator/treasury BigInt-precise) |
 | `storage` | object | receiptRoot, evidenceRoot, encryption block, proofDownloadVerified |
 | `burn` | object (optional) | sessionKeyDestroyedAt timestamp, localCleanupStatus, tempPathsZeroed, wording |
-| `chainAnchor` | object | network, chainId, rpcUrlHash, registryAddress, anchorTxHash, anchorBlockNumber, anchorTimestamp |
+| `chainAnchor` | object | network, chainId, rpcUrlHash, registryAddress, status, onChainId, anchorTxHash, anchorBlockNumber, anchorTimestamp |
 | `outputs` | object | outputHash, citations, riskLevel, wording (headline + doNotSay list) |
-| `signature` | hex string | ECDSA signature over the canonical hash by `agent.ownerWallet` |
+| `parentReceiptId` | ULID (optional) | references a parent receipt when this run was triggered by another anchored action |
+| `routerTrace` | object (optional) | per-role router call trace · provider address, model, latency, token counts |
+| `signature` | `{ method, signer, signature }` | ECDSA signature object · `signature` field is the hex-string `secp256k1` signature over the canonical hash by `agent.ownerWallet`, with `method = 'eth_personal_sign'` and `signer` echoing the recovered address for fail-fast comparison |
 | `createdBy` | string | the runtime that produced the receipt (`ivaronix-runtime/0.0.1`) |
 
 ### Tier marking — `teeVerification.verificationMethod`
