@@ -34,7 +34,11 @@ export const demoCommand = new Command('demo')
   .option('--question <q>', 'question to ask', 'Which clause is most concerning?')
   .option('--tier <tier>', 'consensus tier: quick | standard | high-stakes', 'quick')
   .option('--burn', 'enable burn mode — encrypt evidence, destroy session key after run', false)
-  .action(async (opts: { skill: string; question: string; tier: string; burn?: boolean }) => {
+  // FINAL_BUILD_PLAN.md Block D · payment integration
+  .option('--pay', 'pay for this skill run via SkillRunPayment (Block A) — fee-split to creator + treasury per SkillPricing (Block A.1)', false)
+  .option('--subsidise', 'operator subsidises the payment (sets billing.payment.subsidised=true; same code path)', false)
+  .option('--no-payment', 'free-skill run; skip payment leg even if SkillPricing has a non-zero price (must be priceWei==0 to actually succeed)', false)
+  .action(async (opts: { skill: string; question: string; tier: string; burn?: boolean; pay?: boolean; subsidise?: boolean; noPayment?: boolean }) => {
     if (!['quick', 'standard', 'high-stakes'].includes(opts.tier)) {
       ui.fail(`invalid --tier "${opts.tier}"`, 'must be quick | standard | high-stakes');
       process.exitCode = 1;
@@ -107,6 +111,36 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
     ui.info(`tier                 ${opts.tier} (${roleCount} role${roleCount === 1 ? '' : 's'})`);
     ui.divider();
 
+    // ─── Optional pre-payment (Block D) ───────────────────────────
+    // When --pay or --subsidise is set, send paySkillRun to SkillRunPayment
+    // BEFORE running the pipeline. The patch lands AFTER the receipt is built
+    // (payment is in HASH_EXCLUDE so the canonical body hash is unaffected).
+    let paymentMetadata: import('../lib/payment.js').PaymentMetadata | null = null;
+    if (opts.pay || opts.subsidise) {
+      ui.section('payment');
+      try {
+        const { paySkillRunFromCli } = await import('../lib/payment.js');
+        paymentMetadata = await paySkillRunFromCli({
+          skillId: opts.skill,
+          contentText: canonicalDoc,
+          question: opts.question,
+          subsidise: !!opts.subsidise,
+        });
+        ui.pass(`payment tx           ${paymentMetadata.txHash}`);
+        ui.info(`paid                 ${(Number(paymentMetadata.paidOg) / 1e18).toFixed(6)} OG`);
+        ui.info(`creator              ${paymentMetadata.creator}`);
+        ui.info(`split                ${paymentMetadata.creatorBps / 100}% / ${paymentMetadata.treasuryBps / 100}% (creator/treasury)`);
+        if (paymentMetadata.subsidised) ui.info('subsidised           operator paid on behalf of demo run');
+        ui.divider();
+      } catch (err) {
+        ui.fail('payment failed', (err as Error).message);
+        process.exitCode = 1;
+        return;
+      }
+    } else if (!opts.noPayment) {
+      ui.info('payment              skipped (use --pay to send paySkillRun or --no-payment to silence this hint for free skills)');
+    }
+
     // ─── Run pipeline ──────────────────────────────────────────────
     ui.section('running');
     const result = await runPipeline({
@@ -117,6 +151,19 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
       receipt: true,
     });
     ui.divider();
+
+    // ─── Post-anchor patch (Block D) ──────────────────────────────
+    // Splice billing.payment block into the receipt JSON. Safe because
+    // 'payment' is in HASH_EXCLUDE — canonical body hash unchanged.
+    if (paymentMetadata && result.receiptPath) {
+      try {
+        const { patchReceiptWithPayment } = await import('../lib/payment.js');
+        await patchReceiptWithPayment(result.receiptPath, paymentMetadata);
+        ui.info(`payment patched      receipt body updated with payment metadata`);
+      } catch (err) {
+        ui.fail('payment patch failed', (err as Error).message);
+      }
+    }
 
     // ─── Output + proof URLs ───────────────────────────────────────
     ui.section('output');

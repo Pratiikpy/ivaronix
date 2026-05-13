@@ -692,6 +692,35 @@ receiptCommand
     ui.info(`timestamp            ${row.timestamp}  (${new Date(Number(row.timestamp) * 1000).toISOString()})`);
     ui.info(`type                 ${row.receiptType}`);
     ui.info(`registry             ${versionTag}`);
+
+    // FINAL_BUILD_PLAN.md Block D · display billing.payment when present
+    // on the local receipt JSON. Scan anchored receipts for one whose
+    // chainAnchor.onChainId matches the requested id.
+    try {
+      const { readdirSync, readFileSync, existsSync } = await import('node:fs');
+      const { resolve } = await import('node:path');
+      const anchoredDir = resolve(process.cwd(), '.ivaronix', 'receipts', 'anchored');
+      if (existsSync(anchoredDir)) {
+        const files = readdirSync(anchoredDir).filter((f) => f.endsWith('.json'));
+        for (const file of files) {
+          try {
+            const body = JSON.parse(readFileSync(resolve(anchoredDir, file), 'utf8'));
+            if (body.chainAnchor?.onChainId === id && body.billing?.payment) {
+              const p = body.billing.payment;
+              ui.divider();
+              ui.info(`payment tx           ${p.txHash}`);
+              ui.info(`payer                ${p.payer}`);
+              ui.info(`creator              ${p.creator}`);
+              ui.info(`paid                 ${(Number(p.paidOg) / 1e18).toFixed(6)} OG`);
+              ui.info(`split                ${p.creatorBps / 100}% creator / ${p.treasuryBps / 100}% treasury`);
+              ui.info(`subsidised           ${p.subsidised ? 'YES (operator paid)' : 'no'}`);
+              if (p.refunded) ui.info(`refunded             YES (tx ${p.refundTxHash})`);
+              break;
+            }
+          } catch { /* skip unreadable */ }
+        }
+      }
+    } catch { /* optional */ }
   });
 
 // ─── list ───────────────────────────────────────────────────────────────────
