@@ -123,7 +123,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
           contentText,
           question,
           userWallet: address,
-          burnMode,
+          burn: burnMode,
         }),
       });
       const rawText = await estimateRes.text();
@@ -220,7 +220,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
           contentText,
           question,
           userWallet: address,
-          burnMode,
+          burn: burnMode,
           txHash,
           draftReceiptRoot: estimate.draftReceiptRoot,
           amount: estimate.amount,
