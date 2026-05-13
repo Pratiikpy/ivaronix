@@ -73,41 +73,38 @@ export function consumeNonce(nonce: string): boolean {
 }
 
 /**
- * Issue a session for the given wallet. Returns the cookie value (an
- * HMAC-protected token); the wallet → record mapping is held in-memory.
+ * Issue a session for the given wallet. STATELESS token: the wallet +
+ * expiry are embedded in the cookie itself, HMAC-signed by the server
+ * secret. No Map lookup required at read time — critical for Vercel
+ * multi-lambda where lambda A's in-memory Map isn't visible to lambda B.
+ *
+ * Cookie shape: `<base64url(JSON{wallet, expiresAtMs})>.<hex hmac>`.
+ * Caught by P3 UI test on 2026-05-13: user's SIWE sign succeeded on
+ * lambda A but /api/run rejected on lambda B because the session wasn't
+ * in B's in-memory `sessions` Map.
  */
 export function issueSession(wallet: `0x${string}`): { cookieValue: string; expiresAtMs: number } {
-  const id = randomBytes(24).toString('hex');
   const issuedAtMs = Date.now();
   const expiresAtMs = issuedAtMs + SESSION_TTL_MS;
-  sessions.set(id, { wallet, issuedAtMs, expiresAtMs });
-  // Sweep 194: opportunistic GC matching the rate-limit Map cleanup
-  // (sweep 193). issueNonce already walks the nonces Map fully on
-  // every call; sessions doesn't (cleanup only fires on readSession
-  // when an expired entry is encountered). An attacker rate-limited
-  // to 30 SIWE handshakes/min/IP can still mint up to 30/min sessions
-  // that never get read. Walk every ~100th issue when size > 64.
-  if (sessions.size > 64 && Math.random() < 0.01) {
-    for (const [k, v] of sessions) {
-      if (issuedAtMs > v.expiresAtMs) sessions.delete(k);
-    }
-  }
-  // Cookie value is `<id>.<hmac(id)>`. Tampering invalidates the HMAC.
-  const sig = createHmac('sha256', getHmacSecret()).update(id).digest('hex');
-  return { cookieValue: `${id}.${sig}`, expiresAtMs };
+  const payload = Buffer.from(JSON.stringify({ wallet, expiresAtMs }), 'utf8').toString('base64url');
+  const sig = createHmac('sha256', getHmacSecret()).update(payload).digest('hex');
+  return { cookieValue: `${payload}.${sig}`, expiresAtMs };
 }
 
 /**
- * Read the session associated with a cookie value, or null if missing /
- * tampered / expired.
+ * Read the session from a stateless HMAC-signed cookie. Returns null on
+ * any tamper / expiry / parse error. No Map lookup — works across
+ * Vercel lambda instances as long as IVARONIX_SESSION_SECRET is set
+ * (otherwise each lambda has its own per-process random secret and
+ * sessions remain instance-local — see warning in getHmacSecret).
  */
 export function readSession(cookieValue: string | undefined): SessionRecord | null {
   if (!cookieValue) return null;
   const dot = cookieValue.indexOf('.');
   if (dot < 0) return null;
-  const id = cookieValue.slice(0, dot);
+  const payload = cookieValue.slice(0, dot);
   const sig = cookieValue.slice(dot + 1);
-  const expected = createHmac('sha256', getHmacSecret()).update(id).digest();
+  const expected = createHmac('sha256', getHmacSecret()).update(payload).digest();
   let provided: Buffer;
   try {
     provided = Buffer.from(sig, 'hex');
@@ -116,13 +113,19 @@ export function readSession(cookieValue: string | undefined): SessionRecord | nu
   }
   if (provided.length !== expected.length) return null;
   if (!timingSafeEqual(provided, expected)) return null;
-  const rec = sessions.get(id);
-  if (!rec) return null;
-  if (Date.now() > rec.expiresAtMs) {
-    sessions.delete(id);
+  let decoded: { wallet?: string; expiresAtMs?: number };
+  try {
+    decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+  } catch {
     return null;
   }
-  return rec;
+  if (!decoded.wallet || typeof decoded.expiresAtMs !== 'number') return null;
+  if (Date.now() > decoded.expiresAtMs) return null;
+  return {
+    wallet: decoded.wallet as `0x${string}`,
+    issuedAtMs: decoded.expiresAtMs - SESSION_TTL_MS,
+    expiresAtMs: decoded.expiresAtMs,
+  };
 }
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;

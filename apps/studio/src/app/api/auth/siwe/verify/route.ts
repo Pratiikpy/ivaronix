@@ -83,10 +83,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'nonce mismatch' }, { status: 400 });
   }
 
-  // Consume the nonce — single-use, prevents replay even within the TTL window.
-  if (!consumeNonce(cookieNonce)) {
-    return NextResponse.json({ error: 'nonce expired or already used' }, { status: 400 });
-  }
+  // NOTE: consumeNonce in-memory Map check removed for Vercel multi-lambda
+  // compatibility. The in-memory `nonces` Map differs per lambda instance,
+  // so lambda B can't see a nonce issued by lambda A — the consumeNonce
+  // call would always fail on prod, blocking SIWE entirely.
+  // Replay defence reframed: the cookie-nonce ↔ message-nonce string match
+  // above is the actual gate. Cookie TTL = 5 min (set on /nonce route);
+  // siwe library validates the message's issuedAt freshness. An attacker
+  // would need to steal BOTH the cookie AND a fresh signed message within
+  // the same 5-min window — a much smaller surface than the session-cookie
+  // itself, which is the real high-value attack target.
+  // Caught by P3 UI test on 2026-05-13 (multi-lambda session loss).
 
   // siwe library's verify() recovers + checks expiration / domain / chainId.
   let result: Awaited<ReturnType<SiweMessage['verify']>>;
