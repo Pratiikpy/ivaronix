@@ -1,0 +1,32 @@
+2026/05/13-06:41:31.571 8f10 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-11-26\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-06:41:31.578 8f10 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-11-26\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-06:41:32.658 46d4 Level-0 table #5: started
+2026/05/13-06:41:32.740 46d4 Level-0 table #5: 3857838 bytes OK
+2026/05/13-06:41:32.743 46d4 Delete type=0 #3
+2026/05/13-06:41:53.916 8f10 Level-0 table #7: started
+2026/05/13-06:41:53.933 8f10 Level-0 table #7: 1927689 bytes OK
+2026/05/13-06:41:53.935 8f10 Delete type=0 #4
+2026/05/13-06:41:54.068 84a8 Level-0 table #9: started
+2026/05/13-06:41:54.091 84a8 Level-0 table #9: 2898947 bytes OK
+2026/05/13-06:41:54.094 84a8 Delete type=0 #6
+2026/05/13-06:42:00.257 84a8 Level-0 table #11: started
+2026/05/13-06:42:00.279 84a8 Level-0 table #11: 1752835 bytes OK
+2026/05/13-06:42:00.283 84a8 Delete type=0 #8
+2026/05/13-06:43:18.226 84a8 Level-0 table #13: started
+2026/05/13-06:43:18.253 84a8 Level-0 table #13: 2630609 bytes OK
+2026/05/13-06:43:18.256 84a8 Delete type=0 #10
+2026/05/13-06:43:43.772 84a8 Level-0 table #15: started
+2026/05/13-06:43:43.782 84a8 Level-0 table #15: 1412606 bytes OK
+2026/05/13-06:43:43.784 84a8 Delete type=0 #12
+2026/05/13-06:43:43.785 84a8 Compacting 4@0 + 1@1 files
+2026/05/13-06:43:43.806 84a8 Generated table #16@0: 41 keys, 2264946 bytes
+2026/05/13-06:43:43.828 84a8 Generated table #17@0: 20 keys, 2671832 bytes
+2026/05/13-06:43:43.850 84a8 Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-06:43:43.862 84a8 Generated table #19@0: 8 keys, 1688803 bytes
+2026/05/13-06:43:43.862 84a8 Compacted 4@0 + 1@1 files => 9082996 bytes
+2026/05/13-06:43:43.863 84a8 compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-06:43:43.863 84a8 Delete type=2 #7
+2026/05/13-06:43:43.863 84a8 Delete type=2 #9
+2026/05/13-06:43:43.864 84a8 Delete type=2 #11
+2026/05/13-06:43:43.864 84a8 Delete type=2 #13
+2026/05/13-06:43:43.864 84a8 Delete type=2 #15

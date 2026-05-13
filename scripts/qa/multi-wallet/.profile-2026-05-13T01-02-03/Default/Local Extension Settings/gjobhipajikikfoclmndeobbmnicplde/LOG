@@ -1,0 +1,32 @@
+2026/05/13-06:32:08.330 5228 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-02-03\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-06:32:08.335 5228 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-02-03\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-06:32:09.042 5228 Level-0 table #5: started
+2026/05/13-06:32:09.072 5228 Level-0 table #5: 3857838 bytes OK
+2026/05/13-06:32:09.075 5228 Delete type=0 #3
+2026/05/13-06:32:29.224 1820 Level-0 table #7: started
+2026/05/13-06:32:29.241 1820 Level-0 table #7: 1927294 bytes OK
+2026/05/13-06:32:29.242 1820 Delete type=0 #4
+2026/05/13-06:32:29.354 1820 Level-0 table #9: started
+2026/05/13-06:32:29.376 1820 Level-0 table #9: 2898950 bytes OK
+2026/05/13-06:32:29.378 1820 Delete type=0 #6
+2026/05/13-06:32:35.446 1820 Level-0 table #11: started
+2026/05/13-06:32:35.463 1820 Level-0 table #11: 1834946 bytes OK
+2026/05/13-06:32:35.465 1820 Delete type=0 #8
+2026/05/13-06:33:35.055 1820 Level-0 table #13: started
+2026/05/13-06:33:35.081 1820 Level-0 table #13: 2665873 bytes OK
+2026/05/13-06:33:35.084 1820 Delete type=0 #10
+2026/05/13-06:34:30.580 1820 Level-0 table #15: started
+2026/05/13-06:34:30.591 1820 Level-0 table #15: 1590003 bytes OK
+2026/05/13-06:34:30.593 1820 Delete type=0 #12
+2026/05/13-06:34:30.594 1820 Compacting 4@0 + 1@1 files
+2026/05/13-06:34:30.617 1820 Generated table #16@0: 41 keys, 2268009 bytes
+2026/05/13-06:34:30.638 1820 Generated table #17@0: 20 keys, 2672269 bytes
+2026/05/13-06:34:30.658 1820 Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-06:34:30.676 1820 Generated table #19@0: 8 keys, 1688801 bytes
+2026/05/13-06:34:30.677 1820 Compacted 4@0 + 1@1 files => 9086494 bytes
+2026/05/13-06:34:30.677 1820 compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-06:34:30.678 1820 Delete type=2 #7
+2026/05/13-06:34:30.678 1820 Delete type=2 #9
+2026/05/13-06:34:30.678 1820 Delete type=2 #11
+2026/05/13-06:34:30.678 1820 Delete type=2 #13
+2026/05/13-06:34:30.678 1820 Delete type=2 #15

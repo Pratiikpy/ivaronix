@@ -1,0 +1,35 @@
+2026/05/13-08:43:31.733 9634 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-failure-2026-05-13T03-13-22\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-08:43:31.740 9634 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-failure-2026-05-13T03-13-22\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-08:43:35.056 9528 Level-0 table #5: started
+2026/05/13-08:43:35.085 9528 Level-0 table #5: 3857839 bytes OK
+2026/05/13-08:43:35.088 9528 Delete type=0 #3
+2026/05/13-08:43:53.439 2db8 Level-0 table #7: started
+2026/05/13-08:43:53.452 2db8 Level-0 table #7: 1926941 bytes OK
+2026/05/13-08:43:53.455 2db8 Delete type=0 #4
+2026/05/13-08:43:53.568 2db8 Level-0 table #9: started
+2026/05/13-08:43:53.591 2db8 Level-0 table #9: 2898946 bytes OK
+2026/05/13-08:43:53.594 2db8 Delete type=0 #6
+2026/05/13-08:43:59.644 2db8 Level-0 table #11: started
+2026/05/13-08:43:59.662 2db8 Level-0 table #11: 1750398 bytes OK
+2026/05/13-08:43:59.664 2db8 Delete type=0 #8
+2026/05/13-08:44:03.866 2db8 Level-0 table #13: started
+2026/05/13-08:44:03.883 2db8 Level-0 table #13: 2236024 bytes OK
+2026/05/13-08:44:03.886 2db8 Delete type=0 #10
+2026/05/13-08:45:34.539 2db8 Level-0 table #15: started
+2026/05/13-08:45:34.550 2db8 Level-0 table #15: 1570898 bytes OK
+2026/05/13-08:45:34.551 2db8 Delete type=0 #12
+2026/05/13-08:45:34.552 2db8 Compacting 4@0 + 1@1 files
+2026/05/13-08:45:34.574 2db8 Generated table #16@0: 41 keys, 2253233 bytes
+2026/05/13-08:45:34.594 2db8 Generated table #17@0: 20 keys, 2671795 bytes
+2026/05/13-08:45:34.613 2db8 Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-08:45:34.628 2db8 Generated table #19@0: 8 keys, 1687021 bytes
+2026/05/13-08:45:34.628 2db8 Compacted 4@0 + 1@1 files => 9069464 bytes
+2026/05/13-08:45:34.629 2db8 compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-08:45:34.629 2db8 Delete type=2 #7
+2026/05/13-08:45:34.629 2db8 Delete type=2 #9
+2026/05/13-08:45:34.629 2db8 Delete type=2 #11
+2026/05/13-08:45:34.629 2db8 Delete type=2 #13
+2026/05/13-08:45:34.629 2db8 Delete type=2 #15
+2026/05/13-08:49:27.075 2db8 Level-0 table #21: started
+2026/05/13-08:49:27.093 2db8 Level-0 table #21: 2040643 bytes OK
+2026/05/13-08:49:27.094 2db8 Delete type=0 #14

@@ -1,0 +1,40 @@
+2026/05/13-07:47:43.145 8ba8 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-sweep-2026-05-13T02-17-37\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-07:47:43.150 8ba8 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-sweep-2026-05-13T02-17-37\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-07:47:44.028 484c Level-0 table #5: started
+2026/05/13-07:47:44.205 484c Level-0 table #5: 3857839 bytes OK
+2026/05/13-07:47:44.208 484c Delete type=0 #3
+2026/05/13-07:48:04.443 6e54 Level-0 table #7: started
+2026/05/13-07:48:04.469 6e54 Level-0 table #7: 1927731 bytes OK
+2026/05/13-07:48:04.471 6e54 Delete type=0 #4
+2026/05/13-07:48:04.586 54d8 Level-0 table #9: started
+2026/05/13-07:48:04.609 54d8 Level-0 table #9: 2898953 bytes OK
+2026/05/13-07:48:04.612 54d8 Delete type=0 #6
+2026/05/13-07:48:10.791 54d8 Level-0 table #11: started
+2026/05/13-07:48:10.807 54d8 Level-0 table #11: 1438685 bytes OK
+2026/05/13-07:48:10.809 54d8 Delete type=0 #8
+2026/05/13-07:48:27.315 54d8 Level-0 table #13: started
+2026/05/13-07:48:27.325 54d8 Level-0 table #13: 1181630 bytes OK
+2026/05/13-07:48:27.327 54d8 Delete type=0 #10
+2026/05/13-07:49:13.687 54d8 Level-0 table #15: started
+2026/05/13-07:49:13.709 54d8 Level-0 table #15: 1998601 bytes OK
+2026/05/13-07:49:13.711 54d8 Delete type=0 #12
+2026/05/13-07:49:13.713 54d8 Compacting 4@0 + 1@1 files
+2026/05/13-07:49:13.753 54d8 Generated table #16@0: 61 keys, 4340529 bytes
+2026/05/13-07:49:13.775 54d8 Generated table #17@0: 7 keys, 2457415 bytes
+2026/05/13-07:49:13.792 54d8 Generated table #18@0: 8 keys, 1689421 bytes
+2026/05/13-07:49:13.792 54d8 Compacted 4@0 + 1@1 files => 8487365 bytes
+2026/05/13-07:49:13.793 54d8 compacted to: files[ 0 3 1 0 0 0 0 ]
+2026/05/13-07:49:13.793 54d8 Delete type=2 #7
+2026/05/13-07:49:13.793 54d8 Delete type=2 #9
+2026/05/13-07:49:13.793 54d8 Delete type=2 #11
+2026/05/13-07:49:13.793 54d8 Delete type=2 #13
+2026/05/13-07:49:13.793 54d8 Delete type=2 #15
+2026/05/13-07:50:19.141 54d8 Level-0 table #20: started
+2026/05/13-07:50:19.152 54d8 Level-0 table #20: 1546942 bytes OK
+2026/05/13-07:50:19.153 54d8 Delete type=0 #14
+2026/05/13-07:53:51.851 54d8 Level-0 table #22: started
+2026/05/13-07:53:51.870 54d8 Level-0 table #22: 2129732 bytes OK
+2026/05/13-07:53:51.873 54d8 Delete type=0 #19
+2026/05/13-07:55:01.133 54d8 Level-0 table #24: started
+2026/05/13-07:55:01.148 54d8 Level-0 table #24: 1626361 bytes OK
+2026/05/13-07:55:01.150 54d8 Delete type=0 #21

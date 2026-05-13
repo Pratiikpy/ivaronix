@@ -1,0 +1,14 @@
+2026/05/13-10:54:39.630 8a70 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-open-and-idle\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-10:54:39.630 8a70 Recovering log #11
+2026/05/13-10:54:39.631 8a70 Reusing old log C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-open-and-idle\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/000011.log 
+2026/05/13-10:54:41.630 8f70 Compacting 2@0 + 1@1 files
+2026/05/13-10:54:41.663 8f70 Generated table #14@0: 62 keys, 2465891 bytes
+2026/05/13-10:54:41.680 8f70 Generated table #15@0: 8 keys, 1687567 bytes
+2026/05/13-10:54:41.680 8f70 Compacted 2@0 + 1@1 files => 4153458 bytes
+2026/05/13-10:54:41.682 8f70 compacted to: files[ 0 2 1 0 0 0 0 ]
+2026/05/13-10:54:41.682 8f70 Delete type=2 #7
+2026/05/13-10:54:41.682 8f70 Delete type=2 #9
+2026/05/13-10:54:41.682 8f70 Delete type=2 #12
+2026/05/13-10:55:33.562 8f70 Level-0 table #17: started
+2026/05/13-10:55:33.583 8f70 Level-0 table #17: 1572159 bytes OK
+2026/05/13-10:55:33.585 8f70 Delete type=0 #11

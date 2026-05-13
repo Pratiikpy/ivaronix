@@ -1,0 +1,34 @@
+2026/05/13-07:08:06.829 1f14 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-38-01\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-07:08:06.836 1f14 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-38-01\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-07:08:07.911 6fac Level-0 table #5: started
+2026/05/13-07:08:07.960 6fac Level-0 table #5: 3857838 bytes OK
+2026/05/13-07:08:07.963 6fac Delete type=0 #3
+2026/05/13-07:08:28.702 1f14 Level-0 table #7: started
+2026/05/13-07:08:28.718 1f14 Level-0 table #7: 1927307 bytes OK
+2026/05/13-07:08:28.719 1f14 Delete type=0 #4
+2026/05/13-07:08:28.849 1f14 Level-0 table #9: started
+2026/05/13-07:08:28.875 1f14 Level-0 table #9: 2898949 bytes OK
+2026/05/13-07:08:28.877 1f14 Delete type=0 #6
+2026/05/13-07:08:35.189 1f14 Level-0 table #11: started
+2026/05/13-07:08:35.209 1f14 Level-0 table #11: 1995443 bytes OK
+2026/05/13-07:08:35.211 1f14 Delete type=0 #8
+2026/05/13-07:08:39.187 1f14 Level-0 table #13: started
+2026/05/13-07:08:39.212 1f14 Level-0 table #13: 1990918 bytes OK
+2026/05/13-07:08:39.214 1f14 Delete type=0 #10
+2026/05/13-07:10:04.574 1f14 Level-0 table #15: started
+2026/05/13-07:10:04.598 1f14 Level-0 table #15: 929074 bytes OK
+2026/05/13-07:10:04.602 1f14 Delete type=0 #12
+2026/05/13-07:10:04.607 1f14 Compacting 4@0 + 1@1 files
+2026/05/13-07:10:04.651 1f14 Generated table #16@0: 61 keys, 4193637 bytes
+2026/05/13-07:10:04.682 1f14 Generated table #17@0: 7 keys, 2457415 bytes
+2026/05/13-07:10:04.706 1f14 Generated table #18@0: 8 keys, 1689212 bytes
+2026/05/13-07:10:04.706 1f14 Compacted 4@0 + 1@1 files => 8340264 bytes
+2026/05/13-07:10:04.707 1f14 compacted to: files[ 0 3 1 0 0 0 0 ]
+2026/05/13-07:10:04.707 1f14 Delete type=2 #7
+2026/05/13-07:10:04.707 1f14 Delete type=2 #9
+2026/05/13-07:10:04.707 1f14 Delete type=2 #11
+2026/05/13-07:10:04.707 1f14 Delete type=2 #13
+2026/05/13-07:10:04.707 1f14 Delete type=2 #15
+2026/05/13-07:10:47.118 1f14 Level-0 table #20: started
+2026/05/13-07:10:47.131 1f14 Level-0 table #20: 1386013 bytes OK
+2026/05/13-07:10:47.133 1f14 Delete type=0 #14

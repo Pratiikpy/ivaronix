@@ -1,0 +1,38 @@
+2026/05/13-08:11:04.687 8bec Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-3wallet-2026-05-13T02-40-59\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-08:11:04.692 8bec Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-3wallet-2026-05-13T02-40-59\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-08:11:06.470 8bec Level-0 table #5: started
+2026/05/13-08:11:06.556 8bec Level-0 table #5: 3857837 bytes OK
+2026/05/13-08:11:06.558 8bec Delete type=0 #3
+2026/05/13-08:11:26.523 8bec Level-0 table #7: started
+2026/05/13-08:11:26.538 8bec Level-0 table #7: 1927714 bytes OK
+2026/05/13-08:11:26.540 8bec Delete type=0 #4
+2026/05/13-08:11:26.669 8bec Level-0 table #9: started
+2026/05/13-08:11:26.692 8bec Level-0 table #9: 2898946 bytes OK
+2026/05/13-08:11:26.695 8bec Delete type=0 #6
+2026/05/13-08:11:32.855 8bec Level-0 table #11: started
+2026/05/13-08:11:32.875 8bec Level-0 table #11: 1834965 bytes OK
+2026/05/13-08:11:32.878 8bec Delete type=0 #8
+2026/05/13-08:13:00.195 8bec Level-0 table #13: started
+2026/05/13-08:13:00.222 8bec Level-0 table #13: 2789908 bytes OK
+2026/05/13-08:13:00.225 8bec Delete type=0 #10
+2026/05/13-08:13:36.622 8bec Level-0 table #15: started
+2026/05/13-08:13:36.633 8bec Level-0 table #15: 1548417 bytes OK
+2026/05/13-08:13:36.635 8bec Delete type=0 #12
+2026/05/13-08:13:36.636 8bec Compacting 4@0 + 1@1 files
+2026/05/13-08:13:36.658 8bec Generated table #16@0: 41 keys, 2277477 bytes
+2026/05/13-08:13:36.682 8bec Generated table #17@0: 20 keys, 2671739 bytes
+2026/05/13-08:13:36.716 8bec Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-08:13:36.739 8bec Generated table #19@0: 8 keys, 1689249 bytes
+2026/05/13-08:13:36.739 8bec Compacted 4@0 + 1@1 files => 9095880 bytes
+2026/05/13-08:13:36.740 8bec compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-08:13:36.741 8bec Delete type=2 #7
+2026/05/13-08:13:36.741 8bec Delete type=2 #9
+2026/05/13-08:13:36.741 8bec Delete type=2 #11
+2026/05/13-08:13:36.741 8bec Delete type=2 #13
+2026/05/13-08:13:36.741 8bec Delete type=2 #15
+2026/05/13-08:17:00.260 8bec Level-0 table #21: started
+2026/05/13-08:17:00.282 8bec Level-0 table #21: 2200135 bytes OK
+2026/05/13-08:17:00.284 8bec Delete type=0 #14
+2026/05/13-08:18:27.051 8bec Level-0 table #23: started
+2026/05/13-08:18:27.066 8bec Level-0 table #23: 1741167 bytes OK
+2026/05/13-08:18:27.067 8bec Delete type=0 #20

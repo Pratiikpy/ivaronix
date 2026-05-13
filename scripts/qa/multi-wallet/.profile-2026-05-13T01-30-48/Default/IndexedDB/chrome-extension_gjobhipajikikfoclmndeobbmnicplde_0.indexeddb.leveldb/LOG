@@ -1,0 +1,22 @@
+2026/05/13-07:00:52.995 9c5c Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-30-48\Default\IndexedDB\chrome-extension_gjobhipajikikfoclmndeobbmnicplde_0.indexeddb.leveldb since it was missing.
+2026/05/13-07:00:53.003 9c5c Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-30-48\Default\IndexedDB\chrome-extension_gjobhipajikikfoclmndeobbmnicplde_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/13-07:01:26.738 9944 Manual compaction at level-0 from '\x00\x03\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x04\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-07:01:26.742 9944 Level-0 table #5: started
+2026/05/13-07:01:26.745 9944 Level-0 table #5: 21819 bytes OK
+2026/05/13-07:01:26.747 9944 Delete type=0 #3
+2026/05/13-07:01:26.748 9c5c Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-07:01:26.754 9944 Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-07:03:03.668 33a0 Level-0 table #7: started
+2026/05/13-07:03:03.672 33a0 Level-0 table #7: 32860 bytes OK
+2026/05/13-07:03:03.674 33a0 Delete type=0 #4
+2026/05/13-07:03:03.674 8444 Manual compaction at level-0 from '\x00\x09\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0a\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-07:03:04.988 9944 Level-0 table #9: started
+2026/05/13-07:03:04.991 9944 Level-0 table #9: 13279 bytes OK
+2026/05/13-07:03:04.992 9944 Delete type=0 #6
+2026/05/13-07:03:04.993 9c5c Manual compaction at level-0 from '\x00\x0a\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0b\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0a\x00\x00\x05' @ 922 : 1
+2026/05/13-07:03:04.993 9c5c Compacting 1@0 + 1@1 files
+2026/05/13-07:03:04.997 9c5c Generated table #10@0: 245 keys, 9304 bytes
+2026/05/13-07:03:04.997 9c5c Compacted 1@0 + 1@1 files => 9304 bytes
+2026/05/13-07:03:04.998 9c5c compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/05/13-07:03:04.999 9c5c Delete type=2 #9
+2026/05/13-07:03:04.999 9c5c Manual compaction at level-0 from '\x00\x0a\x00\x00\x05' @ 922 : 1 .. '\x00\x0b\x00\x00\x00' @ 0 : 0; will stop at (end)

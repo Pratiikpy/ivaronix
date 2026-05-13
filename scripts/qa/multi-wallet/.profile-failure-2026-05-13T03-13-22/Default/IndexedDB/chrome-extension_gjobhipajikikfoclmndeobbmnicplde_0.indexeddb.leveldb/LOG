@@ -1,0 +1,22 @@
+2026/05/13-08:43:31.163 9634 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-failure-2026-05-13T03-13-22\Default\IndexedDB\chrome-extension_gjobhipajikikfoclmndeobbmnicplde_0.indexeddb.leveldb since it was missing.
+2026/05/13-08:43:31.181 9634 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-failure-2026-05-13T03-13-22\Default\IndexedDB\chrome-extension_gjobhipajikikfoclmndeobbmnicplde_0.indexeddb.leveldb/MANIFEST-000001
+2026/05/13-08:44:05.569 9528 Level-0 table #5: started
+2026/05/13-08:44:05.572 9528 Level-0 table #5: 27057 bytes OK
+2026/05/13-08:44:05.574 9528 Delete type=0 #3
+2026/05/13-08:44:05.574 2db8 Manual compaction at level-0 from '\x00\x03\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x04\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-08:44:05.576 9528 Level-0 table #7: started
+2026/05/13-08:44:05.584 9528 Level-0 table #7: 797 bytes OK
+2026/05/13-08:44:05.586 9528 Delete type=0 #4
+2026/05/13-08:44:05.586 2db8 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-08:44:05.595 9528 Manual compaction at level-0 from '\x00\x06\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x07\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-08:45:12.737 9528 Manual compaction at level-0 from '\x00\x09\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0a\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/05/13-08:45:13.516 9528 Level-0 table #9: started
+2026/05/13-08:45:13.523 9528 Level-0 table #9: 14305 bytes OK
+2026/05/13-08:45:13.524 9528 Delete type=0 #6
+2026/05/13-08:45:13.525 2db8 Manual compaction at level-0 from '\x00\x0a\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x0b\x00\x00\x00' @ 0 : 0; will stop at '\x00\x0a\x00\x00\x05' @ 904 : 1
+2026/05/13-08:45:13.525 2db8 Compacting 1@0 + 1@1 files
+2026/05/13-08:45:13.528 2db8 Generated table #10@0: 221 keys, 4496 bytes
+2026/05/13-08:45:13.528 2db8 Compacted 1@0 + 1@1 files => 4496 bytes
+2026/05/13-08:45:13.530 2db8 compacted to: files[ 0 1 1 0 0 0 0 ]
+2026/05/13-08:45:13.530 2db8 Delete type=2 #9
+2026/05/13-08:45:13.530 2db8 Manual compaction at level-0 from '\x00\x0a\x00\x00\x05' @ 904 : 1 .. '\x00\x0b\x00\x00\x00' @ 0 : 0; will stop at (end)

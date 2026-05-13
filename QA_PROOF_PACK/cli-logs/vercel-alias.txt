@@ -1,0 +1,12 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Fetching deployment "ivaronix.vercel.app" in pratiikpys-projects
+> Fetched deployment "ivaronix-n1enzfxq6-pratiikpys-projects.vercel.app" in pratiikpys-projects [556ms]
+
+  General
+
+    id		dpl_DT7znoKRPSDXTUmtXexyXKyPek3h
+    name	ivaronix
+    target	production
+    status	● Ready
+    url		https://ivaronix-n1enzfxq6-pratiikpys-projects.vercel.app
+    created	Tue May 12 2026 15:32:46 GMT+0530 (India Standard Time) [4m ago]

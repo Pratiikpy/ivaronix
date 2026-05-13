@@ -1,0 +1,38 @@
+2026/05/13-08:01:03.690 240 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-signing-2026-05-13T02-30-58\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-08:01:03.696 240 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-signing-2026-05-13T02-30-58\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-08:01:04.801 242c Level-0 table #5: started
+2026/05/13-08:01:04.850 242c Level-0 table #5: 3857839 bytes OK
+2026/05/13-08:01:04.854 242c Delete type=0 #3
+2026/05/13-08:01:24.876 76d8 Level-0 table #7: started
+2026/05/13-08:01:24.895 76d8 Level-0 table #7: 1927678 bytes OK
+2026/05/13-08:01:24.897 76d8 Delete type=0 #4
+2026/05/13-08:01:25.054 242c Level-0 table #9: started
+2026/05/13-08:01:25.078 242c Level-0 table #9: 2898953 bytes OK
+2026/05/13-08:01:25.080 242c Delete type=0 #6
+2026/05/13-08:01:31.255 242c Level-0 table #11: started
+2026/05/13-08:01:31.279 242c Level-0 table #11: 2050407 bytes OK
+2026/05/13-08:01:31.282 242c Delete type=0 #8
+2026/05/13-08:02:43.661 242c Level-0 table #13: started
+2026/05/13-08:02:43.685 242c Level-0 table #13: 2415045 bytes OK
+2026/05/13-08:02:43.688 242c Delete type=0 #10
+2026/05/13-08:03:27.978 242c Level-0 table #15: started
+2026/05/13-08:03:27.989 242c Level-0 table #15: 1485622 bytes OK
+2026/05/13-08:03:27.991 242c Delete type=0 #12
+2026/05/13-08:03:27.992 242c Compacting 4@0 + 1@1 files
+2026/05/13-08:03:28.015 242c Generated table #16@0: 41 keys, 2255390 bytes
+2026/05/13-08:03:28.035 242c Generated table #17@0: 20 keys, 2672302 bytes
+2026/05/13-08:03:28.060 242c Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-08:03:28.076 242c Generated table #19@0: 8 keys, 1689508 bytes
+2026/05/13-08:03:28.076 242c Compacted 4@0 + 1@1 files => 9074615 bytes
+2026/05/13-08:03:28.077 242c compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-08:03:28.077 242c Delete type=2 #7
+2026/05/13-08:03:28.077 242c Delete type=2 #9
+2026/05/13-08:03:28.077 242c Delete type=2 #11
+2026/05/13-08:03:28.077 242c Delete type=2 #13
+2026/05/13-08:03:28.078 242c Delete type=2 #15
+2026/05/13-08:07:15.692 242c Level-0 table #21: started
+2026/05/13-08:07:15.714 242c Level-0 table #21: 2120508 bytes OK
+2026/05/13-08:07:15.716 242c Delete type=0 #14
+2026/05/13-08:09:10.710 242c Level-0 table #23: started
+2026/05/13-08:09:10.727 242c Level-0 table #23: 1657333 bytes OK
+2026/05/13-08:09:10.729 242c Delete type=0 #20

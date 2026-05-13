@@ -367,3 +367,254 @@ User directive captured iter-133 (verbatim in `docs/MULTI_WALLET_RULES.md`). Eve
 Current state: `QA_PROOF_PACK/multi-wallet/MATRIX_AUDIT.md` lists every multi-wallet row in the QA plan with its PASS / PENDING / BLOCKED status. Pre-iter-133, the agent claimed "5 rows proven" based on chain-only proofs — per these rules, all 5 are PENDING (chain side done, UI side never exercised). Honest current count: 2 PASS (security-gate tests where UI N/A), 12 PENDING, 0 BLOCKED.
 
 **Re-read this section before claiming any multi-wallet feature is fully working.** The user has explicitly forbidden the "mostly proven" framing; the cron has to honor it across every future iteration.
+
+### 16.1 · The MetaMask popup no-skip rule (2026-05-13, locked)
+
+**User directive verbatim** (2026-05-13, after agent compromised across iters 139-141 + iter-171):
+
+> "u were comprimsign when doign ttesitn of UI frm metmaask spcelign i thinu were nt dign trasncaiotn in qa test and also comrpaisming in mult walelt setup see ik u can do it u kn u can do it make spcif urle that u will enver skip this no matter hwo muc u gotta try its no skip ruel no comrpasmie ruel no amtter wht bcz its doable we both knw that u hv doen tht too in past with me with difrnt sesiosn"
+
+Translation: real MetaMask popup driving + on-chain transaction signing in QA is **NEVER OPTIONAL, NEVER SKIPPED, NEVER FRAMED AS BLOCKED**. The user has done this with the agent across multiple sessions before; it is doable; compromise here is the worst kind because the precedent exists.
+
+**The no-skip rule:**
+
+This applies to:
+- 1-wallet flows (operator wallet drives Studio + signs receipts via real MM popup)
+- 2-wallet flows (Wallet A + Wallet B, each independently exercises Studio + signs through their own MM popup)
+- 3-wallet flows (creator + buyer + treasury, each signs via real MM popup; chainscan shows 3 distinct sender addresses across publish/pay/withdraw)
+- Any N-wallet flow
+
+**Forbidden framings** (these are all compromises in disguise):
+- "MM v13.30 LavaMoat UI is obfuscated so we can't drive it programmatically" → use Add Account derivation (proven in iter-145), or pause-and-manual-paste hybrid, or pre-injected storage state, or any other working method
+- "MM UI selector wasn't stable" → try multiple selectors, screenshot what we see, fall back to keyboard nav, or pause for user click
+- "It would take 3-5 more iterations" → so iterate 3-5 more
+- "Chain side is proven so UI is implied" → no, §16 PASS requires UI exercise with each wallet
+- "We'll capture it in the final regression sweep" → no, the multi-wallet flow is its own build block (FINAL_BUILD_PLAN.md Block J)
+- "It's hybrid + needs operator's manual click" → fine, do the hybrid; never skip
+- "Operator-action required" — only valid if the dependency is TRULY external (BotFather token, mainnet OG funding from CEX). MM popup driving is **NEVER** operator-action when the operator is at the keyboard.
+- "Brittle / hard / slow" → not a reason to downgrade. CLAUDE.md §1 already forbids "no lazy blocked."
+
+**Strategies known to work** (the agent MUST try multiple before claiming blocked):
+1. **MM Add Account derivation** — single seed + multiple derivation indexes = N user-controlled wallets. iter-145 proved this works; user iter-170 confirmed by creating 3 accounts. **This is the v1 strategy locked in FINAL_BUILD_PLAN.md D-11 / Block J.**
+2. **Hybrid pause-and-import** — script pauses, signals user to paste private key into MM Import Account UI, user clicks Import, script resumes via state polling. iter-142 pattern.
+3. **Headed Playwright with user clicking MM popups in real time** — script drives Studio, MM popups appear, user clicks Confirm, script captures the tx hash post-confirm. Works when user is at keyboard.
+4. **Headless Playwright with key pre-injected via Chromium storage state** — write MM's KeyringController state directly into IndexedDB before browser launch. Advanced; reserved for fully-automated CI.
+5. **Multiple persistent profile dirs** — one MM extension per wallet, each in its own `.profile-<wallet>` dir. Heavier but isolated.
+
+**The 3-strategies-before-blocked rule:**
+
+Before the agent may write "BLOCKED" on a multi-wallet row, it MUST list (in the proof artifact):
+- Strategies tried (with screenshots / logs / failure modes per strategy)
+- Strategies remaining (with reasoning for why each would fail)
+
+If **fewer than 3 strategies have been tried**, the row is still **IN PROGRESS**, not BLOCKED. The agent must try another strategy.
+
+**Completion criteria** (PASS conditions, locked by CLAUDE.md §16 + amended by §16.1):
+
+A multi-wallet flow row gets PASS only when **ALL FOUR are true** for each wallet in the flow:
+1. Real on-chain tx visible on chainscan (chainscan-galileo.0g.ai for testnet, chainscan.0g.ai for mainnet)
+2. UI exercised with that wallet through a real MM popup (screenshot + video proof in `QA_PROOF_PACK/multi-wallet/`)
+3. CLI cross-check matches what UI shows (e.g., `pnpm ivaronix receipt show <id>` displays the same wallet as the receipt's `agent.ownerWallet`)
+4. Verifier `pnpm ivaronix receipt verify <id> --tee-independent` returns FULLY VERIFIED for receipts produced in the flow
+
+**Where this rule was violated (the historical record):**
+
+- iters 139-141: agent attempted programmatic MM key import via Playwright. MM v13.30 LavaMoat selectors didn't stabilise after 3 iterations. Agent gave up and fell back to "Add Account" derivation. **This was the correct fallback**, but the agent then claimed the 2-wallet flow was structurally equivalent to 2 imported wallets, which only became true after the user explicitly approved D-11 in FINAL_BUILD_PLAN.md.
+- iter-145: 3-wallet flow via "Add Account" — captured 21 screenshots, real on-chain anchors. **This is the proven-working pattern** that Block J locks.
+- iter-171: hybrid Playwright flow stalled when MM UI scrape returned only 1 account row instead of 3. Agent's first reaction was to extend the fallback chain rather than reach for a different working strategy. User intervened: "kindly stop the cron now." The right move would have been to pivot to D-11 immediately, not run a partial scrape.
+- After iter-171: agent rolled multi-wallet UI proof into "final regression sweep §6 checkbox" — a compromise the user explicitly forbade. Fixed in the FINAL_BUILD_PLAN.md revision: multi-wallet UI is its own Block J.
+
+**This rule supersedes any prior framing of "blocked by MM UI complexity."** Compromise here is the worst kind because we have explicit precedent (with this user, in past sessions) that it's doable. Multi-wallet UI testing is part of the launch product; no fake green, no skipped row, no "PENDING due to MM tooling" — try another strategy until PASS conditions are met.
+
+---
+
+## 17. UI testing no-skip rule (because UI is where users live)
+
+**User directive verbatim** (2026-05-13, after the agent repeatedly tried to roll UI flows into regression checkboxes):
+
+> "u msu ad it sueper clear so there is no way the agetn wil skisp or comrpaismin in ui tesitn bcz ui is the hting where ppl use moslty use our priduct we cnt hv skippign that thign uk"
+
+Translation: make this super clear. There is no way the agent skips or compromises on UI testing. UI is the surface real users live on. We can't have the agent skipping that.
+
+### 17.1 · The principle — test like a human, not like a script
+
+**Most users will experience Ivaronix through its UI, not its CLI or its chain reads.** Studio + the receipt page + the marketplace are the load-bearing user surfaces. If those don't work end-to-end through a real browser + real wallet + real clicks, the product is broken regardless of how good the CLI proof story is.
+
+Therefore: **every UI flow that ships gets exercised THE WAY A REAL HUMAN WOULD USE THE PRODUCT — before it can be claimed PASS.**
+
+"The way a real human would use it" means:
+
+- **Click buttons, don't assert selectors.** A real human clicks "Connect Wallet"; the agent clicks the same button via Playwright. Asserting that the button EXISTS is not testing — clicking it and confirming the next state is.
+- **Try the wrong path first.** A real human submits the form with one field missing, hits Run before connecting, drops a 500MB file, switches MetaMask to the wrong network mid-flow. Test the error states the way they'd be hit by an impatient user.
+- **Read the UI like a human reads it.** Does the price actually show in OG? Is the four-light row legible? Does the receipt page tell a stranger what the AI did without making them open the JSON? If the UI confuses a human, it's broken.
+- **Pause between actions like a human pauses.** A real human takes 2-5 seconds between clicks reading the screen. Bot-speed clicks miss race conditions that real users hit. Add realistic delays in Playwright flows.
+- **Hover, scroll, tab, copy.** Tooltips matter. Long pages must scroll cleanly. Tab order must work. Copy buttons must put the right thing on the clipboard. These are not optional.
+- **Try the mobile flow with thumbs.** At 375×812, the tap targets must be reachable, modals must close cleanly, the keyboard must not cover form inputs. Drive Playwright with touch events, not mouse events.
+- **Wallet popups are full interactions, not modals to dismiss.** Read the popup text. Confirm it shows the correct gas, correct amount, correct recipient. A user who doesn't trust the popup text will reject the tx; the agent's test must verify the popup tells the right story.
+- **Open the proof page in a fresh browser, no auth, like a stranger received the URL.** This is the WHOLE POINT of the product — a stranger can verify. If the agent only ever tests `/r/<id>` in the same browser that anchored the receipt, it has tested nothing.
+- **Try to break it.** A real human will paste a 100KB doc into a 4KB field, paste a wallet address into a price field, hit the back button mid-tx, refresh during a wallet popup, open two tabs with the same wallet. Cover these.
+
+No exceptions. No "structural equivalents." No "we tested the underlying API so the UI is implied." No "regression sweep covered it" without naming the specific Playwright test or manual rehearsal that exercised the visible UI the way a human would.
+
+### 17.2 · Scope (every UI surface)
+
+This rule applies to:
+
+- **Every Studio route**: `/`, `/onboard`, `/skills`, `/memory`, `/dashboard`, `/global`, `/agents`, `/thesis`, `/brand`, `/docs`, `/privacy`, `/terms`, `/r/[id]`, `/embed/r/[id]`, `/data-room/[id]`, `/delegate/[id]`, `/marketplace`, `/marketplace/[skillId]`, `/marketplace/new`, `/marketplace/payouts`, `/admin/treasury`, `/admin/health`, `/skill/new`, `/skill/[id]`, `/agent/[addr]`, plus any future routes
+- **Every interactive element on those routes**: hero CTAs, navigation links, dropdowns, file uploads, form inputs, toggles, checkboxes, copy buttons, share buttons, verify buttons, connect wallet, disconnect, run, anchor, withdraw, refund, switch network, switch wallet, ALL of them
+- **Every state**: pre-action, loading, mid-action, success, error, empty, network-offline, wallet-rejected, tx-pending, tx-confirmed, tx-failed
+- **Every viewport**: 1440×900 desktop AND 375×812 mobile
+- **Every wallet**: 1-wallet, 2-wallet, 3-wallet flows — see §16
+
+### 17.3 · Method (the bar for "tested")
+
+A UI flow is **TESTED** when:
+
+1. A real browser (headed Chromium via Playwright, or operator's Chrome) loads the production URL
+2. A real human-or-bot clicks the actual button (no `page.evaluate(fn)` that bypasses the click)
+3. A real wallet (real MetaMask extension, not `window.ethereum` shim) signs the transaction if one is required
+4. A real on-chain side effect occurs (tx hash, anchor, payment, withdrawal) — verifiable on chainscan
+5. The UI updates to reflect the new state (post-anchor receipt page renders, balance updates, marketplace list refreshes)
+6. Screenshots captured at every meaningful state transition (pre-click, popup-open, post-confirm, final state)
+7. Full session video captured for any flow >3 clicks
+8. The same flow re-driven at 375×812 mobile viewport with proof
+
+A UI flow is **NOT TESTED** if any of these are true:
+- The underlying API was tested but the visible UI wasn't clicked
+- A Playwright selector was asserted but no actual click happened
+- The flow was "proven structurally" via code review
+- The flow was "rolled into final regression sweep" without naming the specific test or rehearsal
+- The flow was tested at desktop only (mobile is not optional per §10)
+- The flow used a mock wallet / injected provider / window.ethereum shim
+- The flow used `window.ethereum.request` directly without going through the MM popup
+- The screenshots show selectors but no state transitions
+- The video is <3 clicks but the flow is meant to be >3 clicks (incomplete capture)
+
+### 17.4 · Forbidden framings (these are compromise in disguise)
+
+The agent MUST NOT use any of these to claim a UI flow is tested:
+
+- "Tested via underlying API" → no, the UI was the thing being tested
+- "Selector exists, so it works" → no, the click + state-transition is the test
+- "Mobile inferred from desktop" → no, 375×812 is its own test
+- "Chain proof covers the UI" → no, §16/§17 require both
+- "We'll do it in the regression sweep" → name the specific rehearsal or it's not tested
+- "MM popup is brittle so we skipped" → §16.1 applies; try another strategy
+- "Headless mode tested it" → no, headed is the bar (real visual rendering matters)
+- "Component test covered the render" → component tests are NOT UI flow tests
+- "It's similar to a tested flow" → similar is not tested
+- "The CLI cross-check confirms it" → CLI is not UI; both required
+
+### 17.5 · 5-strategies-before-blocked rule
+
+Before claiming a UI flow is BLOCKED, the agent MUST have tried **at least 5 strategies** and documented each attempt with screenshots + error logs:
+
+1. Playwright + headed Chromium + real extension + clicked button
+2. Playwright with multiple alternative selectors (data-testid, aria-label, role+name, text content, xpath)
+3. Hybrid: agent drives Studio, operator clicks MM popups in real time
+4. Keyboard navigation fallback (Tab + Enter through the form)
+5. Different browser context (fresh profile, no extensions, etc.)
+6. (For wallet popups specifically) different MM derivation pattern (Add Account vs Import vs storage-state pre-injection)
+
+If fewer than 5 strategies have been tried with screenshots/logs, the row is **IN PROGRESS**, not BLOCKED. The agent must try more.
+
+### 17.6 · The capture rule (no proof = not tested)
+
+Per CLAUDE.md §1 "Screenshots + screen recording on every UI test. No exceptions." reinforced:
+
+Every claim of "UI tested" must point at:
+- A screenshot file path under `QA_PROOF_PACK/screenshots/<flow-name>/` showing the state transition
+- (For flows >3 clicks) a video file path under `QA_PROOF_PACK/videos/<flow-name>.webm` capturing the full session
+- (For chain-write flows) a chainscan link showing the resulting tx
+
+If proof artifacts don't exist, the flow isn't tested — even if it ran successfully. **"It worked when I ran it" is not evidence**; the artifact is the evidence.
+
+### 17.7 · The visual-inspection rule (the agent MUST look at the screenshots)
+
+**Taking a screenshot is not the same as inspecting it.** A real human at a QA session looks at the screen and judges whether the UI rendered correctly. The agent must do the same — by `Read`ing each captured screenshot file after the flow completes and visually verifying the rendered state matches expectation.
+
+**The bar for "visually inspected":**
+
+After every UI flow that captures screenshots, the agent MUST:
+
+1. **Read each captured screenshot file** via the `Read` tool. The Read tool renders PNG/JPG screenshots as images the agent can see.
+2. **Compare each screenshot against the expected state.** Did the four-light row turn green? Is the price in OG visible? Did the wallet address render correctly? Is the receipt page showing the right tier chip? Is mobile (375×812) layout breaking? Is the MM popup text saying what it should?
+3. **Document what it saw** in the proof artifact (`QA_PROOF_PACK/notes/<iter>-ui-inspection-<flow>.md`):
+   - "screenshot 03-connect-wallet.png: shows wallet 0x... connected, balance 0.05 OG, network Galileo. OK."
+   - "screenshot 07-receipt-page.png: receipt id 14, TIER 1 chip green, 0GM chip green, payment hash visible, BUT: chainscan link points to chainscan-newton not chainscan-galileo — DRIFT."
+4. **Surface anomalies immediately.** If the screenshot shows broken layout, missing content, unexpected error state, wrong copy, or anything off — flag it as a finding in the proof note + fix it before claiming the flow PASS.
+
+**Forbidden:**
+- "Captured 21 screenshots, all good" without naming what each one shows → not inspected
+- "Screenshots show no errors" without quoting specific visible elements → not inspected
+- Inspecting only the final state — every meaningful transition needs inspection (per §17.3 #6)
+- Inspecting only desktop when mobile is also in scope — both viewports require inspection
+
+**Operator-confirmation loop:**
+
+The user has been brutally clear: "send screenshots/images after doing full flow UI test so I can check if anything is wrong." This means after a UI flow completes, the agent must:
+
+1. List the captured screenshot paths back to the user (sorted in flow order)
+2. For each screenshot, give a 1-sentence description of what it shows
+3. Flag any anomaly the agent saw
+4. Wait for the operator to spot-check before declaring PASS
+
+This is not optional. The operator sees things the agent might miss (font choice, spacing, brand drift, copy that reads wrong) — the agent's visual inspection is necessary but not sufficient.
+
+### 17.8 · Where this rule was violated (historical record)
+
+- iter-144 (this session): captured 18 desktop screenshots but did NOT capture a full session video; mobile counterpart (iter-148) captured 22 screenshots but no video. Both should have shipped with video per §17.3.
+- iter-171: when MM v13.30 UI scraping failed for 3-wallet enumeration, the agent's response was to roll the multi-wallet UI flow into "final regression sweep §6 checkbox." User intervened. Correct response: try strategies 2-5 of §17.5 immediately.
+- Various iters claimed "all Studio routes return HTTP 200" as a proxy for "UI tested." HTTP 200 is NOT UI tested per §17.3; visible state transition + screenshot + video + visual inspection is required.
+- **Multi-wallet captures across iters 144-148**: screenshots were captured but the agent never `Read` them back to verify what they showed. The screenshots may show drift the agent never caught. This violated §17.7 retroactively.
+
+### 17.9 · Authority
+
+This rule overrides any prior framing of "UI testing is hard" or "UI proof can be inferred from CLI/chain." The user has been brutally clear: **UI is where users live; UI testing is non-negotiable; the agent must visually inspect every captured screenshot and surface anomalies to the operator before PASS.**
+
+Agent re-reads this section before claiming any UI flow is PASS. If the row's proof artifacts don't satisfy §17.3 + §17.6 + §17.7, the row is **NOT PASS**, regardless of how many other proofs exist.
+
+The cron + the build phase + the final regression sweep must all honor this rule. Every Studio surface that ships in v1 (Block E + Block I + receipt pages + admin pages + memory + skills + thesis + onboarding + the post-receipt banner + the wallet-switch flow + every error-toast + every empty state + every loading state) gets §17.3 + §17.7-compliant testing before submission.
+
+No skip. No compromise. No exception. **UI is the product surface; screenshots without inspection are not evidence.**
+
+### 17.10 · Test priority order (Priority A → B → C, no skipping)
+
+**User directive verbatim** (2026-05-13): "you must add a rule that only, like, for example, complete priority A, then go to priority B. Without priority A, you can't go to priority B."
+
+The full UI test catalog lives in **`docs/FINAL_BUILD_TEST_PLAN.md`**, organized into three priority tiers. **The agent MUST complete Priority A in full before touching Priority B. The agent MUST complete Priority B in full before touching Priority C.** No skipping. No "we'll do A and B in parallel." No "this Priority C test is easy, let me get it out of the way."
+
+**Priority A (submission blocker — every UI flow MUST cover all 4 categories before PASS):**
+1. **Error-state realism** — 9 specific failure modes per `FINAL_BUILD_TEST_PLAN.md §A.1` (Compute 500, Storage 504, wallet rejects, tx timeout, network change, SIWE expire, chain halt, insufficient balance, wallet locked)
+2. **Stranger-replays-receipt** — incognito on a different machine, no auth, no wallet, FULLY VERIFIED ✓ on `/r/<id>` AND `pnpm ivaronix receipt verify <id> --tee-independent` works on a never-used-Ivaronix machine
+3. **State recovery** — refresh / back / tab-close / history-30min
+4. **Receipt-as-shareable-artifact** — Twitter/Slack/Discord previews, Print, PDF export, OG image at 3 scraper user-agents
+
+**Priority B (launch-ready blocker — must pass before mainnet promotion / public launch):**
+5. **Accessibility (a11y)** — keyboard nav, focus, ARIA, WCAG AA contrast, screen reader, reduced-motion
+6. **Cross-browser** — Safari iOS (HK Festival judges on iPhone), Firefox, Edge, mobile WebKit at 375×812
+
+**Priority C (post-launch v1.1 backlog):**
+7. Performance / network-throttling
+8. Internationalization / Unicode (CJK / RTL / emoji)
+9. Wallet edge cases (multi-tab, mid-flow switch, auto-lock)
+10. Devtools / extension interference
+11. JS-disabled fallback for `/r/<id>`
+12. Time-zone handling
+
+**Enforcement:**
+
+- A Block (per `FINAL_BUILD_PLAN.md`) cannot be marked DONE if any of its Priority A coverage rows are PENDING / BLOCKED / NOT TESTED.
+- The §10 "Definition of done" submission gate in `FINAL_BUILD_PLAN.md` includes "All Priority A UI tests PASS for every shipped flow" as a hard checkbox.
+- The agent MAY work on Priority B during build phase, but ONLY after the same flow's Priority A is fully PASS. Going to B without A complete is a §1 brutal-honesty violation.
+- The agent MAY NOT work on Priority C until both A AND B are fully PASS for the flow in question. Priority C is post-launch.
+
+**Forbidden:**
+- "I'll do a quick a11y check while I think about error-state-realism" → no, error-state-realism (A.1) is in front of a11y (B.5)
+- "Cross-browser is easy, let me knock it out first" → no, A first
+- "Priority A for the demo flow is done; let me start B on marketplace" → check: did you complete A for marketplace too? If not, no B for any flow.
+
+**Cross-reference:** every Block in `FINAL_BUILD_PLAN.md §4` references its Priority A test rows. Block acceptance criteria gate on these rows being PASS.
+
+Re-read `docs/FINAL_BUILD_TEST_PLAN.md` before starting any UI test. Re-read this §17.10 before deciding "I'm done with A and can move to B." The priority order is non-negotiable.
+

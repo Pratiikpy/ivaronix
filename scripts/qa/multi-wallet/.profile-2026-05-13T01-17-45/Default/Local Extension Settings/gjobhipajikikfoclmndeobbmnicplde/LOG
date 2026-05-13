@@ -1,0 +1,32 @@
+2026/05/13-06:47:50.134 a88 Creating DB C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-17-45\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde since it was missing.
+2026/05/13-06:47:50.139 a88 Reusing MANIFEST C:\Users\prate\Downloads\oglabs\scripts\qa\multi-wallet\.profile-2026-05-13T01-17-45\Default\Local Extension Settings\gjobhipajikikfoclmndeobbmnicplde/MANIFEST-000001
+2026/05/13-06:47:50.912 8540 Level-0 table #5: started
+2026/05/13-06:47:50.946 8540 Level-0 table #5: 3857838 bytes OK
+2026/05/13-06:47:50.948 8540 Delete type=0 #3
+2026/05/13-06:48:11.730 781c Level-0 table #7: started
+2026/05/13-06:48:11.746 781c Level-0 table #7: 1927761 bytes OK
+2026/05/13-06:48:11.748 781c Delete type=0 #4
+2026/05/13-06:48:11.866 9a0c Level-0 table #9: started
+2026/05/13-06:48:11.887 9a0c Level-0 table #9: 2898948 bytes OK
+2026/05/13-06:48:11.890 9a0c Delete type=0 #6
+2026/05/13-06:48:18.223 781c Level-0 table #11: started
+2026/05/13-06:48:18.242 781c Level-0 table #11: 1882010 bytes OK
+2026/05/13-06:48:18.245 781c Delete type=0 #8
+2026/05/13-06:49:52.320 781c Level-0 table #13: started
+2026/05/13-06:49:52.344 781c Level-0 table #13: 2481150 bytes OK
+2026/05/13-06:49:52.346 781c Delete type=0 #10
+2026/05/13-06:50:55.635 781c Level-0 table #15: started
+2026/05/13-06:50:55.644 781c Level-0 table #15: 1466423 bytes OK
+2026/05/13-06:50:55.645 781c Delete type=0 #12
+2026/05/13-06:50:55.646 781c Compacting 4@0 + 1@1 files
+2026/05/13-06:50:55.672 781c Generated table #16@0: 41 keys, 2288754 bytes
+2026/05/13-06:50:55.694 781c Generated table #17@0: 20 keys, 2673448 bytes
+2026/05/13-06:50:55.717 781c Generated table #18@0: 7 keys, 2457415 bytes
+2026/05/13-06:50:55.733 781c Generated table #19@0: 8 keys, 1688792 bytes
+2026/05/13-06:50:55.733 781c Compacted 4@0 + 1@1 files => 9108409 bytes
+2026/05/13-06:50:55.733 781c compacted to: files[ 0 4 1 0 0 0 0 ]
+2026/05/13-06:50:55.734 781c Delete type=2 #7
+2026/05/13-06:50:55.734 781c Delete type=2 #9
+2026/05/13-06:50:55.734 781c Delete type=2 #11
+2026/05/13-06:50:55.734 781c Delete type=2 #13
+2026/05/13-06:50:55.734 781c Delete type=2 #15

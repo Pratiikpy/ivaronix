@@ -171,6 +171,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-k2-registry-v2/,
       /^verify-deploy-scripts-canonical-key/, // §15 · Foundry deploy scripts use IVARONIX_SIGNER_KEY alias chain (sweep 80)
       /^verify-contract-threat-model/, // .claude/rules/contracts.md · every contracts/src/*.sol has a Threat model block (sweep 102)
+      /^verify-skill-run-payment-deployed/, // FINAL_BUILD_PLAN.md Block A · SkillRunPayment address sync across deployments JSON + KNOWN_PAYMENT_CONTRACTS + README/MAINNET_READINESS
     ],
   },
 };

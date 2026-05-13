@@ -67,6 +67,23 @@ export const KNOWN_RECEIPT_REGISTRIES: Record<Network, ReadonlySet<string>> = {
   mainnet: new Set<string>(),
 };
 
+/**
+ * Canonical SkillRunPayment contracts the verifier accepts for the 5-check
+ * payment-tx binding (FINAL_BUILD_PLAN.md D-4 · Block A). The verifier
+ * rejects any receipt whose `billing.payment.paymentContract` is not in
+ * this set, even if the tx exists on chain and the event shape matches.
+ *
+ * Source-of-truth for this constant is `contracts/deployments/<network>.json`.
+ * `scripts/qa/metamask-e2e/verify-skill-run-payment-deployed.ts` regression
+ * keeps it in sync.
+ */
+export const KNOWN_PAYMENT_CONTRACTS: Record<Network, ReadonlySet<string>> = {
+  testnet: new Set<string>([
+    '0x9eA5FDba913AC94dA8833Fee21F2832827950A5C'.toLowerCase(), // SkillRunPayment (Block A)
+  ]),
+  mainnet: new Set<string>(),
+};
+
 /** Receipt type codes per RECEIPTS_SPEC.md §1. */
 export const RECEIPT_TYPES = {
   doc_ask: 0,

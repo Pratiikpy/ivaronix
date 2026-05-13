@@ -1,0 +1,11 @@
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Fetching deployments in pratiikpys-projects
+> Deployments for pratiikpys-projects/ivaronix [338ms]
+
+  Age     Project                          Deployment                                                    Status      Environment     Duration     Username      
+  4m      pratiikpys-projects/ivaronix     https://ivaronix-n1enzfxq6-pratiikpys-projects.vercel.app     ● Ready     Production      17s          pratiikpy     
+  7m      pratiikpys-projects/ivaronix     https://ivaronix-76hkpsor0-pratiikpys-projects.vercel.app     ● Ready     Production      18s          pratiikpy     
+  51m     pratiikpys-projects/ivaronix     https://ivaronix-1bjt1zyym-pratiikpys-projects.vercel.app     ● Ready     Production      2m           pratiikpy     
+  23h     pratiikpys-projects/ivaronix     https://ivaronix-7zeqcqdjx-pratiikpys-projects.vercel.app     ● Ready     Production      20s          pratiikpy     
+  23h     pratiikpys-projects/ivaronix     https://ivaronix-dfep15z3o-pratiikpys-projects.vercel.app     ● Ready     Production      2m           pratiikpy     
+  24h     pratiikpys-projects/ivaronix     http

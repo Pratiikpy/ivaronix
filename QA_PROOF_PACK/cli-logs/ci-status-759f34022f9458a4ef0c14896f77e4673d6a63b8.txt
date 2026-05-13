@@ -1,0 +1,2 @@
+completed	success	docs(claude-md): §1 — split screenshots+recording into its own rule, …	jcs-roundtrip	main	push	25727472741	1m8s	2026-05-12T10:02:47Z
+in_progress		docs(claude-md): §1 — split screenshots+recording into its own rule, …	CI	main	push	25727472761	3m56s	2026-05-12T10:02:47Z
