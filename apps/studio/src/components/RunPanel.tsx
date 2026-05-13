@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
 import { FourLightRow } from './FourLightRow';
+import { ensureSiweSession } from '@/lib/siwe-client';
 
 type Tier = 'quick' | 'standard' | 'high-stakes' | 'audit';
 /**
@@ -119,6 +120,7 @@ export function RunPanel(props: RunPanelProps = {}) {
   // W9 — capture connected wallet to send with /api/run so the receipt's
   // agent.ownerWallet records the user, not the operator.
   const { address: connectedAddress } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [skillId, setSkillId] = useState<string>('private-doc-review');
 
   // If the page arrived with ?skill=<id>, pre-select it.
@@ -181,10 +183,27 @@ export function RunPanel(props: RunPanelProps = {}) {
     // BEFORE any upload happened, then stayed green even on error. Honest
     // tier marking per CLAUDE.md §6: each light reflects real evidence.
     setLayers({ Storage: 'pending', Compute: 'active', TEE: 'pending', Chain: 'pending' });
+
+    // If the user has a wallet connected we'll attribute the receipt to it
+    // (`userWallet` claim). The API requires an active SIWE session for any
+    // such claim, otherwise it rejects with a generic auth error. Drive the
+    // SIWE handshake here so the user just clicks Run once and gets a
+    // wallet-sign popup, then the run proceeds. Falls back to operator
+    // anchoring if the user rejects the sign — same code path as a
+    // wallet-not-connected run, just without the userWallet claim.
+    let useUserWallet = !!connectedAddress;
+    if (useUserWallet && connectedAddress) {
+      const siwe = await ensureSiweSession(connectedAddress, signMessageAsync);
+      if (!siwe.ok) {
+        console.warn('[RunPanel] SIWE handshake skipped:', siwe.error);
+        useUserWallet = false; // fall through to operator-anchored
+      }
+    }
     try {
       const res = await fetch('/api/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           skillId,
           tier,
@@ -196,9 +215,13 @@ export function RunPanel(props: RunPanelProps = {}) {
           burn,
           contentText,
           question,
-          // W9 — pass connected wallet (if any) so the receipt is
-          // attributed to the user, not the operator.
-          ...(connectedAddress ? { userWallet: connectedAddress } : {}),
+          // W9 — pass connected wallet so the receipt is attributed to
+          // the user (not the operator). Gated on `useUserWallet` which
+          // requires the SIWE handshake above to succeed. If it failed
+          // (user rejected sign), the claim is dropped and the receipt
+          // attributes to the operator — same code path as a wallet-not-
+          // connected run.
+          ...(useUserWallet && connectedAddress ? { userWallet: connectedAddress } : {}),
         }),
       });
       const data = (await res.json()) as RunResponse;
