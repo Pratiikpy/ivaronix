@@ -138,24 +138,42 @@ async function clickButton(page: Page, locator: string, label: string, timeout =
 
 // MM onboarding (runs once on first launch of the persistent profile)
 async function onboardIfFresh(mmPage: Page, operatorKey: string): Promise<void> {
-  await mmPage.waitForTimeout(3_000);
+  // Wait up to 30s for MM to render SOME UI (spinner → onboarding OR wallet
+  // OR unlock). Persistent-profile loads can take 5-15s.
+  console.log('  waiting for MM UI to render (up to 30s)...');
+  await mmPage
+    .waitForFunction(
+      () => {
+        const txt = document.body && document.body.innerText ? document.body.innerText : '';
+        return (
+          /existing wallet|Create.*wallet|Get started/i.test(txt) ||   // fresh onboarding
+          /Unlock|Enter your password/i.test(txt) ||                    // locked
+          /Buy|Send|Receive/.test(txt) ||                               // wallet home
+          /0x[a-f0-9]{4}/i.test(txt)                                    // address visible
+        );
+      },
+      { timeout: 30_000, polling: 1_500 },
+    )
+    .catch(() => {});
+  await mmPage.waitForTimeout(2_000);
+
   // Check if already onboarded — wallet home shows "Buy"/"Send"/"Receive"
   const body = await mmPage.locator('body').innerText().catch(() => '');
   if (/Buy|Send|Receive/.test(body) && /0x[a-f0-9]{4}/i.test(body)) {
-    console.log('  MM appears already onboarded');
+    console.log('  MM appears already onboarded · wallet home rendered');
     await snap(mmPage, 'mm-already-onboarded');
     return;
   }
 
   // Check for unlock screen (onboarded but locked)
   const pwd = mmPage.locator('input[type="password"]').first();
-  if (await pwd.isVisible({ timeout: 3_000 }).catch(() => false)) {
+  if (await pwd.isVisible({ timeout: 5_000 }).catch(() => false)) {
     const txt = await mmPage.locator('body').innerText().catch(() => '');
     if (/Unlock|password/i.test(txt) && !/Create.*password/i.test(txt)) {
-      console.log('  MM locked, entering password');
+      console.log('  MM locked · entering password');
       await pwd.fill(PASSWORD);
       await mmPage.keyboard.press('Enter');
-      await mmPage.waitForTimeout(4_000);
+      await mmPage.waitForTimeout(6_000);
       await snap(mmPage, 'mm-unlocked-existing');
       return;
     }
