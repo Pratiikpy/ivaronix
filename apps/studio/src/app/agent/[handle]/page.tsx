@@ -140,7 +140,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
     <Section
       label={`§ AGENT · #${profile.tokenId}`}
       title={`Trust score ${profile.trustScore}`}
-      description={`${profile.receiptCount} receipt${profile.receiptCount === 1n ? '' : 's'} anchored. Owner ${decoded.slice(0, 10)}…${decoded.slice(-4)}.`}
+      description={`${profile.receiptCount} passport-recorded receipt${profile.receiptCount === 1n ? '' : 's'}. ${recent.length} recent on-chain. Owner ${decoded.slice(0, 10)}…${decoded.slice(-4)}.`}
     >
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32, alignItems: 'start' }}>
         <div className="card">

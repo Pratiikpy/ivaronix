@@ -104,7 +104,12 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       <dt style={{ color: 'var(--color-muted)' }}>trust</dt>
                       <dd style={{ margin: 0 }}>{data.passport.trustScore}</dd>
                       <dt style={{ color: 'var(--color-muted)' }}>receipts</dt>
-                      <dd style={{ margin: 0 }}>{data.passport.receiptCount}</dd>
+                      <dd style={{ margin: 0 }}>
+                        {data.passport.receiptCount}
+                        <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--color-muted)' }}>
+                          (passport-recorded · anchored runs not yet recorded here)
+                        </span>
+                      </dd>
                       <dt style={{ color: 'var(--color-muted)' }}>violations</dt>
                       <dd style={{ margin: 0 }}>{data.passport.violationCount}</dd>
                     </dl>
