@@ -11,6 +11,7 @@ import {
   getRegistries,
 } from '@/lib/chain';
 import { findLocalReceiptByRoot, type ReceiptBody } from '@/lib/local-receipt';
+import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import type { OnChainReceipt } from '@ivaronix/og-chain';
 import { verifyClaimed, type CheckResult } from '@ivaronix/receipts';
 
@@ -267,22 +268,26 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   // S-2 / I-5 fix · each light reads from real evidence in the receipt body.
   // Storage: green only when a real 0G Storage Merkle root is present (not
   //   when the file merely exists locally — sha256 fallback was the lie).
-  // Chain:   green only when the local body's anchor tx hash is populated.
-  //   The on-chain row alone proves anchor-by-root, but the local body is
-  //   what the page actually links to; gating prevents a green light next
-  //   to a "no anchor tx" rendering.
+  // Chain:   green when the receipt has an on-chain anchor row OR a local
+  //   anchor tx hash. We already 404'd without `onChain`, so reaching here
+  //   means the chain layer IS verified — even when the body cache is cold
+  //   (P5 receipt-28 case). Pre-fix this was gated on the local body which
+  //   left the Chain dot orange on every Vercel /tmp-cold render — wrong.
+  // Storage: green when the on-chain row carries a non-zero storageRoot OR
+  //   the local body recorded an evidenceRoot. Either is real evidence.
   // Compute: green when consensus attestations exist (multi-role evidence
   //   trail). Falls back to local-body-existence for legacy receipts that
   //   pre-date the consensus block.
   // TEE:     unchanged — gated on real `routerVerified` flag.
   const txHash = local?.chainAnchor?.anchorTxHash ?? null;
-  const hasStorageRoot = Boolean(local?.storage?.evidenceRoot);
+  const hasOnChainStorageRoot = onChain.storageRoot && onChain.storageRoot !== '0x0000000000000000000000000000000000000000000000000000000000000000';
+  const hasStorageRoot = Boolean(local?.storage?.evidenceRoot) || Boolean(hasOnChainStorageRoot);
   const hasConsensusAtt = ((local?.execution?.consensus?.individualAttestations?.length ?? 0) > 0);
   const layers: Partial<Record<'Storage' | 'Compute' | 'TEE' | 'Chain', 'pending' | 'verified' | 'mismatch'>> = {
     Storage: hasStorageRoot ? 'verified' : 'pending',
     Compute: (hasConsensusAtt || hasLocalBody) ? 'verified' : 'pending',
     TEE: teeVerified ? 'verified' : 'pending',
-    Chain: txHash ? 'verified' : 'pending',
+    Chain: 'verified', // we 404'd without onChain so reaching here means anchor is real
   };
   const headline = local?.outputs?.wording?.headline ?? `Receipt #${onChain.id} anchored on 0G ${getNetwork()}`;
   const citations = local?.outputs?.citations ?? [];
@@ -420,6 +425,32 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
               </dd>
             </>
           )}
+          {/* Always show the registry contract for chain-only views.
+              When local body is missing the anchor-tx hash isn't
+              available, but the registry contract address + receipt id
+              are enough for a stranger to confirm the anchor on
+              chainscan (read the contract's getReceipt method). Closes
+              the "no chainscan link on /r/28" UX gap (2026-05-14). */}
+          {(() => {
+            const regName = registryVersion === 'v3' ? 'ReceiptRegistryV3'
+              : registryVersion === 'v2' ? 'ReceiptRegistryV2'
+              : 'ReceiptRegistry';
+            const regAddr = getDeployedAddress(getNetwork(), regName);
+            if (!regAddr) return null;
+            return (
+              <>
+                <dt style={{ color: 'var(--color-muted)' }}>registry</dt>
+                <dd className="mono" style={{ margin: 0 }}>
+                  <a href={explorerAddrUrl(regAddr)} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>
+                    {regName} {regAddr.slice(0, 10)}…{regAddr.slice(-6)}
+                  </a>
+                  <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-muted)' }}>
+                    {`(read getReceipt(${String(onChain.id)}) to confirm the anchor)`}
+                  </span>
+                </dd>
+              </>
+            );
+          })()}
           <dt style={{ color: 'var(--color-muted)' }}>type</dt>
           <dd style={{ margin: 0 }}>{local?.type ?? `code ${onChain.receiptType}`}</dd>
           {local?.billing && (
