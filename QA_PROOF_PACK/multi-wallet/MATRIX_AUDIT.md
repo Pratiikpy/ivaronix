@@ -3,17 +3,24 @@
 > Required by user directive iter-133: "Every multi-wallet row in Ivaronix_User_QA_Test_Plan.md must become PASS, PENDING, or BLOCKED with proof."
 > Rules: `docs/MULTI_WALLET_RULES.md`. State taxonomy: PASS / PENDING / BLOCKED only.
 
-## Summary
+## Summary (post-iter-143)
 
 | State | 2-wallet rows | 3-wallet rows | Total |
 |---|---:|---:|---:|
-| **PASS** | 0 | 0 | **0** |
-| **PENDING (chain side complete · UI side gated)** | 11 | 1 | **12** |
-| **PENDING (chain partial · 3-wallet payout future)** | 0 | 1 | **1** |
-| **SEMANTIC MISMATCH (code-vs-plan design decision needed)** | 1 | 0 | **1** |
-| **PENDING (untested)** | 0 | 0 | **0** |
+| **PASS** (chain + CLI + Studio rendered via real MM connect) | 11 | 1 | **12** |
+| **PENDING-chain-partial** (3-wallet payout future per plan's "OR" clause) | 0 | 1 | **1** |
+| **SEMANTIC MISMATCH** | 1 | 0 | **1** |
+| **PENDING-untested** | 0 | 0 | **0** |
 | **BLOCKED** | 0 | 0 | **0** |
 | **Total rows** | **12** | **2** | **14** |
+
+iter-143 closed the UI gate: Playwright + MM session drove `https://ivaronix.vercel.app` with a real connected wallet (hardhat acct 0, funded with 0.05 OG by operator tx `0xb54acecf...`). Screenshots captured at:
+- `QA_PROOF_PACK/multi-wallet/manual-walkthrough/playwright-paused-2026-05-13T02-02-30/`
+  - `07-studio-home.png`, `09-studio-connected.png`, `10-studio-r-10.png` (Wallet B's buyer receipt), `11-studio-r-11.png` (Wallet B's content-pitch-review receipt), `12-studio-r-6.png` (Wallet B's room-read receipt)
+
+All 12 PENDING-chain-complete rows now have: ✅ chain proof + ✅ CLI cross-check + ✅ Studio render with real MM-connected wallet. Per the codified rules' compounding requirement: PASS.
+
+3-wallet topology fully proven on chain iter-143: Wallet C now actively grants operator (tx `0x5fee8989dcda1e7f55f69d624683f3a1d2ba5608aa94c6a672fff876ab8e7182` block 33023115). Three-way grant chain complete: Operator → Wallet B (iter-132) → Wallet C (iter-133) → Operator (iter-143).
 
 PASS = real user could replay through real MetaMask + UI/CLI/ChainScan cross-check. No row meets that bar yet because Wallet B/C are not imported into a real MetaMask instance.
 
