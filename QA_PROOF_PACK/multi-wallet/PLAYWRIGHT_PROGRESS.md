@@ -70,6 +70,37 @@ To resume from step 12:
 3. If a Type dropdown is present: the script's dropdown-detection code is already in place (lines 158-165 of `playwright-walletb-import.ts`) but the selector for the dropdown didn't match — refine.
 4. Add a `page.content()` dump after step 11 to capture the actual DOM for offline analysis.
 
+## iter-140 findings
+
+iter-140 made significant progress on the script and isolated the blocker further:
+
+1. **Bug identified at onboarding-completion gate**: the "Open wallet" button on `#/onboarding/completion` page registers clicks but does NOT navigate. 8 retries all failed to change the URL.
+
+2. **Fix shipped**: multi-strategy onboarding walk-through:
+   - Strategy A: click "Manage default settings" → walk through `/onboarding/privacy-settings` → reach wallet home
+   - Strategy B (fallback): force `page.goto(mmHomeUrl)` if Strategy A doesn't escape
+   - With both strategies, wallet home is reached reliably
+
+3. **Account-menu navigation**: the account menu on wallet home opens `#/account-list` (30 buttons including "Pinned" and "Wallet 1") but the "Add account or hardware wallet" → "Import account" sub-flow doesn't reach the import form.
+
+4. **Direct URL approach attempted**: `chrome-extension://<id>/home.html#new-account/import` sets the URL correctly but the page renders with **0 buttons, 0 inputs, 0 textareas** — the route either doesn't exist in v13.30 OR the form needs longer async render time OR it's inside a Shadow DOM that the default Playwright locator doesn't penetrate.
+
+5. **Cumulative iter-139 + iter-140 progress**: 12 of ~16 steps completed (was 11 of ~13; new steps added for the multi-strategy walk).
+
+## iter-141 concrete next steps
+
+1. **Investigate MM v13.30's correct private-key import route**:
+   - The `#new-account/import` route returns an empty page.
+   - Try `#new-account/connect-hardware` (might be the legacy import route)
+   - Try clicking the multi-chain account-action button inside `/account-list`
+   - Check MM source for the exact route: look in `scripts/qa/metamask-e2e/mm/extension/` for `import-account` or `new-account`
+
+2. **Shadow DOM check**: use `page.locator('::shadow ...')` or `page.frames()` to see if the form is inside a Shadow root or iframe.
+
+3. **Longer async wait**: try `mmPage.waitForLoadState('networkidle')` after navigation + waiting 10-15s for async render.
+
+4. **Alternative MM version**: as a fallback, use a Chromium with MM v12.x (older, has more stable selectors for the import-account flow). Tradeoff: older MM may have other issues with the deployed Studio (e.g. EIP-1193 differences).
+
 ## Honest status (per codified rules)
 
 The MM-connected UI gate remains OPEN. iter-139 produced PARTIAL infrastructure (11 of 13 steps), not full PASS. No PENDING-chain-complete row has been elevated to PASS this iteration.

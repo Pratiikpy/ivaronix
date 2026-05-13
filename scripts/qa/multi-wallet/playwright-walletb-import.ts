@@ -162,36 +162,103 @@ async function main(): Promise<void> {
   }
   await snap(mmPage, 'mm-onboarding-done');
 
-  // === KEY STEP iter-139: Import Wallet B's private key as additional account ===
+  // CRITICAL iter-140 fix attempt 1: click "Open wallet" failed because
+  // MM v13.30's completion page button doesn't actually navigate on click
+  // (button registered but URL stays at /onboarding/completion through 8
+  // retries). Attempt 2: try clicking "Manage default settings" first
+  // (MM may require completing settings before wallet opens), then click.
+  // Attempt 3: force navigate to the wallet home URL directly.
+  console.log('=== entering wallet home (multi-strategy) ===');
+  // Helper: are we OUT of the entire onboarding flow yet?
+  const isOnboarding = (url: string): boolean =>
+    url.includes('/onboarding/') || url.endsWith('/onboarding') || url.endsWith('home.html');
+
+  // Strategy A: walk through completion → settings → privacy-settings →
+  // any other onboarding step → wallet home.
+  const settingsBtn = mmPage.locator('button:has-text("Manage default settings")').first();
+  if (await settingsBtn.isVisible({ timeout: 2_000 }).catch(() => false)) {
+    console.log('   strategy A: clicking "Manage default settings"...');
+    await settingsBtn.click().catch(() => {});
+    await mmPage.waitForTimeout(2_000);
+    await snap(mmPage, 'mm-after-manage-settings');
+  }
+
+  // Iterate clicking any plausible "next-step" button until URL is NOT
+  // in any onboarding sub-route. Cap at 20 iterations to avoid infinite loop.
+  for (let i = 0; i < 20; i++) {
+    const url = mmPage.url();
+    if (!url.includes('/onboarding/')) {
+      console.log(`   strategy A complete: ${url}`);
+      break;
+    }
+    const cta = mmPage.locator(
+      'button:has-text("Done"), button:has-text("Confirm"), button:has-text("Next"), button:has-text("Open wallet"), button:has-text("Continue"), button:has-text("Got it")',
+    ).filter({ hasNotText: 'Manage default settings' }).first();
+    if (await cta.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      const txt = await cta.textContent().catch(() => '?');
+      console.log(`     onboarding walk [${i}]: clicking "${txt}" (URL hash now: ${url.split('#')[1] ?? '?'})`);
+      await cta.click().catch(() => {});
+      await mmPage.waitForTimeout(2_000);
+    } else {
+      console.log(`     onboarding walk [${i}]: no CTA found at ${url}`);
+      break;
+    }
+  }
+  await snap(mmPage, 'mm-after-onboarding-walk');
+
+  // Strategy B (fallback): force navigate to home if still stuck.
+  if (mmPage.url().includes('/onboarding/')) {
+    console.log('   strategy B: force navigating to home');
+    await mmPage.goto(mmHomeUrl, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+    await mmPage.waitForTimeout(3_000);
+  }
+
+  const entered = !mmPage.url().includes('/onboarding/');
+  await snap(mmPage, entered ? 'mm-wallet-home-entered' : 'mm-still-stuck');
+  console.log(`   wallet home entered: ${entered}, current URL: ${mmPage.url()}`);
+  void isOnboarding; // helper kept for future use
+
+  // === KEY STEP iter-140 fix #3: Import Wallet B's private key as additional account ===
   console.log('=== importing Wallet B private key ===');
   await mmPage.waitForTimeout(2_000);
 
-  // Open account picker. MM v13.30 has the account menu in the top-right area.
-  // Try several known selectors.
-  const accountMenu = mmPage.locator(
-    '[data-testid="account-menu-icon"], button[aria-label*="ccount"], div[data-testid*="account-list"]',
-  ).first();
-  if (await accountMenu.isVisible({ timeout: 5_000 }).catch(() => false)) {
-    await accountMenu.click();
-  } else {
-    // Fallback: click the address chip in the header
-    await mmPage.locator('button').filter({ hasText: /0x[a-fA-F0-9]{4}.*[a-fA-F0-9]{4}/ }).first()
-      .click({ timeout: 5_000 }).catch(() => {});
+  // iter-140 finding: navigating via account-menu UI is unreliable in MM v13.30
+  // (it opens /account-list but the "Add account" / "Import account" buttons
+  // are inside a complex multichain popover with non-stable selectors).
+  // Direct URL approach: navigate straight to the import-account route.
+  console.log('   navigating directly to import-account route...');
+  await mmPage.goto(`${mmHomeUrl}#new-account/import`, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
+  await mmPage.waitForTimeout(3_000);
+  console.log(`   URL after navigation: ${mmPage.url()}`);
+  await snap(mmPage, 'mm-import-account-direct-nav');
+
+  // Diagnostic dump iter-140: log all visible inputs, buttons, and headings.
+  console.log('\n=== diagnostic dump at step 12 ===');
+  console.log(`   page URL: ${mmPage.url()}`);
+  const buttonCount = await mmPage.locator('button').count();
+  console.log(`   button count: ${buttonCount}`);
+  for (let i = 0; i < Math.min(buttonCount, 20); i++) {
+    const txt = await mmPage.locator('button').nth(i).textContent().catch(() => null);
+    if (txt) console.log(`     btn[${i}]: "${txt.trim().slice(0, 80)}"`);
   }
-  await mmPage.waitForTimeout(1_500);
-  await snap(mmPage, 'mm-account-menu-open');
-
-  // Click "Add account or hardware wallet"
-  await mmPage.locator('button:has-text("Add account or hardware wallet"), button:has-text("Add account")').first()
-    .click({ timeout: 8_000 }).catch(() => {});
-  await mmPage.waitForTimeout(1_500);
-  await snap(mmPage, 'mm-add-account-menu');
-
-  // Click "Import account"
-  await mmPage.locator('button:has-text("Import account"), button:has-text("Private key")').first()
-    .click({ timeout: 8_000 }).catch(() => {});
-  await mmPage.waitForTimeout(2_000);
-  await snap(mmPage, 'mm-import-account-page');
+  const inputCount = await mmPage.locator('input').count();
+  console.log(`   input count: ${inputCount}`);
+  for (let i = 0; i < inputCount; i++) {
+    const type = await mmPage.locator('input').nth(i).getAttribute('type').catch(() => null);
+    const placeholder = await mmPage.locator('input').nth(i).getAttribute('placeholder').catch(() => null);
+    const testid = await mmPage.locator('input').nth(i).getAttribute('data-testid').catch(() => null);
+    console.log(`     input[${i}] type=${type} placeholder="${placeholder}" testid="${testid}"`);
+  }
+  const textareaCount = await mmPage.locator('textarea').count();
+  console.log(`   textarea count: ${textareaCount}`);
+  const selectCount = await mmPage.locator('select').count();
+  console.log(`   select count: ${selectCount}`);
+  for (let i = 0; i < selectCount; i++) {
+    const id = await mmPage.locator('select').nth(i).getAttribute('id').catch(() => null);
+    const testid = await mmPage.locator('select').nth(i).getAttribute('data-testid').catch(() => null);
+    console.log(`     select[${i}] id="${id}" testid="${testid}"`);
+  }
+  console.log('=== end diagnostic dump ===\n');
 
   // MM v13.30 may show a "Select Type" dropdown first. If so, pick Private Key.
   const typeDropdown = mmPage.locator('select, [role="combobox"], button:has-text("Select Type")').first();
