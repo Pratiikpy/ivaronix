@@ -12,7 +12,7 @@ The single command no other 0G project ships. Open a terminal, paste this, hit e
 git clone https://github.com/Pratiikpy/ivaronix.git oglabs
 cd oglabs
 pnpm install
-pnpm --filter @ivaronix/cli exec ivaronix receipt verify 1304 --tee-independent
+pnpm ivaronix receipt verify 1304 --tee-independent
 ```
 
 Expected output, when the live 0G Compute provider's TEE channel is reachable:
@@ -58,7 +58,7 @@ If `localhost:3300` isn't running, start it: `pnpm --filter @ivaronix/studio dev
 Two paths. CLI is fastest:
 
 ```bash
-pnpm --filter @ivaronix/cli exec ivaronix demo
+pnpm ivaronix demo
 ```
 
 `ivaronix demo` anchors one real receipt on Galileo testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs. Faucet at `https://faucet.0g.ai` if `IVARONIX_SIGNER_KEY` (legacy alias: `EVM_PRIVATE_KEY`) in `.env` needs OG.

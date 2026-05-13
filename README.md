@@ -176,7 +176,7 @@ Clone, install, run one command — no account, no wallet:
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs
 pnpm install
-pnpm --filter @ivaronix/cli exec ivaronix receipt verify 1304 --tee-independent
+pnpm ivaronix receipt verify 1304 --tee-independent
 ```
 
 Expected output, when the live 0G Compute provider's TEE channel is reachable:
@@ -209,7 +209,7 @@ That's the spine. Everything else in this repo exists to make that command produ
 git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix
 pnpm install
 cp .env.example .env   # add your IVARONIX_ROUTER_KEY + IVARONIX_SIGNER_KEY (faucet at faucet.0g.ai is free)
-pnpm --filter @ivaronix/cli exec tsx apps/cli/src/bin/ivaronix.ts demo
+pnpm ivaronix demo
 ```
 
 `ivaronix demo` anchors one real receipt on 0G Galileo Testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs:

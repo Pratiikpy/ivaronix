@@ -9,13 +9,13 @@
 ### A-1 · Galileo testnet wallet · already funded (no action right now)
 - **Status as of 2026-05-09:** balance ≈ **69 OG** on `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`. Each demo run costs ~0.0001 OG, so the current balance covers thousands of judge runs.
 - **Top up only if needed:** the public faucet at `https://faucet.0g.ai` issues free testnet OG to any address. You do not pay anything; the faucet hands out tokens. Hit it again only if `ivaronix doctor balance` ever shows < 1 OG.
-- **Verify any time:** `pnpm --filter @ivaronix/cli exec ivaronix doctor balance` — checks the live chain.
+- **Verify any time:** `pnpm ivaronix doctor balance` — checks the live chain.
 
 ### A-2 · Fund the mainnet deployer wallet on Aristotle (chainId 16661)
 - **Why it matters:** mainnet promotion is the only real difference between "demo on testnet" and a production-grade artefact. CLAUDE.md §1: "the only blocker is money." All six contracts compile + deploy + mainnet-readiness checklist is already 13/13 green.
 - **Action:** send ~0.1 OG to the deployer wallet on chainId 16661 (Aristotle mainnet, `https://evmrpc.0g.ai`).
-- **Verify:** `pnpm --filter @ivaronix/cli exec ivaronix doctor balance --network mainnet` should show > 0.1 OG.
-- **Then run:** `pnpm --filter @ivaronix/cli exec ivaronix deploy --network mainnet` (script exists; will refuse if balance is short).
+- **Verify:** `pnpm ivaronix doctor balance --network mainnet` should show > 0.1 OG.
+- **Then run:** `pnpm ivaronix deploy --network mainnet` (script exists; will refuse if balance is short).
 
 ### A-3 · Submit the README + repo URL to the OG APAC submission portal
 - **Why it matters:** documentation is a judging input.
@@ -626,9 +626,9 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:**
   1. Fund a fresh DA wallet (~0.005 OG): generate via the `node -e` line in `da.env.example`, send 0.005 OG from the operator's 69 OG testnet balance.
   2. Fill `da.env` with the funded key + the actual `DA_ENTRANCE_CONTRACT` address (currently unset placeholder; check `oglabs resources/0g-da-rust-sdk/README.md` for the live address — it changes per 0G DA release).
-  3. `docker compose up -d da-client && pnpm --filter @ivaronix/cli exec ivaronix da preflight` — expect "endpoint reachable localhost:51001".
-  4. Disperse a small test blob: `pnpm --filter @ivaronix/cli exec ivaronix da disperse README.md`. Capture stdout's `request_id` and `storage_root`.
-  5. Retrieve to confirm: `pnpm --filter @ivaronix/cli exec ivaronix da retrieve <storage_root>`. Should round-trip identical bytes.
+  3. `docker compose up -d da-client && pnpm ivaronix da preflight` — expect "endpoint reachable localhost:51001".
+  4. Disperse a small test blob: `pnpm ivaronix da disperse README.md`. Capture stdout's `request_id` and `storage_root`.
+  5. Retrieve to confirm: `pnpm ivaronix da retrieve <storage_root>`. Should round-trip identical bytes.
   6. Pin the captured `(request_id, storage_root)` pair into README.md "Built on 0G" + JUDGE_GUIDE.md so the integration is replay-able by anyone with the docker stack.
 - **Effort:** ~30min once the DA entrance contract address is locatable. Defer until 0G publishes the testnet DA entrance address (or run on mainnet post-redeploy).
 

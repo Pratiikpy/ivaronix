@@ -557,7 +557,7 @@ Eight items. Each closes a drift class or sprint-language fossilization.
 - **E:** 30min after funding lands
 - **What:** Erc7857Verifier, ReceiptRegistry V1 (legacy compat), AgentPassportINFT V1 (legacy compat), CapabilityRegistry, MemoryAccessLog, SkillRegistry, SubscriptionEscrow.
 - **Cost:** ~0.1 OG total.
-- **Run:** `pnpm --filter @ivaronix/cli exec ivaronix deploy --network mainnet`.
+- **Run:** `pnpm ivaronix deploy --network mainnet`.
 - **P:** 6+ chainscan links in `contracts/deployments/mainnet.json`.
 - **A:** §11.1.
 
