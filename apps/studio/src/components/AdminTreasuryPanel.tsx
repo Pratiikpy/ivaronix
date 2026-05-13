@@ -7,7 +7,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
 
 interface Props {
@@ -25,6 +25,7 @@ const PAYMENT_ABI = parseAbi([
 export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
   const { address, isConnected } = useAccount();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
   const [withdrawState, setWithdrawState] = useState<'idle' | 'pending' | 'success' | 'error'>('idle');
   const [withdrawTxHash, setWithdrawTxHash] = useState<string | null>(null);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
@@ -99,14 +100,30 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
         args: [],
       });
       setWithdrawTxHash(tx);
-      setTimeout(() => {
-        balanceResult.refetch();
-        lifetimeResult.refetch();
-        setWithdrawState('success');
-      }, 6000);
+      if (!publicClient) {
+        setWithdrawError('Public client unavailable. Refresh the page.');
+        setWithdrawState('error');
+        return;
+      }
+      const receipt = await publicClient.waitForTransactionReceipt({ hash: tx as `0x${string}`, timeout: 60_000 });
+      if (receipt.status !== 'success') {
+        setWithdrawError(`Treasury withdraw tx reverted on chain. Hash: ${tx}`);
+        setWithdrawState('error');
+        return;
+      }
+      await balanceResult.refetch();
+      await lifetimeResult.refetch();
+      setWithdrawState('success');
     } catch (err) {
       const msg = (err as Error).message;
-      setWithdrawError(msg.toLowerCase().includes('user rejected') ? 'Cancelled in MetaMask.' : msg);
+      const lower = msg.toLowerCase();
+      if (lower.includes('user rejected')) {
+        setWithdrawError('Cancelled in MetaMask.');
+      } else if (lower.includes('timeout') || lower.includes('timed out')) {
+        setWithdrawError('Tx not confirmed within 60s. Check chainscan — withdrawal may still settle.');
+      } else {
+        setWithdrawError(msg);
+      }
       setWithdrawState('error');
     }
   };

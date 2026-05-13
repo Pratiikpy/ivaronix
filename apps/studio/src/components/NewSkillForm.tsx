@@ -6,7 +6,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, keccak256, toBytes } from 'viem';
 import { useRouter } from 'next/navigation';
 
@@ -33,6 +33,7 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
   const { isConnected } = useAccount();
   const router = useRouter();
   const { writeContractAsync } = useWriteContract();
+  const publicClient = usePublicClient();
 
   const [slug, setSlug] = useState('my-skill');
   const [version, setVersion] = useState('1.0.0');
@@ -67,8 +68,16 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
         args: [skillId, versionId, manifestHash],
       });
 
-      // Wait for confirmation
-      await new Promise((r) => setTimeout(r, 6000));
+      // Wait for publish tx to confirm on chain (replaces v1 setTimeout hack).
+      if (!publicClient) {
+        setState({ kind: 'error', message: 'Public client unavailable. Refresh and try again.' });
+        return;
+      }
+      const publishReceipt = await publicClient.waitForTransactionReceipt({ hash: publishTx as `0x${string}`, timeout: 60_000 });
+      if (publishReceipt.status !== 'success') {
+        setState({ kind: 'error', message: `Publish tx reverted on chain. Hash: ${publishTx}` });
+        return;
+      }
 
       // 2. Set price
       setState({ kind: 'pricing', publishTx });
