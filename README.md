@@ -1,6 +1,7 @@
 # Ivaronix
 
-> Catch the risks. Keep the receipts.
+> **A founder reviewing a term sheet shouldn't have to trust the AI.**
+> With Ivaronix, every AI review leaves a cryptographic receipt — independently re-verifiable by anyone, on any machine, in 10 seconds.
 
 ```text
 [ Drop a document ]  ──▶  [ 0G Compute TEE ]  ──▶  [ 0G Chain anchor ]  ──▶  [ Public Proof URL ]
@@ -372,9 +373,26 @@ Each 0G primitive carries a specific user-visible value. We adopted the modules 
 - **0G Storage** — the encrypted blob and the signed receipt JSON live here. The blob's storage root is recorded inside the receipt; anyone can fetch the ciphertext later and confirm it matches.
 - **0G Router** — carries the inference traffic and supplies the per-provider rate-limit and cost telemetry the receipt records. A reviewer can read the receipt and see how the work was billed.
 - **Agent ID (ERC-7857)** — every receipt is bound to a passport tokenId. A delegated agent (planning-01 §2A) gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an `AgentPassport`-resolvable wallet — the chain confirms the signer matches.
-- **0G DA** — on the roadmap. We don't claim integration we haven't shipped; the path is documented in `docs/PHASE_B_DISCLOSURES.md`.
+- **0G DA** — on the roadmap. We don't claim integration we haven't shipped; the path is documented in `docs/PHASE_B_DISCLOSURES.md` and reserved on the receipt schema (`og.da.batched`).
 
 The toolkit at `@ivaronix/og-toolkit` wraps `@0gfoundation/0g-storage-ts-sdk`, `@0gfoundation/0g-compute-ts-sdk`, and `@0glabs/0g-serving-broker` with receipt-defaulting helpers — easier than the raw SDKs, and every helper produces a receipt by default rather than as an opt-in.
+
+### 0G DA · honest roadmap
+
+Ivaronix is DA-ready for high-volume receipt batching. v1 uses 0G Storage + 0G Chain because individual receipts need persistent evidence and direct verification first. The receipt schema reserves `og.da.batched` (default `false`) so v1.1 can wire DA without breaking byte-equality with current receipts.
+
+When 0G Foundation ships a public DA disperser endpoint, the integration path is:
+
+1. Batch N receipts (default 100) into a single blob.
+2. Disperse via `disperse_blob` against the 0G DA Rust SDK (`oglabs resources/0g-da-rust-sdk/`).
+3. Anchor the batch's Merkle root via a new `ReceiptBatchRegistry` contract.
+4. Per-receipt verifier walks: batch root → DA blob retrieve → individual receipt → existing 5-check binding.
+
+We didn't force DA in v1 because that would have been vapor. The architecture is queued; the schema slot exists; the migration is forward-only (existing receipts stay valid with `og.da.batched: false`). See `subgraph/README.md` for the indexing layer that will route DA-batched receipts when they ship.
+
+### IETF Agent Audit Trail export
+
+Ivaronix receipts export to IETF Agent Audit Trail format (`draft-rosenberg-aat-01`) via `pnpm ivaronix receipt verify <id> --format aat`. Designed to satisfy EU AI Act Article 14 human-in-the-loop documentation requirements. 34 mapped fields across 10 AAT sections; see [`docs/AAT_MAPPING.md`](docs/AAT_MAPPING.md) for the full mapping table.
 
 ## Network reference
 
