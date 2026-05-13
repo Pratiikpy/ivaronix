@@ -716,6 +716,21 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
       burnMode: burnEnabled,
       consensusMode: tier !== 'quick',
       modelSelection: { requested: env.defaultModel, final: resolvedModel },
+      // FINAL_BUILD_PLAN.md Block G · 0GM model source declaration.
+      // Honest assignment: '0G' when the run hits 0G Router (TIER 1 TEE);
+      // 'NVIDIA' / 'OpenAI' / 'Ollama' for external providers (TIER 2).
+      // Derived from the resolved provider kind so legacy callers don't
+      // need to set it explicitly.
+      model: (() => {
+        // a.provider is '0g' | 'nvidia' (AnchorArgs at line 550). Map to receipt schema enum.
+        const source: '0G' | 'NVIDIA' | 'OpenAI' | 'Ollama' =
+          a.provider === 'nvidia' ? 'NVIDIA' : '0G';
+        return {
+          source,
+          computePath: source === '0G' ? '0G Private Compute' : `External: ${source}`,
+          skillRunOn0GModel: source === '0G',
+        };
+      })(),
       providerRouting: {
         allowFallbacks: true,
         finalProvider: (primaryAtt?.providerAddress ?? '0x0000000000000000000000000000000000000000') as `0x${string}`,

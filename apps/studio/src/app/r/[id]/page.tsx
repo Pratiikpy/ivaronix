@@ -163,6 +163,41 @@ function TierBadge({ tier, providerKind }: { tier: 'tier-1-tee' | 'tier-2-extern
   );
 }
 
+/**
+ * FINAL_BUILD_PLAN.md Block G + Going_Extra.md §2 · 0GM model chip.
+ * Green when execution.model.source === '0G' (0GM via 0G Private Compute);
+ * amber otherwise (external provider). Renders next to the TIER badge so
+ * judges + users see model provenance at a glance.
+ */
+function ModelBadge({ source, computePath }: { source: '0G' | 'NVIDIA' | 'OpenAI' | 'Ollama'; computePath?: string }) {
+  const is0G = source === '0G';
+  const palette = is0G
+    ? { bg: 'var(--color-verified-bg)', fg: '#166534', border: 'var(--color-verified)' }
+    : { bg: 'var(--color-pending-bg)', fg: '#92400e', border: 'var(--color-pending)' };
+  const label = is0G ? '0GM' : `External · ${source}`;
+  const title = is0G
+    ? `0G-native model${computePath ? ` (${computePath})` : ''}. Inference happens on the same ecosystem as the proof layer.`
+    : `Inference happened on ${source} (third-party). Receipt is still signed + chain-anchored but not 0G-native.`;
+  return (
+    <span
+      title={title}
+      style={{
+        background: palette.bg,
+        color: palette.fg,
+        border: `1px solid ${palette.border}`,
+        padding: '4px 12px',
+        borderRadius: 4,
+        fontSize: 11,
+        textTransform: 'uppercase',
+        letterSpacing: '1px',
+        fontWeight: 600,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const result = await loadReceipt(id);
@@ -256,6 +291,16 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <ReceiptStateChip state={overallState} />
           <TierBadge tier={tier} providerKind={providerKind} />
+          {(() => {
+            // Block G · 0GM chip. Reads execution.model.source per Block B schema.
+            // Falls back to deriving from teeVerification.providerKind for legacy receipts.
+            const execBlock = local?.execution as
+              | { model?: { source?: '0G' | 'NVIDIA' | 'OpenAI' | 'Ollama'; computePath?: string } }
+              | undefined;
+            const source: '0G' | 'NVIDIA' | 'OpenAI' | 'Ollama' = execBlock?.model?.source
+              ?? (tier === 'tier-1-tee' ? '0G' : providerKind?.toLowerCase().includes('nvidia') ? 'NVIDIA' : providerKind?.toLowerCase().includes('openai') ? 'OpenAI' : 'NVIDIA');
+            return <ModelBadge source={source} computePath={execBlock?.model?.computePath} />;
+          })()}
           {risk(local?.outputs?.riskLevel)}
           {registryVersion === 'v1' && (
             <span
