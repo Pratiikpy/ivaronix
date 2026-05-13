@@ -84,7 +84,7 @@ export default async function AgentsPage() {
     <Section
       label="§ AGENTS"
       title="Every passport on this network"
-      description={`Live read of AgentPassportINFT on 0G ${network}. Sorted by trust score. Each agent's trust grows by +1 per anchored receipt — the score reflects real on-chain activity, not endorsement.`}
+      description={`Live read of AgentPassportINFT on 0G ${network}. Sorted by trust score. Trust + recorded-receipts only increment when an authorized recorder calls recordReceipt() — the on-chain receipt log can be larger than the per-passport counter shown here.`}
     >
       {agents.length === 0 ? (
         <p style={{ fontSize: 14, color: 'var(--color-muted)' }}>
@@ -113,7 +113,7 @@ export default async function AgentsPage() {
             <div>agent</div>
             <div>tier</div>
             <div style={{ textAlign: 'right' }}>trust</div>
-            <div style={{ textAlign: 'right' }}>receipts</div>
+            <div style={{ textAlign: 'right' }} title="passport.receiptCount — only increments when an authorized recorder calls AgentPassportINFTV2.recordReceipt(). The on-chain receipt log can be much larger; this column shows the passport-attested subset.">recorded receipts</div>
             <div style={{ textAlign: 'right' }}>minted</div>
           </div>
           {agents.map((a, i) => {
