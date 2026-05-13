@@ -169,8 +169,12 @@ async function skillsListFromChain(limit: number): Promise<SkillListing[]> {
         owner,
         priceWei: price.toString(),
         priceOg: formatUnits(price, 18),
-        creatorBps: cBps,
-        treasuryBps: tBps,
+        // ethers v6 returns uint16 as BigInt at runtime (despite TS `number`
+        // signature). Explicit Number() cast is mandatory or downstream
+        // `creatorBps / 100` throws "Cannot mix BigInt" SSR exception that
+        // crashes the whole /marketplace page. Caught by P5 UI test.
+        creatorBps: Number(cBps),
+        treasuryBps: Number(tBps),
         isPriced: priced,
         totalReceipts: 0, // not available without subgraph
         totalPaidWei: '0',
