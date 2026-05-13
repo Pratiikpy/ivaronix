@@ -93,6 +93,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-studio-security-headers/, // HALF_BAKED §G Tier-A item 6 · X-Frame-Options + nosniff + Referrer-Policy + HSTS (sweep 130)
       /^verify-privacy-terms-routes/, // HALF_BAKED §G Tier-A item 7 · /privacy + /terms routes + footer links (sweep 131)
       /^verify-share-surface-fonts/, // HALF_BAKED §G Tier-A item 8 · brand fonts on /r/[id]/print + /embed/r/[id] (sweep 132)
+      /^verify-first-party-slugs-canonical/, // §15 · FIRST_PARTY_SLUGS lives only in lib/first-party-skills.ts; no inline array drift across consumers (2026-05-14)
       /^verify-no-bare-auto-1fr/, // HALF_BAKED §G Tier-A item 9 · grid `auto 1fr` mobile-overflow (sweep 133)
       /^verify-api-route-zod-validation/, // HALF_BAKED §J-2 · every body-taking API route validates via Zod safeParse (sweeps 145-149 fixed; sweep 150 locks)
       /^verify-publishable-metadata/, // HALF_BAKED §J-14 · npm-publishable packages have description/license/homepage/repository/bugs/engines (sweep 155)

@@ -49,14 +49,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // promise. The home stat row + live-testnet card both bind to the
   // first-party count so the labels match reality (P1 UI test caught
   // the prior "FIRST-PARTY SKILLS: 156" misleading-label drift).
-  const FIRST_PARTY_SKILL_IDS = new Set([
-    'private-doc-review',
-    'content-pitch-review',
-    'github-audit',
-    '0g-integration-auditor',
-    'plan-step',
-    'code-edit',
-  ]);
+  const { FIRST_PARTY_SLUGS } = await import('@/lib/first-party-skills');
+  const FIRST_PARTY_SKILL_IDS = new Set<string>(FIRST_PARTY_SLUGS);
   const allSkills = loadAllSkills();
   const firstPartyCount = allSkills.filter((s) => FIRST_PARTY_SKILL_IDS.has(s.id)).length;
   const totalCatalogCount = allSkills.length;

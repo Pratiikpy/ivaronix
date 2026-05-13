@@ -8,27 +8,14 @@ import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
 
 export const dynamic = 'force-dynamic';
 
-// Resolve hex-form skillId back to slug. /marketplace/<hex> links to here
-// via "Full skill profile" buttons; without this branch any hex URL 404s
-// even though the slug entry is right on disk. Mirrors the same hex→slug
-// reverse lookup /api/run/confirm uses (commit d352561).
-const FIRST_PARTY_SLUGS = [
-  'private-doc-review', 'content-pitch-review', 'github-audit',
-  '0g-integration-auditor', 'plan-step', 'code-edit',
-  'lawyer-clean', 'finance-watchdog',
-];
-async function hexToSlug(maybeHex: string): Promise<string> {
-  if (!/^0x[0-9a-fA-F]{64}$/.test(maybeHex)) return maybeHex;
-  const { keccak256, toUtf8Bytes } = await import('ethers');
-  const match = FIRST_PARTY_SLUGS.find((slug) =>
-    keccak256(toUtf8Bytes(`skill:${slug}`)).toLowerCase() === maybeHex.toLowerCase()
-  );
-  return match ?? maybeHex;
-}
+import { resolveSkillSlug } from '@/lib/first-party-skills';
 
 export default async function SkillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
-  const id = await hexToSlug(rawId);
+  // /marketplace/<hex> links to /skill/<hex>; resolve hex back to slug
+  // via the canonical first-party set (apps/studio/src/lib/first-party-
+  // skills.ts). Unknown hex still 404s honestly via findSkillByIdServer.
+  const id = await resolveSkillSlug(rawId);
   const skill = findSkillByIdServer(id);
   if (!skill) notFound();
 

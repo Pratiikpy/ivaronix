@@ -34,15 +34,18 @@ export interface RunPanelSkillOption {
  * `skills` prop. Per planning-003 §A.2.7, the dropdown should derive
  * from `loadAllSkills()` server-side so first-party + community-imported
  * skills appear without manual list maintenance.
+ *
+ * The slug list comes from the canonical first-party set; defaultTier
+ * is mapped per-slug — heavy review skills get standard, lightweight
+ * planning skills get quick.
  */
-const FALLBACK_SKILLS: RunPanelSkillOption[] = [
-  { id: 'private-doc-review', label: 'private-doc-review', defaultTier: 'standard' },
-  { id: 'content-pitch-review', label: 'content-pitch-review', defaultTier: 'quick' },
-  { id: 'github-audit', label: 'github-audit', defaultTier: 'standard' },
-  { id: '0g-integration-auditor', label: '0g-integration-auditor', defaultTier: 'quick' },
-  { id: 'plan-step', label: 'plan-step', defaultTier: 'quick' },
-  { id: 'code-edit', label: 'code-edit', defaultTier: 'standard' },
-];
+import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
+const STANDARD_TIER_SLUGS = new Set<string>(['private-doc-review', 'github-audit', 'code-edit']);
+const FALLBACK_SKILLS: RunPanelSkillOption[] = FIRST_PARTY_SLUGS.map((slug) => ({
+  id: slug,
+  label: slug,
+  defaultTier: STANDARD_TIER_SLUGS.has(slug) ? 'standard' : 'quick',
+}));
 
 // One-click demo doc for W1 — judges browsing without a wallet can hit
 // "Use sample contract" → Run and produce a real anchored receipt in

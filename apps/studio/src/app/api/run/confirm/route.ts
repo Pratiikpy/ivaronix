@@ -255,19 +255,11 @@ export async function POST(req: Request) {
   const receiptOutDir = process.env.VERCEL ? '/tmp/.ivaronix/receipts/anchored' : undefined;
   // Hex → slug reverse lookup. /marketplace/<hex> routes pass the
   // already-hashed skillId; runPipeline's findSkill expects a slug to
-  // resolve SKILL.md on disk. Without this, the pipeline throws
-  // "Skill \"0x0934cfc2...\" not found" after the user has already paid.
-  // P5 auto run 2026-05-13 (post-jsonSafe) caught this — payment landed,
-  // inference failed at skill resolution, refund-queue picked it up.
-  const { keccak256: kk, toUtf8Bytes: tub } = await import('ethers');
-  const FIRST_PARTY_SLUGS = [
-    'private-doc-review', 'content-pitch-review', 'github-audit',
-    '0g-integration-auditor', 'plan-step', 'code-edit',
-    'lawyer-clean', 'finance-watchdog',
-  ];
-  const skillIdForPipeline = /^0x[0-9a-fA-F]{64}$/.test(body.skillId)
-    ? (FIRST_PARTY_SLUGS.find((slug) => kk(tub(`skill:${slug}`)).toLowerCase() === body.skillId.toLowerCase()) ?? body.skillId)
-    : body.skillId;
+  // resolve SKILL.md on disk. Centralised in lib/first-party-skills.ts
+  // so the slug set stays in sync across the 4 consumer surfaces
+  // (estimate, confirm, /skill/<hex>, home page first-party filter).
+  const { resolveSkillSlug } = await import('@/lib/first-party-skills');
+  const skillIdForPipeline = await resolveSkillSlug(body.skillId);
   try {
     const result = await runPipeline({
       skillId: skillIdForPipeline,

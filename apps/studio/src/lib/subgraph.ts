@@ -136,14 +136,12 @@ export async function skillsList(opts: {
   return await skillsListFromChain(limit);
 }
 
-const FIRST_PARTY_SKILLS = [
-  'private-doc-review',
-  'content-pitch-review',
-  'github-audit',
-  '0g-integration-auditor',
-  'lawyer-clean',
-  'finance-watchdog',
-];
+// Canonical first-party set lives in lib/first-party-skills.ts. Pre-fix
+// the list here had 2 phantom slugs (lawyer-clean + finance-watchdog
+// with no SKILL.md on disk) AND was missing 2 real ones (plan-step +
+// code-edit) — so the marketplace listing was 2-4 short of the actual
+// first-party set.
+import { FIRST_PARTY_SLUGS as FIRST_PARTY_SKILLS } from './first-party-skills';
 
 async function skillsListFromChain(limit: number): Promise<SkillListing[]> {
   const network = getNetwork();

@@ -24,18 +24,12 @@ const SCOPE_PRESETS = [
 ] as const;
 
 /**
- * Skill-scoped grants — mirror the manifest ids on disk so users can
- * authorise a single skill rather than a whole namespace. Scope hash
- * is `keccak256("skill:" + id)`. Adding a skill to this list is the
- * only change needed for it to appear in the grant form.
+ * Skill-scoped grants — pulls from the canonical first-party set so
+ * the grant form lists every shipped skill (was hand-maintained and
+ * silently missing 'content-pitch-review' pre-2026-05-14).
  */
-const SKILL_SCOPES = [
-  'private-doc-review',
-  'github-audit',
-  '0g-integration-auditor',
-  'plan-step',
-  'code-edit',
-] as const;
+import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
+const SKILL_SCOPES = FIRST_PARTY_SLUGS;
 type SkillId = (typeof SKILL_SCOPES)[number];
 
 type ScopeKind = 'namespace' | 'skill';
