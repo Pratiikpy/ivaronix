@@ -297,22 +297,48 @@ async function drivePopupOnce(popup: Page, label: string, maxSteps = 8): Promise
     if (await warningCheckbox.isVisible({ timeout: 800 }).catch(() => false)) {
       await warningCheckbox.check({ force: true }).catch(() => {});
     }
-    // Multi-label confirm button
+    // EXCLUDE disabled buttons + EXCLUDE "Cancel"; multi-label confirm.
     const confirmBtn = popup
       .locator(
-        "button:has-text('Confirm'), button:has-text('Approve'), button:has-text('Sign'), button:has-text('Connect'), button:has-text('Send'), button:has-text('Switch'), button:has-text('Next'), button:has-text('Got it'), button:has-text('Continue'), button:has-text('Proceed')"
+        "button:not([disabled]):has-text('Confirm'), " +
+        "button:not([disabled]):has-text('Approve'), " +
+        "button:not([disabled]):has-text('Sign'), " +
+        "button:not([disabled]):has-text('Connect'), " +
+        "button:not([disabled]):has-text('Send'), " +
+        "button:not([disabled]):has-text('Switch'), " +
+        "button:not([disabled]):has-text('Next'), " +
+        "button:not([disabled]):has-text('Got it'), " +
+        "button:not([disabled]):has-text('Continue'), " +
+        "button:not([disabled]):has-text('Proceed')"
       )
+      .filter({ hasNotText: /Cancel/i })
       .first();
     try {
       await confirmBtn.waitFor({ state: 'visible', timeout: 4_000 });
+      const txt = await confirmBtn.textContent().catch(() => '?');
       await confirmBtn.scrollIntoViewIfNeeded().catch(() => {});
       await confirmBtn.hover().catch(() => {});
-      await confirmBtn.click({ delay: 70 });
-      console.log(`  ${label} step ${step}: clicked`);
-      await popup.waitForTimeout(1_800);
+      await confirmBtn.click({ delay: 70, force: true });
+      console.log(`  ${label} step ${step}: clicked "${txt?.trim()}"`);
+      await popup.waitForTimeout(2_500);
       if (!popup.isClosed()) await snap(popup, `${label}-step-${step}`);
-    } catch {
-      console.log(`  ${label}: no actionable button at step ${step}, done`);
+    } catch (e) {
+      // FALLBACK: MM v13.30 default-button is activated by Enter key.
+      // If selector match fails, press Enter on the popup page.
+      console.log(`  ${label}: selector miss at step ${step}, trying Enter`);
+      try {
+        await popup.bringToFront();
+        await popup.keyboard.press('Enter');
+        await popup.waitForTimeout(2_500);
+        if (!popup.isClosed()) {
+          await snap(popup, `${label}-enter-${step}`);
+          console.log(`  ${label} step ${step}: Enter pressed`);
+          continue;
+        }
+      } catch {
+        /* fall through to done */
+      }
+      console.log(`  ${label}: no actionable at step ${step} (${(e as Error).message.split('\n')[0]}), done`);
       break;
     }
   }
@@ -367,21 +393,42 @@ async function main(): Promise<void> {
   await studio.waitForTimeout(3_000);
   await snap(studio, 'onboard-loaded');
 
-  // Listen for connect popup
-  const connectPopupP = ctx.waitForEvent('page', { timeout: 15_000 }).catch(() => null);
+  // Click Connect → loop-drive ANY popups (connect, SIWE, chain switch).
   await clickButton(studio, 'button:has-text("Connect wallet"), button:has-text("Connect injected")', 'Connect wallet', 10_000);
-  await studio.waitForTimeout(2_000);
-  const connectPopup = await connectPopupP;
-  if (connectPopup && connectPopup.url().includes(extId)) {
-    await drivePopupOnce(connectPopup, 'mm-connect');
-  } else {
-    // Sometimes MM injects in-context vs popup — give it another beat
-    await studio.waitForTimeout(2_000);
-    const popup = ctx.pages().find((p) => p.url().includes(extId) && p !== mmPopup);
-    if (popup) await drivePopupOnce(popup, 'mm-connect');
+  await studio.waitForTimeout(3_500); // wait for popup to spawn
+
+  let drivenCount = 0;
+  const driven = new Set<Page>();
+  for (let i = 0; i < 8; i++) {
+    // Dump all pages for debug
+    const allPages = ctx.pages();
+    console.log(`  [iter ${i}] pages in context:`);
+    for (const p of allPages) {
+      const tag = p === mmPopup ? '(mmPopup)' : p === studio ? '(studio)' : driven.has(p) ? '(driven)' : '(candidate)';
+      console.log(`    ${tag} ${p.url().slice(0, 80)}`);
+    }
+    // Find an undriven page that's NOT mmPopup/studio AND has extId in URL
+    const popup = allPages.find((p) =>
+      p.url().includes(extId) && p !== mmPopup && p !== studio && !driven.has(p)
+    );
+    if (popup) {
+      const label = drivenCount === 0 ? 'mm-connect' : drivenCount === 1 ? 'mm-siwe' : `mm-popup-${drivenCount}`;
+      driven.add(popup);
+      await drivePopupOnce(popup, label, 6);
+      drivenCount += 1;
+      await studio.waitForTimeout(2_500);
+      continue;
+    }
+    // Check connected state
+    const txt = await studio.locator('body').innerText().catch(() => '');
+    if (/0x[a-f0-9]{4}.{0,40}0x[a-f0-9]{4}|Disconnect/i.test(txt)) {
+      console.log(`  ✓ Studio shows connected state after ${drivenCount} popups`);
+      break;
+    }
+    await studio.waitForTimeout(2_500);
   }
   await studio.bringToFront();
-  await studio.waitForTimeout(3_000);
+  await studio.waitForTimeout(2_500);
   await snap(studio, 'after-connect');
 
   // 3. Switch to Galileo network — Studio should prompt OR we can request
@@ -441,12 +488,25 @@ async function main(): Promise<void> {
   await studio.waitForTimeout(3_000);
   await snap(studio, 'after-run-click');
 
-  const payPopup = await payPopupP;
-  if (payPopup && payPopup.url().includes(extId)) {
-    await drivePopupOnce(payPopup, 'mm-payment');
-  } else {
-    const popup = ctx.pages().find((p) => p.url().includes(extId) && p !== mmPopup && p !== studio);
-    if (popup) await drivePopupOnce(popup, 'mm-payment');
+  // Loop-drive any popups that appear after Run click (SIWE if expired,
+  // then paySkillRun tx). The pipeline waits for /api/run/estimate
+  // (chain read · slow) before opening the payment popup, so give it
+  // generous time.
+  let payDriven = 0;
+  for (let i = 0; i < 4; i++) {
+    const popup = ctx.pages().find((p) =>
+      p.url().includes(extId) && p !== mmPopup && p !== studio
+    );
+    if (popup) {
+      const label = payDriven === 0 ? 'mm-payment' : `mm-post-pay-${payDriven}`;
+      await drivePopupOnce(popup, label, 6);
+      payDriven += 1;
+      await studio.waitForTimeout(2_500);
+      continue;
+    }
+    // Check if Studio redirected to /r/<id>
+    if (/\/r\/\d+/.test(studio.url())) break;
+    await studio.waitForTimeout(4_500);
   }
 
   // 6. Wait for receipt redirect
