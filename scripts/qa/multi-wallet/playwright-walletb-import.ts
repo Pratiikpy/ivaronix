@@ -222,15 +222,51 @@ async function main(): Promise<void> {
   console.log('=== importing Wallet B private key ===');
   await mmPage.waitForTimeout(2_000);
 
-  // iter-140 finding: navigating via account-menu UI is unreliable in MM v13.30
-  // (it opens /account-list but the "Add account" / "Import account" buttons
-  // are inside a complex multichain popover with non-stable selectors).
-  // Direct URL approach: navigate straight to the import-account route.
-  console.log('   navigating directly to import-account route...');
-  await mmPage.goto(`${mmHomeUrl}#new-account/import`, { waitUntil: 'domcontentloaded', timeout: 15_000 }).catch(() => {});
-  await mmPage.waitForTimeout(3_000);
-  console.log(`   URL after navigation: ${mmPage.url()}`);
-  await snap(mmPage, 'mm-import-account-direct-nav');
+  // iter-141 finding: MM v13.30 source archeology revealed that the only
+  // existing route is `home.html#new-account/connect` (hardware wallets);
+  // private-key import happens INLINE in the multichain-account-picker
+  // popover, NOT via URL navigation. Component testids found in
+  // mm/extension/common-0.js include `multichain-account-picker`,
+  // `multichain-account-menu-popover-action-button`,
+  // `import-account-confirm-button`.
+  console.log('   targeting multichain-account-picker testid...');
+  const picker = mmPage.locator('[data-testid="multichain-account-picker"]').first();
+  if (await picker.isVisible({ timeout: 8_000 }).catch(() => false)) {
+    await picker.click();
+    await mmPage.waitForTimeout(2_000);
+    await snap(mmPage, 'mm-picker-clicked');
+  } else {
+    console.log('   picker not found via testid; clicking the address chip at top');
+    await mmPage.locator('button').filter({ hasText: /0x[a-fA-F0-9]{4}/ }).first()
+      .click({ timeout: 5_000 }).catch(() => {});
+    await mmPage.waitForTimeout(2_000);
+    await snap(mmPage, 'mm-address-chip-clicked');
+  }
+
+  // Look for an "Add account" or popover action button. MM v13.30 uses
+  // `add-multichain-account-button` + `multichain-account-menu-popover`.
+  const addAccountBtn = mmPage.locator(
+    '[data-testid="add-multichain-account-button"], [data-testid="add-account"], [data-testid="multichain-account-menu-popover-action-button"]',
+  ).first();
+  if (await addAccountBtn.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    console.log('   clicking add-multichain-account-button...');
+    await addAccountBtn.click();
+    await mmPage.waitForTimeout(2_500);
+    await snap(mmPage, 'mm-add-account-clicked');
+  }
+
+  // Look for Import Account option in the popover/menu (text-based fallback).
+  const importOption = mmPage.locator(
+    'button:has-text("Import account"), button:has-text("Import a private key"), [role="menuitem"]:has-text("Import")',
+  ).first();
+  if (await importOption.isVisible({ timeout: 5_000 }).catch(() => false)) {
+    console.log('   clicking Import account...');
+    await importOption.click();
+    await mmPage.waitForTimeout(3_000);
+    await snap(mmPage, 'mm-import-option-clicked');
+  } else {
+    console.log('   Import option not found via locator strategies — diagnostics below');
+  }
 
   // Diagnostic dump iter-140: log all visible inputs, buttons, and headings.
   console.log('\n=== diagnostic dump at step 12 ===');
