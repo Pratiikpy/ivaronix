@@ -8,11 +8,16 @@
 | State | 2-wallet rows | 3-wallet rows | Total |
 |---|---:|---:|---:|
 | **PASS** | 0 | 0 | **0** |
-| **PENDING** | 12 | 2 | **14** |
+| **PENDING (chain side complete · UI side gated)** | 5 | 0 | **5** |
+| **PENDING (untested)** | 7 | 2 | **9** |
 | **BLOCKED** | 0 | 0 | **0** |
 | **Total rows** | **12** | **2** | **14** |
 
-PASS = real user could replay through real MetaMask + UI/CLI/ChainScan cross-check.
+PASS = real user could replay through real MetaMask + UI/CLI/ChainScan cross-check. No row meets that bar yet because Wallet B/C are not imported into a real MetaMask instance.
+
+**Chain-side complete (5 rows):** 763, 820, 821, 822, 827, 830 — each has a real chainscan-verifiable tx hash or revert reason proving the contract-level behaviour. UI side gated on MetaMask import.
+
+**Untested (9 rows):** 791, 825, 826, 828, 829, 863 (2-wallet) + 757, 864 (3-wallet) — need additional CLI/Playwright drives.
 
 ## Wallets in scope
 
@@ -37,10 +42,10 @@ The "NOT yet imported into MetaMask" status is the gate on every PASS classifica
 | 5 | 822 | MemoryAccessLogV2 spoofing defense | PENDING | ✅ iter-133 (revert "not agent") | ❌ no MM popup capture | Direct ABI call test — UI N/A for spoofing attempt. Honest re-classification: PASS (chain) + UI N/A. **Effective PASS after reclassify.** |
 | 6 | 825 | Data room share | PENDING | ❌ (room create iter-95 was single-wallet) | ❌ | Needs `ivaronix room create` with party=[Wallet B] then Wallet B opens `/data-room/<id>` in real MM. CLI side agent-doable; UI side gated. |
 | 7 | 826 | Data room revoke | PENDING | ❌ | ❌ | Needs the row 6 prerequisite + revoke + Wallet B refresh. |
-| 8 | 827 | Create delegate | PENDING | ❌ | ❌ | `ivaronix delegate grant <B-addr>` exists; needs to be driven + Studio /delegate rendering verified. |
-| 9 | 828 | Delegate run | PENDING | ❌ | ❌ | Needs CLI delegate run command exercised with Wallet B's key. |
-| 10 | 829 | Delegate receipt semantics | PENDING | ❌ | ❌ | Receipt-body verification: `agent.signedBy = 'operator-on-behalf-of-user'` + `ownerWallet = Wallet A`. Needs row 9 to produce a real receipt first. |
-| 11 | 830 | Revoke delegate | PENDING | ❌ | ❌ | Needs row 8 prerequisite + revoke + retry-action-fails. |
+| 8 | 827 | Create delegate | PENDING | ✅ iter-133 (`0xb491f9d0...` mint tokenId 5; fund tx `0x8e2c75c1...`) | ❌ no /delegate page capture from delegate's MM | Chain side done: delegate wallet `0xc347bCb0...` generated, funded with 0.005 OG, V1 passport minted (delegate.ts has v1-passport-allow marker; B-V2-38 tracks V2 migration). |
+| 9 | 828 | Delegate run | PENDING | ❌ | ❌ | Delegate grant issued iter-133 (`0x12ffcd01...` block 33009056 · grantId `0x7e4deb8d...`) but `delegate run` needs LLM call + receipt anchor — not driven in this iteration. |
+| 10 | 829 | Delegate receipt semantics | PENDING | ❌ | ❌ | Receipt-body verification gated on row 9 producing a real receipt. |
+| 11 | 830 | Revoke delegate | PENDING | ✅ iter-133 (`0xd30accbb...` block 33009107) | ❌ no UI capture | Chain side: capability grant revoked. State transition (grant active → revoked) observed on chain. Retry-action-fails post-revoke not yet driven. |
 | 12 | 863 | Marketplace: buyer runs creator skill | PENDING | ❌ | ❌ | Wallet B (as buyer) runs a skill published by operator (as creator). `ivaronix doc ask --skill <name>` with Wallet B's key. |
 
 ### 3-wallet rows
