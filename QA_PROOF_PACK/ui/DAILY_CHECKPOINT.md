@@ -268,6 +268,28 @@ CLI cross-tool consistency for receipt 31 reconfirmed:
 - UI /r/31: same receiptRoot · same agent · same registry chip
 - Byte-equal cross-tool ✓
 
+### Iter 19 V2-V3-first migration · final state across 5 surfaces (commit 8ac1040)
+
+**§B-V2-38 ✅ SHIPPED** — closed across cron iters 11-17 with 8 commits chained:
+
+| Surface | V2-first | V3-first | Reports version | Smoke proof |
+|---|---|---|---|---|
+| Studio dashboard | ✓ since K-2 | ✓ since iter-126 | ✓ chip on /r/<id> | live curls iter-19 |
+| Studio /api/run | ✓ since K-2 | ✓ pipeline routes V3 slots 10/11/12 | ✓ ANCHORED chip | /api/run/demo id=32 |
+| CLI `receipt show` | ✓ since iter-92 | ✓ V3-aware lookup | ✓ V1/V2/V3 tag | doctor V1=1644+V2=31+V3=6=1681 |
+| CLI `serve` REST | ✓ since iter-12 | ✓ since iter-12 | ✓ `registry` field | direct curl probe |
+| MCP server | ✓ since iter-11 | ✓ since iter-10 | ✓ `registry V3\|V2\|V1` line | smoke-mcp.ts passes |
+
+**Live consistency cross-check (iter-19):**
+- /api/run/demo POST → `receiptOnchainId: 32` (anchored on V2)
+- /r/32 GET (Vercel) → ReceiptRegistryV2 (the just-anchored receipt)
+- /healthz now V2=32 (was 31 pre-anchor)
+- /global headline now 1,682 (was 1,681)
+- CLI stats: operator wallet shows tokenId 1 (V2 passport, was 'not minted' pre-fix)
+- MCP smoke: V3 ANCHORED + V2 ANCHORED + operator V2 contract tokenId 1
+
+The Ivaronix tri-surface (Studio UI · CLI · MCP) is now read/write-consistent for the V3→V2→V1 receipt fallback path and V2→V1 passport fallback. The same URL semantic produces the same answer across all surfaces. K-1/K-4/K-6 V2 passport fixes apply to every passport-mint and recordReceipt() call across the codebase.
+
 ### Iter 8 CLI doctor half-bakes fixed (commit 0cac46f)
 
 Running `ivaronix doctor` surfaced two real half-bakes:
