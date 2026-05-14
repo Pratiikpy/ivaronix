@@ -263,6 +263,8 @@ body {
      * visible at touch-target sizes (38h, below 44 minimum). */
     header > div > nav > a[href="/thesis"],
     header > div > nav > a[href="/0g"],
+    header > div > nav > a[href="/verticals"],
+    header > div > nav > a[href="/legal"],
     header > div > nav > a[href="/agents"],
     header > div > nav > a[href="/global"],
     header > div > nav > a[href="/skills"],
@@ -414,6 +416,12 @@ dd.mono, .card .mono {
   transform: translateY(-1px);
 }
 
+.live-feed-row {
+  /* WCAG 2.5.5 Level AA touch-target ≥ 44×44 on mobile. The grid
+   * row sits at 43px from font-size 12 + 12px padding × 2, just shy
+   * of the 44px minimum. Bump explicitly so the audit stays green. */
+  min-height: 44px;
+}
 .live-feed-row:hover {
   background: var(--color-tonal);
 }
