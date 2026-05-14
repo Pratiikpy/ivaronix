@@ -536,21 +536,63 @@ docCommand
     // findings from the canonical receipt body. ok=false records the
     // attempt honestly when the model emitted prose-only.
     const parseAttempt = tryParseJson<unknown>(finalOutput);
-    const parsedField = parseAttempt.ok
-      ? {
-          ok: true as const,
-          data: parseAttempt.value,
-          repaired: parseAttempt.repaired,
-          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+    // Schema-aware validation · B-V2-46 closure (launch-readiness).
+    // When the skill manifest declares `og.output_schema.required_keys`,
+    // check the parsed data against the required set. Mismatch → mark
+    // validationFailed: true (mark-and-anchor preserves Router credits +
+    // honest gap signal); if `fail_closed: true`, exit before chain anchor.
+    type ParsedField =
+      | { ok: true; data: unknown; repaired: string[]; rawBytes: number; validationFailed?: boolean; validationError?: string }
+      | { ok: false; error: string; attempted: string[]; rawBytes: number };
+    let parsedField: ParsedField;
+    const outputSchema = skill.manifest.og.output_schema;
+    let validationFailed = false;
+    let validationError: string | undefined;
+    if (parseAttempt.ok && outputSchema) {
+      const required = outputSchema.required_keys;
+      const data = parseAttempt.value;
+      if (Array.isArray(data)) {
+        validationFailed = true;
+        validationError = `array shape but object with required keys [${required.join(', ')}] expected`;
+      } else if (data === null || typeof data !== 'object') {
+        validationFailed = true;
+        validationError = `${typeof data} shape but object with required keys [${required.join(', ')}] expected`;
+      } else {
+        const missing = required.filter((k) => !(k in (data as Record<string, unknown>)));
+        if (missing.length > 0) {
+          validationFailed = true;
+          validationError = `missing required keys: ${missing.join(', ')}`;
         }
-      : {
-          ok: false as const,
-          error: parseAttempt.error,
-          attempted: parseAttempt.attempted,
-          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
-        };
+      }
+    }
     if (parseAttempt.ok) {
-      ui.pass(`structured output   parsed ok (${parseAttempt.repaired.length === 0 ? 'raw' : parseAttempt.repaired.join('+')})`);
+      parsedField = {
+        ok: true,
+        data: parseAttempt.value,
+        repaired: parseAttempt.repaired,
+        rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+        ...(validationFailed ? { validationFailed: true, validationError } : {}),
+      };
+    } else {
+      parsedField = {
+        ok: false,
+        error: parseAttempt.error,
+        attempted: parseAttempt.attempted,
+        rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+      };
+    }
+    if (parseAttempt.ok) {
+      if (!validationFailed) {
+        ui.pass(`structured output   parsed ok (${parseAttempt.repaired.length === 0 ? 'raw' : parseAttempt.repaired.join('+')})`);
+      } else {
+        ui.fail(`structured output   schema mismatch · ${validationError}`);
+        if (outputSchema?.fail_closed) {
+          ui.hint('skill declares fail_closed: true · refusing to anchor with malformed output');
+          process.exitCode = 1;
+          return;
+        }
+        ui.hint(`anchoring receipt anyway (mark-and-anchor preserves Router credits · validationFailed flag is visible)`);
+      }
     } else {
       ui.info(`structured output   prose-only · ${parseAttempt.error}`);
     }

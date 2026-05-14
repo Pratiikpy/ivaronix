@@ -286,6 +286,42 @@ const OgBlock = z.object({
    * manifestHash stays byte-stable across the schema change.
    */
   related_skills: z.array(z.string()).optional(),
+  /**
+   * Output schema validation contract (B-V2-46 closure · launch-readiness).
+   *
+   * Skills that declare a JSON output shape in their SKILL.md "Output
+   * schema" section should also list the required top-level keys here so
+   * the runtime can fail-closed when the model emits the wrong shape.
+   *
+   * Pre-fix, receipt #72 (nda-triage re-anchor) caught a real variance
+   * gap: the parser recovered an empty `[]` array from the model's prose
+   * even though the skill demanded `{type, term_years, governing_law,
+   * exclusions_list, red_flags, standard_or_aggressive,
+   * signature_recommendation}`. The receipt still anchored with
+   * `parsed.ok: true · data: []` because the parser only checks "is it
+   * valid JSON," not "does it match the skill's contract."
+   *
+   * With `output_schema.required_keys` declared, the runtime checks the
+   * parsed data against the required set:
+   *   - shape is an object AND all required keys are present → ok
+   *   - shape is an array OR a required key is missing → mark
+   *     `outputs.parsed.validationFailed: true` with the missing-keys
+   *     list. Receipt still anchors (mark-and-anchor — operator paid
+   *     for the Router call, the receipt is honest about the gap).
+   *
+   * Optional for canonical-hash backwards compatibility. Skills that omit
+   * the field are unvalidated (legacy behavior). First-party legal cluster
+   * SHIPS the field on every manifest.
+   */
+  output_schema: z
+    .object({
+      required_keys: z.array(z.string()).min(1),
+      // Optional: when true, runtime fails-closed (returns error before
+      // receipt anchor) rather than mark-and-anchor. Default false so
+      // operator doesn't lose Router credits on a single bad output.
+      fail_closed: z.boolean().default(false),
+    })
+    .optional(),
   // Hooks is optional so older manifests (published without an `og.hooks` block)
   // produce the SAME canonical-JSON hash they did before this field was added.
   // Adding `.default({})` would silently mutate every old manifest's hash.

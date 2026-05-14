@@ -533,6 +533,26 @@ export const ReceiptV1Schema = z.object({
           data: z.unknown(),
           repaired: z.array(z.string()),
           rawBytes: z.number().int().nonnegative(),
+          /**
+           * Schema-validation status (B-V2-46 closure · launch-readiness).
+           * Set to true when the skill manifest declares `og.output_schema.required_keys`
+           * AND the parsed data fails the required-keys check (e.g. model
+           * emitted `[]` when the skill demanded `{type, term_years, ...}`).
+           * Receipt still anchors (mark-and-anchor — operator paid for the
+           * run; the gap is honest), but downstream consumers can branch
+           * on this flag to refetch prose / retry / etc.
+           *
+           * Absent on receipts where the skill doesn't declare a schema
+           * (legacy behaviour) OR where the parsed data passes validation.
+           */
+          validationFailed: z.boolean().optional(),
+          /**
+           * Comma-separated list of required keys that were missing or
+           * the reason validation failed (e.g. "array shape but object
+           * required" or "missing: signature_recommendation, term_years").
+           * Populated only when `validationFailed: true`.
+           */
+          validationError: z.string().optional(),
         }),
         z.object({
           ok: z.literal(false),

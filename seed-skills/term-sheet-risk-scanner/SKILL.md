@@ -1,6 +1,6 @@
 ---
 name: term-sheet-risk-scanner
-version: 0.1.0
+version: 0.1.1
 description: Scan a Series A/B term sheet for liquidation preferences, participation rights, anti-dilution, option pool expansion, founder vesting reset, drag-along, MFN, pay-to-play, and protective provisions. Returns structured findings with founder-impact estimates. Testnet output may miss subtle terms — production-grade scanning requires a larger model on mainnet; this skill validates the pipeline today and ships with upgraded models on mainnet promotion. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
@@ -37,6 +37,12 @@ og:
     - "contract-renewal-clause-detector"
     - "nda-triage-reviewer"
     - "legal-citation-verifier"
+  # Output schema · B-V2-46 closure. Receipt anchors with
+  # `validationFailed: true` if the model emits the wrong shape.
+  output_schema:
+    required_keys:
+      - findings
+    fail_closed: false
   permissions:
     # Term-sheet review pulls the founder's prior cap-table conversations
     # from memory so the model can flag dilution drift across rounds

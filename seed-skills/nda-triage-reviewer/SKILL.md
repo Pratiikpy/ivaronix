@@ -1,6 +1,6 @@
 ---
 name: nda-triage-reviewer
-version: 0.1.0
+version: 0.1.1
 description: Triage an NDA in seconds. Classifies as mutual or one-way, extracts term length, governing law, jurisdiction, exclusions, and red flags. Built for founders and in-house counsel reviewing 5-10 NDAs/week from vendors, customers, and partners. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
@@ -33,6 +33,25 @@ og:
     - "contract-renewal-clause-detector"
     - "term-sheet-risk-scanner"
     - "legal-citation-verifier"
+  # Output schema contract · B-V2-46 closure. The runtime checks that
+  # outputs.parsed.data is an object with every required key present
+  # before anchoring. If the model emits the wrong shape (e.g. an empty
+  # `[]` array as receipt #72 caught), the receipt anchors with
+  # `outputs.parsed.validationFailed: true` and the missing-keys list.
+  # fail_closed=false because Router credits cost real money and
+  # mark-and-anchor preserves a per-run audit trail. Studios reading
+  # `validationFailed` should retry or fall back to prose.
+  output_schema:
+    required_keys:
+      - type
+      - term_years
+      - governing_law
+      - jurisdiction
+      - exclusions_list
+      - red_flags
+      - standard_or_aggressive
+      - signature_recommendation
+    fail_closed: false
   permissions:
     # High-volume triage: pull prior reviewed NDAs from memory so the
     # model can note "this NDA matches the vendor template you reviewed

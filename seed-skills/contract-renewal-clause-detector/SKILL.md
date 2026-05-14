@@ -1,6 +1,6 @@
 ---
 name: contract-renewal-clause-detector
-version: 0.1.0
+version: 0.1.1
 description: Scan a contract for every auto-renewal, auto-extension, evergreen, and negative-option-billing clause. Flags hidden renewal in boilerplate, asymmetric notice periods, and price escalation at renewal. Part of the Ivaronix legal cluster on Galileo testnet. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
@@ -31,6 +31,12 @@ og:
     - "nda-triage-reviewer"
     - "term-sheet-risk-scanner"
     - "legal-citation-verifier"
+  # Output schema · B-V2-46 closure. Receipt anchors with
+  # `validationFailed: true` if the model emits the wrong shape.
+  output_schema:
+    required_keys:
+      - findings
+    fail_closed: false
   permissions:
     # Legal review skills query prior reviewed contracts so the model can
     # cite "I flagged the same evergreen clause on the lease I reviewed
