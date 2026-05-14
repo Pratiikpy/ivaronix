@@ -1,4 +1,4 @@
-// v1-passport-allow: telegram bot exposes V1 passport state for chat-style queries; V2-first migration tracked in USER_TODO §B-V2-38.
+// Telegram bot exposes V2 → V1 passport state via the canonical AgentPassportClient (matches CLI passport show + Studio dashboard). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 /**
  * Ivaronix Telegram thin client (PASS 76 S-3).
  *
@@ -24,7 +24,7 @@
 
 import 'dotenv/config';
 import { Bot } from 'grammy';
-import { JsonRpcProvider, Contract } from 'ethers';
+import { JsonRpcProvider } from 'ethers';
 import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { existsSync, mkdirSync } from 'node:fs';
@@ -37,8 +37,6 @@ const IS_WIN = process.platform === 'win32';
 interface Config {
   token: string;
   network: Network;
-  registryAddress?: Address;
-  passportAddress?: Address;
   cliEntry: string; // path to apps/cli/src/bin/ivaronix.ts (resolved)
   studioBase: string;
 }
@@ -171,10 +169,6 @@ function isAddress(s: string): boolean {
   return /^0x[0-9a-fA-F]{40}$/.test(s);
 }
 
-const PASSPORT_ABI = [
-  'function passportOf(address wallet) external view returns (uint256 tokenId, string memory profileURI, uint64 mintedAt, int64 trustScore)',
-] as const;
-
 async function buildBot(cfg: Config): Promise<Bot> {
   const bindings = new ChatBindings();
   const indexer = new IndexerDb(resolve(anchorDbDir(), '..', 'indexer', 'receipts.db'));
@@ -238,12 +232,14 @@ async function buildBot(cfg: Config): Promise<Bot> {
   });
 
   bot.command('passport', async (ctx) => {
-    if (!cfg.passportAddress) {
-      const { getDeployedAddress } = await import('@ivaronix/og-chain');
-      const a = getDeployedAddress(cfg.network, 'AgentPassportINFT');
-      if (a) cfg.passportAddress = a as Address;
-    }
-    if (!cfg.passportAddress) {
+    // V2-first lookup using the canonical AgentPassportClient. Replaces
+    // the inline PASSPORT_ABI tuple shape (which didn't match V1's actual
+    // passportOf(address)→uint256 signature). Operator-funded V2 carries
+    // the active passport state with V1 fallback for legacy mints.
+    const { getDeployedAddress, AgentPassportClient } = await import('@ivaronix/og-chain');
+    const addrV2 = getDeployedAddress(cfg.network, 'AgentPassportINFTV2');
+    const addrV1 = getDeployedAddress(cfg.network, 'AgentPassportINFT');
+    if (!addrV1 && !addrV2) {
       await ctx.reply('AgentPassport address unavailable for this network.');
       return;
     }
@@ -254,21 +250,32 @@ async function buildBot(cfg: Config): Promise<Bot> {
       return;
     }
     try {
-      const c = new Contract(cfg.passportAddress, PASSPORT_ABI, provider);
-      const out = (await c.passportOf!(wallet)) as readonly [bigint, string, bigint, bigint];
-      const tokenId = out[0];
-      if (tokenId === 0n) {
+      // V2 first, V1 fallback. The first non-null profile wins; we
+      // report which contract version returned it.
+      type Profile = Awaited<ReturnType<InstanceType<typeof AgentPassportClient>['getPassportByWallet']>>;
+      let profile: Profile = null;
+      let contractVersion: 'V1' | 'V2' = 'V2';
+      if (addrV2) {
+        profile = await new AgentPassportClient(addrV2 as Address, provider).getPassportByWallet(wallet);
+        if (profile) contractVersion = 'V2';
+      }
+      if (!profile && addrV1) {
+        profile = await new AgentPassportClient(addrV1 as Address, provider).getPassportByWallet(wallet);
+        if (profile) contractVersion = 'V1';
+      }
+      if (!profile) {
         await ctx.reply(`No passport found for ${wallet}. Mint via: ivaronix passport mint`);
         return;
       }
       await ctx.reply(
         [
-          '*AgentPassport*',
+          `*AgentPassport (${contractVersion})*`,
           `wallet: ${wallet}`,
-          `tokenId: ${tokenId}`,
-          `profileURI: ${out[1]}`,
-          `mintedAt: ${new Date(Number(out[2]) * 1000).toISOString()}`,
-          `trustScore: ${out[3]}`,
+          `tokenId: ${profile.tokenId}`,
+          `trustScore: ${profile.trustScore}`,
+          `receiptCount: ${profile.receiptCount}`,
+          `violations: ${profile.violationCount}`,
+          `mintedAt: ${new Date(Number(profile.mintedAt) * 1000).toISOString()}`,
         ].join('\n'),
         { parse_mode: 'Markdown' },
       );
