@@ -1,0 +1,32 @@
+MASTER SERVICES AGREEMENT — ACCOUNT MANAGEMENT PLATFORM
+
+This Master Services Agreement (this "Agreement") is entered into as of January 15, 2026 (the "Effective Date"), between Vendor Platform, Inc. ("Vendor") and Subscriber Co. ("Customer"), each a "Party" and collectively the "Parties".
+
+1. SERVICES
+Vendor will provide Customer with access to the Vendor Platform Application ("Services") as described in Schedule A.
+
+2. FEES
+Customer shall pay Vendor the fees set forth in Schedule A. Fees are due net-30 from invoice date. Late payments accrue interest at 1.5% per month or the maximum rate permitted by law, whichever is less.
+
+3. TERM
+3.1 Initial Term. The initial term of this Agreement shall be twelve (12) months from the Effective Date.
+
+3.2 Renewal Term. Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a "Renewal Term") unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.
+
+3.3 Renewal Pricing. For each Renewal Term, Customer's fees shall increase by the greater of (i) seven percent (7%) or (ii) the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.
+
+4. TERMINATION FOR CAUSE
+Either Party may terminate this Agreement for material breach upon thirty (30) days written notice if the breaching Party fails to cure within such period.
+
+5. MISCELLANEOUS
+5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.
+
+5.2 Vendor may modify the Services and these terms from time to time in its sole discretion upon thirty (30) days notice. Customer's continued use of the Services after such notice constitutes acceptance of the modified terms.
+
+6. GOVERNING LAW
+This Agreement shall be governed by the laws of the State of Delaware, without regard to its conflict of laws principles. Any disputes shall be resolved by binding arbitration in Wilmington, Delaware, under the rules of the American Arbitration Association.
+
+7. ENTIRE AGREEMENT
+This Agreement, together with all Schedules, constitutes the entire agreement between the Parties and supersedes all prior or contemporaneous agreements.
+
+[Signature blocks omitted]

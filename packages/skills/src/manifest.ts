@@ -215,11 +215,67 @@ const SkillTools = z.object({
 
 export type SkillToolDef = z.infer<typeof SkillTools>['custom'][number];
 
+/**
+ * Vertical taxonomy. Skills declare their target domain so the marketplace
+ * can group + filter, and so `/verticals` can lead with the live cluster.
+ * Adding a vertical here is the contract: every `LIVE` value MUST have at
+ * least one shipped, published, FULLY-VERIFIED-anchored first-party skill
+ * behind it. `roadmap_*` values are the honest COMING SOON list — they exist
+ * in the enum so a `/verticals` card can render with an amber dashed badge,
+ * but no shipped skill carries a `roadmap_*` value.
+ *
+ * Backwards compatibility: this field is optional on `og` so the 6 existing
+ * first-party skills (published with canonical sha256 manifestHashes already
+ * registered on `SkillRegistryV2 0xF05113E83…`) serialize to byte-identical
+ * canonical JSON when re-loaded. New first-party skills MUST declare a vertical.
+ */
+export const VerticalEnum = z.enum([
+  'legal',
+  'roadmap_healthcare',
+  'roadmap_hr',
+  'roadmap_finance',
+  'roadmap_customer_support',
+  'roadmap_education',
+  'roadmap_code',
+  'roadmap_compliance',
+  'roadmap_insurance',
+  'roadmap_real_estate',
+  'roadmap_journalism',
+  'roadmap_marketing_sales',
+  'roadmap_research',
+  'roadmap_government',
+  'roadmap_procurement',
+]);
+
+export type Vertical = z.infer<typeof VerticalEnum>;
+
 const OgBlock = z.object({
   permissions: Permissions.default({} as z.infer<typeof Permissions>),
   reputation: Reputation.default({} as z.infer<typeof Reputation>),
   consensus: Consensus.default({} as z.infer<typeof Consensus>),
   burn: Burn.default({} as z.infer<typeof Burn>),
+  /**
+   * Vertical taxonomy (legal first · 14 others as honest roadmap). Optional
+   * to preserve canonical manifestHash byte-identity for previously published
+   * first-party skills. New manifests declare a vertical; the marketplace and
+   * `/verticals` page filter on it.
+   */
+  vertical: VerticalEnum.optional(),
+  /**
+   * Models this skill is permitted to run against. The runtime checks
+   * `model in acceptableModels[]` against the live 0G Compute provider
+   * catalog before invocation; mismatch fails the run rather than silently
+   * substituting. Empty/undefined = no whitelist (testnet permissive).
+   *
+   * TESTNET (Galileo · today): the legal cluster locks to
+   * `['qwen/qwen-2.5-7b-instruct']` plus whatever else `compute list-providers`
+   * returns live. Mainnet promotion swaps to `['0GM-1.0-35B-A3B',
+   * 'deepseek-v4-pro', 'qwen3-32b']` — never substitute before the §2.7
+   * smoke test confirms our route hits those endpoints.
+   *
+   * Optional for canonical-hash backwards compatibility.
+   */
+  acceptableModels: z.array(z.string()).optional(),
   // Hooks is optional so older manifests (published without an `og.hooks` block)
   // produce the SAME canonical-JSON hash they did before this field was added.
   // Adding `.default({})` would silently mutate every old manifest's hash.

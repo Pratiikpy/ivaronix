@@ -1,7 +1,7 @@
 ---
 name: private-doc-review
-version: 0.3.2
-description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Burn-mode-aware; produces an Action Receipt.
+version: 0.4.0
+description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Anchor of the Ivaronix legal cluster on Galileo testnet. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:
@@ -19,6 +19,13 @@ tests:
   - tests/sample-lease.txt
 
 og:
+  vertical: legal
+  # Testnet (Galileo · today): Qwen 2.5 7B + whatever else `compute list-providers`
+  # returns. Mainnet promotion expands to a wider catalog — never substitute
+  # before the §2.7 smoke test confirms the route hits the new endpoint.
+  # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
+  acceptableModels:
+    - "qwen/qwen-2.5-7b-instruct"
   permissions:
     # planning-003 §A.4.8: doc-review queries the user's prior memory for
     # related context (e.g. "I reviewed a similar lease 3 months ago and
