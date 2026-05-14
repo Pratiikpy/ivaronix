@@ -17,7 +17,27 @@ import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployment
 import type { OnChainReceipt } from '@ivaronix/og-chain';
 import { verifyClaimed, type CheckResult } from '@ivaronix/receipts';
 
-export const dynamic = 'force-dynamic';
+/**
+ * ISR · 24h revalidate so Vercel edge can cache the rendered HTML
+ * per the `Cache-Control: public, s-maxage=86400` directive set in
+ * `next.config.ts:headers()` (B-V2-45 / docs/PRIVACY_NOTES.md §1).
+ *
+ * Pre-fix `export const dynamic = 'force-dynamic'` forced Vercel to
+ * send `Cache-Control: private, no-cache, no-store, max-age=0`
+ * regardless of the next.config.ts setting — every distinct viewer
+ * of /r/<id> triggered a fresh server render + indexer read signed
+ * by the operator wallet. With ISR, the first viewer of a given
+ * receipt pays the render cost; subsequent viewers hit the edge
+ * cache, reducing operator-wallet appearance in indexer logs by
+ * ~99% on popular receipts (which is the whole point of the
+ * read-proxy privacy mitigation).
+ *
+ * Receipts are immutable post-anchor (canonical-hash-bound +
+ * signature-verifiable), so 24h staleness has zero correctness
+ * risk. Newly-anchored receipts will 404 until first request
+ * triggers the render — acceptable for testnet launch-readiness.
+ */
+export const revalidate = 86400;
 
 interface ResolvedReceipt {
   onChain: OnChainReceipt;
