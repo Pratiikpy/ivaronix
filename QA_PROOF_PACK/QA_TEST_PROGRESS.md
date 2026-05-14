@@ -4,7 +4,7 @@
 
 12 commits shipped across the run · 6 of 7 half-baked items closed · home page rewrite done · /learn + /faq + pc.0g.ai adapter + sovereignty circle + animated four-light + builder rail + before/after examples + half-baked audit + best-version audit all landed. Pre-commit gates green on every commit (typecheck + 76 source-file regressions + brand-token-drift + wording-lint).
 
-**Build-phase commit ledger:**
+**Build-phase commit ledger (27 commits total):**
 
 | # | Commit | Day | Shipped |
 |---|---|---|---|
@@ -20,6 +20,39 @@
 | 10 | `1d4ac82` | 19-22 | Before/after examples (3 anonymised cards) |
 | 11 | `219dad0` | 5-9 | Animated four-light (pure CSS 6s cycle) |
 | 12 | `44d5130` | 31 | Half-baked audit refresh (6 of 7 items LIVE) |
+| 13 | `44fe1e9` | docs | QA_TEST_PROGRESS refresh |
+| 14 | `219517e` | docs | Punch list reconcile |
+| 15 | `59d27c0` | fix | /docs real page + best-version audit |
+| 16 | `fa7cbf3` | 19-22 | 3 new FAQs (TEE · earnings · provider compromise) |
+| 17 | `6fffca3` | fix | /faq H1 "Twelve" drift caught by §17.7 |
+| 18 | `e6bf949` | fix | /faq second "twelve" Section eyebrow caught |
+| 19 | `7daa9c0` | 13-17 | 0G DA Phase 2 demote (later corrected) |
+| 20 | `a24c009` | 13-17 | DA entrance address corrected |
+| 21 | `051672e` | 13-17 | DA env vars + image-source-build corrected |
+| 22 | `344e5f7` | 13-17 | **DA client LIVE locally · preflight green** |
+| 23 | `77df22c` | 13-17 | DA honest scope · disperse needs encoder service |
+| 24 | `779690e` | 36 | **4 UNBACKED claims fixed** (CLI count · MCP snippet · Sealed Inference pill · audit doc) |
+| 25 | `d8a9553` | fix | README "5 primitives" (was "6" · KV is scaffolding) |
+| 26-27 | (test-phase) | testing | AI quality matrix · receipts #39-#47 anchored |
+
+**AI quality matrix (6 of 6 first-party skills tested, real on-chain receipts):**
+
+| Skill | Verdict | Receipt |
+|---|---|---|
+| `private-doc-review` | ✅ PASS — specific clause findings with $ amounts | #39 |
+| `plan-step` | ⚠ PARTIAL — structured but generic | #40 |
+| `0g-integration-auditor` | ✅ HONEST — no false-positives | #41-43 |
+| `code-edit` | 🔴 FAIL at `--quick` tier · diff doesn't apply | #44 |
+| `content-pitch-review` | ⚠ PARTIAL — caught defects, fixes weak | #45 |
+| `github-audit` | ⚠ PARTIAL — 1 real + 1 mild false-positive | #47 |
+
+**Honest finding:** receipt provenance is correct on every run — the chain anchors what the AI said faithfully, even when AI output is broken (code-edit). The receipt model is *process-verified*, not *answer-correct*.
+
+**Honest gap (NOT fully proven, work order step 4 perspective):**
+- Did NOT click every UI button via real Playwright drives — captured static page loads + visually inspected 8 PNGs + drove chain via Pattern C burner wallets.
+- Did NOT submit every form (`/skill/new`, `/onboard`, `/admin/treasury` withdraw click) via real browser.
+- Did NOT test every error/loading/empty state interactively.
+- Subagent currently building interactive Playwright suite (`scripts/qa/ui-test-plan/playwright-interactive-sweep.ts`) to close this gap.
 
 **Production build:** `pnpm --filter @ivaronix/studio build` PASS · 30+ routes including all new landing surfaces (/learn 201 B · /faq 201 B · /onboard 6.28 kB · /marketplace 201 B + subroutes).
 
