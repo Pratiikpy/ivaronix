@@ -1,11 +1,12 @@
-// v3-lookup-allow: writer emits slots 0-9 only (chat receipt types); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: reads V1 passport for chat trust-score display; V2-first migration tracked in USER_TODO §B-V2-38.
+// v3-lookup-allow: chat-v2 writer emits slots 0-9 only (chat receipt types); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// Passport trust-score read now V2-first via getActivePassportClient. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import React from 'react';
 import { render } from 'ink';
 import { JsonRpcProvider } from 'ethers';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
-import { AgentPassportClient, ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { getActivePassportClient } from '../lib/passport.js';
 import type { Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -40,15 +41,16 @@ export const chatV2Command = new Command('chat-v2')
 
     const fetchPassport = async () => {
       try {
-        const addr = getDeployedAddress(env.network, 'AgentPassportINFT');
-        if (!addr || !env.walletAddress) return null;
-        const client = new AgentPassportClient(addr, provider);
-        const data = await client.getPassportByWallet(env.walletAddress as Address);
+        if (!env.walletAddress) return null;
+        const handle = getActivePassportClient(env.network, provider);
+        if (!handle) return null;
+        const data = await handle.client.getPassportByWallet(env.walletAddress as Address);
         if (!data) return null;
         return {
           tokenId: data.tokenId.toString(),
           trust: data.trustScore.toString(),
           receipts: data.receiptCount.toString(),
+          contract: handle.version.toUpperCase() as 'V1' | 'V2',
         };
       } catch {
         return null;

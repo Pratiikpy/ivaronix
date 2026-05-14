@@ -1,11 +1,10 @@
 // v3-lookup-allow: bulk writer emits slots 0-9 only (doc_ask/consensus/burn/skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: bulk anchorer reads V1 passport for trust-score gating; V2-first migration tracked in USER_TODO §B-V2-38.
+// Passport read/write path now V2-first via getActivePassportClient (K-6 memoryRoot-poisoning fix on V2). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { writeFileSync, readdirSync, mkdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname, basename, extname } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import {
-  AgentPassportClient,
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
   getDeployedAddress,
@@ -15,6 +14,7 @@ import { sha256HexAsync, studioUrl, type Address, type Hash } from '@ivaronix/co
 import { docCommand } from './doc.js';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
+import { getActivePassportClient } from '../lib/passport.js';
 
 /**
  * Bulk multi-doc audit (planning-01 §4B).
@@ -168,7 +168,8 @@ export function addBulkCommand(parent: Command): void {
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
       const registryAddr = registryAddrV2 ?? registryAddrV1;
       const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+      // V2-first passport handle (K-6 memoryRoot-poisoning fix on V2).
+      const passportHandle = getActivePassportClient(env.network, wallet);
       if (!registryAddr) { ui.fail('ReceiptRegistry not deployed'); process.exitCode = 1; return; }
 
       const childIds = children.filter((c) => c.receiptId).map((c) => c.receiptId!);
@@ -324,18 +325,18 @@ export function addBulkCommand(parent: Command): void {
       };
       writeFileSync(localPath, JSON.stringify(updated, null, 2));
 
-      // Bump passport
-      if (passportAddr) {
+      // Bump passport — V2-first write so the K-6 memoryRoot-poisoning
+      // fix is engaged on the aggregate receipt's recordReceipt() call.
+      if (passportHandle) {
         try {
-          const passport = new AgentPassportClient(passportAddr, wallet);
-          const tokenId = await passport.passportOf(env.walletAddress as Address);
+          const tokenId = await passportHandle.client.passportOf(env.walletAddress as Address);
           if (tokenId !== 0n) {
-            ui.pending(`recording aggregate against passport tokenId=${tokenId}...`);
-            const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
+            ui.pending(`recording aggregate against ${passportHandle.version.toUpperCase()} passport tokenId=${tokenId}...`);
+            const ptx = await passportHandle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
             await ptx.wait();
-            const refreshed = await passport.getPassport(tokenId);
+            const refreshed = await passportHandle.client.getPassport(tokenId);
             if (refreshed) {
-              ui.pass(`passport updated     receiptCount=${refreshed.receiptCount} trustScore=${refreshed.trustScore}`);
+              ui.pass(`passport updated     receiptCount=${refreshed.receiptCount} trustScore=${refreshed.trustScore} · ${passportHandle.version.toUpperCase()}`);
             }
           }
         } catch (err) {
