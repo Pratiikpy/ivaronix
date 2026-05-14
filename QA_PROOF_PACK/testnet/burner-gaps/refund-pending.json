@@ -1,0 +1,16 @@
+{
+  "capturedAt": "2026-05-14T18:46:33.765Z",
+  "network": "galileo",
+  "chainId": 16602,
+  "skillPaymentAddress": "0x9eA5FDba913AC94dA8833Fee21F2832827950A5C",
+  "paySkillRunTx": "0x3f82ca95e01c56ba91b63027da8d0fcb218fc95feb8a21dcd7e211deb8d73ded",
+  "receiptRoot": "0xa4dd526dc6e2c598fd12a65774a2607cd2bdb55daccc939850c2a584c345cc2b",
+  "payer": "0x1C8075694d89845D7C4eF1bfbe0F9174C098Baa8",
+  "creator": "0x0B9caa2Ceb65a8018e3457396be38d846B463837",
+  "amount": "5000000000000000",
+  "paidAt": 1778784001,
+  "paidAtIso": "2026-05-14T18:40:01.000Z",
+  "unlockAt": 1778870401,
+  "unlockAtIso": "2026-05-15T18:40:01.000Z",
+  "note": "Phase-1 (pay) complete on-chain. Phase-2 (refund) is gated by SkillRunPayment.REFUND_TIMELOCK=24h. The cron should retry refundFailedRun(receiptRoot) after unlockAt elapses. Foundry test_A20_Refund_HappyPath_AfterTimelock proves the logic; this entry queues the real on-chain refund half."
+}

@@ -1,0 +1,99 @@
+{
+  "timestamp": "2026-05-14T18:54:40.567Z",
+  "elapsedSec": 56.592,
+  "alice": {
+    "address": "0xa2c07364eD010b0884d2adc51f4e18eB3900c748",
+    "privateKey": "0x71fccd3391770a2bab9039b309da6adae86447b24d46a47ea8443de4465d29ef"
+  },
+  "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "passportTokenId": "20",
+  "receiptId": "78",
+  "receiptRoot": "0xb383d3b7ea2591196b25f4f368cdf30cb23c500fa3ee0c070c7b54d36c6efee1",
+  "txs": {
+    "fundAlice": {
+      "hash": "0x66fb64d4de14e9ef9a727678758453d91044014ce2b670e7adaeb5d1e96c2306",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x66fb64d4de14e9ef9a727678758453d91044014ce2b670e7adaeb5d1e96c2306"
+    },
+    "mintPassport": {
+      "hash": "0x13f20b616822dfbcd77b08d280cff3b01f27c79a30e9ffd3c57cc7f36150024f",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x13f20b616822dfbcd77b08d280cff3b01f27c79a30e9ffd3c57cc7f36150024f"
+    },
+    "anchor": {
+      "hash": "0x39e4506ac46003a72305744b678a0d0f8846ff117805b7d662484c7bd86ab30b",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x39e4506ac46003a72305744b678a0d0f8846ff117805b7d662484c7bd86ab30b"
+    },
+    "recordReceipt": {
+      "hash": "0x40279a7c2352db4e77ed18d6022a5fc3e61996a3898d5a7cb85053337e848a91",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x40279a7c2352db4e77ed18d6022a5fc3e61996a3898d5a7cb85053337e848a91"
+    }
+  },
+  "deltas": {
+    "receiptCount": {
+      "before": "0",
+      "after": "1"
+    },
+    "trustScore": {
+      "before": "0",
+      "after": "5"
+    }
+  },
+  "event": {
+    "tokenId": "20",
+    "receiptId": "78",
+    "receiptRoot": "0xb383d3b7ea2591196b25f4f368cdf30cb23c500fa3ee0c070c7b54d36c6efee1",
+    "receiptType": 0,
+    "trustScoreDelta": "5"
+  },
+  "checks": [
+    {
+      "name": "operator is authorized recorder",
+      "pass": true,
+      "detail": "allowed to call recordReceipt"
+    },
+    {
+      "name": "recordReceipt tx success",
+      "pass": true,
+      "detail": "tx 0x40279a7c2352db4e77ed18d6022a5fc3e61996a3898d5a7cb85053337e848a91"
+    },
+    {
+      "name": "receiptCount incremented by 1",
+      "pass": true,
+      "detail": "0 -> 1"
+    },
+    {
+      "name": "trustScore delta == +5",
+      "pass": true,
+      "detail": "0 -> 5"
+    },
+    {
+      "name": "ReceiptRecorded event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "event.tokenId == alice token",
+      "pass": true,
+      "detail": "20"
+    },
+    {
+      "name": "event.receiptId == anchored id",
+      "pass": true,
+      "detail": "78"
+    },
+    {
+      "name": "event.receiptRoot matches",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "event.trustScoreDelta == 5",
+      "pass": true,
+      "detail": "5"
+    }
+  ],
+  "summary": {
+    "pass": 9,
+    "fail": 0,
+    "total": 9
+  }
+}

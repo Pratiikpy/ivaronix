@@ -64,9 +64,9 @@ const PASSPORT_ABI = [
   'function mint(bytes32) external returns (uint256)',
   'function passportOf(address) external view returns (uint256)',
   'function agents(uint256) external view returns (bytes32, bytes32, bytes32, uint64 receiptCount, uint64, int128 trustScore, uint64, uint64)',
-  'function recordReceipt(uint256 tokenId, bytes32 receiptRoot, uint8 receiptType, int128 trustScoreDelta) external',
+  'function recordReceipt(uint256 tokenId, uint256 receiptId, bytes32 expectedReceiptRoot, uint8 expectedReceiptType, int128 trustScoreDelta) external',
   'function authorizedRecorders(address) external view returns (bool)',
-  'event ReceiptRecorded(uint256 indexed tokenId, bytes32 indexed receiptRoot, uint8 receiptType, int128 trustScoreDelta)',
+  'event ReceiptRecorded(uint256 indexed tokenId, bytes32 indexed receiptRoot, uint256 indexed receiptId, uint8 receiptType, int128 trustScoreDelta)',
 ];
 const GAS = { gasPrice: 5_000_000_000n, gasLimit: 400_000n };
 
@@ -204,7 +204,7 @@ async function main(): Promise<void> {
     const beforeAgent = await passportRO.agents!(aliceTokenId);
     console.log(`  before · receiptCount=${beforeAgent.receiptCount} trustScore=${beforeAgent.trustScore}`);
     const passportOp = new Contract(PASSPORT_V2, PASSPORT_ABI, operator);
-    const recordData = passportOp.interface.encodeFunctionData('recordReceipt', [aliceTokenId, params.receiptRoot, 0, 5]);
+    const recordData = passportOp.interface.encodeFunctionData('recordReceipt', [aliceTokenId, receiptId, params.receiptRoot, 0, 5]);
     const recordTx = await operator.sendTransaction({ to: PASSPORT_V2, data: recordData, ...GAS });
     const recordRcpt = await recordTx.wait();
     check('recordReceipt tx success', recordRcpt?.status === 1, `tx ${recordTx.hash}`);
