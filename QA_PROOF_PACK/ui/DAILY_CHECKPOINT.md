@@ -145,3 +145,32 @@ Audit after first fix (live on `f3eaaf1310637217.css`): **74 → 8 violations**.
 Audit after follow-up fix awaiting deploy (`504294c`): expected 0 hard violations.
 
 Proof: `QA_PROOF_PACK/ui/P11-mobile/touch-targets.md` (auto-updated by audit script).
+
+### Iter 4 confirmation (post-CSS-bump · 3827e91d2c7fa943.css)
+
+Re-audit after the 2nd CSS deploy: **74 → 2 violations** (96.4% reduction).
+
+| Route | Before | After |
+|---|---:|---:|
+| / | 8 | 2 (checkboxes only) |
+| /onboard | 4 | 0 |
+| /skills | 4 | 0 |
+| /memory | 4 | 0 |
+| /dashboard | 4 | 0 |
+| /agents | 4 | 0 |
+| /global | 4 | 0 |
+| /thesis | 4 | 0 |
+| /0g | 11 | 0 |
+| /marketplace | 4 | 0 |
+| /marketplace/payouts | 4 | 0 |
+| /marketplace/new | 8 | 0 |
+| /admin/treasury | 4 | 0 |
+| /r/1004 | 7 | 0 |
+
+The remaining 2 on `/` are the RunPanel `anchor receipt` + `burn mode` checkboxes. Shipped fix `fe78b9e` — mobile-only CSS `main label:has(input[type=checkbox|radio]) { min-height: 44px; padding-top: 6px; padding-bottom: 6px }`. Local build verified the rule compiles (Tailwind v4 + Lightning CSS pass it through unchanged). Awaiting Vercel deploy propagation for the final 2 → 0.
+
+### Iter 4 cross-validation
+
+- **`/api/run/demo` health probe** (2026-05-14 ~23:50 UTC) — POST /api/run/demo returned 200 in 41.5s with full receipt body. Receipt id 31 anchored on V3 at txHash `0x1361be858ceedfd89130400a6f528991560463b387d0c0d807337b7c27e9743e`. Payment: 0.005 OG (90/10 split = 0.0045 + 0.0005), subsidised by operator wallet (creator = operator on first-party skills). Final text rich legal analysis with "Risk Level: high" + actionable next step.
+- **Read-after-write validation** — /global "receipts anchored" pulsed 1,679 → 1,680 within the same observation cycle. Confirms `unifiedNextId()` reads live chain state every request (force-dynamic).
+- **/r/31 render** — ANCHORED chip green, TIER 1 green, owner 0xaa954c33..., share button pre-populated with "Receipt #31 anchored". No drift between API response and rendered proof page.
