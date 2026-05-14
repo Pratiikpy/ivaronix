@@ -1,3 +1,41 @@
+# QA Test Progress · ivaronix.vercel.app
+
+## Current cron run · `a5ec057e` · 2026-05-14 · build phase complete
+
+12 commits shipped across the run · 6 of 7 half-baked items closed · home page rewrite done · /learn + /faq + pc.0g.ai adapter + sovereignty circle + animated four-light + builder rail + before/after examples + half-baked audit + best-version audit all landed. Pre-commit gates green on every commit (typecheck + 76 source-file regressions + brand-token-drift + wording-lint).
+
+**Build-phase commit ledger:**
+
+| # | Commit | Day | Shipped |
+|---|---|---|---|
+| 1 | `86eb50e` | 1-3 | Receipt page hero · AI findings + signer context + "Process verified" copy |
+| 2 | `e21aad6` | 5-9 | Home H1/H2 plan-locked + 5-step landing loop |
+| 3 | `f57abac` | 5-9 | Home 12-module LIVE grid |
+| 4 | `d31f595` | 5-9 | Home live receipt feed widget |
+| 5 | `3a9180a` | 5-9 + 10-12 + 31 | Sovereignty circle + /learn page + half-baked audit |
+| 6 | `70cb2df` | 18 | pc.0g.ai adapter in og-router (30 unit tests) |
+| 7 | `589661d` | 19-22 | /faq page (12 honest answers) + home 14-module grid |
+| 8 | `70849cc` | 5-9 + 19-22 | 5 sections (personas + numbers + manifesto + roadmap + final CTA) |
+| 9 | `bbbb77f` | 5-9 | Builder rail (CLI + SDK + MCP + embed) |
+| 10 | `1d4ac82` | 19-22 | Before/after examples (3 anonymised cards) |
+| 11 | `219dad0` | 5-9 | Animated four-light (pure CSS 6s cycle) |
+| 12 | `44d5130` | 31 | Half-baked audit refresh (6 of 7 items LIVE) |
+
+**Production build:** `pnpm --filter @ivaronix/studio build` PASS · 30+ routes including all new landing surfaces (/learn 201 B · /faq 201 B · /onboard 6.28 kB · /marketplace 201 B + subroutes).
+
+**Remaining build-phase work:**
+- Day 4 schema bump · deferred (coordinated polyglot TS+Py+Rust sweep)
+- Day 13-17 0G DA full pipeline · preflight only · 1 of 7 half-baked items
+- Day 23-26 mobile-first pass · partial
+- Day 27-28 bilingual README + demo video · partial
+- Day 29-30 multi-wallet UI proof · chain-side proven via burner harnesses (52/52 outcomes + 14/14 cross-machine) · UI side pending
+- Day 32-35 QA sweep · Lighthouse 95+ + WCAG AA · Priority 20 external reviewer
+- Day 36 claims-vs-built audit · pre-submission gate
+
+**Next phase:** testing per work order step 4 · Playwright UI sweep + burner-wallet flow re-run + cross-machine receipt verify. Gated by subagent H best-version audit (`docs/UI_BEST_VERSION_AUDIT.md` in flight).
+
+---
+
 # QA Test Progress · ivaronix.vercel.app · commit `3baac20`
 
 ```
