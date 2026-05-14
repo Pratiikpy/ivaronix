@@ -83,3 +83,61 @@ The receipts ARE real chain anchors and the skill DOES produce some value (parsi
 ## Date
 
 2026-05-14 · Fire 9 of the LEGAL VERTICAL HARD-LAUNCH PIVOT directive · audit performed during the testing phase mandated by feedback_test_phase_priority_one.md memory.
+
+---
+
+## Update · v0.1.2 prompt-strengthening result (2026-05-14, post-publish + re-run)
+
+After committing the "CRITICAL · YOUR FIRST OUTPUT MUST BE A TOOL CALL" prompt rewrite in v0.1.2 (commit `e4d95a9`) and publishing it on-chain (tx `0xad4974ec…` · block 33277694), re-ran the Mata-probe golden vector. New receipt anchored at on-chain id 67 (tx `0x83a322458d…` · block 33277914 · `rcpt_01KRK8PZKEQW7VRGG5BESA8BND`).
+
+Audit of the v0.1.2 receipt:
+
+| Metric | v0.1.0 (id 64) | v0.1.2 (id 67) | Delta |
+|---|---|---|---|
+| `web_fetch` prose mentions | 0 | 8 | +8 |
+| `execution.toolCalls` | null | null | unchanged |
+| `outputs.citations` array length | 0 | 0 | unchanged |
+| Model role outputs reference web_fetch | no | yes ("Emit `web_fetch` for…") | better |
+
+**Verdict:** prompt-strengthening moved the conversation but did NOT close the runtime gap. The 7B is now writing prose ABOUT emitting web_fetch instead of EMITTING the tool_call. The runtime never invokes the tool, never gets a tool_result, never loops.
+
+## The deeper architectural gap (now identified)
+
+The `apps/cli/src/commands/doc.ts` `doc ask` consensus pipeline uses a single chat-completion call per role (no tool-call loop). Even when the model emits a `tool_call` message, the runtime doesn't:
+
+1. Detect the `tool_calls` field in the response
+2. Execute the tool (despite `webFetchTool` existing at `apps/cli/src/lib/chat-tools.ts:238`)
+3. Send the `tool_result` back to the model
+4. Loop until the model emits no more `tool_call` messages
+
+This is the same single-pass pattern that the interactive `chat` REPL (which DOES have tool-loop support per `apps/cli/src/lib/chat-tools.ts`) escapes. The `doc ask` consensus path needs the same loop wiring.
+
+## Proper-fix path (revised)
+
+The complete fix is a runtime extension across 3-4 files:
+
+1. `packages/runtime/src/inference.ts` (or equivalent in consensus runner) — extend the chat-completion call to pass `tools: ToolDef[]` when the active skill declares `og.tools.builtins`. Handle the `tool_calls` field in the response.
+
+2. `apps/cli/src/lib/chat-tools.ts` — export the tool-execution loop helper from the chat REPL so the consensus runner can reuse it.
+
+3. `packages/receipts/src/build.ts` (or doc.ts receipt-assembly) — add a `toolCallTrace: ToolCallRecord[]` field to receipts when tool_calls were invoked during inference. Records timestamp + tool name + arguments + response hash per call.
+
+4. `seed-skills/legal-citation-verifier/SKILL.md` — once runtime supports tool-loops, the existing v0.1.2 prompt becomes architecturally enforceable.
+
+5. Re-run the 3 golden vectors against v0.1.2 (now backed by tool-loop runtime); confirm `execution.toolCalls.length > 0` AND `outputs.citations` is populated. Both signals must be true for the architecture to be considered closed.
+
+## Honest position for testnet launch
+
+The other 4 skills in the legal cluster (private-doc-review, contract-renewal-clause-detector, nda-triage-reviewer, term-sheet-risk-scanner) work end-to-end on the current runtime — they produce structured outputs without needing tool-call loops. The legal-citation-verifier is the only one architecturally dependent on tool-loops.
+
+For testnet launch-readiness:
+- 4 of 5 legal skills work fully end-to-end
+- legal-citation-verifier currently produces parse-only output (no external verification); description in v0.1.2 SKILL.md states this honestly
+- Mainnet promotion ships the runtime tool-loop extension alongside the larger model catalog
+
+This is the honest position. Not "fully launch-ready" — "4/5 launch-ready · 1/5 architecturally documented with proper-fix runtime work queued."
+
+## Receipts referenced (updated)
+
+- v0.1.0 receipts: ids 63, 64, 65 (Fire 8 anchors · failure mode present)
+- v0.1.2 receipt: id 67 (this audit's re-run · same failure mode after prompt-level fix · proper fix is runtime not prompt)
