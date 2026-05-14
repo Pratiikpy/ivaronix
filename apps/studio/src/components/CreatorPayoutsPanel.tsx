@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
+import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 interface Props {
   paymentAddr: string;
@@ -60,6 +61,7 @@ export function CreatorPayoutsPanel({ paymentAddr }: Props) {
         abi: PAYMENT_ABI,
         functionName: 'withdrawCreator',
         args: [],
+        ...GALILEO_GAS_PARAMS,
       });
       setWithdrawTxHash(tx);
       if (!publicClient) {

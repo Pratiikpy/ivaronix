@@ -16,6 +16,28 @@
 
 import { parseAbi } from 'viem';
 
+/**
+ * Galileo testnet (chainId 16602) enforces a non-standard ~2 Gwei
+ * priority-fee floor. MetaMask's default EIP-1559 fee estimator can't
+ * figure that out and renders the popup with "Network fee: Unavailable"
+ * + a disabled Confirm button. Pin both fields on every writeContract
+ * call so the user can actually submit.
+ *
+ * 2.5 Gwei tip floor + 5 Gwei cap matches `apps/studio/src/app/api/run/demo/route.ts`
+ * (the operator-side ethers anchor uses `gasPrice: 5_000_000_000n`) and
+ * the Foundry deploy envs (`ETH_PRIORITY_GAS_PRICE=2500000000`,
+ * `ETH_GAS_PRICE=5000000000`) per CLAUDE.md §1.
+ *
+ * Mainnet (chainId 16661) has standard EIP-1559 — pass these only on
+ * testnet writes. The constants are the SAME on mainnet for now since
+ * Aristotle launched with matching floors; revisit if 0G changes the
+ * mainnet fee market.
+ */
+export const GALILEO_GAS_PARAMS = {
+  maxPriorityFeePerGas: 2_500_000_000n, // 2.5 Gwei
+  maxFeePerGas: 5_000_000_000n,         // 5 Gwei
+} as const;
+
 export const CAPABILITY_REGISTRY_ABI = parseAbi([
   'function issueGrant(address grantee, bytes32 scopeHash, uint64 ttlSeconds, uint32 readsCap) external returns (bytes32)',
   'function revokeGrant(bytes32 grantId) external',

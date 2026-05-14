@@ -13,6 +13,7 @@ import { injected } from 'wagmi/connectors';
 import { parseAbi } from 'viem';
 import Link from 'next/link';
 import { ShareButton } from '@/components/ShareButton';
+import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 import type { Network } from '@ivaronix/core';
 
 /**
@@ -282,12 +283,16 @@ export function OnboardClient({
       setStorageMethod(json.method);
       setMetadataPending(false);
 
-      // Real testnet tx — wallet popup opens here
+      // Real testnet tx — wallet popup opens here.
+      // Galileo's 2 Gwei priority-fee floor would render MM as
+      // "Network fee: Unavailable" without explicit EIP-1559 fields;
+      // GALILEO_GAS_PARAMS pins them. See lib/client-abis.ts doc.
       writeContract({
         abi: PASSPORT_ABI,
         address: passportAddr,
         functionName: 'mint',
         args: [json.metadataRoot as `0x${string}`],
+        ...GALILEO_GAS_PARAMS,
       });
     } catch (err) {
       setMetadataError((err as Error).message);

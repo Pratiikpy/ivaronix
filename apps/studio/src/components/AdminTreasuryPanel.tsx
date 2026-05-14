@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
+import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 interface Props {
   paymentAddr: string;
@@ -98,6 +99,7 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
         abi: PAYMENT_ABI,
         functionName: 'withdrawTreasury',
         args: [],
+        ...GALILEO_GAS_PARAMS,
       });
       setWithdrawTxHash(tx);
       if (!publicClient) {

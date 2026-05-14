@@ -9,6 +9,7 @@ import { useState } from 'react';
 import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, keccak256, toBytes } from 'viem';
 import { useRouter } from 'next/navigation';
+import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 interface Props {
   registryAddr: string;
@@ -66,6 +67,7 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
         abi: REGISTRY_ABI,
         functionName: 'publishVersion',
         args: [skillId, versionId, manifestHash],
+        ...GALILEO_GAS_PARAMS,
       });
 
       // Wait for publish tx to confirm on chain (replaces v1 setTimeout hack).
@@ -87,6 +89,7 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
         abi: PRICING_ABI,
         functionName: 'setPrice',
         args: [skillId, priceWei, creatorBps, treasuryBps],
+        ...GALILEO_GAS_PARAMS,
       });
 
       setState({ kind: 'success', publishTx, pricingTx, skillId });

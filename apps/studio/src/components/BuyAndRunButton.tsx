@@ -19,6 +19,7 @@ import { parseAbi } from 'viem';
 import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { ensureSiweSession } from '@/lib/siwe-client';
+import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 interface Props {
   skillId: string;
@@ -207,6 +208,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
           estimate.treasuryBps!,
         ],
         value: BigInt(estimate.amount!),
+        ...GALILEO_GAS_PARAMS,
       });
 
       setState({ kind: 'payment-pending', estimate, txHash });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { keccak256, toBytes, parseAbiItem, type Hex, type Address } from 'viem';
-import { CAPABILITY_REGISTRY_ABI } from '@/lib/client-abis';
+import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 /**
  * Memory Permission Center — wallet-aware grants admin.
@@ -118,6 +118,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'issueGrant',
       args: [grantee as Hex, activeScopeHash, BigInt(ttlSeconds), MAX_READS],
+      ...GALILEO_GAS_PARAMS,
     });
   };
 
@@ -127,6 +128,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'revokeGrant',
       args: [grantId],
+      ...GALILEO_GAS_PARAMS,
     });
   };
 
