@@ -57,9 +57,15 @@ async function recentReceipts(n: number): Promise<UnifiedReceipt[]> {
   }
 }
 
-function timeAgo(unixSec: bigint | number): string {
+// `nowSec` is captured once per server render and threaded through so the
+// SSR HTML and the client hydration both compute against the same instant.
+// Without the pin, Date.now() advances between server-render and client-
+// hydration and crosses a whole-second boundary often enough to trip React
+// hydration warning #418 on the live feed (caught by the Playwright
+// interactive sweep · pageerror capture).
+function timeAgo(unixSec: bigint | number, nowSec: number): string {
   const sec = typeof unixSec === 'bigint' ? Number(unixSec) : unixSec;
-  const diff = Math.max(0, Math.floor(Date.now() / 1000) - sec);
+  const diff = Math.max(0, nowSec - sec);
   if (diff < 60) return `${diff}s ago`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
@@ -90,6 +96,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     livePassportCount(),
     recentReceipts(5),
   ]);
+  // Pin `now` once per server render so the SSR HTML and the client
+  // hydration agree on the relative-time text in the live feed (see the
+  // timeAgo doc-comment for the hydration-warning root cause).
+  const nowSec = Math.floor(Date.now() / 1000);
   const network = getNetwork();
   // Live-derived contract count from the deployments manifest. Source-of-
   // truth file is `contracts/deployments/<network>.json`; any new V2/V3
@@ -175,7 +185,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   animation: 'pulse 1.6s ease-in-out infinite',
                 }}
               />
-              {Number(totalReceipts).toLocaleString()} receipts on-chain · live
+              {Number(totalReceipts).toLocaleString('en-US')} receipts on-chain · live
             </span>
           )}
         </div>
@@ -276,13 +286,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             >
               <div>
                 <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>
-                  {totalReceipts !== null ? Number(totalReceipts).toLocaleString() : '—'}
+                  {totalReceipts !== null ? Number(totalReceipts).toLocaleString('en-US') : '—'}
                 </span>{' '}
                 <span style={{ color: 'var(--color-muted)' }}>receipts on-chain</span>
               </div>
               <div>
                 <span style={{ fontWeight: 600, color: 'var(--color-fg)' }}>
-                  {totalPassports !== null ? Number(totalPassports).toLocaleString() : '—'}
+                  {totalPassports !== null ? Number(totalPassports).toLocaleString('en-US') : '—'}
                 </span>{' '}
                 <span style={{ color: 'var(--color-muted)' }}>passports minted</span>
               </div>
@@ -832,12 +842,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         >
           {[
             {
-              value: totalReceipts !== null ? Number(totalReceipts).toLocaleString() : '—',
+              value: totalReceipts !== null ? Number(totalReceipts).toLocaleString('en-US') : '—',
               label: 'Receipts anchored',
               note: `on ${network === 'testnet' ? 'Galileo testnet' : 'Aristotle mainnet'}`,
             },
             {
-              value: totalPassports !== null ? Number(totalPassports).toLocaleString() : '—',
+              value: totalPassports !== null ? Number(totalPassports).toLocaleString('en-US') : '—',
               label: 'Passports minted',
               note: 'ERC-7857 INFTs',
             },
@@ -978,7 +988,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   {receiptTypeLabel(r.receiptType)} · {r.agentAddress.slice(0, 10)}…{r.agentAddress.slice(-4)}
                 </span>
                 <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
-                  {timeAgo(r.timestamp)}
+                  {timeAgo(r.timestamp, nowSec)}
                 </span>
                 <span style={{ color: 'var(--color-muted)' }}>→</span>
               </Link>
