@@ -1,7 +1,7 @@
 // v3-lookup-allow: debug reader inspects V1+V2 chain state for diagnostic depth; V3 receipts are visible via `ivaronix receipt show <id>` (V2-first lookup includes V3 since iter-92). V3-aware debug surfaces tracked in USER_TODO §B-V2-37.
 // v1-passport-allow: debug reader inspects V1 passport state for diagnostic depth — intentional. The V2-first migration across other CLI/MCP/Studio surfaces is shipped per USER_TODO §B-V2-38 (✅ shipped); this diagnostic surface stays V1 by design so operators can inspect legacy state.
 // v1-capability-allow: debug reader inspects V1 CapabilityRegistry grant state for diagnostic depth — intentional. V1's listGrantsByOwner is the diagnostic point (V2's getGrantsByOwner is access-controlled by design). The V2-first migration across other CLI/MCP/Studio surfaces is shipped per USER_TODO §B-V2-39 (✅ shipped); this debug surface stays V1.
-// v1-skill-registry-allow: debug reader inspects V1 SkillRegistry state for diagnostic depth; V2-aware debug surfaces tracked in USER_TODO §B-V2-40.
+// debug reader inspects V2 → V1 SkillRegistry state (V2 has the reserved-name allow-list; V1 fallback for legacy). Closes the V1-only waiver from USER_TODO §B-V2-40 (✅ shipped).
 // v1-memory-access-log-allow: debug reader inspects V1 MemoryAccessLog events for diagnostic depth — intentional. The V2-first migration across other CLI/MCP/Studio surfaces is shipped per USER_TODO §B-V2-41 (✅ shipped); this debug surface stays V1 so operators can inspect legacy spoofable events.
 /**
  * `ivaronix debug …` — diagnostic depth (PASS 77 F-7, A2 path).
@@ -302,27 +302,41 @@ debugCommand
     ui.info(`skill                ${skillId}`);
     ui.divider();
 
-    const addr = getDeployedAddress(env.network, 'SkillRegistry');
-    if (!addr) {
+    // V2-first read — V2 has the reserved-name allow-list (6 first-party slugs pre-reserved).
+    // V1 fallback for legacy chains. Reports which version returned the hit.
+    const addrV2 = getDeployedAddress(env.network, 'SkillRegistryV2');
+    const addrV1 = getDeployedAddress(env.network, 'SkillRegistry');
+    if (!addrV1 && !addrV2) {
       ui.fail(`no SkillRegistry deployed on ${env.network}`);
       process.exitCode = 1;
       return;
     }
     const provider = buildProvider(env.network, env.rpcUrl, env.chainId);
     try {
-      const client = new SkillRegistryClient(addr as Address, provider);
       // Accept either a 0x-prefixed skill-id hash or a string name; the
       // SkillRegistry stores keccak256("skill:<name>") as the canonical id.
       const skillIdHash = (skillId.startsWith('0x') ? skillId : keccak256(toUtf8Bytes(`skill:${skillId.toLowerCase()}`))) as Address;
-      const count = await client.versionCount(skillIdHash);
-      if (count === 0n) {
-        ui.info('(skill not registered on chain)');
+      let foundOn: 'v1' | 'v2' | null = null;
+      let count = 0n;
+      let latest: Awaited<ReturnType<SkillRegistryClient['latestVersion']>> = null;
+      if (addrV2) {
+        const v2 = new SkillRegistryClient(addrV2 as Address, provider);
+        count = await v2.versionCount(skillIdHash);
+        if (count > 0n) { foundOn = 'v2'; latest = await v2.latestVersion(skillIdHash); }
+      }
+      if (!foundOn && addrV1) {
+        const v1 = new SkillRegistryClient(addrV1 as Address, provider);
+        count = await v1.versionCount(skillIdHash);
+        if (count > 0n) { foundOn = 'v1'; latest = await v1.latestVersion(skillIdHash); }
+      }
+      if (!foundOn) {
+        ui.info('(skill not registered on V1 or V2)');
         ui.hint('Publish via: ivaronix skill publish');
         return;
       }
       ui.pass(`skillId              ${skillIdHash}`);
+      ui.pass(`registry             ${foundOn.toUpperCase()}`);
       ui.pass(`version count        ${count}`);
-      const latest = await client.latestVersion(skillIdHash);
       if (latest) {
         ui.info(`latest versionId     ${latest.versionId}`);
         ui.info(`manifestHash         ${latest.data.manifestHash}`);

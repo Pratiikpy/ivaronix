@@ -535,12 +535,10 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Intentionally V1 (allow-marked with reason):** `apps/cli/src/commands/debug.ts` (operator diagnostic surface for legacy V1 events) — does not block submission.
 - **Deferred:** MemoryEngine internal V2-first refactor (packages/memory/src/engine.ts) — separate larger iteration since callers already pass V2 addresses through the constructor.
 
-### B-V2-40 · SkillRegistryV2 read/write propagation follow-up (1 latent-V2-blind CLI file)
-- **Source:** cron iter-123. `verify-skill-registry-v2-coexists-with-v1.ts` regression caught 1 file in CLI that looks up `SkillRegistry` but not `SkillRegistryV2`: `apps/cli/src/commands/debug.ts` (diagnostic reader, allow-marked).
-- **Why this matters:** SkillRegistryV2 (deployed B-V2-17) closes the name-squatter risk. V1 is first-come-first-served — any wallet can publish `keccak256("skill:private-doc-review")` first and lock the canonical name. V2 ships a reserved-name allow-list (6 first-party skill IDs pre-reserved at deploy: doc-ask, private-doc-review, lawyer-clean, finance-watchdog, contract-reviewer, swarm-aggregator) plus owner-arbitration for squatted names. iter-123 fixed the active writer bug in `skill publish` + made `skill verify` / pipeline scanner / doc.ts scanner V2-first.
-- **Action:** if `debug.ts`'s skill-inspection logic needs to surface V2-published skills too, extend the V1-only read to V2-first-V1-fallback (matching pipeline.ts post-iter-123 pattern). Effort: ~10 min.
-- **The 1 latent file:** `debug.ts` (diagnostic skill-state inspection — currently V1-only, allow-marked).
-- **Effort:** ~10 min.
+### B-V2-40 · SkillRegistryV2 read/write propagation follow-up ✅ SHIPPED (debug.ts migrated · iter-22 · 2026-05-14)
+- **Source:** cron iter-123. `verify-skill-registry-v2-coexists-with-v1.ts` regression caught 1 file in CLI that looks up `SkillRegistry` but not `SkillRegistryV2`: `apps/cli/src/commands/debug.ts`.
+- **Why this matters:** SkillRegistryV2 (deployed B-V2-17) closes the name-squatter risk. V1 is first-come-first-served; V2 ships a reserved-name allow-list (6 first-party skill IDs pre-reserved at deploy) plus owner-arbitration. The `debug skill <id>` command was V1-only — V2-published skills showed up as "not registered." Live cross-check after fix: `debug skill private-doc-review` correctly reports `registry V2 · version count 3 · revoked false`.
+- **Closed:** `apps/cli/src/commands/debug.ts` — V2-first read with V1 fallback, reports which version returned the hit.
 
 ### B-V2-39 · CapabilityRegistryV2 read/write propagation follow-up ✅ SHIPPED (commits 6e22e66, b3dda02 + iter-21 ChatScreen · 2026-05-14)
 - **Source:** cron iter-122. `verify-capability-registry-v2-coexists-with-v1.ts` regression caught 4 files in CLI + MCP that look up `CapabilityRegistry` but not `CapabilityRegistryV2`.
