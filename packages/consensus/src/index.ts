@@ -10,6 +10,7 @@ export * from './prompts.js';
 export * from './convergence.js';
 export * from './gates.js';
 export * from './policy.js';
+export * from './tool-loop.js';
 
 export interface ConsensusInput {
   tier: ConsensusTier;
