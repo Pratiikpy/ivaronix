@@ -189,6 +189,41 @@ export const ReceiptV1Schema = z.object({
         dissents: z.number().int().min(0).optional(),
       })
       .optional(),
+    /**
+     * Tool-call trace · ships the receipt-side audit trail for skills that
+     * declare `og.tools.builtins` in their manifest (e.g. legal-citation-
+     * verifier with web_fetch). Each entry records one tool invocation
+     * across the consensus loop:
+     *
+     *   - `tool`           — tool name (matches the ToolDef.function.name)
+     *   - `argumentsHash`  — sha256 of the JSON-stringified arguments
+     *   - `ok`             — true if the dispatch returned ok: true
+     *   - `durationMs`     — wall time of the dispatch in milliseconds
+     *   - `responseHash`   — sha256 of the response text fed back to model
+     *   - `responseSize`   — byte length of response BEFORE 8KB truncation
+     *
+     * Optional + array so receipts written before the tool-loop runtime
+     * extension shipped (ids 1-67) parse unchanged. Their canonical hash
+     * stays byte-stable.
+     *
+     * Used by the fail-closed runtime gate (queued · docs/TOOL_LOOP_RUNTIME_EXTENSION.md):
+     * if a skill declares `og.tools.builtins` AND the receipt's
+     * toolCallTrace is missing/empty, the runtime fails the run BEFORE
+     * chain anchor — closing the Mata v. Avianca attack surface at the
+     * runtime layer, not just the manifest layer.
+     */
+    toolCallTrace: z
+      .array(
+        z.object({
+          tool: z.string(),
+          argumentsHash: z.string(),
+          ok: z.boolean(),
+          durationMs: z.number().int().min(0),
+          responseHash: z.string(),
+          responseSize: z.number().int().min(0),
+        }),
+      )
+      .optional(),
   }),
 
   /**
