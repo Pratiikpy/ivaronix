@@ -1,0 +1,201 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRKFN9Q8DDTSXZXCK0H9FJHM",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "nda-triage-reviewer",
+    "skillVersion": "0.1.0",
+    "skillManifestHash": "sha256:c4c3104a507d2d7de235503cf7a4476a81ed4659846152e0ba9b9c13daa99e19",
+    "userPromptHash": "sha256:b1d48b048de56dcd36785022291fd99b225d286487cd1390fdda151cf552e0e9",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "qwen/qwen-2.5-7b-instruct",
+      "final": "qwen/qwen-2.5-7b-instruct"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0xa48f01287233509FD694a22Bf840225062E67836"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.54,
+      "agreementSummary": "Reviewers partially overlap (Jaccard 0.54); the judge will flag conflicts.",
+      "disagreementSummary": "critic: \"  \"governing_law\": \"Cayman Islands\",\"\nevidence-checker: \"  \"governing_law\": \"Cayman Islands\",\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xa1a333d3f58b3201fc82e5b04c7c398ae0c121878cdd54847eb5bd055d44bc2b",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "2fd57cac-0fe7-4401-a604-5eae5f00a6e0",
+          "content": "1. **Type** — one-way\n2. **Term** — 0 (perpetual)\n3. **Governing law** — Cayman Islands\n4. **Jurisdiction** — The courts of the Cayman Islands\n5. **Exclusions list** — []\n6. **Red flags** — [\"Term is in perpetuity — standard is 2-5 for non-trade-secret information\", \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\"]\n7. **Standard_or_aggressive** — aggressive\n8. **Signature_recommendation** — refuse\n\n```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"The courts of the Cayman Islands\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"refuse\"\n}\n```\n\nTriage: refuse",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0x9cf451466989e24707503ca0787481a94da47dc85b03714cb50c653fc49ffe0b",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "301bdb55-e3bc-449b-ad47-baff80b26479",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": -1,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"exclusive jurisdiction of the courts of the Cayman Islands\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Confidential Information defined to include any communication, oral or written, including future-tense statements\",\n    \"Liquidated damages of $1,000,000 per breach are unreasonably high\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\nTriage: escalate",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0xc23c8832de8f35fae40ef93fff9dffd6591cd594ffcae8c58a0b831f96cf7de7",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "058c5135-0b01-4e36-acc3-6e1393358435",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\",\n    \"Broad 'Confidential Information' definition includes future-tense statements and context of disclosure — could lock the asking party out of parallel work\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Liquidated damages of $1,000,000 per breach are unreasonably high\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\nRisks:\n1. Term is in perpetuity — legal — high\n2. Broad 'Confidential Information' definition includes future-tense statements and context of disclosure — legal — high\n3. No exclusion for 'independently developed' — legal — high\n4. Unreasonably high liquidated damages of $1,000,000 per breach — financial — high",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0x6057e06393a8c1bbb355c6b7dac0f747867f4d80078a5a5cf5bd1300d1519275",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "894ebc53-9f88-43a3-a9a2-e56768206a18",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands (exclusive jurisdiction)\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Future-tense statements included in 'Confidential Information' definition — could be overly broad\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\n- **Verified facts:**\n  - Type: one-way (Claimed in section 4. NO RECIPROCAL OBLIGATION)\n  - Term: 0 (Perpetual, stated in section 5. TERM)\n  - Governing law: Cayman Islands (stated in section 7. GOVERNING LAW)\n  - Jurisdiction: Cayman Islands (exclusive jurisdiction, stated in section 7. GOVERNING LAW)\n  - Exclusions list: [] (No exclusions list provided)\n  - Red flags: \n    - Term is in perpetuity — standard is 2-5 for non-trade-secret information\n    - No exclusion for 'independently developed' — could lock the asking party out of parallel work\n    - Future-tense statements included in 'Confidential Information' definition — could be overly broad\n\n- **Inferred:**\n  - Future-tense statements included in 'Confidential Information' definition — could be overly broad (This is an inference based on the inclusion of future-tense statements in the definition of Confidential Information)\n\n- **Unsupported:**\n  - The document does not support claims about asymmetric remedies, liability caps, auto-renewal, or other similar terms that are mentioned in the schema but not in the given document.",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x943dbd1df1c3e6704bb2c9ac9aafa5c9e32d3a6e56d597bbf67a709c37b1d9c2",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "b30b737d-91f7-44ba-b8c1-5018203c1ca4",
+          "content": "### Synthesized Judgment\n\n- **Type**: one-way\n- **Term Years**: 0 (perpetual)\n- **Governing Law**: Cayman Islands\n- **Jurisdiction**: Cayman Islands (exclusive jurisdiction)\n- **Exclusions List**: []\n- **Red Flags**:\n  - \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\"\n  - \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\"\n  - \"Future-tense statements included in 'Confidential Information' definition — could be overly broad\"\n  - \"Liquidated damages of $1,000,000 per breach are unreasonably high\"\n\n### Final Risk Level: High\n\n### Action\nGiven the numerous red flags, especially the perpetual term and the overly broad definition of Confidential Information, it is recommended to escalate this NDA to outside counsel for further review and negotiation.\n\n```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands (exclusive jurisdiction)\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Future-tense statements included in 'Confidential Information' definition — could be overly broad\",\n    \"Liquidated damages of $1,000,000 per breach are unreasonably high\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\nTriage: escalate",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778770421479",
+    "zgResKey": "b30b737d-91f7-44ba-b8c1-5018203c1ca4",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 10513,
+    "outputTokens": 1487,
+    "inputCostNeuron": "525650000000000",
+    "outputCostNeuron": "148700000000000",
+    "totalCostNeuron": "674350000000000",
+    "totalCostOg": "0.0006743500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "515877750000000",
+      "treasuryNeuron": "158472250000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x61639ae0e8fcbeaf411ba588e5ef788f1690432f70ec18564cc5fe2cb3558a5a",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:4b177af02be311a112e09c0fb7be5d400664495504f7e02a4c7cad18f960d3c7"
+    },
+    "receiptRoot": "0x03baa0d7f46b0b04cce1fb872fbefadaf95e061c0fdf31180b2f765ca250fd12"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778770385029,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "testnet",
+    "chainId": 16602,
+    "rpcUrlHash": "sha256:7d8e420a351f8e2272a6674876da272f2a5b5f7d1c0e48203a55880b872419d4",
+    "registryAddress": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+    "anchorTxHash": "0xea57db4c243e068e91bbecfb1890e30364c473042f9b83f99caa5f61f0d4246b",
+    "anchorBlockNumber": 33292844,
+    "anchorTimestamp": 1778770435
+  },
+  "outputs": {
+    "outputHash": "sha256:95f6055337571150e04af8ec5a319416067ad6f6a2e6325e19a84b64ad9b04b9",
+    "citations": [],
+    "riskLevel": "low",
+    "wording": {
+      "headline": "### Synthesized Judgment - **Type**: one-way - **Term Years**: 0 (perpetual) - **Governing Law**: Cayman Islands - **Jurisdiction**: Cayman Islands (exclusive jurisdiction) - **Exclusions List**: [] ",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": true,
+      "data": {
+        "type": "one-way",
+        "term_years": 0,
+        "governing_law": "Cayman Islands",
+        "jurisdiction": "Cayman Islands (exclusive jurisdiction)",
+        "exclusions_list": [],
+        "red_flags": [
+          "Term is in perpetuity — standard is 2-5 for non-trade-secret information",
+          "No exclusion for 'independently developed' — could lock the asking party out of parallel work",
+          "Future-tense statements included in 'Confidential Information' definition — could be overly broad",
+          "Liquidated damages of $1,000,000 per breach are unreasonably high"
+        ],
+        "standard_or_aggressive": "aggressive",
+        "signature_recommendation": "escalate"
+      },
+      "repaired": [
+        "codeFence"
+      ],
+      "rawBytes": 1499
+    }
+  },
+  "createdAt": 1778770421481,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xd8199f22dfbb257df7ed98485fbc21e69ea7f0a262e42d5b2dd850e3a0f5ea9d4632fffb5ec6f09d65736905bb8ce2a00ff38e82ab9bfc0c6f0175676887768f1b"
+  }
+}

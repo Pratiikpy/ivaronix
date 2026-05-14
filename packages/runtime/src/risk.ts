@@ -32,8 +32,14 @@ const LOW_RX = /\bseverity:\s*(low|informational)\b/i;
 const JSON_HIGH_RX = /["']?risk[_-]?level["']?\s*:\s*["'](critical|high)["']/i;
 const JSON_MED_RX = /["']?risk[_-]?level["']?\s*:\s*["']medium["']/i;
 // nda-triage's signature_recommendation is the verdict-equivalent.
-const JSON_REFUSE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["']refuse["']/i;
+// `escalate` is verdict-equivalent to `refuse-with-process` — receipt 69
+// surfaced the model returning "escalate" (the lawyer says don't sign,
+// escalate up the chain); semantically that's high-risk, not low.
+const JSON_REFUSE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["'](refuse|escalate)["']/i;
 const JSON_NEGOTIATE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["']negotiate["']/i;
+// red_flags array length signal · 3+ red flags is at least medium risk.
+// Matches `"red_flags": [...]` with at least 3 comma-separated entries.
+const JSON_RED_FLAGS_MANY_RX = /["']?red[_-]?flags["']?\s*:\s*\[[^\]]*,[^\]]*,[^\]]*,[^\]]*\]/i;
 
 // Bare-keyword fallback when the response doesn't use the explicit
 // `severity:` prefix. Conservative: require the keyword to appear at
@@ -53,6 +59,10 @@ export function deriveRiskLevel(finalText: string): RiskLevel {
   if (JSON_HIGH_RX.test(finalText) || JSON_REFUSE_RX.test(finalText)) return 'high';
   if (MED_RX.test(finalText)) return 'medium';
   if (JSON_MED_RX.test(finalText) || JSON_NEGOTIATE_RX.test(finalText)) return 'medium';
+  // Many red flags (4+ entries) implies at least medium risk even if
+  // the model didn't explicitly classify. Conservative — fewer than
+  // 4 doesn't escalate.
+  if (JSON_RED_FLAGS_MANY_RX.test(finalText)) return 'medium';
   if (LOW_RX.test(finalText)) return 'low';
 
   // Bare-keyword fallback.

@@ -80,3 +80,18 @@ test('deriveRiskLevel: markdown-fenced JSON block → high', () => {
   const finalText = '```json\n{"findings": [{"risk_level": "high"}]}\n```';
   assert.equal(deriveRiskLevel(finalText), 'high');
 });
+
+test('deriveRiskLevel: nda-triage signature_recommendation: escalate → high (receipt 69 signal)', () => {
+  // Real shape from receipt rcpt_01KRKFN9Q8DDTSXZXCK0H9FJHM (on-chain 69).
+  // Model returned "escalate" — verdict-equivalent to refuse-with-process.
+  const finalText = '{"type": "one-way", "standard_or_aggressive": "aggressive", "signature_recommendation": "escalate"}';
+  assert.equal(deriveRiskLevel(finalText), 'high');
+});
+
+test('deriveRiskLevel: 4+ red_flags entries → medium (when no explicit risk_level)', () => {
+  const finalText = '{"type": "two-way", "red_flags": ["clause-a", "clause-b", "clause-c", "clause-d"], "summary": "concerning"}';
+  // Note: "concerning" also triggers BARE_MED so this would be medium either way.
+  // Adjusting to be a focused JSON-shape test.
+  const cleanText = '{"type": "two-way", "red_flags": ["clause-a", "clause-b", "clause-c", "clause-d"]}';
+  assert.equal(deriveRiskLevel(cleanText), 'medium');
+});

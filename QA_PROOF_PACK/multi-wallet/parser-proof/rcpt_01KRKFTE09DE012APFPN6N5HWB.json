@@ -1,0 +1,247 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRKFTE09DE012APFPN6N5HWB",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "term-sheet-risk-scanner",
+    "skillVersion": "0.1.0",
+    "skillManifestHash": "sha256:9f6adecc0d5899c86052dad9022b436e6588d5b0cb619ee1149d250d9f71751f",
+    "userPromptHash": "sha256:e89e2e3266f7d813bc002f0bf5cb80304bf4859ad00e1823320e3b67505ba935",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "qwen/qwen-2.5-7b-instruct",
+      "final": "qwen/qwen-2.5-7b-instruct"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0xa48f01287233509FD694a22Bf840225062E67836"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.564,
+      "agreementSummary": "Reviewers partially overlap (Jaccard 0.564); the judge will flag conflicts.",
+      "disagreementSummary": "risk-reviewer: \"      \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders\"\nevidence-checker: \"      \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0x6827405bf16ec52ff3485aebaf0cd801de8ea9ae0e39b53bd01602e6dc3b430c",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "cb5d358e-a36e-4907-b31a-cb69beb99635",
+          "content": "1. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"liquidation_pref\",\n   \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \\\"Series B Liquidation Preference\\\").\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"3x liquidation preference means a significant payout reduction at an exit.\",\n   \"counter_recommendation\": \"reject as founder-hostile\"\n}\n\n2. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"participation\",\n   \"term\": \"The Series B Preferred Stock is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"Fully participating preferred shares can significantly dilute founder value at an exit.\",\n   \"counter_recommendation\": \"push back on participation structure\"\n}\n\n3. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"anti_dilution\",\n   \"term\": \"The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"Full-ratchet anti-dilution can dramatically increase the Series B preferred share count at the expense of founders and other investors.\",\n   \"counter_recommendation\": \"redline full-ratchet anti-dilution\"\n}\n\n4. {\n   \"risk_level\": \"medium\",\n   \"term_type\": \"option_pool\",\n   \"term\": \"The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization.\",\n   \"comparison_to_standard\": \"standard\",\n   \"founder_impact_estimate\": \"15% post-money option pool is typical in Series B financings and may slightly reduce founder equity.\",\n   \"counter_recommendation\": \"accept as standard\"\n}\n\n5. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"founder_vesting\",\n   \"term\": \"All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control.\",\n   \"comparison_to_standard\": \"investor-friendly\",\n   \"founder_impact_estimate\": \"Reset vesting schedule adds 18 months to the liquidity timeline for founders.\",\n   \"counter_recommendation\": \"walk if not changed\"\n}\n\n6. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"drag_along\",\n   \"term\": \"In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"Drag-along rights allow the Lead Investor to force a sale without additional approval from other shareholders.\",\n   \"counter_recommendation\": \"reject as founder-hostile\"\n}\n\n7. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"protective_provisions\",\n   \"term\": \"So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions: ...\",\n   \"comparison_to_standard\": \"aggressive\",\n   \"founder_impact_estimate\": \"Aggressive protective provisions limit the Company's ability to make strategic decisions without preferred investor approval.\",\n   \"counter_recommendation\": \"walk if not changed\"\n}\n\n8. {\n   \"risk_level\": \"medium\",\n   \"term_type\": \"pay_to_play\",\n   \"term\": \"In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.\",\n   \"comparison_to_standard\": \"founder-friendly\",\n   \"founder_impact_estimate\": \"Pay-to-play ensures active participation from investors, preventing them from passively blocking dilutive rounds.\",\n   \"counter_recommendation\": \"accept as founder-friendly\"\n}\n\nWorst term: \"liquidation_pref\"",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xe5923ee09c8a1e7ab5e0de67edccf414c814155b5fd5a744b2009ad22e47c021",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "ec41085a-e10b-403e-8066-ced3ebe3079a",
+          "content": "1. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"liquidation_pref\",\n   \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \\\"Series B Liquidation Preference\\\"). The Series B Liquidation Preference is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"1.2x dilution to founders at a $50M exit · 3x pref payout at exit\",\n   \"negotiation_recommendation\": \"reject as founder-hostile · walk if not changed\"\n}\n\n2. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"anti_dilution\",\n   \"term\": \"The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price. Upon any such Down Round issuance, the Series B Conversion Price shall be reduced to the price per share of the new issuance, regardless of the size of such issuance.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"significant dilution risk · conversion of pref to common in down rounds\",\n   \"negotiation_recommendation\": \"redline as founder-hostile\"\n}\n\n3. {\n   \"risk_level\": \"medium\",\n   \"term_type\": \"founder_vesting\",\n   \"term\": \"All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control. Founder shares vested as of the closing date that were subject to vesting under prior agreements shall remain vested; the reset applies to the unvested balance and to any future stock awards.\",\n   \"comparison_to_standard\": \"investor-friendly\",\n   \"founder_impact_estimate\": \"18 months added to liquidity timeline · potential for significant dilution\",\n   \"negotiation_recommendation\": \"push back on participation cap and reset clause\"\n}\n\n4. {\n   \"risk_level\": \"high\",\n   \"term_type\": \"drag_along\",\n   \"term\": \"In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock. The drag right may be exercised by the Lead in its sole discretion at any time after the second anniversary of the Series B closing.\",\n   \"comparison_to_standard\": \"founder-hostile\",\n   \"founder_impact_estimate\": \"forced to sell at any price after 2 years · loss of control over sale\",\n   \"negotiation_recommendation\": \"reject as founder-hostile · walk if not changed\"\n}\n\n5. {\n   \"risk_level\": \"medium\",\n   \"term_type\": \"protective_provisions\",\n   \"term\": \"So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions: - Amend the Certificate of Incorporation or Bylaws - Sell or merge the Company - Issue any equity securities - Incur debt in excess of $500,000 in the aggregate - Increase or decrease the authorized number of directors - Pay any dividend - Repurchase or redeem any equity securities - Hire or terminate any officer of the Company (CEO, CFO, COO, CTO) - Approve the annual budget or any deviation from such budget in excess of ten percent (10%) - Adopt or amend any employee benefit plan or executive compensation plan - Enter into any contract with a counterparty obligation in excess of $1,000,000 in the aggregate - Initiate or settle any litigation\",\n   \"comparison_to_standard\": \"aggressive\",\n   \"founder_impact_estimate\": \"significant governance restrictions · 18 months added to liquidity timeline\",\n   \"negotiation_recommendation\": \"push back on extensive list of protective provisions\"\n}\n\n6. {\n   \"risk_level\": \"low\",\n   \"term_type\": \"pay_to_play\",\n   \"term\": \"In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.\",\n   \"comparison_to_standard\": \"investor-friendly\",\n   \"founder_impact_estimate\": \"4% dilution at the next round · potential for founder dilution\",\n   \"negotiation_recommendation\": \"accept as investor-friendly\"\n}\n\n7. {\n   \"risk_level\": \"medium\",\n   \"term_type\": \"option_pool\",\n   \"term\": \"The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization. The Option Pool expansion shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock and Series A holders, not the Series B Investors).\",\n   \"comparison_to_standard\": \"dilutive to founders\",\n   \"founder_impact_estimate\": \"10% dilution to founders at the next round\",\n   \"negotiation_recommendation\": \"push back on dilutive option pool\"\n}\n\nWorst term: liquidation_pref",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0xe93dda9bf7e37970b4067889e17a4762ea5247d93d701c5a9b14bd3f8c37107c",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "846ecf40-4375-4ae9-a29b-ca454632237a",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"type\": \"liquidation_pref\",\n      \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \\\"Series B Liquidation Preference\\\"). The Series B Liquidation Preference is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"120% higher payout at exit, reducing founder's potential returns significantly\",\n      \"negotiation_recommendation\": \"reject as founder-hostile\"\n    },\n    {\n      \"type\": \"anti_dilution\",\n      \"term\": \"The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"100% reduction in conversion price in case of a down round, leading to significant dilution\",\n      \"negotiation_recommendation\": \"push back on full-ratchet anti-dilution\"\n    },\n    {\n      \"type\": \"founder_vesting\",\n      \"term\": \"All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control.\",\n      \"comparison_to_standard\": \"investor-friendly\",\n      \"founder_impact_estimate\": \"18 months added to liquidity timeline due to vesting reset\",\n      \"negotiation_recommendation\": \"accept as investor-friendly\"\n    },\n    {\n      \"type\": \"drag_along\",\n      \"term\": \"In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"forced to sell in a future round if Lead Investor approves, limiting founder's control\",\n      \"negotiation_recommendation\": \"walk if not changed\"\n    },\n    {\n      \"type\": \"pay_to_play\",\n      \"term\": \"In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.\",\n      \"comparison_to_standard\": \"founder-friendly\",\n      \"founder_impact_estimate\": \"prevents passive investors from blocking future rounds, ensuring capital efficiency\",\n      \"negotiation_recommendation\": \"accept as founder-friendly\"\n    }\n  ],\n  \"Worst term\": \"liquidation_pref\"\n}\n```\n\n### Risk Summary\n1. **Liquidation Preference (High)** - **Category**: Financial - **Impact**: High\n2. **Anti-Dilution (High)** - **Category**: Financial - **Impact**: High\n3. **Founder Vesting (Medium)** - **Category**: Operational - **Impact**: Medium\n4. **Drag-Along (High)** - **Category**: Operational - **Impact**: High\n5. **Pay-to-Play (Low)** - **Category**: Financial - **Impact**: Low",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0x98610961493dd63e70c9eada28bcf2bc3adc31a336e96ce8d7c090ee395c2c21",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "2b2cd6e0-07c5-40b7-a485-685d6b84a586",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"type\": \"liquidation_pref\",\n      \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \\\"Series B Liquidation Preference\\\").\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"3x liquidation preference at a $50M exit reduces the founder's payout by $1.8M.\",\n      \"negotiation_recommendation\": \"reject as founder-hostile · walk if not changed\"\n    },\n    {\n      \"type\": \"participation\",\n      \"term\": \"The Series B Preferred Stock is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"fully participating preferred shares reduce the founder's share of the remaining proceeds by up to 3x at a $50M exit.\",\n      \"negotiation_recommendation\": \"redline as founder-hostile\"\n    },\n    {\n      \"type\": \"anti_dilution\",\n      \"term\": \"The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"full-ratchet anti-dilution can significantly dilute the founder's shares if a down-round occurs.\",\n      \"negotiation_recommendation\": \"push back on anti-dilution clause\"\n    },\n    {\n      \"type\": \"option_pool\",\n      \"term\": \"The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization. The Option Pool expansion shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock and Series A holders, not the Series B Investors).\",\n      \"comparison_to_standard\": \"dilutive to founders\",\n      \"founder_impact_estimate\": \"15% option pool reduces founders' equity by 15% of the post-money valuation.\",\n      \"negotiation_recommendation\": \"accept as market-standard\"\n    },\n    {\n      \"type\": \"founder_vesting\",\n      \"term\": \"All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control. Founder shares vested as of the closing date that were subject to vesting under prior agreements shall remain vested; the reset applies to the unvested balance and to any future stock awards.\",\n      \"comparison_to_standard\": \"investor-friendly\",\n      \"founder_impact_estimate\": \"Founder vesting reset to 4-year schedule with a 1-year cliff delays potential liquidity by 18 months.\",\n      \"negotiation_recommendation\": \"accept as investor-friendly\"\n    },\n    {\n      \"type\": \"drag_along\",\n      \"term\": \"In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock.\",\n      \"comparison_to_standard\": \"aggressive\",\n      \"founder_impact_estimate\": \"Drag-along right allows the Lead Investor to force sale without additional approval, potentially harming founders.\",\n      \"negotiation_recommendation\": \"push back on drag-along right\"\n    },\n    {\n      \"type\": \"mfn\",\n      \"term\": \"The Company shall not issue any equity securities at terms more favorable to the holders than those of the Series B Preferred Stock without offering such favorable terms to the Series B Investors.\",\n      \"comparison_to_standard\": \"standard\",\n      \"founder_impact_estimate\": \"Most-favored-nation clause ensures fairness among investors.\",\n      \"negotiation_recommendation\": \"accept as standard\"\n    },\n    {\n      \"type\": \"pay_to_play\",\n      \"term\": \"In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.\",\n      \"comparison_to_standard\": \"founder-friendly\",\n      \"founder_impact_estimate\": \"Pay-to-play clause prevents passive investors from blocking dilutive rounds, benefiting founders.\",\n      \"negotiation_recommendation\": \"accept as founder-friendly\"\n    },\n    {\n      \"type\": \"protective_provisions\",\n      \"term\": \"So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions: - Amend the Certificate of Incorporation or Bylaws - Sell or merge the Company - Issue any equity securities - Incur debt in excess of $500,000 in the aggregate - Increase or decrease the authorized number of directors - Pay any dividend - Repurchase or redeem any equity securities - Hire or terminate any officer of the Company (CEO, CFO, COO, CTO) - Approve the annual budget or any deviation from such budget in excess of ten percent (10%) - Adopt or amend any employee benefit plan or executive compensation plan - Enter into any contract with a counterparty obligation in excess of $1,000,000 in the aggregate - Initiate or settle any litigation\",\n      \"comparison_to_standard\": \"aggressive\",\n      \"founder_impact_estimate\": \"Protective provisions include many key business decisions, significantly impacting founders' control.\",\n      \"negotiation_recommendation\": \"redline as investor-friendly\"\n    }\n  ],\n  \"Worst term\": \"liquidation_pref\"\n}\n```\n\n### Verified facts\n- Liquidation preference of 3x participating.\n- Full-ratchet anti-dilution clause.\n- 15% post-financing option pool.\n- Founder vesting reset to 4-year schedule with a 1-year cliff.\n- Drag-along right allowing the Lead Investor to force sale without additional approval.\n- Protective provisions covering a wide range of company actions.\n- Pay-to-play clause requiring pro rata participation in future financings.\n\n### Inferred\n- The term sheet is highly investor-friendly due to the aggressive protective provisions and liquidation preference.\n- The drag-along right is particularly aggressive since it allows the Lead Investor to act alone.\n- The pay-to-play clause is beneficial for founders as it prevents passive investors from blocking necessary dilutive rounds.\n\n### Unsupported\n- The term sheet does not mention a participation cap, so there is no evidence to support a claim about a capped participation.\n- The term sheet does not provide specific details on the size of the option pool or how it impacts founders' equity beyond stating it is dilutive.\n- The term sheet does not indicate any founder-specific clauses that would make the term sheet more founder-friendly compared to standard market practices.",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x8cc88b8b0c31eeb5b3fe6cf214943a57bbab5174924d1c207246054ad9899852",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "de551c74-a2c9-453a-b94d-dba7a4e3252b",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"type\": \"liquidation_pref\",\n      \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \\\"Series B Liquidation Preference\\\"). The Series B Liquidation Preference is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"3x liquidation preference means a significant payout reduction at an exit.\",\n      \"counter_recommendation\": \"reject as founder-hostile\"\n    },\n    {\n      \"type\": \"participation\",\n      \"term\": \"The Series B Preferred Stock is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"Fully participating preferred shares can significantly dilute founder value at an exit.\",\n      \"counter_recommendation\": \"redline full-ratchet participation\"\n    },\n    {\n      \"type\": \"anti_dilution\",\n      \"term\": \"The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price. Upon any such Down Round issuance, the Series B Conversion Price shall be reduced to the price per share of the new issuance, regardless of the size of such issuance.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"Full-ratchet anti-dilution can dramatically increase the Series B preferred share count at the expense of founders and other investors.\",\n      \"counter_recommendation\": \"redline full-ratchet anti-dilution\"\n    },\n    {\n      \"type\": \"option_pool\",\n      \"term\": \"The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization. The Option Pool expansion shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock and Series A holders, not the Series B Investors).\",\n      \"comparison_to_standard\": \"dilutive to founders\",\n      \"founder_impact_estimate\": \"15% post-money option pool reduces founders' equity by 15% of the post-money valuation.\",\n      \"counter_recommendation\": \"push back on dilutive option pool\"\n    },\n    {\n      \"type\": \"founder_vesting\",\n      \"term\": \"All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control. Founder shares vested as of the closing date that were subject to vesting under prior agreements shall remain vested; the reset applies to the unvested balance and to any future stock awards.\",\n      \"comparison_to_standard\": \"investor-friendly\",\n      \"founder_impact_estimate\": \"Founder vesting reset to 4-year schedule with a 1-year cliff delays potential liquidity by 18 months.\",\n      \"counter_recommendation\": \"push back on participation cap and reset clause\"\n    },\n    {\n      \"type\": \"drag_along\",\n      \"term\": \"In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock.\",\n      \"comparison_to_standard\": \"founder-hostile\",\n      \"founder_impact_estimate\": \"Drag-along right allows the Lead Investor to force sale without additional approval, limiting founder's control.\",\n      \"counter_recommendation\": \"reject as founder-hostile · walk if not changed\"\n    },\n    {\n      \"type\": \"protective_provisions\",\n      \"term\": \"So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions: - Amend the Certificate of Incorporation or Bylaws - Sell or merge the Company - Issue any equity securities - Incur debt in excess of $500,000 in the aggregate - Increase or decrease the authorized number of directors - Pay any dividend - Repurchase or redeem any equity securities - Hire or terminate any officer of the Company (CEO, CFO, COO, CTO) - Approve the annual budget or any deviation from such budget in excess of ten percent (10%) - Adopt or amend any employee benefit plan or executive compensation plan - Enter into any contract with a counterparty obligation in excess of $1,000,000 in the aggregate - Initiate or settle any litigation\",\n      \"comparison_to_standard\": \"aggressive\",\n      \"founder_impact_estimate\": \"Aggressive protective provisions limit the Company's ability to make strategic decisions without preferred investor approval.\",\n      \"counter_recommendation\": \"redline as investor-friendly\"\n    },\n    {\n      \"type\": \"pay_to_play\",\n      \"term\": \"In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.\",\n      \"comparison_to_standard\": \"founder-friendly\",\n      \"founder_impact_estimate\": \"Pay-to-play ensures active participation from investors, preventing them from passively blocking dilutive rounds.\",\n      \"counter_recommendation\": \"accept as founder-friendly\"\n    }\n  ],\n  \"Worst term\": \"liquidation_pref\"\n}\n```\n\n### Risk Level\n**Worst term: liquidation_pref**\n\n### Action\nGiven the high risk level, the user should **reject the 3x participating liquidation preference** and consider **walking away from the deal** if this term is not changed. The other clauses, while concerning, are either market-standard or beneficial to the founders and can be negotiated.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778770589704",
+    "zgResKey": "de551c74-a2c9-453a-b94d-dba7a4e3252b",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 16856,
+    "outputTokens": 6021,
+    "inputCostNeuron": "842800000000000",
+    "outputCostNeuron": "602100000000000",
+    "totalCostNeuron": "1444900000000000",
+    "totalCostOg": "0.0014449000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "1105348500000000",
+      "treasuryNeuron": "339551500000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xf1822b3239b82f28bfcc99110bc41f6da8cbaba2845242b036185cc9a243bd5c",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:43c2af03e5be44337a6d36abc542f63dee1fec00e9da56967d4f2b97025cd7fb"
+    },
+    "receiptRoot": "0x94ff45062919d61cf820651f977525de3e7ed881c18252c60e8f91245fbe64ac"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778770504853,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "testnet",
+    "chainId": 16602,
+    "rpcUrlHash": "sha256:7d8e420a351f8e2272a6674876da272f2a5b5f7d1c0e48203a55880b872419d4",
+    "registryAddress": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+    "anchorTxHash": "0xc3d522396c546ef0baf82b56852f0ad9d6aba56a8b0034543b23cbee11fc7bb0",
+    "anchorBlockNumber": 33293189,
+    "anchorTimestamp": 1778770602
+  },
+  "outputs": {
+    "outputHash": "sha256:f19b42ecfef86bea1c44c8ae5a004f2418971a9016c59b3b3aa64c7cb3f1715e",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "```json {   \"findings\": [     {       \"type\": \"liquidation_pref\",       \"term\": \"In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to a",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": true,
+      "data": {
+        "findings": [
+          {
+            "type": "liquidation_pref",
+            "term": "In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the \"Series B Liquidation Preference\"). The Series B Liquidation Preference is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.",
+            "comparison_to_standard": "founder-hostile",
+            "founder_impact_estimate": "3x liquidation preference means a significant payout reduction at an exit.",
+            "counter_recommendation": "reject as founder-hostile"
+          },
+          {
+            "type": "participation",
+            "term": "The Series B Preferred Stock is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.",
+            "comparison_to_standard": "founder-hostile",
+            "founder_impact_estimate": "Fully participating preferred shares can significantly dilute founder value at an exit.",
+            "counter_recommendation": "redline full-ratchet participation"
+          },
+          {
+            "type": "anti_dilution",
+            "term": "The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price. Upon any such Down Round issuance, the Series B Conversion Price shall be reduced to the price per share of the new issuance, regardless of the size of such issuance.",
+            "comparison_to_standard": "founder-hostile",
+            "founder_impact_estimate": "Full-ratchet anti-dilution can dramatically increase the Series B preferred share count at the expense of founders and other investors.",
+            "counter_recommendation": "redline full-ratchet anti-dilution"
+          },
+          {
+            "type": "option_pool",
+            "term": "The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization. The Option Pool expansion shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock and Series A holders, not the Series B Investors).",
+            "comparison_to_standard": "dilutive to founders",
+            "founder_impact_estimate": "15% post-money option pool reduces founders' equity by 15% of the post-money valuation.",
+            "counter_recommendation": "push back on dilutive option pool"
+          },
+          {
+            "type": "founder_vesting",
+            "term": "All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control. Founder shares vested as of the closing date that were subject to vesting under prior agreements shall remain vested; the reset applies to the unvested balance and to any future stock awards.",
+            "comparison_to_standard": "investor-friendly",
+            "founder_impact_estimate": "Founder vesting reset to 4-year schedule with a 1-year cliff delays potential liquidity by 18 months.",
+            "counter_recommendation": "push back on participation cap and reset clause"
+          },
+          {
+            "type": "drag_along",
+            "term": "In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock.",
+            "comparison_to_standard": "founder-hostile",
+            "founder_impact_estimate": "Drag-along right allows the Lead Investor to force sale without additional approval, limiting founder's control.",
+            "counter_recommendation": "reject as founder-hostile · walk if not changed"
+          },
+          {
+            "type": "protective_provisions",
+            "term": "So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions: - Amend the Certificate of Incorporation or Bylaws - Sell or merge the Company - Issue any equity securities - Incur debt in excess of $500,000 in the aggregate - Increase or decrease the authorized number of directors - Pay any dividend - Repurchase or redeem any equity securities - Hire or terminate any officer of the Company (CEO, CFO, COO, CTO) - Approve the annual budget or any deviation from such budget in excess of ten percent (10%) - Adopt or amend any employee benefit plan or executive compensation plan - Enter into any contract with a counterparty obligation in excess of $1,000,000 in the aggregate - Initiate or settle any litigation",
+            "comparison_to_standard": "aggressive",
+            "founder_impact_estimate": "Aggressive protective provisions limit the Company's ability to make strategic decisions without preferred investor approval.",
+            "counter_recommendation": "redline as investor-friendly"
+          },
+          {
+            "type": "pay_to_play",
+            "term": "In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.",
+            "comparison_to_standard": "founder-friendly",
+            "founder_impact_estimate": "Pay-to-play ensures active participation from investors, preventing them from passively blocking dilutive rounds.",
+            "counter_recommendation": "accept as founder-friendly"
+          }
+        ],
+        "Worst term": "liquidation_pref"
+      },
+      "repaired": [
+        "codeFence"
+      ],
+      "rawBytes": 6504
+    }
+  },
+  "createdAt": 1778770589705,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x9039ca58a6e286e42b0125864cda56ad39c964e44998df8d2ba3e743579bfc953caf5fc5ef3d2c7e46f2bb19be95715ee04fd1e068831163a472a8925b69c85b1c"
+  }
+}
