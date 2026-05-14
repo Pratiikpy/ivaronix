@@ -1,0 +1,97 @@
+{
+  "timestamp": "2026-05-14T04:17:17.344Z",
+  "elapsedSec": 38.58,
+  "alice": {
+    "address": "0xaE752fc036250fdB0b6458e3d4FCe2F533ff71d2",
+    "privateKey": "0x326269b3e88b230e9c014abad7dee23284e5570fb76e2c7f1341195f17f8573e"
+  },
+  "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "receipt": {
+    "id": "36",
+    "receiptRoot": "0x57603dae1514d1f35e362216a7a7eee1f0b837c60b169719ce1ca6c2386be29c",
+    "storageRoot": "0xc7b7c4b02bb9d86ef3014225fb84732b6e1916f71021ab5f540ba50802e95638",
+    "anchorTx": "0xdb13331c55f7ba51e4507dafa6dcec15685a02dfd6c89866792e8a50735befe9",
+    "chainscan": "https://chainscan-galileo.0g.ai/tx/0xdb13331c55f7ba51e4507dafa6dcec15685a02dfd6c89866792e8a50735befe9",
+    "studioUrl": "https://ivaronix.vercel.app/r/36",
+    "ogImage": "https://ivaronix.vercel.app/r/36/opengraph-image",
+    "embed": "https://ivaronix.vercel.app/embed/r/36",
+    "print": "https://ivaronix.vercel.app/r/36/print"
+  },
+  "checks": [
+    {
+      "name": "/r/36 returns HTML",
+      "pass": true,
+      "detail": "49335 bytes"
+    },
+    {
+      "name": "/r/36 shows ANCHORED chip",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "/r/36 shows alice's address",
+      "pass": true,
+      "detail": "0xaE752fc036250fdB0b6458e3d4FCe2F533ff71d2"
+    },
+    {
+      "name": "/r/36 shows receiptRoot",
+      "pass": true,
+      "detail": "0x57603dae1514d1f3…"
+    },
+    {
+      "name": "/r/36 renders V2 chip",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "/r/36/opengraph-image returns 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "OG content-type = image/png",
+      "pass": true,
+      "detail": "ct=image/png"
+    },
+    {
+      "name": "/embed/r/36 returns 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "/embed/r/36 shows ANCHORED",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "name": "/r/36/print returns 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "/api/dashboard/0xaE752fc0… returns 200",
+      "pass": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "/api/dashboard recentReceipts contains alice's anchor",
+      "pass": true,
+      "detail": "id=36"
+    },
+    {
+      "name": "/global headline parses a receipt count",
+      "pass": true,
+      "detail": "count=50"
+    },
+    {
+      "name": "/global count >= V2 nextId",
+      "pass": true,
+      "detail": "global=50 vs V2.nextId=36"
+    }
+  ],
+  "summary": {
+    "pass": 14,
+    "fail": 0,
+    "total": 14
+  }
+}
