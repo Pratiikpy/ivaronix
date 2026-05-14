@@ -479,6 +479,87 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </section>
 
+      {/* Before / after examples · final-plan.md §1.6 Day 19-22.
+          Three anonymised use-cases showing what raw input looks
+          like vs. the receipt-anchored finding. Concrete proof the
+          flow produces real-value findings, not generic AI prose. */}
+      <section
+        style={{
+          padding: '48px 32px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <div
+          className="section-label"
+          style={{ marginBottom: 8, color: 'var(--color-muted)', fontSize: 12, letterSpacing: '1.5px' }}
+        >
+          REAL EXAMPLES · BEFORE → AFTER
+        </div>
+        <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--color-muted)', maxWidth: 720 }}>
+          Three anonymised runs. Each &quot;before&quot; is what the user drops in. Each &quot;after&quot; is what the receipt records — finding plus chain proof.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {[
+            {
+              persona: 'Founder · term sheet',
+              before:
+                'Section 4.2: "Liquidation preference shall be 2x participating, with a 7% cumulative dividend accruing annually, payable upon any Deemed Liquidation Event…"',
+              after:
+                '2x participating + 7% cumulative compounds to ~$3.2M extra to investor on an $8M exit. Worse than market for a $4M raise.',
+            },
+            {
+              persona: 'Lawyer · vendor MSA',
+              before:
+                '"Provider may sub-process customer data in any jurisdiction in which Provider operates or contracts with sub-processors, including but not limited to facilities outside the European Economic Area."',
+              after:
+                'Conflicts with the customer\'s SOC 2 commitment to EU-only data residency. The provider list (Exhibit B) names a US-based analytics firm. Material breach risk on disclosure.',
+            },
+            {
+              persona: 'Compliance · employment offer',
+              before:
+                '"Employee agrees to a non-competition restriction covering all business activities directly or indirectly competitive with the Company, for a period of 24 months following termination, worldwide."',
+              after:
+                'California Civil Code §16600 voids worldwide non-competes for CA residents. The 24-month duration also fails the reasonableness test in 41 of 50 US states.',
+            },
+          ].map(({ persona, before, after }) => (
+            <div
+              key={persona}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+                padding: 16,
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
+              }}
+            >
+              <div className="mono" style={{ fontSize: 11, letterSpacing: '1px', color: 'var(--color-muted)', textTransform: 'uppercase' }}>
+                {persona}
+              </div>
+              <div>
+                <div className="section-label" style={{ fontSize: 10, marginBottom: 4 }}>BEFORE · raw input</div>
+                <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--color-muted)' }}>{before}</p>
+              </div>
+              <div style={{ paddingTop: 10, borderTop: '1px solid var(--color-hairline)' }}>
+                <div className="section-label" style={{ fontSize: 10, marginBottom: 4 }}>AFTER · receipt finding</div>
+                <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.5, color: 'var(--color-fg)' }}>{after}</p>
+              </div>
+              <p className="mono" style={{ margin: 0, fontSize: 10.5, color: 'var(--color-muted)' }}>
+                Anonymised. Real receipts on `/r/&lt;id&gt;` carry the full chain anchor and TEE attestation.
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* 12-module grid · final-plan.md §1.6 Day 5-9 acceptance.
           Every card LIVE (real shipped page) — zero fake cards, zero
           placeholder claims. This is the external-reviewer fix for
