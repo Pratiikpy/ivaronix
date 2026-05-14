@@ -513,7 +513,7 @@ export default async function FaqPage(): Promise<React.JSX.Element> {
             marginBottom: 24,
           }}
         >
-          Twelve hard questions,{' '}
+          Hard questions,{' '}
           <span className="italic-display" style={{ fontWeight: 400 }}>
             answered honestly.
           </span>
