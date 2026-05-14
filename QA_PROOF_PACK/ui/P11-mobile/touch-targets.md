@@ -1,10 +1,10 @@
-# P11 · Touch-target ≥ 44×44 audit · 2026-05-13T23:44:21.789Z
+# P11 · Touch-target ≥ 44×44 audit · 2026-05-14T00:08:11.731Z
 
 Target: https://ivaronix.vercel.app · viewport 375×812 · WCAG 2.5.5 Level AA
 
 | Route | Violations |
 |---|---:|
-| / | ✗ 2 |
+| / | ✓ |
 | /onboard | ✓ |
 | /skills | ✓ |
 | /memory | ✓ |
@@ -19,13 +19,6 @@ Target: https://ivaronix.vercel.app · viewport 375×812 · WCAG 2.5.5 Level AA
 | /admin/treasury | ✓ |
 | /r/1004 | ✓ |
 
-Total violations: 2
+Total violations: 0
 
-## Detailed violations
-
-### /
-
-| Selector | Text | Size |
-|---|---|---|
-| `input` | (no text) | 13×13 px |
-| `input` | (no text) | 13×13 px |
+✓ Every interactive element on every route meets the ≥ 44×44 minimum.
