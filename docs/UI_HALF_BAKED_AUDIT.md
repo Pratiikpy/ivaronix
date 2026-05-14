@@ -26,12 +26,13 @@
 | Independent-verify chip in hero | 🟢 LIVE | `pnpm ivaronix receipt verify rec_1004 --tee-independent` works | — |
 | Sovereignty circle visual | 🟢 LIVE | `apps/studio/src/components/SovereigntyCircle.tsx` (439 lines) · server component · honest "what it defends / does not" framing · desktop SVG flow + mobile vertical stack | — |
 | Builder rail | 🟢 LIVE | +474 lines to page.tsx · typecheck + wording-lint + brand-token-drift all PASS | — |
-| Animated four-light (home) | 🔴 NOT BUILT | static `FourLightRow` only · `pulse` keyframe shipped for live-feed dot in `globals.css` | queued |
-| Personas band (Founders / Lawyers / Compliance / Builders) | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
-| Honest roadmap section | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
-| Final CTA section | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
-| Big numbers row (5 KPIs in dedicated band) | 🟡 IN PROGRESS (subagent E) | hero stat row already has 3 (receipts / passports / skills) | review + commit when E reports |
-| Manifesto block | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
+| Animated four-light (home) | 🟢 LIVE `219dad0` | pure-CSS 6s cycle · prefers-reduced-motion respected · embedded under sovereignty circle | — |
+| Personas band (Founders / Lawyers / Compliance / Builders) | 🟢 LIVE `70849cc` | 4-card persona row with italic-serif use-case framing | — |
+| Honest roadmap section | 🟢 LIVE `70849cc` | 4 items with GATED / IN PROGRESS pills | — |
+| Final CTA section | 🟢 LIVE `70849cc` | 3-button card (Try demo / Read docs / GitHub) | — |
+| Big numbers row (5 KPIs in dedicated band) | 🟢 LIVE `70849cc` | 5 KPI tiles · live chain reads + numbers-snapshot for Foundry count | — |
+| Manifesto block | 🟢 LIVE `70849cc` | ~70-word serif-italic centred paragraph | — |
+| Before / after examples | 🟢 LIVE `1d4ac82` | 3 anonymised cards (founder · lawyer · compliance) | — |
 
 ## Receipt page (`/r/<id>`)
 
@@ -76,8 +77,8 @@
 | `/memory` | 🟢 LIVE | grant + revoke + access-log feed |
 | `/agents` | 🟢 LIVE | passport list |
 | `/agent/[addr]` | 🟢 LIVE | per-passport profile |
-| `/delegate/[id]` | 🟡 WEAKLY EXPLAINED | delegate-grant flow exists but UI copy is thin |
-| `/data-room/[id]` | 🟡 WEAKLY EXPLAINED | data-room read flow exists; share UI thin |
+| `/delegate/[id]` | 🟢 LIVE (re-audited) | full copy ships: delegate identity · key-custody disclosure (phase A vs B) · trust-boundary explanation · active grants table · phase-B-TEE target documented |
+| `/data-room/[id]` | 🟢 LIVE | data-room read flow + receipts list + share path live |
 | `/skills` | 🟢 LIVE | skill library catalog |
 | `/skill/[id]` | 🟢 LIVE | per-skill detail |
 | `/skill/new` | 🟢 LIVE | publish a skill |
@@ -105,13 +106,17 @@
 
 ## Half-baked items (must be fixed before testnet launch claim)
 
-1. **Sovereignty circle visual** — subagent A integrating this fire. Review pending.
-2. **Builder rail** — not built. Day 5-9 remainder.
-3. **Animated four-light on home** — not built. Day 5-9 remainder.
-4. **0G Storage body fetch fallback on `/r/<id>`** — Day 13-17 build queued. Only local-cache today.
-5. **/learn page** — subagent B integrating this fire. Review pending.
-6. **`/delegate/[id]` + `/data-room/[id]` UI copy** — flows work but copy is thin. Day 23-26 mobile-first pass + content gaps.
-7. **`/test-wallet` route** — dev-only, should not ship to production nav. Hide or move.
+| # | Item | Status |
+|---|---|---|
+| 1 | Sovereignty circle visual | 🟢 LIVE `3a9180a` |
+| 2 | Builder rail | 🟢 LIVE `bbbb77f` |
+| 3 | Animated four-light on home | 🟢 LIVE `219dad0` |
+| 4 | 0G Storage body fetch fallback on /r/&lt;id&gt; | 🔴 Day 13-17 build queued · local-cache fallback today |
+| 5 | /learn page | 🟢 LIVE `3a9180a` |
+| 6 | /delegate/&lt;id&gt; + /data-room/&lt;id&gt; UI copy | 🟢 LIVE (re-audited) — full custody disclosure + grants table already ships |
+| 7 | /test-wallet route | 🟢 confirmed dormant · not in production nav |
+
+Only item 4 (Storage body fetch fallback) remains open. Closed: 6 of 7.
 
 ## Roadmap items (honestly labelled, not shipping false claims)
 
@@ -131,7 +136,7 @@ This audit is "complete" when:
 
 ## Last refresh
 
-2026-05-14 · cron `a5ec057e` iteration 19+ · subagent E mid-edit on page.tsx (+474 lines, all 5 sections likely in place, awaiting completion + gates).
+2026-05-14 · cron `a5ec057e` iteration 27 · build-phase essentially complete · 6 of 7 half-baked items closed · 1 remaining (Storage body fetch fallback, Day 13-17 queued).
 
 ## Cron run progress ledger
 
@@ -144,4 +149,19 @@ This audit is "complete" when:
 | 5 | `3a9180a` | 5-9 + 10-12 + 31 | Sovereignty circle + /learn page + half-baked audit |
 | 6 | `70cb2df` | 18 | pc.0g.ai adapter in og-router (30 unit tests) |
 | 7 | `589661d` | 19-22 | /faq page (12 honest answers) + home 14-module grid |
-| 8 | _pending_ | 5-9 + 19-22 | Subagent E: personas band + big numbers row + manifesto + honest roadmap + final CTA |
+| 8 | `70849cc` | 5-9 + 19-22 | 5 sections (personas + numbers + manifesto + roadmap + final CTA) |
+| 9 | `bbbb77f` | 5-9 | Builder rail (CLI + SDK + MCP + embed) |
+| 10 | `1d4ac82` | 19-22 | Before/after examples (3 anonymised cards) |
+| 11 | `219dad0` | 5-9 | Animated four-light (pure CSS 6s cycle) |
+
+## Remaining work to testnet launch
+
+| Day-N | Status | What's left |
+|---|---|---|
+| 4 schema bump | 🟡 deferred | needs coordinated polyglot TS+Py+Rust sweep + 29 vectors re-pinned |
+| 13-17 0G DA pipeline | 🟡 preflight done | full disperse + retrieve pipeline · or `docs/0G_DA_INTEGRATION.md` runbook + Phase 2 demote |
+| 23-26 mobile-first pass | 🟡 partial | per-page screenshot inspection @ 375×812 per §17.7 |
+| 27-28 bilingual README + demo video | 🟡 partial | EN + 中文 README · 90s tour video against post-rewrite UI |
+| 29-30 multi-wallet UI proof | 🟡 chain-side proven | real MM 3-wallet walkthrough · per §16 PASS criteria |
+| 32-35 QA sweep + polish | 🔴 | Lighthouse 95+ · WCAG AA · Priority 20 external reviewer signoff |
+| 36 claims-vs-built audit | 🔴 | every UI claim traces to shipped feature or roadmap |
