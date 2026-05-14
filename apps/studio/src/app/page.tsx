@@ -1027,7 +1027,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       {/* Builder rail · final-plan.md §1.6 Day 5-9 acceptance.
           Copy-paste-able CLI + SDK + MCP + embed snippets so a
           developer lands here and sees an integration path
-          immediately. Surfaces the 33-command CLI and 21-package
+          immediately. Surfaces the 34-command CLI and 21-package
           SDK to the landing surface — operator directive: every
           backend capability with UI PMF must show on landing. */}
       <section
@@ -1056,7 +1056,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           {[
             {
               name: 'CLI',
-              body: '33 commands. Anchor a receipt from your shell.',
+              body: '34 commands. Anchor a receipt from your shell.',
               code: '$ pnpm ivaronix doc ask contract.pdf "find risks" --quick',
               href: '/docs#cli',
             },
@@ -1069,7 +1069,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {
               name: 'MCP',
               body: 'Wire receipts into Claude Desktop / Cursor.',
-              code: '{ "mcpServers": { "ivaronix": { "command": "ivaronix", "args": ["mcp"] } } }',
+              code: '{ "mcpServers": { "ivaronix": { "command": "ivaronix-mcp" } } }',
               href: '/docs#mcp',
             },
             {
@@ -1165,7 +1165,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 instead of a brand lie. */}
             <span style={{ color: 'var(--color-muted)' }}>0G DA <span style={{ fontSize: 10, fontStyle: 'italic' }}>(integration documented)</span></span>
             <span>0G Router</span>
-            <span>Sealed Inference</span>
           </div>
         </div>
       </section>

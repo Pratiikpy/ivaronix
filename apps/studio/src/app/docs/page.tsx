@@ -22,7 +22,7 @@ const SECTIONS: DocSection[] = [
     id: 'cli',
     name: 'CLI',
     body:
-      'The Ivaronix CLI ships 33 commands. Install once, run a private review against any local file, anchor a receipt on chain. Every command works against the live Galileo testnet.',
+      'The Ivaronix CLI ships 34 commands. Install once, run a private review against any local file, anchor a receipt on chain. Every command works against the live Galileo testnet.',
     snippets: [
       {
         label: 'Install + first run',
@@ -84,8 +84,7 @@ const SECTIONS: DocSection[] = [
           '{\n' +
           '  "mcpServers": {\n' +
           '    "ivaronix": {\n' +
-          '      "command": "ivaronix",\n' +
-          '      "args": ["mcp"]\n' +
+          '      "command": "ivaronix-mcp"\n' +
           '    }\n' +
           '  }\n' +
           '}',
