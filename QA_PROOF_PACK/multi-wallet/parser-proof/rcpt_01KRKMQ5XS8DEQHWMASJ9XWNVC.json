@@ -1,0 +1,187 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRKMQ5XS8DEQHWMASJ9XWNVC",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "nda-triage-reviewer",
+    "skillVersion": "0.1.0",
+    "skillManifestHash": "sha256:c4c3104a507d2d7de235503cf7a4476a81ed4659846152e0ba9b9c13daa99e19",
+    "userPromptHash": "sha256:b1d48b048de56dcd36785022291fd99b225d286487cd1390fdda151cf552e0e9",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "qwen/qwen-2.5-7b-instruct",
+      "final": "qwen/qwen-2.5-7b-instruct"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0xa48f01287233509FD694a22Bf840225062E67836"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.446,
+      "agreementSummary": "Reviewers partially overlap (Jaccard 0.446); the judge will flag conflicts.",
+      "disagreementSummary": "analyst: \"1. **Type** — one-way because only Recipient owes confidentiality.\"\nevidence-checker: \"  \"governing_law\": \"Cayman Islands\",\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0x849f1a227db07a8ef84e9f841c25da549474fe5cc608e65e3e3661057878f3b8",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "0eeba3ec-b298-467f-b490-85b5c5a7dcab",
+          "content": "1. **Type** — one-way because only Recipient owes confidentiality.\n2. **Term_years** — `-1` because the term is stated to be in perpetuity.\n3. **Governing_law** — \"Cayman Islands\" as specified in the document.\n4. **Jurisdiction** — \"unspecified\" because the document does not mention any specific city or state for disputes.\n5. **Exclusions_list** — `[]` as there is no exclusions list provided.\n6. **Red_flags** — [\"Term is in perpetuity — standard is 2-5 for non-trade-secret information\", \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\", \"Auto-renewal of the NDA itself (rare but happens)\"].\n7. **Standard_or_aggressive** — \"aggressive\" due to the presence of multiple red flags.\n8. **Signature_recommendation** — `refuse`.\n\n```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": -1,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"unspecified\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Auto-renewal of the NDA itself (rare but happens)\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"refuse\"\n}\n```\n\nTriage: refuse",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0x1adf58817f01d027b6749c3a9336df3d0039262fea2a409440b3b3188dc49fd4",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "4636c823-3fa1-4aa7-bb27-11d3b44f0023",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": -1,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands (no court)\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Future-tense statements included in 'Confidential Information' definition — overly broad\",\n    \"No reciprocal obligation — Recipient has no similar confidentiality obligations\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\nTriage: escalate",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0xd687e5dfa034fa50656da99239808267b172dbb731f88e72492668588c772a4a",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "e03d46d1-764b-4783-8ef7-5ad8fcc51c38",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\",\n    \"Broad 'Confidential Information' definition includes future-tense statements and any information that Recipient could reasonably infer to be confidential\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Liquidated damages of $1,000,000 per breach — high liability cap\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\nRisks:\n1. Term is in perpetuity — legal — high\n2. Broad 'Confidential Information' definition includes future-tense statements and any information that Recipient could reasonably infer to be confidential — legal — high\n3. No exclusion for 'independently developed' — could lock the asking party out of parallel work — legal — medium\n4. Liquidated damages of $1,000,000 per breach — high liability cap — financial — high",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0xc39de855bc174504a525b4c7a46f450b58e915404ae4b84ed54482ee86878189",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "4f229b23-0723-4174-bb93-d356af6f83c9",
+          "content": "```json\n{\n  \"type\": \"one-way\",\n  \"term_years\": 0,\n  \"governing_law\": \"Cayman Islands\",\n  \"jurisdiction\": \"Cayman Islands (no specific court mentioned)\",\n  \"exclusions_list\": [],\n  \"red_flags\": [\n    \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\",\n    \"Confidential Information defined to include future-tense statements about plans or intent — could be overly broad\",\n    \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\",\n    \"Liquidated damages of $1,000,000 per breach — could be considered unreasonably high\"\n  ],\n  \"standard_or_aggressive\": \"aggressive\",\n  \"signature_recommendation\": \"escalate\"\n}\n```\n\n- **Verified facts**: \n  - Type: one-way (Clause 4 states \"Acme makes no representations or warranties as to the Confidential Information and shall have no obligation of confidentiality with respect to any information disclosed by Recipient.\")\n  - Term: 0 (Clause 5 states \"This Agreement shall remain in effect in perpetuity.\")\n  - Governing law: Cayman Islands (Clause 7 states \"This Agreement shall be governed by the laws of the Cayman Islands.\")\n  - Jurisdiction: Cayman Islands (Clause 7 states \"The Parties consent to the exclusive jurisdiction of the courts of the Cayman Islands.\")\n  - Exclusions list: [] (There is no exclusions list provided in the document.)\n  - Red flags: \n    - Term is in perpetuity.\n    - Confidential Information defined to include future-tense statements.\n    - No exclusion for 'independently developed'.\n    - Liquidated damages of $1,000,000 per breach.\n\n- **Inferred**: \n  - The term is perpetual, which is a common inference from the phrase \"in perpetuity\".\n\n- **Unsupported**: \n  - The document does not specify any reciprocal confidentiality obligations, so it cannot be verified as mutual.\n  - There is no mention of non-solicit or non-compete clauses, so these cannot be inferred.\n  - The document does not indicate any auto-renewal clause, so this cannot be inferred.\n  - The document does not provide a term for non-trade-secret information, so it cannot be verified as either 2-5 years or longer than 5 years.\n  - There is no indication of a familiar forum to the asking party, so this cannot be verified.",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x6e7a21630353a360b16764f5ed611c9fe603d05ce80b4f7b076477a6b89d915f",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "660aaba5-568f-44bc-8b03-767ba14f8721",
+          "content": "### Synthesized Judgment\n\n**Type:**  \n- **AGREEMENT:** one-way (Clause 4 states \"Acme makes no representations or warranties as to the Confidential Information and shall have no obligation of confidentiality with respect to any information disclosed by Recipient.\")\n\n**Term Years:**  \n- **AGREEMENT:** -1 (The term is stated to be in perpetuity.)\n\n**Governing Law:**  \n- **AGREEMENT:** Cayman Islands (Clause 7 states \"This Agreement shall be governed by the laws of the Cayman Islands.\")\n\n**Jurisdiction:**  \n- **AGREEMENT:** Cayman Islands (Clause 7 states \"The Parties consent to the exclusive jurisdiction of the courts of the Cayman Islands.\")\n\n**Exclusions List:**  \n- **AGREEMENT:** `[]` (There is no exclusions list provided in the document.)\n\n**Red Flags:**  \n- **ANALYST:** \"Term is in perpetuity — standard is 2-5 for non-trade-secret information\"\n- **CRITIC:** \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\", \"Broad 'Confidential Information' definition includes future-tense statements and any information that Recipient could reasonably infer to be confidential\", \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\", \"No reciprocal obligation — Recipient has no similar confidentiality obligations\"\n- **RISK-REVIEWER:** \"Term is in perpetuity — standard is 2-5 years for non-trade-secret information\", \"Broad 'Confidential Information' definition includes future-tense statements and any information that Recipient could reasonably infer to be confidential\", \"No exclusion for 'independently developed' — could lock the asking party out of parallel work\", \"Liquidated damages of $1,000,000 per breach — could be considered unreasonably high\"\n\n**Standard or Aggressive:**  \n- **AGREEMENT:** \"aggressive\" (Due to the presence of multiple red flags.)\n\n**Signature Recommendation:**  \n- **ANALYST:** `refuse`\n- **CRITIC:** `escalate`\n- **RISK-REVIEWER:** `escalate`\n\n### Final Risk Level: High\n\n### Action:  \nEscalate the NDA to outside counsel for further review and negotiation. The perpetual term, broad definition of \"Confidential Information,\" lack of exclusions, and high liquidated damages make this NDA highly aggressive and potentially unfavorable for the asking party.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778775726008",
+    "zgResKey": "660aaba5-568f-44bc-8b03-767ba14f8721",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 10718,
+    "outputTokens": 1839,
+    "inputCostNeuron": "535900000000000",
+    "outputCostNeuron": "183900000000000",
+    "totalCostNeuron": "719800000000000",
+    "totalCostOg": "0.0007198000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "550647000000000",
+      "treasuryNeuron": "169153000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x49f9b11dbd80f63ff42b5aacdd5c1da209da321f93708a4995515cb991b5d49e",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:2f6e0f80e7142beb903f66dba0e8a5d6a5b9b22c1679ab8cbd9cfc7a85c97685"
+    },
+    "receiptRoot": "0x7bd555d98816458059ba1aa573808a49f7404e9b055adb9739d28c45edb23403"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778775688596,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "testnet",
+    "chainId": 16602,
+    "rpcUrlHash": "sha256:7d8e420a351f8e2272a6674876da272f2a5b5f7d1c0e48203a55880b872419d4",
+    "registryAddress": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+    "anchorTxHash": "0x4c4510143dc2dc958f5479224065d9c8e29796b61dc0eb2ef310e8ac5440fc89",
+    "anchorBlockNumber": 33303721,
+    "anchorTimestamp": 1778775739
+  },
+  "outputs": {
+    "outputHash": "sha256:680f420a191e734e78b19262648a1ea1adae3044734a67d677c9706b11dcacea",
+    "citations": [],
+    "riskLevel": "low",
+    "wording": {
+      "headline": "### Synthesized Judgment **Type:**   - **AGREEMENT:** one-way (Clause 4 states \"Acme makes no representations or warranties as to the Confidential Information and shall have no obligation of confiden",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": true,
+      "data": [],
+      "repaired": [
+        "leadingTrailingProse"
+      ],
+      "rawBytes": 2280
+    }
+  },
+  "createdAt": 1778775726010,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xb0f9d974b3c9978b445f50ae341f099273764562a1c94ebca73f222fa6051ed87215ff5b81a56751aea78864b5252434e735bbdd6f6ebd797ae2ff1447a4dd8c1c"
+  }
+}

@@ -717,6 +717,14 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 ---
 
+### B-V2-46 · Schema-aware Zod validation per-skill on outputs.parsed.data
+
+- **Source:** Breadth-test launch-readiness sweep · 2026-05-14 · receipt #72 (nda-triage re-anchor). The parser-shipping arc (commits `4785f6f` + `83a0fbe`) recovers JSON from prose and writes it to `outputs.parsed.data`, but `data` is typed `z.unknown()` — so a model emitting wrong-shape JSON (e.g., empty `[]` array instead of `{type, term_years, governing_law, ...}`) still anchors with `parsed.ok: true · data: []`. Receipt #72 caught exactly this: nda-triage skill ran, model emitted `[]`, receipt anchored "successfully", `outputs.riskLevel: low` (no data to infer from), prose headline correctly identified "one-way" + "AGREEMENT" but the structured field is empty.
+- **Why this matters:** machine consumers reading `receipt.outputs.parsed.data.signature_recommendation` get `undefined` instead of the verdict the model actually produced in prose. The marketplace promises structured output; today's contract holds for ~2/3 of runs (model variance is 33% on this prompt). Production CLM/Notion/Zapier integrations would silently get empty data and not know they should refetch prose.
+- **Action:** (1) Per skill, declare a Zod schema for the expected output shape in the skill manifest or a sibling `output-schema.ts` file (e.g., `nda-triage`: `z.object({type: z.enum(['one-way','two-way']), term_years: z.number(), ...signature_recommendation: z.enum([...])})`). (2) In `apps/cli/src/commands/doc.ts` after `tryParseJson`, validate parsed JSON against the skill's declared schema. (3) On schema mismatch, EITHER fail-closed (don't anchor receipt — return 422 to user with "model output didn't match skill schema, retry") OR mark `outputs.parsed.ok: false` with a `validationFailed: true` flag and an error message. (4) Add a `verify-skill-output-schemas-shipped.ts` regression that fails CI if any first-party skill manifest declares an Output schema section but no Zod validator ships.
+- **Why queued not shipped:** real architecture decision. Fail-closed is correct (user retries; pays Router again) but means more 429-risk on hot keys. Mark-and-anchor is honest but lets bad receipts on chain (and the marketplace promises broken). Probably the right answer is fail-closed in `--high-stakes` + `--audit` tiers (where the user paid extra for quality) and mark-and-anchor in `--quick` (where they explicitly asked for fast).
+- **Effort:** ~3-5h (schema-per-skill drafting + runtime gate + tests). Real launch-readiness item but doesn't block the burner-wallet breadth-test PASS.
+
 ## C · Distribution + outreach (operator-only by nature)
 
 > **Network targeting note:** C-1, C-3, C-4 are **network-agnostic** (they apply whether the user is on testnet or mainnet). C-2 (ChainGPT audit) is **mainnet-only** — you audit *before* mainnet, not before testnet.
