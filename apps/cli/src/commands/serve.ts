@@ -1,7 +1,7 @@
 // /v1/receipt/<id> walks V3 → V2 → V1 + reports registry version (matches studio + mcp).
 // /v1/passport/<addr> reads V2 → V1 + reports contract version (matches CLI passport show + mcp).
 // /healthz returns receiptsV1, receiptsV2, receiptsV3 separately + passports (V2-first count).
-// Closes V3 lookup waiver (USER_TODO §B-V2-37) and V1 passport waiver (USER_TODO §B-V2-38) for this surface.
+// Closes V3 lookup waiver (USER_TODO §B-V2-37) and V1 passport waiver (USER_TODO §B-V2-38 · ✅ shipped) for this surface.
 import { Command } from 'commander';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve, dirname } from 'node:path';

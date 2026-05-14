@@ -551,14 +551,15 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
   - Readers: `debug.ts` (diagnostic inspection of V1 grants), `apps/cli/src/ui/ChatScreen.tsx` (display), `apps/mcp-server/src/server.ts` (exposes memory grants via MCP).
 - **Effort:** ~2h.
 
-### B-V2-38 · AgentPassportINFTV2 read/write propagation follow-up (14 latent-V2-blind CLI/MCP/runtime/telegram files)
-- **Source:** cron iter-121. `verify-agent-passport-v2-coexists-with-v1.ts` regression caught 14 files in `apps/cli/src/commands/` + `apps/mcp-server/src/` + `apps/telegram-bot/src/` that look up `AgentPassportINFT` but not `AgentPassportINFTV2`. Each file carries an `// v1-passport-allow:` marker explaining its current scope.
-- **Why this matters:** AgentPassportINFTV2 (deployed B-V2-1 K-1/K-4/K-6 fix) covers three security holes: K-1 multi-mint protection, K-4 trustScore manipulation, K-6 memoryRoot poisoning. Pre-iter-121, only 2 of 17+ caller sites (studio onboard + memory.ts) queried V2. The cron found three ACTIVE bugs in iter-121 alone: passport.ts mint targeted V1 only (bypassing all three fixes), passport.ts show couldn't surface V2 passports, packages/runtime/src/pipeline.ts recordReceipt silently skipped V2-passport wallets AND read trust score from V1 only (downgrading V2-passport sandbox decisions). Those three were fixed iter-121; the remaining 14 files are latent same-class drift.
-- **Action (per file):** read the V2-first-V1-fallback pattern in `apps/cli/src/commands/passport.ts` (mint + show, post-iter-121) and `packages/runtime/src/pipeline.ts` (recordReceipt + trust read, post-iter-121). For each file: add `getDeployedAddress(network, 'AgentPassportINFTV2')` lookup, refactor to V2-first read/write, remove the `// v1-passport-allow:` marker. Effort: ~10-15 min per reader · ~20 min per writer (delegate.ts, passport-consolidate.ts) · ~3h total across all 14 files.
-- **The 14 latent files:**
-  - Writers: `delegate.ts` (delegate ops against passport), `passport-consolidate.ts` (memory-snapshot updateMemoryRoot — bypasses K-6 fix).
-  - Readers: `chat-v2.tsx`, `chat.ts`, `debug.ts`, `demo.ts`, `doc-bulk.ts`, `doc.ts`, `export.ts`, `model.ts`, `serve.ts`, `stats.ts`, `apps/mcp-server/src/server.ts`, `apps/telegram-bot/src/index.ts`.
-- **Effort:** ~3h. Each file is independent; can ship across multiple commits.
+### B-V2-38 · AgentPassportINFTV2 read/write propagation follow-up ✅ SHIPPED (commits e300781, 6e22e66, 9564463, 2a71ca6, b8b53ba, 5fdcc74, 2105633, 9327c90 · 2026-05-14)
+- **Source:** cron iter-121. `verify-agent-passport-v2-coexists-with-v1.ts` regression caught 14 files in `apps/cli/src/commands/` + `apps/mcp-server/src/` + `apps/telegram-bot/src/` that look up `AgentPassportINFT` but not `AgentPassportINFTV2`.
+- **Why this matters:** AgentPassportINFTV2 (deployed B-V2-1 K-1/K-4/K-6 fix) covers three security holes: K-1 multi-mint protection, K-4 trustScore manipulation, K-6 memoryRoot poisoning.
+- **Closed across cron iters 11-17:**
+  - Writers fixed: `delegate.ts` (iter-17 · K-1/K-4/K-6 apply to fresh delegate mints), `passport-consolidate.ts` (iter-13 · K-6 memoryRoot fix on consolidation receipt).
+  - Readers fixed: `chat-v2.tsx`, `chat.ts`, `demo.ts`, `doc-bulk.ts`, `doc.ts`, `export.ts`, `model.ts`, `serve.ts`, `stats.ts`, `apps/mcp-server/src/server.ts`, `apps/telegram-bot/src/index.ts` (iter-16 · also dropped broken inline PASSPORT_ABI tuple).
+  - Shared helper: `apps/cli/src/lib/passport.ts` (`getActivePassportClient` + `resolvePassportTokenId`) consolidates the V2-first pattern.
+- **Intentionally V1 (allow-marked with reason):** `apps/cli/src/commands/debug.ts` (operator diagnostic surface for inspecting legacy V1 state) — does not block submission.
+- **Commits:** e300781, 6e22e66, 9564463, 2a71ca6, b8b53ba, 5fdcc74, 2105633, 9327c90.
 
 ### B-V2-37 · V3-anchor-branch follow-up audit (10 latent-V3-blind CLI/MCP files)
 - **Source:** cron iter-120. `verify-v3-lookup-coexists-with-v2.ts` regression caught 10 files in `apps/cli/src/commands/` + `apps/mcp-server/src/` that look up `ReceiptRegistryV2` but not `ReceiptRegistryV3`. Each file carries an `// v3-lookup-allow:` marker explaining its current scope:

@@ -1,4 +1,4 @@
-// stats reads V2 → V1 passport tokenId for the operator wallet (matches CLI passport show + Studio dashboard). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// stats reads V2 → V1 passport tokenId for the operator wallet (matches CLI passport show + Studio dashboard). Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 /**
  * `ivaronix stats` — usage telemetry on real on-chain + local data (F-stats, A2).
  *

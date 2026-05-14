@@ -1,4 +1,4 @@
-// Telegram bot exposes V2 → V1 passport state via the canonical AgentPassportClient (matches CLI passport show + Studio dashboard). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// Telegram bot exposes V2 → V1 passport state via the canonical AgentPassportClient (matches CLI passport show + Studio dashboard). Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 /**
  * Ivaronix Telegram thin client (PASS 76 S-3).
  *

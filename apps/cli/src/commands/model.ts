@@ -1,5 +1,5 @@
 // v3-lookup-allow: model writer emits slots 0-9 only (consensus + skill_exec); slot 10+ types still need V3 anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// Passport write path now V2-first via getActivePassportClient (K-6 memoryRoot-poisoning fix on V2). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// Passport write path now V2-first via getActivePassportClient (K-6 memoryRoot-poisoning fix on V2). Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 import { Command } from 'commander';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';

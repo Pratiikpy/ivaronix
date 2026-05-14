@@ -1,4 +1,4 @@
-// chat reads V2 → V1 passport via getActivePassportClient. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// chat reads V2 → V1 passport via getActivePassportClient. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';

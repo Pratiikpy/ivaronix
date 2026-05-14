@@ -1,4 +1,4 @@
-// Delegate flow mints fresh passports against V2 (with V1 fallback) so K-1 multi-mint + K-4 trustScore + K-6 memoryRoot fixes apply. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// Delegate flow mints fresh passports against V2 (with V1 fallback) so K-1 multi-mint + K-4 trustScore + K-6 memoryRoot fixes apply. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 // v1-capability-allow: delegate flow issues + revokes V1 grants for hand-off lifecycle; V2-first migration tracked in USER_TODO §B-V2-39 (delegate-flow grants leak via V1's public reverse indexes).
 import { Command } from 'commander';
 import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';

@@ -1,5 +1,5 @@
 // v3-lookup-allow: chat-v2 writer emits slots 0-9 only (chat receipt types); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// Passport trust-score read now V2-first via getActivePassportClient. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// Passport trust-score read now V2-first via getActivePassportClient. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 import { Command } from 'commander';
 import React from 'react';
 import { render } from 'ink';

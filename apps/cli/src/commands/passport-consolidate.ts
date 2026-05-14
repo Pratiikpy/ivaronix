@@ -1,4 +1,4 @@
-// consolidator writes memory snapshot against V2 passport (with V1 fallback). K-6 memoryRoot-poisoning fix lives on V2 only — writing to V2 first means the consolidation receipt is protected. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
+// consolidator writes memory snapshot against V2 passport (with V1 fallback). K-6 memoryRoot-poisoning fix lives on V2 only — writing to V2 first means the consolidation receipt is protected. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 import { Command } from 'commander';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
