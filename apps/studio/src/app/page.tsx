@@ -3,6 +3,7 @@ import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
 import { DemoPanel } from '@/components/DemoPanel';
 import { SovereigntyCircle } from '@/components/SovereigntyCircle';
+import { AnimatedFourLightHero } from '@/components/AnimatedFourLightHero';
 import {
   unifiedNextId,
   unifiedGetReceipt,
@@ -772,6 +773,22 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         }}
       >
         <SovereigntyCircle />
+      </section>
+
+      {/* Animated four-light · final-plan.md §1.6 Day 5-9 acceptance.
+          Visual punctuation after the sovereignty architecture diagram.
+          Shows the trust loop unfolding in time: 4 lights flip green
+          on a 6s cycle (Storage → Compute → TEE → Chain →
+          FULLY VERIFIED ✓ caption). prefers-reduced-motion respected
+          via globals.css. */}
+      <section
+        style={{
+          padding: '0 32px 48px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <AnimatedFourLightHero />
       </section>
 
       {/* BIG NUMBERS ROW · live counts from chain + manifest + numbers.json.
