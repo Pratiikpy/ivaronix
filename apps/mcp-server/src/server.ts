@@ -1,7 +1,6 @@
 // Receipt verify path reads V3 → V2 → V1 (operator-funded V3 deployed; lookup matches studio/lib/chain.ts unifiedGetReceipt order). Anchor branch for slot 10+ MCP flows (doc_room_*, memory_consolidation) still queued — tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: MCP exposes V1 passport state via the passport tool; V2-first migration tracked in USER_TODO §B-V2-38.
-// v1-capability-allow: MCP exposes V1 CapabilityRegistry grant state via the memory-grant tools; V2-first migration tracked in USER_TODO §B-V2-39.
-// v1-memory-access-log-allow: MCP exposes V1 MemoryAccessLog events; V2-first migration tracked in USER_TODO §B-V2-41.
+// Passport tool reads V2 → V1 (matches CLI passport show + Studio dashboard). Closes V1-only waiver originally queued in USER_TODO §B-V2-38.
+// Memory search reads V2 → V1 for both CapabilityRegistry + MemoryAccessLog (matches Studio /memory). Closes the V1-only waivers originally queued in USER_TODO §B-V2-39 + §B-V2-41.
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
@@ -173,8 +172,12 @@ async function handleSearchMemory(params: z.infer<typeof SearchMemoryInput>): Pr
     return candidates[0] ?? resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
   })();
   mkdirSync(dirname(dbPath), { recursive: true });
-  const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
-  const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+  // V2-first capability + access-log addresses; V1 fallback for the
+  // older deploys still on chain. Studio /memory already reads V2.
+  const capAddr = getDeployedAddress(env.network, 'CapabilityRegistryV2')
+    ?? getDeployedAddress(env.network, 'CapabilityRegistry');
+  const logAddr = getDeployedAddress(env.network, 'MemoryAccessLogV2')
+    ?? getDeployedAddress(env.network, 'MemoryAccessLog');
   const engine = MemoryEngine.create({
     ownerWallet: env.walletAddress as Address,
     ownerPrivateKey: env.privateKey,
@@ -233,10 +236,27 @@ async function handleInstallSkill(params: z.infer<typeof InstallSkillInput>): Pr
 async function handlePassportShow(params: z.infer<typeof PassportShowInput>): Promise<CallToolResult> {
   const env = loadEnv();
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-  const addr = getDeployedAddress(env.network, 'AgentPassportINFT');
-  if (!addr) return { content: [{ type: 'text', text: `AgentPassportINFT not deployed on ${env.network}` }], isError: true };
-  const client = new AgentPassportClient(addr, provider);
-  const profile = await client.getPassportByWallet(params.wallet as `0x${string}`);
+  // V2-first read per .claude/rules/og-chain.md. Operator-funded V2 is
+  // the active passport target; V1 is preserved for legacy passports
+  // minted before the K-2 migration. Same shape as CLI passport show
+  // (apps/cli/src/commands/passport.ts:217-242) and Studio dashboard.
+  const addrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+  const addrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+  if (!addrV1 && !addrV2) {
+    return { content: [{ type: 'text', text: `AgentPassportINFT not deployed on ${env.network}` }], isError: true };
+  }
+  let profile;
+  let passportVersion: 'v1' | 'v2' | null = null;
+  if (addrV2) {
+    const v2 = new AgentPassportClient(addrV2, provider);
+    profile = await v2.getPassportByWallet(params.wallet as `0x${string}`);
+    if (profile) passportVersion = 'v2';
+  }
+  if (!profile && addrV1) {
+    const v1 = new AgentPassportClient(addrV1, provider);
+    profile = await v1.getPassportByWallet(params.wallet as `0x${string}`);
+    if (profile) passportVersion = 'v1';
+  }
   if (!profile) return { content: [{ type: 'text', text: `No passport for ${params.wallet} on ${env.network}` }] };
   const lines = [
     `tokenId        ${profile.tokenId}`,
@@ -244,6 +264,7 @@ async function handlePassportShow(params: z.infer<typeof PassportShowInput>): Pr
     `trustScore     ${profile.trustScore}`,
     `receiptCount   ${profile.receiptCount}`,
     `violations     ${profile.violationCount}`,
+    `contract       ${passportVersion?.toUpperCase() ?? '?'}`,
     `network        ${env.network}`,
   ].join('\n');
   return { content: [{ type: 'text', text: lines }] };

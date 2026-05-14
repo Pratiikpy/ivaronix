@@ -58,6 +58,18 @@ async function main(): Promise<void> {
     method: 'tools/call',
     params: { name: 'ivaronix_verify_receipt', arguments: { id: '31' } },
   });
+  // Iter 11 V2-first fix: passport_show should return contract V2 for
+  // the operator wallet (the V2 passport is the active state; V1-only
+  // lookup returned "No passport for ..." before the fix).
+  const callPassportV2 = JSON.stringify({
+    jsonrpc: '2.0',
+    id: 5,
+    method: 'tools/call',
+    params: {
+      name: 'ivaronix_passport_show',
+      arguments: { wallet: '0xaa954c33810029a3eFb0bf755FEF17863E8677Ce' },
+    },
+  });
 
   // Wait for child to be ready (pnpm dev needs to print its banner first)
   await new Promise((r) => setTimeout(r, 2_000));
@@ -69,6 +81,8 @@ async function main(): Promise<void> {
   child.stdin?.write(callVerifyV3 + '\n');
   await new Promise((r) => setTimeout(r, 4_000));
   child.stdin?.write(callVerifyV2 + '\n');
+  await new Promise((r) => setTimeout(r, 4_000));
+  child.stdin?.write(callPassportV2 + '\n');
   await new Promise((r) => setTimeout(r, 4_000));
 
   child.kill('SIGTERM');
@@ -136,6 +150,26 @@ async function main(): Promise<void> {
   }
   console.log(`✓ verify_receipt id=1 → V3 ANCHORED`);
   console.log(`✓ verify_receipt id=31 → V2 ANCHORED`);
+
+  // passport_show response (id 5) — should report V2 contract for operator
+  let passportResp: { result?: { content?: Array<{ text?: string }> } } | null = null;
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed.id === 5) passportResp = parsed;
+    } catch { /* skip */ }
+  }
+  if (!passportResp) {
+    console.error('✗ Did not receive passport_show response (id 5)');
+    process.exit(1);
+  }
+  const passportText = passportResp.result?.content?.[0]?.text ?? '';
+  if (!/contract\s+V2/.test(passportText) || !/tokenId\s+1/.test(passportText)) {
+    console.error('✗ passport_show did not return contract V2 + tokenId 1:');
+    console.error(passportText);
+    process.exit(1);
+  }
+  console.log(`✓ passport_show operator → contract V2 tokenId 1`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });
