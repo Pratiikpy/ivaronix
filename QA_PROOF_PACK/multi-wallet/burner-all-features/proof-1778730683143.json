@@ -1,0 +1,76 @@
+{
+  "timestamp": "2026-05-14T03:51:23.142Z",
+  "elapsedSec": 158.3,
+  "wallets": {
+    "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "alice": {
+      "address": "0xF93bA2B931884FEF60C40614C0637e2311dF3Ee5",
+      "role": "creator",
+      "privateKey": "0x0c0628cefa5f64848605171128c2ff056ee554b8fdf0236d037bdb7e9df54ec4"
+    },
+    "bob": {
+      "address": "0x02FF0e85fcA06704E735FdFA1154b1812109E987",
+      "role": "buyer",
+      "privateKey": "0x27e5c947697a62f79f61e2c65b1abaa18941bbc8227f424326ec2929a201ba12"
+    },
+    "carol": {
+      "address": "0x7356b66Ba9EC5A241D5c4606092672Df263E9477",
+      "role": "grantee",
+      "privateKey": "0xf98d422ba9a69787e5c45843f9b0ad01b01f1f90e6666f6582706a14abaf9cb3"
+    },
+    "dave": {
+      "address": "0xA533075b4e522A9BE5750CDEf8dbD97D73D87134",
+      "role": "delegate",
+      "privateKey": "0xbfce70e120e3d0d7eef43ab7ae6ecbdda9605d932f85cdd8ecd596b71d52cb45"
+    }
+  },
+  "fundTxs": {
+    "alice": "0x942ba663bbf02f7e59e30f9434619165f2c121d2d86a9dabf46f8b8ba48e266f",
+    "bob": "0x2b2ba3263eee739855f880e2d0c5e6454b58918213177ba5131233f5ef74d745",
+    "carol": "0x2a957182e93a99ab33af9b95eb0c39dee7b470a5435fdbc1e79a76b9784805a4",
+    "dave": "0xc528681f52512f5ff1339c8dc190be4d1547d34d2e1d15bef7ff04baa63aa6dd"
+  },
+  "results": {
+    "passport": {
+      "mintTx": "0x7d58772bc99aa5589df126383712288f85eeb4cd5281040b717528abfbc675b6",
+      "tokenId": "7",
+      "metadataRoot": "0xf618be352b9c0aeab6c61be95097b9cded2ea57ef548c209c3ad0a29558e8ae8",
+      "trustScore": "0",
+      "receiptCount": "0"
+    },
+    "skillRegistry": {
+      "publishTx": "0x86e86ddb6a40c4af97249e8cbbc0fefc2fa57e86acd1e9e4295be2ef55bc2c88",
+      "skillId": "0xfae0a810cfd704a69f4252441e88b9ea7d0701c39fe06a48341f8f4132250323",
+      "versionId": "0xe32e703a20098305652a91ed3370235a27f244557ddae05f8afc0fc46e3bdc8a",
+      "owner": "0xF93bA2B931884FEF60C40614C0637e2311dF3Ee5",
+      "versionCount": "1"
+    },
+    "pricing": {
+      "setTx": "0xcf4c98e5872e414e0c736e48cbc533cbb90a6a649694d09c19ac6ed3286970d3",
+      "price": "0.005",
+      "creatorBps": 9000,
+      "treasuryBps": 1000
+    },
+    "payment": {
+      "payTx": "0x2c035705c904ef136152f48aac19c809c4b28c358faba0292dfe05358cd3898a",
+      "withdrawTx": "0x7ba99a174a751f64b20f33a9b37fb6aabb2604b83a301f318cf54d5652f01278",
+      "creatorEarned": "0.0045",
+      "treasuryAccumulated": "0.01",
+      "expectedCreator": "0.0045"
+    },
+    "capability": {
+      "grantTx": "0x839cbf9d5b956c9051cf463082d93d7847307acb9758d84aa4bece19f34242aa",
+      "revokeTx": "0x3a0acd16db85e3ba7a3b2ad91e2b7a2048777ba88a295e18174e2a5b5708b217",
+      "grantId": "0xeb5c0082b9f6cec0ffba41bd9b24dc04c17668559643506105fe6eb0e15bafa9",
+      "validBefore": true,
+      "validAfter": false
+    },
+    "memoryLog": {
+      "logTx": "0x4e43029db648457c78c9774b92c25636920130cded3004bc71e6a69c0b13233c",
+      "status": "logged",
+      "memoryRoot": "0x641120b1f184f9a8b0ee0dba6b7e5841c16614d9e785c96300824a57e3021be9",
+      "scopeHash": "0xa31a79154ad8a5f29e00ab01270e16f315f86de9b41306475de824689d2d6963"
+    }
+  },
+  "chainscanBase": "https://chainscan-galileo.0g.ai"
+}
