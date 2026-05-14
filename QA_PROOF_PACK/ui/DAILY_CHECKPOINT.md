@@ -174,3 +174,36 @@ The remaining 2 on `/` are the RunPanel `anchor receipt` + `burn mode` checkboxe
 - **`/api/run/demo` health probe** (2026-05-14 ~23:50 UTC) — POST /api/run/demo returned 200 in 41.5s with full receipt body. Receipt id 31 anchored on V3 at txHash `0x1361be858ceedfd89130400a6f528991560463b387d0c0d807337b7c27e9743e`. Payment: 0.005 OG (90/10 split = 0.0045 + 0.0005), subsidised by operator wallet (creator = operator on first-party skills). Final text rich legal analysis with "Risk Level: high" + actionable next step.
 - **Read-after-write validation** — /global "receipts anchored" pulsed 1,679 → 1,680 within the same observation cycle. Confirms `unifiedNextId()` reads live chain state every request (force-dynamic).
 - **/r/31 render** — ANCHORED chip green, TIER 1 green, owner 0xaa954c33..., share button pre-populated with "Receipt #31 anchored". No drift between API response and rendered proof page.
+
+### Iter 5 closing state (post-fe78b9e deploy · CSS `6e80902c72c0f1ab.css`)
+
+**Final P11 mobile audit: 0 violations across all 14 routes.**
+
+| Route | Final |
+|---|---:|
+| / | ✓ 0 |
+| /onboard | ✓ 0 |
+| /skills | ✓ 0 |
+| /memory | ✓ 0 |
+| /dashboard | ✓ 0 |
+| /agents | ✓ 0 |
+| /global | ✓ 0 |
+| /thesis | ✓ 0 |
+| /0g | ✓ 0 |
+| /marketplace | ✓ 0 |
+| /marketplace/payouts | ✓ 0 |
+| /marketplace/new | ✓ 0 |
+| /admin/treasury | ✓ 0 |
+| /r/1004 | ✓ 0 |
+
+Three-phase fix landed across `e155435` (hide-all-nav + min-width hamburger + min-height on body CTAs + form inputs) → `cd60f37` (inline-flex on anchor CTAs so min-height takes effect on `<a>`) → `fe78b9e` (label `:has(input[type=checkbox|radio])` 44h + 6px vertical padding so checkbox tap area meets WCAG 2.5.5).
+
+Total reduction: **74 → 8 → 2 → 0 violations** across 3 iter cycles.
+
+### Iter 5 edge-API probes (all healthy)
+
+- `GET /api/dashboard/<unknown-wallet>` → 200 `{"passport":null,"recentReceipts":[],"balanceOg":"0.0"}` (honest empty)
+- `POST /api/run/estimate` (bad fields) → 400 `{"error":"invalid body","issues":[...]}` (schema enforcement)
+- `POST /api/run/estimate` with `userWallet` claim + no SIWE → 401 `"userWallet claim requires active SIWE session"` (K-8/K-9 security gate)
+- `POST /api/run/estimate` anonymous on paid skill → 402-style `"paid skill requires userWallet claim"` + reveals `priceWei: 5000000000000000` (honest, actionable)
+- `/r/31/print` 200 text/html, `/r/31/opengraph-image` 200 image/png, `/embed/r/31` 200 text/html with ANCHORED chip rendered
