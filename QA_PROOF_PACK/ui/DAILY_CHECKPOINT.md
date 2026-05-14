@@ -267,3 +267,23 @@ CLI cross-tool consistency for receipt 31 reconfirmed:
 - CLI `receipt show 31`: receiptRoot `0x401dff029f10d5960e23a848e05acc80cf6e7af78b7712a31a2a5f34d24f0e72` · agent `0xaa954c33...8677Ce` · V2
 - UI /r/31: same receiptRoot · same agent · same registry chip
 - Byte-equal cross-tool ✓
+
+### Iter 8 CLI doctor half-bakes fixed (commit 0cac46f)
+
+Running `ivaronix doctor` surfaced two real half-bakes:
+
+1. **ReceiptRegistryV3 row missing receipt count**: V1 and V2 rows displayed "X receipts anchored" but V3 didn't (the conditional only matched V1 and V2 contract names). Fixed by extending `isReceiptRegistry` to include V3 and adding the descriptive tag `(V3 — canonical slots 10/11/12)`.
+
+2. **Storage indexer "alive · HTTP 404" misleading**: wording could read as "indexer broken with 404 routing" when actually the 0G Storage indexer expects POST to specific API paths; GET on `/` returns 404 by design. Fixed to differentiate: 2xx/3xx → `reachable · HTTP N`, 4xx → `reachable · HTTP 404 on / — POST-only API`, 5xx → fail.
+
+**Cross-validation: V1 1,644 + V2 31 + V3 6 = 1,681 receipts**, matches `/global` "1,681 receipts on-chain · live" headline exactly. `unifiedNextId()` is honest across CLI + UI.
+
+### Iter 8 CLI surface sweep (all green)
+
+- `ivaronix doctor` → ALL SYSTEMS GO · 14 contracts deployed · V1 + V2 + V3 counts shown · 68.39 OG wallet balance · storage reachable
+- `ivaronix passport show` → V2 token 1 · receiptCount: 0 (honest — passport.receiptCount only ticks on recordReceipt(); on-chain anchor ids count separately)
+- `ivaronix skill list` → 156 entries including 6 first-party with correct semver + tier + 🔒 burn + 🛡 tee permission glyphs
+- `ivaronix receipt list` → top 20 receipts sorted desc, merged from 3 registries, latest #31 V2 matches demo run timestamp
+- `ivaronix receipt show 31` → byte-equal with UI /r/31
+- `ivaronix receipt verify 31 --tee-independent` → honest body-not-local error with storageRoot hint
+- `ivaronix receipt verify 1004` → ANCHORED ✓ (local body, V1 LEGACY)
