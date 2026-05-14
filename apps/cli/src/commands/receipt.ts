@@ -108,15 +108,33 @@ function findAnchoredDirs(): string[] {
  *   - 0x bytes32 receiptRoot — searches dirs by storage.receiptRoot field
  *   - ULID (rcpt_01HV...) — searches dirs by file basename
  *   - file path (existing behavior)
+ *
+ * The discriminated return type distinguishes "input doesn't resolve to
+ * any on-chain receipt" (`not-on-chain`) from "input resolves on-chain
+ * but body JSON isn't in any local anchored dir" (`body-not-local`).
+ * Earlier versions returned `null` for both cases, which produced the
+ * misleading "No receipt resolves" message even when the id was a real
+ * chain-anchored receipt that just didn't have a local body cache.
  */
+type ResolveResult =
+  | { kind: 'found'; path: string }
+  | { kind: 'not-on-chain' }
+  | {
+      kind: 'body-not-local';
+      receiptRoot: string;
+      registryVersion: 'v1' | 'v2' | 'v3';
+      onChainId: bigint;
+      storageRoot?: string;
+    };
+
 async function resolveReceiptInput(
   input: string,
   network: 'testnet' | 'mainnet',
   rpcUrl: string,
-): Promise<string | null> {
+): Promise<ResolveResult> {
   // 1. Direct file path (absolute or relative to cwd)
   const direct = resolve(process.cwd(), input);
-  if (existsSync(direct)) return direct;
+  if (existsSync(direct)) return { kind: 'found', path: direct };
 
   const dirs = findAnchoredDirs();
 
@@ -124,36 +142,42 @@ async function resolveReceiptInput(
   if (/^rcpt_[0-9A-Z]{26}$/.test(input)) {
     for (const dir of dirs) {
       const candidate = resolve(dir, `${input}.json`);
-      if (existsSync(candidate)) return candidate;
+      if (existsSync(candidate)) return { kind: 'found', path: candidate };
     }
-    return null;
+    return { kind: 'not-on-chain' };
   }
 
   // 3. bytes32 receiptRoot — scan files for matching storage.receiptRoot
   const isRoot = /^0x[0-9a-fA-F]{64}$/.test(input);
   let targetRoot: string | null = isRoot ? input.toLowerCase() : null;
+  let onChainId: bigint | null = null;
+  let registryVersion: 'v1' | 'v2' | 'v3' | null = null;
+  let storageRoot: string | undefined = undefined;
 
   // 4. Numeric on-chain id — resolve to receiptRoot via ReceiptRegistryV2
   //    (preferred, post K-2) or fall back to V1 (legacy receipts).
   if (!targetRoot && /^\d+$/.test(input)) {
     const provider = new JsonRpcProvider(rpcUrl);
     const registries = buildReadRegistries(network, provider);
-    if (registries.length === 0) return null;
+    if (registries.length === 0) return { kind: 'not-on-chain' };
+    onChainId = BigInt(input);
     for (const r of registries) {
       try {
-        const onChain = await r.client.getReceipt(BigInt(input));
+        const onChain = await r.client.getReceipt(onChainId);
         if (onChain) {
           targetRoot = onChain.receiptRoot.toLowerCase();
+          registryVersion = r.version as 'v1' | 'v2' | 'v3';
+          storageRoot = onChain.storageRoot;
           break;
         }
       } catch {
         // try next registry
       }
     }
-    if (!targetRoot) return null;
+    if (!targetRoot) return { kind: 'not-on-chain' };
   }
 
-  if (!targetRoot) return null;
+  if (!targetRoot) return { kind: 'not-on-chain' };
 
   for (const dir of dirs) {
     let entries: string[];
@@ -164,11 +188,18 @@ async function resolveReceiptInput(
       try {
         const json = JSON.parse(readFileSync(path, 'utf8'));
         const root = (json?.storage?.receiptRoot as string | undefined)?.toLowerCase();
-        if (root === targetRoot) return path;
+        if (root === targetRoot) return { kind: 'found', path };
       } catch { /* skip unparseable */ }
     }
   }
-  return null;
+
+  // Receipt IS on chain (or input was a receiptRoot we couldn't find locally).
+  // Distinguish "not on chain" (root never anchored) from "body not local"
+  // (root is anchored but the JSON body isn't in any local cache dir).
+  if (registryVersion && onChainId !== null) {
+    return { kind: 'body-not-local', receiptRoot: targetRoot, registryVersion, onChainId, storageRoot };
+  }
+  return { kind: 'not-on-chain' };
 }
 
 export const receiptCommand = new Command('receipt')
@@ -186,16 +217,26 @@ receiptCommand
     // FINAL_BUILD_PLAN.md Block H · --format aat path: skip the verifier UI
     // and emit a clean AAT JSON document for enterprise auditors.
     if (opts.format === 'aat') {
-      const filePath = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
-      if (!filePath) {
+      const r = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
+      if (r.kind === 'not-on-chain') {
         process.stderr.write(`No receipt resolves "${pathOrId}"\n`);
+        process.exitCode = 1;
+        return;
+      }
+      if (r.kind === 'body-not-local') {
+        process.stderr.write(
+          `Receipt ${r.onChainId} is anchored on ${r.registryVersion.toUpperCase()} (receiptRoot ${r.receiptRoot}),\n` +
+          `but the body JSON is not in any local anchored dir.\n` +
+          (r.storageRoot ? `Fetch from 0G Storage by storageRoot: ${r.storageRoot}\n` : '') +
+          `or run on the machine that anchored the receipt.\n`
+        );
         process.exitCode = 1;
         return;
       }
       try {
         const { readFileSync } = await import('node:fs');
         const { exportReceiptAsAat } = await import('@ivaronix/receipts');
-        const body = JSON.parse(readFileSync(filePath, 'utf8'));
+        const body = JSON.parse(readFileSync(r.path, 'utf8'));
         const aatDoc = exportReceiptAsAat(body);
         process.stdout.write(JSON.stringify(aatDoc, null, 2) + '\n');
         return;
@@ -206,13 +247,24 @@ receiptCommand
       }
     }
 
-    const filePath = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
-    if (!filePath) {
+    const r = await resolveReceiptInput(pathOrId, env.network, env.rpcUrl);
+    if (r.kind === 'not-on-chain') {
       ui.fail(`No receipt resolves "${pathOrId}"`);
       ui.hint('Pass a file path, an on-chain id (e.g. "169"), a 0x bytes32 receiptRoot, or a ULID (rcpt_01...).');
       process.exitCode = 1;
       return;
     }
+    if (r.kind === 'body-not-local') {
+      ui.fail(`Receipt ${r.onChainId} is anchored on ${r.registryVersion.toUpperCase()}, but the body JSON is not cached on this machine.`);
+      ui.hint(`receiptRoot: ${r.receiptRoot}`);
+      if (r.storageRoot) {
+        ui.hint(`storageRoot: ${r.storageRoot} — fetch from 0G Storage to re-verify locally`);
+      }
+      ui.hint('Run `ivaronix receipt show ' + pathOrId + '` for on-chain metadata only (no body needed).');
+      process.exitCode = 1;
+      return;
+    }
+    const filePath = r.path;
 
     let json: unknown;
     try {
