@@ -120,3 +120,44 @@ The "skill: code-2 / code-3" finding flagged earlier in receipt-page inspections
 - Prod receipt pages COULD fetch + show non-Burn-Mode bodies from 0G Storage (queued as a real enhancement in local-receipt.ts:11)
 
 This correction stands as honest record: I mis-classified expected fallback behavior as a bug. The real anomaly is the cluster-wide structured-output schema gap (still RED · queued for proper-fix arc).
+
+---
+
+## Closure · Structured-output runtime parser shipped (2026-05-14 · commit `4785f6f`)
+
+The RED above ("manifests promise structured JSON · runtime never parses it") is now CLOSED. Three-part fix shipped in one atomic commit:
+
+1. **`packages/runtime/src/risk.ts` extended** — `deriveRiskLevel` now reads JSON-shape risk markers (`"risk_level": "high|medium|low"`, `"riskLevel": ...` camelCase, `"signature_recommendation": "refuse"` → high · `"negotiate"` → medium). The "always low" trust-theatre call-out in the original audit is fixed; the regex now matches the legal cluster's actual output shape. 9 new tests, all green.
+
+2. **`packages/receipts/src/schema.ts`** — new optional `outputs.parsed` discriminated union: `{ok: true, data, repaired, rawBytes}` when parseable JSON was recovered; `{ok: false, error, attempted, rawBytes}` when prose-only. Default-elision preserves byte-equality for pre-fix testnet receipts (ids 1-67).
+
+3. **`apps/cli/src/commands/doc.ts`** — wires `tryParseJson(finalOutput)` into the receipt-assembly path. The existing `tryParseJson` helper (`packages/runtime/src/json-repair.ts`) strips markdown code fences, peels leading/trailing prose, fixes trailing commas + smart quotes + BOM. Logs `structured output   parsed ok (codeFence)` or `prose-only` to surface the parse outcome.
+
+### Real on-chain proof (receipt #68 · 2026-05-14)
+
+Re-ran contract-renewal-clause-detector with the new parser against the `sample-vendor-contract.txt` golden vector. Result:
+
+- **Receipt id**: `rcpt_01KRKFAJ122ARGCRM7ARHCS5KB` (on-chain id 68)
+- **Tx**: `0xe6d1cf4cca14ab7ae423e00398a4b7f00cfa0e14795bddbebaa2947c5f67408f` · block 33292121
+- **`outputs.parsed.ok`**: `true`
+- **`outputs.parsed.repaired`**: `['codeFence']` (parser stripped the ```json fence)
+- **`outputs.parsed.data.findings`**: 3 real Finding objects:
+  - §3.2 Renewal Term · risk_level: high · notice=180d
+  - §5.1 (continued use clause) · risk_level: high · notice=0d
+  - §3.3 Renewal Pricing · risk_level: high · notice=0d
+- **`outputs.riskLevel`**: `high` (was `low` pre-fix — the JSON-shape regex now matches)
+
+Receipt JSON at `QA_PROOF_PACK/multi-wallet/parser-proof/rcpt_01KRKFAJ122ARGCRM7ARHCS5KB.json`.
+
+### What this means downstream
+
+The audit's machine-consumability call-out is closed:
+
+- Downstream CLM/Notion/Zapier integrations can now read `receipt.outputs.parsed.data.findings` and pull the clauses + risk levels + recommendations directly — no scraping prose.
+- The `outputs.riskLevel` pill on /r/<id> now reflects the model's actual classification when the model returns structured output, not a regex artifact.
+- Receipts where the model emitted prose-only record `ok: false` with the parse error — honest about the gap rather than a misleading empty array.
+
+### What's still RED
+
+- **Schema-strict validation per skill** (e.g. Zod schema for `Finding[]`) — currently `outputs.parsed.data` is typed `z.unknown()` so a model emitting JSON that doesn't match the manifest's declared shape still parses. A skill-aware validator that fails-closed if the JSON doesn't conform to the manifest's `Output schema` block is queued (similar arc to the tool-loop runtime extension that already shipped for web_fetch).
+- **Re-anchor receipts 53/55/58/62** with the new parser to retroactively populate their `outputs.parsed.data`. (Optional · those receipts predate the parser ship; they remain valid as prose-only artifacts.)

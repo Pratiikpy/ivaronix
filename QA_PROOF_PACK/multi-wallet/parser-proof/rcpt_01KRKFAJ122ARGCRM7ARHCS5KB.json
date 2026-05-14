@@ -1,0 +1,215 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRKFAJ122ARGCRM7ARHCS5KB",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "contract-renewal-clause-detector",
+    "skillVersion": "0.1.0",
+    "skillManifestHash": "sha256:bdf441830af1c06421d8e332df7a69e73b5b092f3836b8323791e6aaa8f7921e",
+    "userPromptHash": "sha256:2cf8badd77fdf91d34b2059e7f4037940d55e3a9db344552e582326f4e0167f5",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "qwen/qwen-2.5-7b-instruct",
+      "final": "qwen/qwen-2.5-7b-instruct"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0xa48f01287233509FD694a22Bf840225062E67836"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.464,
+      "agreementSummary": "Reviewers partially overlap (Jaccard 0.464); the judge will flag conflicts.",
+      "disagreementSummary": "analyst: \"   \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a \\\"Renewal Term\"\nevidence-checker: \"      \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a 'Renewal Te\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xe16700e2f71c626aeabf273411dc465aa084e61dc7a246120b9383ac81b6553f",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "c431df37-9c49-49c7-b1f0-6bb9395e1fb8",
+          "content": "1. {\n   \"section\": \"3.2 Renewal Term\",\n   \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a \\\"Renewal Term\\\") unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.\",\n   \"risk_level\": \"low\",\n   \"notice_period_days\": 180,\n   \"exit_cost_estimate_usd\": 0,\n   \"recommendation\": \"Standard 180-day notice period with no material upfront cost.\"\n}",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xdcfa080cae8867e2850a4770db2d1fadf93ea027d69ade2e177cbd5a1919e793",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "888a4687-94b6-4185-b6f8-e5a15930d150",
+          "content": "1. {\n    \"section\": \"3.2 Renewal Term\",\n    \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a 'Renewal Term') unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.\",\n    \"risk_level\": \"low\",\n    \"notice_period_days\": 180,\n    \"exit_cost_estimate_usd\": 0,\n    \"recommendation\": \"Review the notice requirements for potential improvements.\"\n}\n\n2. {\n    \"section\": \"5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n    \"clause_text\": \"If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n    \"risk_level\": \"high\",\n    \"notice_period_days\": 0,\n    \"exit_cost_estimate_usd\": 0,\n    \"recommendation\": \"Consider negotiating a clear and explicit notice period to avoid being locked into indefinite renewals.\"\n}\n\n3. {\n    \"section\": \"3.3 Renewal Pricing\",\n    \"clause_text\": \"For each Renewal Term, Customer's fees shall increase by the greater of (i) seven percent (7%) or (ii) the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.\",\n    \"risk_level\": \"high\",\n    \"notice_period_days\": 0,\n    \"exit_cost_estimate_usd\": 0,\n    \"recommendation\": \"Ensure that the fee increase is reasonable and does not disproportionately benefit the vendor.\"\n}\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0x6b43dc4d5ad2ea011e1af30fee9b66836ba469d4e1073ae88f51e7384f246070",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "f0cb9371-d1cf-4ce8-abf8-6aa476c4dea7",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"section\": \"3.2 Renewal Term\",\n      \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a \\\"Renewal Term\\\") unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 180,\n      \"exit_cost_estimate_usd\": 0,\n      \"recommendation\": \"Act promptly to send notice of non-renewal 180 days before the end of the term.\"\n    },\n    {\n      \"section\": \"5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term\",\n      \"clause_text\": \"such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 0,\n      \"exit_cost_estimate_usd\": 0,\n      \"recommendation\": \"Review and understand the pricing mechanism for continued use to avoid unexpected charges.\"\n    }\n  ],\n  \"Risk Level\": \"high\"\n}\n```\n\n### Risks:\n1. **Automatically renew for successive twelve (12) month periods unless notice is given 180 days prior** - **financial / operational / high**\n2. **Continued use constitutes agreement to a new Renewal Term on the then-current pricing** - **financial / operational / high**",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0xf4c453ccc67474eef56130f272ed5c55d7fa763f75113152a9c278d24cd292fa",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "8276cd58-a430-4473-a908-7a4ed87f153d",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"section\": \"3.2 Renewal Term\",\n      \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a 'Renewal Term') unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.\",\n      \"risk_level\": \"low\",\n      \"notice_period_days\": 180,\n      \"exit_cost_estimate_usd\": 0\n    },\n    {\n      \"section\": \"5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n      \"clause_text\": \"If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 0,\n      \"exit_cost_estimate_usd\": 0\n    },\n    {\n      \"section\": \"3.3 Renewal Pricing\",\n      \"clause_text\": \"For each Renewal Term, Customer's fees shall increase by the greater of (i) seven percent (7%) or (ii) the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 0,\n      \"exit_cost_estimate_usd\": 0\n    }\n  ],\n  \"Risk Level\": \"high\"\n}\n```\n\n### Verified Facts\n- **Auto-renewal**: The agreement automatically renews for successive twelve (12) month periods unless either party gives notice of non-renewal at least 180 days prior to the end of the then-current term.\n- **Price escalation at renewal**: The fees for each Renewal Term will increase by the greater of 7% or the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.\n- **Hidden renewal in boilerplate**: If the customer continues to use the Services after the expiration of the Initial Term or any Renewal Term, such continued use shall constitute agreement to a new Renewal Term on the then-current pricing.\n\n### Inferred\n- The risk level for the hidden renewal clause (5.1) is inferred to be high because it does not specify a notice period and has no explicit cancellation cost, making it difficult to terminate the agreement easily.\n\n### Unsupported\n- There is no clause that specifies an asymmetric notice period where the asking party must give more than 90 days' notice while the counterparty can cancel with less than 90 days' notice.\n- There is no clause indicating a negative-option billing system where charges continue unless the customer takes affirmative action to stop.\n- There is no clause suggesting that the contract has no fixed end date and will renew indefinitely until cancelled (evergreen clause).",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x418b7660dc2a46248a33084d97f20ac17a51da94632a2ff4ddec1d3e02830431",
+          "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+          "chatId": "40f40c45-40b3-46f6-9ae7-3436d44569a9",
+          "content": "```json\n{\n  \"findings\": [\n    {\n      \"section\": \"3.2 Renewal Term\",\n      \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a 'Renewal Term') unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 180,\n      \"exit_cost_estimate_usd\": 0,\n      \"recommendation\": \"Act promptly to send notice of non-renewal 180 days before the end of the term.\"\n    },\n    {\n      \"section\": \"5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n      \"clause_text\": \"If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 0,\n      \"exit_cost_estimate_usd\": 0,\n      \"recommendation\": \"Review and understand the pricing mechanism for continued use to avoid unexpected charges.\"\n    },\n    {\n      \"section\": \"3.3 Renewal Pricing\",\n      \"clause_text\": \"For each Renewal Term, Customer's fees shall increase by the greater of (i) seven percent (7%) or (ii) the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.\",\n      \"risk_level\": \"high\",\n      \"notice_period_days\": 0,\n      \"exit_cost_estimate_usd\": 0,\n      \"recommendation\": \"Ensure that the fee increase is reasonable and does not disproportionately benefit the vendor.\"\n    }\n  ],\n  \"Risk Level\": \"high\"\n}\n```\n\n**Synthesis:**\n- **Agreement on Auto-renewal:** Both the Analyst and Critic agree that there is an auto-renewal clause in Section 3.2, which sets a 180-day notice period. This aligns with the Risk-Checker’s findings as well.\n- **Disagreement on Hidden Renewal:** The Critic and Risk-Checker both identified a hidden renewal clause in Section 5.1, but the Analyst did not. The conflict here is that the Analyst considers this a low-risk clause due to the lack of a specific notice period and no early-termination fee, whereas the Critic and Risk-Checker see it as high risk because of the same reasons.\n\n**Final Judgment:**\nBased on the findings from the Critic and Risk-Checker, the contract includes clauses that could lock the party into indefinite renewals without clear notice requirements, which is a significant risk. Therefore, the overall risk level is high.\n\n**Action:**\n- Review the notice requirements for potential improvements.\n- Ensure that the fee increase is reasonable and does not disproportionately benefit the vendor.\n- Consider negotiating a clear and explicit notice period to avoid being locked into indefinite renewals.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778770069537",
+    "zgResKey": "40f40c45-40b3-46f6-9ae7-3436d44569a9",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 8399,
+    "outputTokens": 2210,
+    "inputCostNeuron": "419950000000000",
+    "outputCostNeuron": "221000000000000",
+    "totalCostNeuron": "640950000000000",
+    "totalCostOg": "0.0006409500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "490326750000000",
+      "treasuryNeuron": "150623250000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xbd1e5fa1f429c02f3c7b9aa3c82bac3a82b440a9c7cb31fea25fcd899be3c97a",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:c74382c4237ec4af6121e6dcbbc5fd395884f2229aad26ef52378620863fe668"
+    },
+    "receiptRoot": "0xf96e96a8473a39156c9b1c497f5304285869158ffeb38eed8dca4a10bb4fc203"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778770023666,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "testnet",
+    "chainId": 16602,
+    "rpcUrlHash": "sha256:7d8e420a351f8e2272a6674876da272f2a5b5f7d1c0e48203a55880b872419d4",
+    "registryAddress": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+    "anchorTxHash": "0xe6d1cf4cca14ab7ae423e00398a4b7f00cfa0e14795bddbebaa2947c5f67408f",
+    "anchorBlockNumber": 33292121,
+    "anchorTimestamp": 1778770082
+  },
+  "outputs": {
+    "outputHash": "sha256:f19a7d98313891da6058f2c265ad7deec06749d959dc0d1323b1af2af053459e",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "```json {   \"findings\": [     {       \"section\": \"3.2 Renewal Term\",       \"clause_text\": \"Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) mont",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": true,
+      "data": {
+        "findings": [
+          {
+            "section": "3.2 Renewal Term",
+            "clause_text": "Upon expiration of the Initial Term, this Agreement shall automatically renew for successive twelve (12) month periods (each a 'Renewal Term') unless either Party provides written notice of non-renewal to the other Party at least one hundred eighty (180) days prior to the end of the then-current term.",
+            "risk_level": "high",
+            "notice_period_days": 180,
+            "exit_cost_estimate_usd": 0,
+            "recommendation": "Act promptly to send notice of non-renewal 180 days before the end of the term."
+          },
+          {
+            "section": "5.1 If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.",
+            "clause_text": "If Customer continues to use the Services after expiration of the Initial Term or any Renewal Term, such continued use shall constitute Customer's agreement to a new Renewal Term on the then-current pricing.",
+            "risk_level": "high",
+            "notice_period_days": 0,
+            "exit_cost_estimate_usd": 0,
+            "recommendation": "Review and understand the pricing mechanism for continued use to avoid unexpected charges."
+          },
+          {
+            "section": "3.3 Renewal Pricing",
+            "clause_text": "For each Renewal Term, Customer's fees shall increase by the greater of (i) seven percent (7%) or (ii) the percentage change in the Consumer Price Index for All Urban Consumers (CPI-U) over the preceding twelve months.",
+            "risk_level": "high",
+            "notice_period_days": 0,
+            "exit_cost_estimate_usd": 0,
+            "recommendation": "Ensure that the fee increase is reasonable and does not disproportionately benefit the vendor."
+          }
+        ],
+        "Risk Level": "high"
+      },
+      "repaired": [
+        "codeFence"
+      ],
+      "rawBytes": 2983
+    }
+  },
+  "createdAt": 1778770069538,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x7b4ad727e69de6d20f7348ec23746ec4889fa6fd5724617b02647684449a3aa957e10fcaa0ade6b1f1afe989d159b9cdd720c35f72e2ece79b2e48be11dd5cc81b"
+  }
+}
