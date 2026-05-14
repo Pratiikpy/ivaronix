@@ -42,8 +42,9 @@ const CHAIN_ID = 16602;
 const CS = 'https://chainscan-galileo.0g.ai';
 const PAY_ABI = [
   'function refundFailedRun(bytes32 receiptRoot) external',
-  'function refunded(bytes32) external view returns (bool)',
+  'function paidRuns(bytes32) external view returns (address payer, address creator, uint128 amount, uint128 creatorShare, uint128 treasuryShare, uint64 paidAt, bool refunded)',
   'function refundUnlockAt(bytes32) external view returns (uint64)',
+  'function isPaid(bytes32) external view returns (bool)',
   'event Refunded(bytes32 indexed receiptRoot, address indexed payer, uint256 amount, uint64 timestamp)',
 ];
 const GAS = { gasPrice: 5_000_000_000n, gasLimit: 400_000n };
@@ -69,7 +70,8 @@ async function main(): Promise<void> {
   const operator = new Wallet(OPERATOR_KEY, provider);
   const pay = new Contract(pending.skillPaymentAddress, PAY_ABI, operator);
 
-  const alreadyRefunded = await pay.refunded!(pending.receiptRoot) as boolean;
+  const run = await pay.paidRuns!(pending.receiptRoot);
+  const alreadyRefunded = run.refunded as boolean;
   if (alreadyRefunded) {
     console.log(`already refunded · marking closed without new tx`);
     writeFileSync(CLOSED, JSON.stringify({
