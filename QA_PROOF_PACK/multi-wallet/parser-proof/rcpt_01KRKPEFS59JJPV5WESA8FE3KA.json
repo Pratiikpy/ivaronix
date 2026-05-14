@@ -1,0 +1,147 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRKPEFS59JJPV5WESA8FE3KA",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "nda-triage-reviewer",
+    "skillVersion": "0.1.1",
+    "skillManifestHash": "sha256:114042c5a4cc6ee3c6bcf66cf2eb6574fe6bee543737f5eef2e6b4521db29792",
+    "userPromptHash": "sha256:ba303fe0b9e57c71e8347c94cef3ecc9ed1c317db62a175e4ae766d70806d3c1",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": false,
+    "modelSelection": {
+      "requested": "qwen/qwen-2.5-7b-instruct",
+      "final": "qwen/qwen-2.5-7b-instruct"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0xa48f01287233509FD694a22Bf840225062E67836"
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778777538340",
+    "zgResKey": "90276fc3-4880-4042-a04c-290c58079d1c",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0xa48f01287233509FD694a22Bf840225062E67836",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 1839,
+    "outputTokens": 183,
+    "inputCostNeuron": "91950000000000",
+    "outputCostNeuron": "18300000000000",
+    "totalCostNeuron": "110250000000000",
+    "totalCostOg": "0.0001102500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "84341250000000",
+      "treasuryNeuron": "25908750000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x683b2e8f35d0ec9870c28ab5aac62afe71df2aebb267b07103aaee9a4ddc59de",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:fae8268669c583524c9ec7af03026df64ed301ecc7e7eb25d9349b5ea5b45557"
+    },
+    "receiptRoot": "0x17b296ca82c7a13a3643a536885e280ea0cf1c5605584350eec277e20bb391c4"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778777520083,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "testnet",
+    "chainId": 16602,
+    "rpcUrlHash": "sha256:7d8e420a351f8e2272a6674876da272f2a5b5f7d1c0e48203a55880b872419d4",
+    "registryAddress": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
+    "anchorTxHash": "0x030b0f594914176b7f850c6c1612e0c2b63b50a83152eb6a22999f49a7407a01",
+    "anchorBlockNumber": 33307430,
+    "anchorTimestamp": 1778777551
+  },
+  "outputs": {
+    "outputHash": "sha256:c06331d565032ccfdf6070e1833075b75490b57e55923a682c03b9eb937fc15e",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "```json {   \"type\": \"one-way\",   \"term_years\": 0,   \"governing_law\": \"Cayman Islands\",   \"jurisdiction\": \"exclusive jurisdiction of the courts of the Cayman Islands\",   \"exclusions_list\": [],   \"red_f",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": true,
+      "data": {
+        "type": "one-way",
+        "term_years": 0,
+        "governing_law": "Cayman Islands",
+        "jurisdiction": "exclusive jurisdiction of the courts of the Cayman Islands",
+        "exclusions_list": [],
+        "red_flags": [
+          "Confidential Information defined to include any communication, oral or written, including future-tense statements",
+          "Term is in perpetuity — standard is 2-5 for non-trade-secret information",
+          "No exclusion for 'independently developed' — could lock the asking party out of parallel work",
+          "Liquidated damages of $1,000,000 per breach, which is unreasonably high"
+        ],
+        "standard_or_aggressive": "aggressive",
+        "signature_recommendation": "escalate"
+      },
+      "repaired": [
+        "codeFence"
+      ],
+      "rawBytes": 703
+    }
+  },
+  "createdAt": 1778777538341,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x2d2f9c2f1bd2600b16ac5e2c723974418c5c2593dbc155ac1a2b38f2a1a0cd1c5ad3662b0948d54a8c89a4588443e43eca2feb137c6e919305c86a26486993bc1c"
+  }
+}
