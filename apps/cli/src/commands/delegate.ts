@@ -1,5 +1,5 @@
 // Delegate flow mints fresh passports against V2 (with V1 fallback) so K-1 multi-mint + K-4 trustScore + K-6 memoryRoot fixes apply. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
-// v1-capability-allow: delegate flow issues + revokes V1 grants for hand-off lifecycle; V2-first migration tracked in USER_TODO §B-V2-39 (delegate-flow grants leak via V1's public reverse indexes).
+// Delegate flow issues + revokes grants against V2 CapabilityRegistry (with V1 fallback) — V2 gates reverse-index reads so delegate-flow grants don't leak via the social-graph side channel. Closes the V1-only writer waiver from USER_TODO §B-V2-39.
 import { Command } from 'commander';
 import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
@@ -362,7 +362,13 @@ delegateCommand
       return;
     }
 
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first capability address — V2 gates reverse-index reads so
+    // grants don't leak the agent social graph. Write API is identical
+    // (issueGrant/revokeGrant/isValid) so V1 client works against V2.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
+    const capVersion: 'v1' | 'v2' = capAddrV2 ? 'v2' : 'v1';
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -382,7 +388,7 @@ delegateCommand
     ui.info(`ttl                  ${opts.ttl} (${ttlSec}s)`);
     ui.info(`reads cap            ${readsCap}`);
 
-    ui.pending('issuing grant on chain...');
+    ui.pending(`issuing grant on chain (${capVersion.toUpperCase()})...`);
     const tx = await cap.issueGrant(m.delegateAddress, scopeHash, ttlSec, readsCap);
     const receipt = await tx.wait();
     const grantIssuedTopic = keccak256(toUtf8Bytes('GrantIssued(bytes32,address,address,bytes32,uint64,uint32)'));
@@ -433,13 +439,17 @@ delegateCommand
       return;
     }
 
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first capability address (see comment at delegate grant action).
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
+    const capVersion: 'v1' | 'v2' = capAddrV2 ? 'v2' : 'v1';
     if (!capAddr) { ui.fail('CapabilityRegistry not deployed'); process.exitCode = 1; return; }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
     const userWallet = new Wallet(env.privateKey, provider);
     const cap = new CapabilityRegistryClient(capAddr, userWallet);
 
-    ui.title(`Revoking grant ${target.grantId.slice(0, 18)}… for skill ${target.skillId}`);
+    ui.title(`Revoking grant ${target.grantId.slice(0, 18)}… for skill ${target.skillId} (${capVersion.toUpperCase()})`);
     // HALF_BAKED §I-19 closure (sweep 169): destructive on-chain tx
     // confirms before submission unless --yes flag was passed.
     if (!opts.yes) {
@@ -497,8 +507,10 @@ delegateCommand
       return;
     }
 
-    // Verify grant is still valid on chain
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // Verify grant is still valid on chain — V2-first.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
     if (!capAddr) { ui.fail('CapabilityRegistry not deployed'); process.exitCode = 1; return; }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
     const userWallet = new Wallet(env.privateKey, provider);
