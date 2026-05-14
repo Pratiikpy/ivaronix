@@ -1,8 +1,14 @@
 # 0G DA Integration · Status, Runbook, Path to Live
 
-> Last refresh 2026-05-14 (corrected).
+> Last refresh 2026-05-14 (corrected twice).
 >
-> Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA entrance contract address is published** (`0xE75A073dA5bb7b0eC622170Fd268f35E675a957B`) per `oglabs resources/0g-doc/docs/developer-hub/testnet/testnet-overview.md`. The Docker `da-client` service is wired and ready to start once the operator generates a fresh DA signing key + funds it with ~0.005 OG. The full disperse + retrieve loop is a 5-step operator action, not a blocker.
+> Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA is real and reachable** but the path is more involved than initially thought:
+>
+> 1. The `ghcr.io/0glabs/0g-da-client:latest` image is **not anonymously pullable** (registry returns `denied`). The 0G team distributes the DA client as **source you build yourself** per `oglabs resources/0g-doc/docs/developer-hub/building-on-0g/da-integration.md`.
+> 2. Two DA contract addresses live on Galileo: `0xE75A073d…` (public submission entrance referenced in `testnet-overview.md`) and `0x857C0A28…` (the DASigner-aware entrance used by your own DA client per `da-integration.md`). The integration doc's address is the one to put in `da.env`.
+> 3. Env var names are `COMBINED_SERVER_*` and `ENTRANCE_CONTRACT_ADDR` (per 0G's integration doc), not the `DA_*` names I had earlier.
+>
+> Updated runbook below reflects all three corrections.
 
 ## What IS shipped today
 
@@ -33,9 +39,9 @@ The honest shipped surfaces (`/0g` page, `/learn#receipt-anatomy`, receipt-page 
 - The four-light row on `/r/<id>` does NOT include a DA light today. The four lights are Storage · Compute · TEE · Chain. DA would become a fifth light only once it actually attests.
 - The `storage.daBlobRef` schema field is optional and stays unset on every receipt in the current 1683-receipt corpus.
 
-## Operator runbook (5 commands to live)
+## Operator runbook (8 commands to live · source build required)
 
-Per the correction above, the path to live is mechanical — no waiting on 0G:
+Per the corrections above, the path:
 
 1. **Update `da.env`:**
    - Fresh wallet via `node -e 'const{Wallet}=require("ethers");const w=Wallet.createRandom();console.log(w.address);console.log(w.privateKey);'`
