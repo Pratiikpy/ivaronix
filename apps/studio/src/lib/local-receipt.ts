@@ -121,10 +121,14 @@ function findReceiptsDirs(): string[] {
   const seen = new Set<string>();
   let dir = process.cwd();
   let workspaceRoot: string | null = null;
+  let studioRoot: string | null = null;
   for (let i = 0; i < 12; i++) {
     const candidate = resolve(dir, '.ivaronix', 'receipts', 'anchored');
     if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
     if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) workspaceRoot = dir;
+    if (existsSync(resolve(dir, 'next.config.ts')) || existsSync(resolve(dir, 'next.config.js'))) {
+      studioRoot = dir;
+    }
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -134,6 +138,21 @@ function findReceiptsDirs(): string[] {
       const candidate = resolve(workspaceRoot, sib, '.ivaronix', 'receipts', 'anchored');
       if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
     }
+  }
+  // Bundled receipts · ships with the Vercel deploy so prod /r/<id>
+  // can render the structured findings card for hand-picked receipts
+  // (the legal cluster proof set + future demo path receipts).
+  // Operator-local .ivaronix/ is still preferred when present; this
+  // path is the fallback for environments where the receipt cache
+  // wasn't synced. The directory is tracked in git (no gitignore rule)
+  // unlike the operator-local .ivaronix/.
+  if (studioRoot) {
+    const bundled = resolve(studioRoot, 'src', 'data', 'receipts', 'anchored');
+    if (existsSync(bundled) && !seen.has(bundled)) { out.push(bundled); seen.add(bundled); }
+  }
+  if (workspaceRoot) {
+    const bundled = resolve(workspaceRoot, 'apps', 'studio', 'src', 'data', 'receipts', 'anchored');
+    if (existsSync(bundled) && !seen.has(bundled)) { out.push(bundled); seen.add(bundled); }
   }
   return out;
 }
