@@ -1,4 +1,4 @@
-// v1-passport-allow: stats reads V1 passport tokenId for the operator wallet; V2-first migration tracked in USER_TODO §B-V2-38.
+// stats reads V2 → V1 passport tokenId for the operator wallet (matches CLI passport show + Studio dashboard). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 /**
  * `ivaronix stats` — usage telemetry on real on-chain + local data (F-stats, A2).
  *
@@ -135,10 +135,20 @@ export const statsCommand = new Command('stats')
           walletReceipts += await client.agentReceiptCount(env.walletAddress as Address);
         } catch {/* ignore */}
       }
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-      if (passportAddr) {
+      // V2-first read (matches CLI passport show + Studio dashboard).
+      // Operator-funded V2 is the active passport target; V1 fallback
+      // catches passports minted before the K-2 migration.
+      const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+      const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+      if (passportAddrV2) {
         try {
-          const c = new AgentPassportClient(passportAddr as Address, provider);
+          const c = new AgentPassportClient(passportAddrV2 as Address, provider);
+          passportTokenId = await c.passportOf(env.walletAddress as Address);
+        } catch {/* ignore */}
+      }
+      if (passportTokenId === 0n && passportAddrV1) {
+        try {
+          const c = new AgentPassportClient(passportAddrV1 as Address, provider);
           passportTokenId = await c.passportOf(env.walletAddress as Address);
         } catch {/* ignore */}
       }

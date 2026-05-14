@@ -1,4 +1,4 @@
-// v1-passport-allow: consolidator writes memory snapshot against V1 passport (updateMemoryRoot); V2-first migration tracked in USER_TODO §B-V2-38. K-6 memoryRoot-poisoning fix is on V2 only.
+// consolidator writes memory snapshot against V2 passport (with V1 fallback). K-6 memoryRoot-poisoning fix lives on V2 only — writing to V2 first means the consolidation receipt is protected. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -157,7 +157,12 @@ export function addConsolidateCommand(parent: Command): void {
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
       const writeAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
       const writeVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+      // V2-first passport write — K-6 memoryRoot-poisoning fix only on V2.
+      // V1 fallback for chains that haven't deployed V2 yet.
+      const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+      const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+      const passportAddr = passportAddrV2 ?? passportAddrV1;
+      const passportVersion: 'v1' | 'v2' = passportAddrV2 ? 'v2' : 'v1';
       if (!registryAddrV1 || !writeAddr) {
         ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
         process.exitCode = 1;
@@ -441,13 +446,15 @@ export function addConsolidateCommand(parent: Command): void {
       };
       writeFileSync(localPath, JSON.stringify(updated, null, 2));
 
-      // 6. Update passport (the consolidation itself counts as a receipt)
+      // 6. Update passport (the consolidation itself counts as a receipt).
+      //    Writes against the V2 passport when deployed — V2 has the K-6
+      //    memoryRoot-poisoning fix; V1 doesn't. V1 fallback when V2 not present.
       if (passportAddr) {
         const passport = new AgentPassportClient(passportAddr, wallet);
         try {
           const tokenId = await passport.passportOf(env.walletAddress as Address);
           if (tokenId !== 0n) {
-            ui.pending(`recording consolidation against passport tokenId=${tokenId}...`);
+            ui.pending(`recording consolidation against ${passportVersion.toUpperCase()} passport tokenId=${tokenId}...`);
             const ptx = await passport.recordReceipt(
               tokenId,
               signed.storage.receiptRoot as Hash,
@@ -457,7 +464,7 @@ export function addConsolidateCommand(parent: Command): void {
             await ptx.wait();
             const refreshed = await passport.getPassport(tokenId);
             if (refreshed) {
-              ui.pass(`passport updated     receiptCount=${refreshed.receiptCount} trustScore=${refreshed.trustScore}`);
+              ui.pass(`passport updated     receiptCount=${refreshed.receiptCount} trustScore=${refreshed.trustScore} · ${passportVersion.toUpperCase()}`);
             }
           }
         } catch (err) {

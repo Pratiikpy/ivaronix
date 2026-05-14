@@ -1,4 +1,4 @@
-// v1-passport-allow: export reader bundles V1 passport state for portability; V2 passport export tracked in USER_TODO §B-V2-38.
+// export bundles V2 → V1 passport tokenId (matches CLI passport show + Studio dashboard). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 /**
  * `ivaronix export` and `ivaronix import` — portable bundle (F-export, A2).
  *
@@ -93,16 +93,23 @@ export const exportCommand = new Command('export')
     ui.info(`network              ${env.network} (${env.chainId})`);
     ui.divider();
 
-    // 1. Read passport tokenId at export time (snapshot)
+    // 1. Read passport tokenId at export time (snapshot) — V2 first, V1 fallback.
     let passportTokenId = 0n;
     if (env.walletAddress) {
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-      if (passportAddr) {
+      const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+      const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+      const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
+      if (passportAddrV2) {
         try {
-          const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-          const c = new AgentPassportClient(passportAddr as Address, provider);
+          const c = new AgentPassportClient(passportAddrV2 as Address, provider);
           passportTokenId = await c.passportOf(env.walletAddress as Address);
         } catch {/* ignore — bundle still valid without it */}
+      }
+      if (passportTokenId === 0n && passportAddrV1) {
+        try {
+          const c = new AgentPassportClient(passportAddrV1 as Address, provider);
+          passportTokenId = await c.passportOf(env.walletAddress as Address);
+        } catch {/* ignore */}
       }
     }
 
