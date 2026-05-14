@@ -1,5 +1,5 @@
-// v3-lookup-allow: model writer emits slots 0-9 only (consensus + skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: model fine-tune reads V1 passport for trust score; V2-first migration tracked in USER_TODO §B-V2-38.
+// v3-lookup-allow: model writer emits slots 0-9 only (consensus + skill_exec); slot 10+ types still need V3 anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// Passport write path now V2-first via getActivePassportClient (K-6 memoryRoot-poisoning fix on V2). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -8,7 +8,8 @@ import { resolve } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { sha256HexAsync, RECEIPT_TYPES, type Hash, type ReceiptType } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, ReceiptRegistryV2Client, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { getActivePassportClient } from '../lib/passport.js';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 
@@ -272,14 +273,13 @@ modelCommand
         }
         ui.pass(`receipt              ${signed.id}  tx=${txHash}  block=${blockNumber} (${registryVersion.toUpperCase()})`);
 
-        // Best-effort passport update
+        // Best-effort passport update — V2-first (K-6 memoryRoot-poisoning fix on V2).
         try {
-          const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-          if (passportAddr) {
-            const passport = new AgentPassportClient(passportAddr, wallet);
-            const tokenId = await passport.passportOf(wallet.address as `0x${string}`);
+          const handle = getActivePassportClient(env.network, wallet);
+          if (handle) {
+            const tokenId = await handle.client.passportOf(wallet.address as `0x${string}`);
             if (tokenId !== 0n) {
-              const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPES[receiptType], 1);
+              const ptx = await handle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPES[receiptType], 1);
               await ptx.wait();
             }
           }

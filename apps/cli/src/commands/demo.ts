@@ -1,5 +1,5 @@
 // v3-lookup-allow: demo writer emits slots 0-9 only (burn-mode demo + verify-replay); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: demo reads V1 passport for display only; V2-first migration tracked in USER_TODO §B-V2-38.
+// demo reads V2 → V1 passport via getActivePassportClient for the informational snapshot. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -7,7 +7,8 @@ import { tmpdir } from 'node:os';
 import { JsonRpcProvider } from 'ethers';
 import { runPipeline } from '../lib/pipeline.js';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
-import { AgentPassportClient, ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { getActivePassportClient } from '../lib/passport.js';
 import { NETWORKS, studioUrl, type Address } from '@ivaronix/core';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -85,13 +86,12 @@ export const demoCommand = new Command('demo')
       return;
     }
 
-    // Optional passport snapshot — informational, not gating.
+    // Optional passport snapshot — informational, not gating. V2-first.
     try {
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-      if (passportAddr) {
-        const client = new AgentPassportClient(passportAddr, provider);
-        const data = await client.getPassportByWallet(env.walletAddress as Address);
-        if (data) ui.info(`passport             tokenId ${data.tokenId} · trust ${data.trustScore} · receipts ${data.receiptCount}`);
+      const handle = getActivePassportClient(env.network, provider);
+      if (handle) {
+        const data = await handle.client.getPassportByWallet(env.walletAddress as Address);
+        if (data) ui.info(`passport             ${handle.version.toUpperCase()} tokenId ${data.tokenId} · trust ${data.trustScore} · receipts ${data.receiptCount}`);
         else ui.info(`passport             not minted yet (use 'ivaronix passport mint')`);
       }
     } catch { /* optional */ }

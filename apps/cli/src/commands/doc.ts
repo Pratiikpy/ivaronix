@@ -1,5 +1,5 @@
-// v3-lookup-allow: writer emits slots 0-9 only (doc_ask/consensus/burn/skill_exec); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: doc anchorer reads V1 passport for trust-score gating; V2-first migration tracked in USER_TODO §B-V2-38. (pipeline.ts trust read IS V2-first since iter-121 · this file's read is the redundant sandbox-decision path.)
+// v3-lookup-allow: doc writer emits slots 0-9 only (doc_ask/consensus/burn/skill_exec); slot 10+ types still need V3 anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// Passport read/write path now V2-first via getActivePassportClient (K-6 memoryRoot-poisoning fix on V2). Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
@@ -7,7 +7,8 @@ import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, ReceiptRegistryV2Client, AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { getActivePassportClient } from '../lib/passport.js';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
@@ -128,14 +129,15 @@ docCommand
       ui.info(`registry scan        skipped (SkillRegistry not deployed on ${env.network})`);
     }
 
-    // Sandbox: pull caller's passport trust score (best-effort)
+    // Sandbox: pull caller's passport trust score (best-effort, V2-first).
     let callerTrust = 0;
     try {
-      const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-      if (passportAddr && env.walletAddress) {
-        const passport = new AgentPassportClient(passportAddr, provider0);
-        const profile = await passport.getPassportByWallet(env.walletAddress as `0x${string}`);
-        if (profile) callerTrust = Number(profile.trustScore ?? 0);
+      if (env.walletAddress) {
+        const handle = getActivePassportClient(env.network, provider0);
+        if (handle) {
+          const profile = await handle.client.getPassportByWallet(env.walletAddress as `0x${string}`);
+          if (profile) callerTrust = Number(profile.trustScore ?? 0);
+        }
       }
     } catch { /* best-effort; sandbox treats trust=0 if unknown */ }
 
@@ -742,13 +744,14 @@ docCommand
     }, null, 2));
 
     // ─── 6. Record receipt against passport (if owner has one) ────────────
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
-    if (passportAddr) {
-      const passport = new AgentPassportClient(passportAddr, wallet);
+    // V2-first write — K-6 memoryRoot-poisoning fix lives on V2 only.
+    const passportHandle = getActivePassportClient(env.network, wallet);
+    if (passportHandle) {
+      const passport = passportHandle.client;
       try {
         const tokenId = await passport.passportOf(wallet.address as `0x${string}`);
         if (tokenId !== 0n) {
-          ui.pending(`recording receipt against passport tokenId=${tokenId}...`);
+          ui.pending(`recording receipt against ${passportHandle.version.toUpperCase()} passport tokenId=${tokenId}...`);
           // Trust delta: +1 per anchored receipt; tunable per skill via the
           // skill manifest's `og.reputation.on_pass.trustScore` field.
           const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
@@ -756,7 +759,7 @@ docCommand
           // Re-read updated state
           const updated = await passport.getPassport(tokenId);
           if (updated) {
-            ui.pass(`passport updated     receiptCount=${updated.receiptCount} trustScore=${updated.trustScore}`);
+            ui.pass(`passport updated     receiptCount=${updated.receiptCount} trustScore=${updated.trustScore} · ${passportHandle.version.toUpperCase()}`);
           }
         }
       } catch (err) {

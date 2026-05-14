@@ -1,4 +1,4 @@
-// v1-passport-allow: reads V1 passport for chat session context; V2-first migration tracked in USER_TODO §B-V2-38.
+// chat reads V2 → V1 passport via getActivePassportClient. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 import { Command } from 'commander';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -9,7 +9,7 @@ import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import type { ChatRichMessage, Keyring } from '@ivaronix/og-router';
 import { findSkill, type LoadedSkill } from '@ivaronix/skills';
 import { JsonRpcProvider } from 'ethers';
-import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { getActivePassportClient } from '../lib/passport.js';
 import { TOOL_DEFS, dispatchTool, buildSkillToolCatalog } from '../lib/chat-tools.js';
 import {
   newConversation,
@@ -118,13 +118,13 @@ function startSpinner(label: string): { stop: () => void } {
 
 async function passportSnapshot(env: ReturnType<typeof loadEnv>): Promise<string> {
   try {
-    const addr = getDeployedAddress(env.network, 'AgentPassportINFT');
-    if (!addr || !env.walletAddress) return 'no passport configured';
+    if (!env.walletAddress) return 'no passport configured';
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-    const client = new AgentPassportClient(addr, provider);
-    const profile = await client.getPassportByWallet(env.walletAddress as `0x${string}`);
+    const handle = getActivePassportClient(env.network, provider);
+    if (!handle) return 'no passport configured';
+    const profile = await handle.client.getPassportByWallet(env.walletAddress as `0x${string}`);
     if (!profile) return `no passport for ${env.walletAddress}`;
-    return `tokenId=${profile.tokenId} · trust=${profile.trustScore} · receipts=${profile.receiptCount} · violations=${profile.violationCount}`;
+    return `${handle.version.toUpperCase()} tokenId=${profile.tokenId} · trust=${profile.trustScore} · receipts=${profile.receiptCount} · violations=${profile.violationCount}`;
   } catch (err) {
     return `(passport read failed: ${(err as Error).message})`;
   }
