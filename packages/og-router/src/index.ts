@@ -1,12 +1,28 @@
 import OpenAI from 'openai';
 import type { Address } from '@ivaronix/core';
 
+/**
+ * Identifies which 0G Compute adapter this credential targets.
+ *
+ *   - `compute-network`  Third-party Router relay (testnet default · today's
+ *                        Qwen 2.5 7B path · `compute-network-X.integratenetwork.work`).
+ *   - `pc.0g.ai`         0G's sovereign Compute endpoint serving 0GM-1.0
+ *                        (mainnet target per final-plan.md §2.3 / §2.4).
+ *                        Adapter prepped now; testnet does not route here yet.
+ *
+ * Unset (`undefined`) is treated as `'compute-network'` for backwards
+ * compatibility with credential objects authored before this field existed.
+ */
+export type RouterCredentialKind = 'compute-network' | 'pc.0g.ai';
+
 export interface RouterCredential {
   label: string;
   wallet: Address;
   apiKey: string; // app-sk-...
-  serviceUrl: string; // https://compute-network-X.integratenetwork.work/v1/proxy
+  serviceUrl: string; // https://compute-network-X.integratenetwork.work/v1/proxy or https://pc.0g.ai/v1
   providerAddress: Address;
+  /** Adapter discriminator. Defaults to `'compute-network'` when omitted. */
+  kind?: RouterCredentialKind;
 }
 
 export interface RouterCallOptions {
@@ -238,3 +254,14 @@ export {
   type ProviderKind,
   type ProviderTier,
 } from './nvidia.js';
+export {
+  chatPcOgAi,
+  PC_OG_AI_DEFAULT_BASE_URL,
+  PC_OG_AI_DEFAULT_MODEL,
+  PcOgAiCredentialError,
+  PcOgAiHttpError,
+  PcOgAiResponseError,
+  type PcOgAiChatMessage,
+  type PcOgAiChatOptions,
+  type PcOgAiChatResult,
+} from './pc-og-ai.js';
