@@ -53,7 +53,7 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 | Metric | Value | Where to look |
 |---|---|---|
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
-| 0G primitives integrated | **6** | Chain · Compute · Storage · Router · AgentID · Memory KV |
+| 0G primitives integrated | **5** | Chain · Compute · Storage · Router · AgentID (Memory KV scaffolding ships separately at `infra/0g-kv/`; defaults to in-memory fallback until operator runs the real KV stack) |
 | Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->** | <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
 | Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1665<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` + `ReceiptRegistryV3` |
 | Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + V3 + Guard + Capability + Skill + Subscription |
