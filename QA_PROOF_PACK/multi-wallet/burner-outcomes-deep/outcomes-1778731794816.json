@@ -1,0 +1,285 @@
+{
+  "timestamp": "2026-05-14T04:09:54.815Z",
+  "elapsedSec": 138.44,
+  "burners": {
+    "alice": {
+      "address": "0x852FD8fa5F88562aA3e06D0be7d9FDcc73dD4Fbb",
+      "privateKey": "0x80dacf77f3348f43387887e2250b9c2ef6dbfa9cad13a5c830ab270b6173646f"
+    },
+    "bob": {
+      "address": "0x30592e912f5590B449e2ED6D25841a2cD0B10fB8",
+      "privateKey": "0xf0c4915ee37a6c58a82856af1911d549f9b074f65e9e34843ed344379e2c792c"
+    },
+    "carol": {
+      "address": "0xd99EAcBdf706Bd299ed2f9cC6bd8E000284A8aA2",
+      "privateKey": "0xe3134476e1c41edafdb9ec9db2716c25453fbc773aa740600d94df061192d6c7"
+    }
+  },
+  "checks": [
+    {
+      "action": "mint tx status",
+      "pass": true,
+      "detail": "tx 0x17f35312072aa16eea8dab76fe72bb369b44ed7723e8131189cf8daa944f6018"
+    },
+    {
+      "action": "PassportMinted event emitted",
+      "pass": true,
+      "detail": "tokenId=9 owner=0x852FD8fa5F88562aA3e06D0be7d9FDcc73dD4Fbb"
+    },
+    {
+      "action": "event.owner == alice",
+      "pass": true,
+      "detail": "0x852FD8fa5F88562aA3e06D0be7d9FDcc73dD4Fbb"
+    },
+    {
+      "action": "event.metadataRoot == provided",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "passportOf(alice) > 0",
+      "pass": true,
+      "detail": "tokenId=9"
+    },
+    {
+      "action": "agent.metadataRoot stored correctly",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "agent.trustScore initial = 0",
+      "pass": true,
+      "detail": "trustScore=0"
+    },
+    {
+      "action": "agent.receiptCount initial = 0",
+      "pass": true,
+      "detail": "receiptCount=0"
+    },
+    {
+      "action": "publishVersion tx status",
+      "pass": true,
+      "detail": "tx 0x3020879afc72df3e282cec8c29cbcc1ea75ebf30325af2ad7711fbc2ec745edf"
+    },
+    {
+      "action": "SkillPublished event emitted",
+      "pass": true,
+      "detail": "skill=0x0072f741bbbb..."
+    },
+    {
+      "action": "event.creator == alice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.versionId matches",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.manifestHash matches",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "ownerOf(skillId) == alice",
+      "pass": true,
+      "detail": "0x852FD8fa5F88562aA3e06D0be7d9FDcc73dD4Fbb"
+    },
+    {
+      "action": "versionCount == 1",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "setPrice tx status",
+      "pass": true,
+      "detail": "tx 0x8d10ac577573e04e262097c7ceea7c1b54c5542ecffba3f88badd10bee0eacc9"
+    },
+    {
+      "action": "PriceUpdated event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.priceWei matches",
+      "pass": true,
+      "detail": "priceWei=0.005 OG"
+    },
+    {
+      "action": "event.creatorBps == 9000",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.treasuryBps == 1000",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "getPricing.priced = true",
+      "pass": true,
+      "detail": "priced=true"
+    },
+    {
+      "action": "getPricing.price matches",
+      "pass": true,
+      "detail": "0.005 OG"
+    },
+    {
+      "action": "paySkillRun tx status",
+      "pass": true,
+      "detail": "tx 0x46d3c6b0a435af3a7642d679dcf7857832fc7ef7fef81786d0fdf0fac297a5fe"
+    },
+    {
+      "action": "SkillRunPaid event emitted",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "action": "event.payer == bob",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "action": "event.creator == alice",
+      "pass": false,
+      "detail": ""
+    },
+    {
+      "action": "event.creatorShare = 90% of price",
+      "pass": false,
+      "detail": "0.0 OG"
+    },
+    {
+      "action": "event.treasuryShare = 10% of price",
+      "pass": false,
+      "detail": "0.0 OG"
+    },
+    {
+      "action": "event.amount == price",
+      "pass": false,
+      "detail": "0.0 OG"
+    },
+    {
+      "action": "alice creatorBalance delta == 90%",
+      "pass": true,
+      "detail": "+0.0045 OG"
+    },
+    {
+      "action": "treasury delta == 10%",
+      "pass": true,
+      "detail": "+0.0005 OG"
+    },
+    {
+      "action": "alice lifetimeEarned delta == 90%",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "withdrawCreator tx status",
+      "pass": true,
+      "detail": "tx 0x115578537202c149dde6f470734aa449a4b73d9eba86c3486722d6ef5277f5d4"
+    },
+    {
+      "action": "Withdrawn event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.amount == alice prior balance",
+      "pass": true,
+      "detail": "0.0045 OG"
+    },
+    {
+      "action": "event.isTreasury == false (creator path)",
+      "pass": true,
+      "detail": "isTreasury=false"
+    },
+    {
+      "action": "creatorBalance(alice) zeroed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "alice wallet balance delta ~= earned - gas",
+      "pass": true,
+      "detail": "delta=0.0029 OG (expected 0.0029 OG)"
+    },
+    {
+      "action": "unsetPrice tx status",
+      "pass": true,
+      "detail": "tx 0xbe25305b8ea921e8614fb7d0b2aec819dfce0a1367a3296813d170101ec61278"
+    },
+    {
+      "action": "PriceUnset event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "getPricing.priced = false after unset",
+      "pass": true,
+      "detail": "priced=false"
+    },
+    {
+      "action": "getPricing.price = 0 after unset",
+      "pass": true,
+      "detail": "price=0.0"
+    },
+    {
+      "action": "issueGrant tx status",
+      "pass": true,
+      "detail": "tx 0x83c44c0f8f31f3ab81ca508b73c5a4a9ded72dfc286b8ac154a3da7dcf20988c"
+    },
+    {
+      "action": "GrantIssued event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.owner == alice",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.grantee == carol",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.scopeHash matches",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "isValid = true before revoke",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "revokeGrant tx status",
+      "pass": true,
+      "detail": "tx 0xc224a73f26305a87d674c7ceda75f66d7bf6345a6eb071b3e6eada5e68b5763c"
+    },
+    {
+      "action": "GrantRevoked event emitted",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "event.grantId matches",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "isValid = false after revoke",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "summary": {
+    "pass": 46,
+    "fail": 6,
+    "total": 52
+  }
+}
