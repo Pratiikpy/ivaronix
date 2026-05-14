@@ -9,6 +9,7 @@ import {
   explorerAddrUrl,
   getNetwork,
   getRegistries,
+  receiptTypeLabel,
 } from '@/lib/chain';
 import { findLocalReceiptByRoot, type ReceiptBody } from '@/lib/local-receipt';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
@@ -366,7 +367,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
             <div>
               <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>skill</div>
               <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)' }}>
-                {skill ? `${skill.skillId}@${skill.skillVersion}` : (local?.type ?? `code ${onChain.receiptType}`)}
+                {skill ? `${skill.skillId}@${skill.skillVersion}` : (local?.type ?? receiptTypeLabel(onChain.receiptType))}
               </div>
             </div>
             {modelFinal && (

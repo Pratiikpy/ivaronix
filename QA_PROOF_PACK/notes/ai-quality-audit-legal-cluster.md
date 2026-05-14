@@ -97,3 +97,26 @@ Honest move for testnet launch:
 ## Date
 
 2026-05-14 · Fire 10 of the LEGAL VERTICAL HARD-LAUNCH PIVOT directive · audit performed per the new priority order item #4 (AI quality audits are not optional · receipt anchored ≠ output usable).
+
+---
+
+## Correction (later same day · 2026-05-14 post-investigation)
+
+The "skill: code-2 / code-3" finding flagged earlier in receipt-page inspections was MIS-CLASSIFIED as a bug. Correcting honestly:
+
+**What's actually happening:**
+- Receipt JSON on disk DOES have `request.skillId` populated correctly (e.g., `"contract-renewal-clause-detector"`)
+- Studio's `/r/[id]/page.tsx` reads it correctly at `local?.request?.skillId`
+- The fallback display `code N` only appears when `local` is null — which happens because the prod Vercel server doesn't have access to the operator's local CLI receipt JSON files (`apps/cli/.ivaronix/receipts/anchored/`)
+- Receipt body fetch from 0G Storage via `evidenceRoot` is a noted gap in `apps/studio/src/lib/local-receipt.ts:11` ("Future: fall back to 0G Storage download via the receipt's storageRoot")
+- All 5 legal cluster skills use Burn Mode (`og.burn.auto_enable: true`), so even if the body was fetched from 0G Storage, it would be AES-256-GCM encrypted and unreadable from the prod server (privacy by design)
+
+**The "code N" display IS correct fallback behavior** when the prod page can't access the body. But "code 3" is unhelpful — it should say "burn" instead. This is a 1-line cosmetic improvement, not a bug fix.
+
+**Action taken** (this commit): replaced `code ${onChain.receiptType}` with `receiptTypeLabel(onChain.receiptType)` in `apps/studio/src/app/r/[id]/page.tsx`. Now receipt pages show human-readable type labels (e.g., "burn", "consensus", "doc_ask") when the body isn't accessible. The privacy model is preserved; the UX is clearer.
+
+**What's still gap-shaped (not a bug, an enhancement):**
+- Prod receipt pages can't show skill slugs for Burn Mode receipts (privacy-correct behavior · the body is encrypted)
+- Prod receipt pages COULD fetch + show non-Burn-Mode bodies from 0G Storage (queued as a real enhancement in local-receipt.ts:11)
+
+This correction stands as honest record: I mis-classified expected fallback behavior as a bug. The real anomaly is the cluster-wide structured-output schema gap (still RED · queued for proper-fix arc).
