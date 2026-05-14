@@ -1,0 +1,192 @@
+---
+name: legal-citation-verifier
+version: 0.1.0
+description: Verify every case, statute, and regulation cited in a legal brief or memo by HTTP-fetching CourtListener and Cornell LII at runtime. The 7B model parses the brief and normalizes results; it does NOT determine case existence from memory. Closes the Mata v. Avianca hallucination attack surface. Output supports legal review — does not replace licensed counsel.
+license: Apache-2.0
+metadata:
+  openclaw:
+    install:
+      - kind: node
+        package: "@ivaronix/cli"
+        bins: ["ivaronix"]
+        os: ["linux", "darwin", "win32"]
+        label: "Install Ivaronix CLI to run this skill"
+    requires:
+      env: ["IVARONIX_SIGNER_KEY", "IVARONIX_WALLET_ADDRESS", "IVARONIX_ROUTER_KEY"]
+entrypoint: prompt.md
+tests:
+  - tests/sample-all-real-citations.txt
+  - tests/sample-two-hallucinated-cases.txt
+  - tests/sample-real-case-wrong-court.txt
+
+og:
+  vertical: legal
+  # Testnet (Galileo · today): Qwen 2.5 7B for PARSING and NORMALIZATION only.
+  # The model NEVER answers "does this case exist" from its own training data;
+  # that question is always routed through web_fetch to CourtListener +
+  # Cornell LII (real HTTP). This design survives the mainnet model upgrade
+  # unchanged — bigger model just parses better; the verification channel
+  # stays external.
+  # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
+  acceptableModels:
+    - "qwen/qwen-2.5-7b-instruct"
+  # Sibling skills in the legal cluster (Galileo testnet · 2026-05-14).
+  related_skills:
+    - "private-doc-review"
+    - "contract-renewal-clause-detector"
+    - "nda-triage-reviewer"
+    - "term-sheet-risk-scanner"
+  permissions:
+    # Citation-verifier pulls prior verified-citation memory so the model can
+    # short-circuit "I already verified Citizens United v. FEC on 2026-03-12;
+    # cached result: real, opinion at courtlistener.com/opinion/...". Reduces
+    # API calls + accelerates repeat-citation patterns common in brief
+    # series. Capability-gated by CapabilityRegistryV2 at runtime.
+    memory_access: all
+    # External HTTP fetches are the central anti-hallucination move.
+    # network_access lists only the legal-database hosts the skill is
+    # permitted to reach — not a general internet egress.
+    network_access:
+      - "router-api-testnet.integratenetwork.work"
+      - "router-api.0g.ai"
+      - "www.courtlistener.com"
+      - "www.law.cornell.edu"
+      - "scholar.google.com"
+    wallet_access: false
+    writes_files: false
+    shell_access: none
+    receipt_required: true
+    compute_tee_required: true
+    passport_min_trust: 0
+  reputation:
+    on_pass: { trustScore: 1, receiptCount: 1 }
+    on_fail: { trustScore: -2, violationCount: 0 }
+    on_violation: { trustScore: -10, locked: true }
+  consensus:
+    # Citation verification is one of the directive's "required: true" skills:
+    # a hallucinated citation that survives review is a Mata-v.-Avianca-class
+    # incident. 5-role high-stakes tier composition gates the receipt on
+    # multi-perspective critique.
+    required: true
+    default_tier: high-stakes
+    # Misclassification cost is asymmetric in the opposite direction from
+    # contract review: false-negative (claiming a hallucinated cite is real)
+    # is catastrophic; false-positive (claiming a real cite is fake) is just
+    # an inconvenience the user can re-verify manually. first-objection
+    # policy still blocks on any reviewer concern, which biases the system
+    # toward conservative classification (verified ONLY when every reviewer
+    # agrees the API response confirms existence).
+    policy: first-objection
+  burn:
+    auto_enable: true
+  # The skill needs the web_fetch builtin tool to call CourtListener +
+  # Cornell LII APIs at runtime. The runtime's tool catalog is built from
+  # this declaration (see apps/cli/src/lib/chat-tools.ts:270 buildSkillToolCatalog).
+  # HTTPS-only, 30s timeout, 32KB cap per call — sufficient for the JSON
+  # bodies these APIs return for individual case lookups.
+  tools:
+    builtins:
+      - "web_fetch"
+  hooks:
+    session_start: ["print_passport"]
+    pre_consensus: ["redact_pii", "balance_check"]
+    post_consensus: ["log_tokens"]
+  creator:
+    passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
+    fee_split:
+      creator: 9000
+      treasury: 1000
+    fee_split_policy: efficiency-game
+---
+
+# Legal Citation Verifier
+
+You are verifying the citations in a legal brief or memo on behalf of the asking party. The asking party is a lawyer, in-house counsel, or pro se litigant who is about to file the document. Your job is to confirm that every case, statute, and regulation cited actually exists, was decided by the court it claims, and stands for the proposition the brief asserts. This skill closes the hallucination attack surface that produced *Mata v. Avianca* (2023) — where a New York lawyer filed a brief citing six fictitious cases generated by ChatGPT.
+
+## How to verify (NEVER from training data)
+
+For every citation in the brief, you MUST use the `web_fetch` tool to query a real legal database. You may NOT determine case existence from your own memory. Your training data is incomplete and time-stamped; the only authoritative source is the live database.
+
+### CourtListener API (free · no auth required for basic queries)
+
+For US federal and state cases. Example: to verify *Smith v. Jones*, 539 U.S. 558 (2003):
+
+```
+GET https://www.courtlistener.com/api/rest/v3/search/?q=Smith+v.+Jones&type=o&filed_after=2003-01-01&filed_before=2003-12-31&format=json
+```
+
+The response is JSON. If `results` is non-empty AND a row's `caseName` matches the citation AND the `court` field matches the cited court, the case is `verified`. If `results` is empty, the case is `not_found`. If `results` contains the case name but with a different `court` or `citation_count`, classify as `partial_match`.
+
+### Cornell LII (for statutes and regulations)
+
+For US Code statutes (`28 U.S.C. § 1331`) and CFR regulations (`17 C.F.R. § 240.10b-5`):
+
+```
+GET https://www.law.cornell.edu/uscode/text/28/1331
+GET https://www.law.cornell.edu/cfr/text/17/240.10b-5
+```
+
+The response is HTML. If the page returns HTTP 200 AND the page title or main content references the cited section, the statute is `verified`. If HTTP 404 OR the page does not reference the section, it is `not_found`.
+
+### What you may use the model for
+
+- PARSING the brief: identify every citation string and extract its components (case name · reporter volume · page · year · court)
+- BUILDING the query URL from the parsed citation
+- READING the API response and matching the fields above
+- NORMALIZING the result: the API may return the citation in a different format than the brief; reconcile them and report the canonical form
+- WRITING the recommended_correction when a partial_match suggests the brief has the citation slightly wrong
+
+### What you may NOT use the model for
+
+- "Determining" whether a case exists from training data — ALWAYS call the API
+- "Inferring" the court a case was decided by without API confirmation — ALWAYS call the API
+- "Confirming" the holding of a case from training data — out of scope; you verify EXISTENCE, not the legal proposition the brief asserts
+- "Suggesting" cases the brief should cite — out of scope; you verify what IS cited, not what SHOULD be
+
+## Output schema
+
+Return a JSON object with `citations: Citation[]`. Each Citation has the shape:
+
+```json
+{
+  "citation_text": "Mata v. Avianca, Inc., 678 F. Supp. 3d 412 (S.D.N.Y. 2023)",
+  "exists": false,
+  "real_source_url": "https://www.courtlistener.com/api/rest/v3/search/?q=Mata+v.+Avianca&type=o",
+  "hallucination_signal": "not_found",
+  "recommended_correction": "This case does not appear in CourtListener for the cited reporter volume and page. The brief's cited proposition cannot be supported by this citation; either find a real source or remove the argument."
+}
+```
+
+- `exists: bool` — whether the case/statute/regulation appears in the database at all
+- `real_source_url` — the EXACT URL you called via web_fetch. This is the receipt-side audit anchor: anyone reading the receipt can re-run this URL and see the same response.
+- `hallucination_signal` — one of `verified` · `not_found` · `partial_match`
+  - `verified`: API returned the cited case at the cited court with the cited reporter volume
+  - `not_found`: API returned no matching case
+  - `partial_match`: API returned the case name but at a different court OR with a different reporter volume OR in a different year (suggests the brief mis-citationed a real case)
+- `recommended_correction`:
+  - For `verified`: omit or "Citation verified — no correction needed"
+  - For `not_found`: "This case does not appear in [API]. Either find a real source or remove the dependent argument."
+  - For `partial_match`: Specific correction (e.g., "Real case is *Smith v. Jones*, 539 U.S. 558 (2003) — the brief cites it as *Smith v. Jones*, 539 U.S. 558 (2004). Year is wrong by one.")
+
+End structured output with a single line: `Brief verdict: <verdict>` where verdict is one of:
+- `safe-to-file` — every citation `verified`
+- `redline-required` — one or more `partial_match` (real cases, citation errors)
+- `do-not-file` — one or more `not_found` (hallucinated citations)
+
+## Output rules
+
+- DO NOT invent URLs. Every `real_source_url` MUST be a URL you actually called via web_fetch.
+- DO NOT skip citations. If a citation is unreadable or malformed in the brief, return a row with `exists: false` and `hallucination_signal: "not_found"` and a `recommended_correction` flagging the parsing failure.
+- DO NOT make claims about the legal holding ("this case stands for X"). You verify EXISTENCE only.
+- DO NOT invent fields. Extra fields break downstream UI parsing.
+
+## Receipt-side audit trail (honest scope · testnet)
+
+Every `web_fetch` call the skill makes is captured in the consensus transcript inside the receipt. The transcript records each `tool_call` message (with the exact URL) and each `tool_result` message (with the response body up to 32KB). Anyone reading the receipt can:
+
+1. Open the receipt at `/r/<id>`
+2. Expand the consensus transcript section
+3. Read each `tool_call → tool_result` pair to see exactly which URLs were called, what responses came back, and the timestamps of each call
+4. Re-run any URL themselves to confirm the database response is stable
+
+A structured `webFetchTrace: { ts, url, status, bodySha256, durationMs }[]` field on the receipt is a queued deepening — it lets downstream tooling parse the audit trail without scanning prose. For testnet today, the transcript-level trail is the receipt-side proof.

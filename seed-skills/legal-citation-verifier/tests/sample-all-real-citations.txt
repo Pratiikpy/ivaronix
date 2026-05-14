@@ -1,0 +1,52 @@
+MEMORANDUM OF LAW IN SUPPORT OF DEFENDANT'S MOTION TO DISMISS
+
+ACME CORPORATION,
+Plaintiff,
+
+v.
+
+ZENITH TECHNOLOGIES, INC.,
+Defendant.
+
+Case No. 1:26-cv-00471 (S.D.N.Y.)
+Filed: February 3, 2026
+
+INTRODUCTION
+
+Defendant Zenith Technologies, Inc. ("Zenith") respectfully submits this memorandum in support of its motion to dismiss the Complaint pursuant to Federal Rule of Civil Procedure 12(b)(6) for failure to state a claim upon which relief can be granted.
+
+LEGAL STANDARD
+
+To survive a motion to dismiss under Rule 12(b)(6), a complaint must contain sufficient factual matter, accepted as true, to "state a claim to relief that is plausible on its face." *Ashcroft v. Iqbal*, 556 U.S. 662, 678 (2009) (quoting *Bell Atlantic Corp. v. Twombly*, 550 U.S. 544, 570 (2007)). The plausibility standard requires more than a "sheer possibility that a defendant has acted unlawfully." *Iqbal*, 556 U.S. at 678. Courts must "draw on [their] judicial experience and common sense" in determining whether a complaint has nudged claims "across the line from conceivable to plausible." *Id.* at 679-80.
+
+ARGUMENT
+
+I. PLAINTIFF FAILS TO STATE A CLAIM FOR BREACH OF CONTRACT
+
+A. The Complaint Fails to Plead the Existence of an Enforceable Contract
+
+Under New York law, the elements of a breach-of-contract claim are: (1) the existence of a contract, (2) the plaintiff's performance, (3) the defendant's breach, and (4) resulting damages. *Harsco Corp. v. Segui*, 91 F.3d 337, 348 (2d Cir. 1996); *see also Eternity Global Master Fund Ltd. v. Morgan Guar. Trust Co. of N.Y.*, 375 F.3d 168, 177 (2d Cir. 2004) (same).
+
+The Complaint here alleges only that "the parties had an agreement," without identifying the offer, acceptance, consideration, or material terms. Conclusory allegations of contract existence are insufficient to survive Rule 12(b)(6). *Iqbal*, 556 U.S. at 681.
+
+B. The Statute of Frauds Bars Any Oral Agreement
+
+To the extent Plaintiff seeks to enforce an alleged oral agreement, New York's Statute of Frauds requires contracts that cannot be performed within one year to be in writing. N.Y. Gen. Oblig. Law § 5-701(a)(1). The Complaint alleges performance over a three-year period (Compl. ¶ 14), making any oral agreement unenforceable.
+
+II. PLAINTIFF FAILS TO STATE A CLAIM FOR TORTIOUS INTERFERENCE
+
+The elements of tortious interference with contract under New York law are: (1) the existence of a valid contract, (2) the defendant's knowledge of the contract, (3) the defendant's intentional procurement of the contract's breach without justification, and (4) damages. *Lama Holding Co. v. Smith Barney Inc.*, 88 N.Y.2d 413, 424 (1996).
+
+Plaintiff fails to plead that Zenith had knowledge of any specific contract. See *White Plains Coat & Apron Co. v. Cintas Corp.*, 8 N.Y.3d 422, 426 (2007).
+
+III. PLAINTIFF'S CLAIMS ARE PREEMPTED BY FEDERAL LAW
+
+The federal Copyright Act preempts state-law claims that protect rights "equivalent to" the exclusive rights of copyright. 17 U.S.C. § 301(a); *Briarpatch Ltd., L.P. v. Phoenix Pictures, Inc.*, 373 F.3d 296, 305 (2d Cir. 2004).
+
+CONCLUSION
+
+For the foregoing reasons, Zenith respectfully requests that this Court grant its motion to dismiss the Complaint in its entirety.
+
+Respectfully submitted,
+
+[Counsel signature block omitted]

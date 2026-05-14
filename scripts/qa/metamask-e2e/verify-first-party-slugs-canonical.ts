@@ -33,11 +33,11 @@ const FIRST_PARTY_SLUGS = [
   'github-audit',
   'plan-step',
   'private-doc-review',
-  // Legal cluster (2026-05-14 directive · landed across cron fires 1-4)
+  // Legal cluster (2026-05-14 directive · all 5 shipped across cron fires 1-4)
   'contract-renewal-clause-detector',
   'nda-triage-reviewer',
   'term-sheet-risk-scanner',
-  // 'legal-citation-verifier'  // fire 4 · queued
+  'legal-citation-verifier',
 ];
 
 let failures = 0;

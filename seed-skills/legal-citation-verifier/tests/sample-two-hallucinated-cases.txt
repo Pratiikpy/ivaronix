@@ -1,0 +1,54 @@
+MEMORANDUM OF LAW IN OPPOSITION TO MOTION FOR SUMMARY JUDGMENT
+
+VIRTUAL VENTURES, LLC,
+Plaintiff,
+
+v.
+
+INNOVATE LABS, INC.,
+Defendant.
+
+Case No. 1:26-cv-00892 (E.D.N.Y.)
+Filed: March 14, 2026
+
+INTRODUCTION
+
+Plaintiff Virtual Ventures, LLC submits this memorandum in opposition to Defendant's motion for summary judgment.
+
+LEGAL STANDARD
+
+Summary judgment is appropriate only when there is "no genuine dispute as to any material fact." Fed. R. Civ. P. 56(a). The moving party bears the initial burden of demonstrating the absence of a genuine issue. *Celotex Corp. v. Catrett*, 477 U.S. 317, 323 (1986). All reasonable inferences must be drawn in favor of the non-moving party. *Anderson v. Liberty Lobby, Inc.*, 477 U.S. 242, 255 (1986).
+
+ARGUMENT
+
+I. MATERIAL DISPUTES OF FACT PRECLUDE SUMMARY JUDGMENT
+
+A. The Parties Dispute the Scope of the Licensing Agreement
+
+The Second Circuit has consistently held that the scope of a licensing agreement is a question of fact when the contract is ambiguous. *Patterson v. Aramburu Industries*, 894 F.3d 217, 224 (2d Cir. 2021). In *Patterson*, the court reversed summary judgment where two reasonable readings of a software license clause produced opposite legal results.
+
+Here, the parties dispute whether the licensing agreement extended to derivative works. Plaintiff submits expert testimony from Dr. Marcus Chen establishing that the industry-standard reading of "all related implementations" includes derivatives. *See* Chen Decl. ¶¶ 14-22.
+
+B. The Statute of Limitations Has Not Run
+
+The applicable four-year limitations period for breach of a license agreement was tolled during the parties' good-faith dispute-resolution process. *Glenwood Capital Partners v. Reliance Holdings, LLC*, 612 F.3d 504, 511 (2d Cir. 2019). This Court should follow Glenwood and reject Defendant's limitations defense.
+
+II. DEFENDANT'S COUNTERCLAIMS FAIL AS A MATTER OF LAW
+
+A. The Counterclaim for Unjust Enrichment Is Barred
+
+Under New York law, an unjust enrichment claim cannot proceed where a valid contract governs the same subject matter. *Clark-Fitzpatrick, Inc. v. Long Island R.R. Co.*, 70 N.Y.2d 382, 388 (1987). Because the parties' licensing agreement governs all the disputed conduct, the unjust enrichment claim is barred.
+
+B. The Counterclaim for Fraudulent Inducement Lacks Particularity
+
+Federal Rule of Civil Procedure 9(b) requires that allegations of fraud be pled "with particularity." Fed. R. Civ. P. 9(b). The counterclaim alleges only that "representations were made" without identifying who made them, when, or what the specific representations were.
+
+The Second Circuit has held that "boilerplate fraud allegations" cannot survive Rule 9(b) review. *Wexler v. Brody-Tonelli Group*, 798 F.3d 412, 419 (2d Cir. 2017). The counterclaim here fails for exactly that reason.
+
+CONCLUSION
+
+For the foregoing reasons, Plaintiff respectfully requests that this Court deny Defendant's motion for summary judgment in its entirety.
+
+Respectfully submitted,
+
+[Counsel signature block omitted]

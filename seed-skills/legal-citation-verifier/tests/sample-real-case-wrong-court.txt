@@ -1,0 +1,52 @@
+REPLY BRIEF IN SUPPORT OF DEFENDANT'S MOTION TO COMPEL ARBITRATION
+
+GLOBAL SERVICES CORP.,
+Plaintiff,
+
+v.
+
+DATAFLOW SYSTEMS, INC.,
+Defendant.
+
+Case No. 1:26-cv-01205 (S.D.N.Y.)
+Filed: April 8, 2026
+
+INTRODUCTION
+
+Defendant DataFlow Systems, Inc. respectfully submits this reply brief in further support of its motion to compel arbitration pursuant to 9 U.S.C. § 4.
+
+LEGAL STANDARD
+
+The Federal Arbitration Act establishes a strong national policy favoring arbitration. 9 U.S.C. § 2. Plaintiff's response brief mischaracterizes the standard for compelling arbitration; this reply clarifies the controlling authorities.
+
+ARGUMENT
+
+I. THE ARBITRATION CLAUSE IS VALID AND ENFORCEABLE
+
+The Supreme Court has held that arbitration agreements are valid, irrevocable, and enforceable, save upon such grounds as exist at law or in equity for the revocation of any contract. *AT&T Mobility LLC v. Concepcion*, 563 F.3d 1255 (9th Cir. 2011). Plaintiff's reliance on state-law contract defenses is foreclosed by *Concepcion* and its progeny.
+
+The pleading standard under Rule 12(b)(6) does not apply to a motion to compel arbitration. *Bell Atlantic Corp. v. Twombly*, 550 F.3d 544 (3d Cir. 2007). The standard is whether the parties agreed to arbitrate, not whether the underlying claims state a cause of action. *See* 9 U.S.C. § 4.
+
+II. THE ARBITRATION CLAUSE ENCOMPASSES PLAINTIFF'S CLAIMS
+
+A. Statutory Claims Are Arbitrable
+
+The Supreme Court has consistently held that federal statutory claims are arbitrable absent a clear congressional intent to the contrary. *Gilmer v. Interstate/Johnson Lane Corp.*, 500 U.S. 20, 26 (1991). Plaintiff has identified no statutory text or legislative history suggesting that its claims fall outside the FAA's reach.
+
+B. The Delegation Clause Reserves Threshold Questions to the Arbitrator
+
+The arbitration clause in question (Master Services Agreement § 14.3) explicitly delegates questions of arbitrability to the arbitrator. The Supreme Court has held that such delegation clauses are enforceable when the delegation is "clear and unmistakable." *Rent-A-Center, West, Inc. v. Jackson*, 561 U.S. 63, 69 (2010).
+
+The clause here states: "The arbitrator shall have exclusive authority to resolve any dispute relating to the interpretation, applicability, enforceability, or formation of this arbitration agreement." This language meets the "clear and unmistakable" standard. *See Henry Schein, Inc. v. Archer & White Sales, Inc.*, 586 U.S. 63 (2019).
+
+III. THE CLASS-ACTION WAIVER IS ENFORCEABLE
+
+Class-action waivers in arbitration agreements are enforceable. *Epic Systems Corp. v. Lewis*, 584 U.S. 497 (2018). Plaintiff's argument that the waiver violates the National Labor Relations Act is squarely foreclosed by *Epic Systems*.
+
+CONCLUSION
+
+For the foregoing reasons, Defendant respectfully requests that this Court grant its motion to compel arbitration and stay all further proceedings pending the arbitration's conclusion.
+
+Respectfully submitted,
+
+[Counsel signature block omitted]
