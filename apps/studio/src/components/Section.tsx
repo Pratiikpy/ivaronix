@@ -13,8 +13,12 @@ export function Section({
   cta,
   children,
 }: {
-  label: string;
-  title: string;
+  // ReactNode (not string-only) so pages can compose richer headlines —
+  // e.g., italic-serif accents per the brand contract in CLAUDE.md §10,
+  // or dynamic chips like a live receipt count in the eyebrow. Existing
+  // string call sites stay valid (string assigns to ReactNode).
+  label: ReactNode;
+  title: ReactNode;
   description?: string;
   cta?: ReactNode;
   children?: ReactNode;

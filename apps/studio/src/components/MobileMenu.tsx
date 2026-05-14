@@ -19,6 +19,7 @@ import { WalletConnect } from './WalletConnect';
 const LINKS: { href: string; label: string }[] = [
   { href: '/onboard', label: 'Onboard' },
   { href: '/verticals', label: 'Verticals' },
+  { href: '/legal', label: 'Legal' },
   { href: '/skills', label: 'Skills' },
   { href: '/global', label: 'Global' },
   { href: '/brand', label: 'Brand' },

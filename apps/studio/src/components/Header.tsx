@@ -48,6 +48,9 @@ export function Header() {
           <Link href="/verticals" className="btn-ghost">
             Verticals
           </Link>
+          <Link href="/legal" className="btn-ghost">
+            Legal
+          </Link>
           <Link href="/skills" className="btn-ghost">
             Skills
           </Link>
