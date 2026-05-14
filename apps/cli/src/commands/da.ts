@@ -122,7 +122,21 @@ daCommand
         const st = statSync(outPath);
         ui.pass(`wrote ${st.size.toLocaleString()} bytes to ${opts.out}`);
         ui.info(`sha256               ${createHash('sha256').update(data).digest('hex')}`);
+      } else if (process.stdout.isTTY) {
+        // HALF_BAKED §C closure · refuse to write binary to a TTY.
+        // Writing raw blob bytes to a terminal can render control
+        // characters that corrupt the cursor/state, and DA blobs are
+        // routinely large (megabytes) so the scroll-back fills with
+        // noise. Force the user to pick an explicit output path or
+        // pipe the output downstream where binary is expected.
+        ui.fail('stdout is a TTY; refusing to dump binary blob to terminal');
+        ui.hint(`pass --out <path> to write the blob to a file, OR pipe stdout to a consumer (e.g. \`ivaronix da retrieve ... | sha256sum\` or \`> blob.bin\`)`);
+        ui.info(`blob size            ${data.byteLength.toLocaleString()} bytes`);
+        ui.info(`sha256               ${createHash('sha256').update(data).digest('hex')}`);
+        process.exitCode = 1;
       } else {
+        // Pipe target (file redirect, downstream command). Binary is
+        // expected here; write through unchanged.
         process.stdout.write(data);
       }
     } catch (err) {
