@@ -293,13 +293,98 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const citations = local?.outputs?.citations ?? [];
   const skill = local?.request;
 
+  // final-plan.md §1.6 Day 1-3 · AI findings + signer context surfaced as the hero
+  const summary = (local?.outputs as { summary?: string } | undefined)?.summary ?? null;
+  const convergenceScore =
+    (local?.execution as { consensus?: { convergenceScore?: number } } | undefined)?.consensus?.convergenceScore ?? null;
+  const modelFinal = local?.execution?.modelSelection?.final ?? null;
+
   return (
     <Section
       label={`§ RECEIPT · ON-CHAIN ID ${onChain.id}`}
       title={headline}
-      description={skill ? `Skill ${skill.skillId}@${skill.skillVersion}` : 'Anchored receipt — independently verifiable.'}
+      description="Process verified — process, not answer. The signer + skill + model + chain anchor are all checkable. The AI's conclusion is shown so you can judge it yourself."
     >
       <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        {/* Hero · AI findings + signer context · final-plan.md §1.6 Day 1-3 */}
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: '20px 24px',
+            background: 'var(--color-tonal)',
+            border: '1px solid var(--color-hairline)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <div
+            className="section-label"
+            style={{ color: 'var(--color-muted)', fontSize: 11, letterSpacing: '1.5px' }}
+          >
+            AI FINDINGS
+          </div>
+          {summary ? (
+            <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: 'var(--color-fg)' }}>{summary}</p>
+          ) : hasLocalBody ? (
+            <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--color-muted)' }}>
+              Body summary not in this receipt (older schema · pre-Day-4 bump). The on-chain anchor, signature, citations, and consensus trace below are all verifiable.
+            </p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--color-muted)' }}>
+                Receipt body not in local cache. Chain anchor + receipt root below are verifiable on chainscan without it. To re-derive the canonical hash + signature locally, fetch the body via{' '}
+                <code className="mono" style={{ fontSize: 12 }}>ivaronix receipt show {onChain.id.toString()}</code> on a machine with the cache, or wait for the 0G Storage fetch (Day 13-17 build).
+              </p>
+              <a
+                href={`/r/${onChain.id.toString()}`}
+                className="btn-ghost"
+                style={{ alignSelf: 'flex-start', fontSize: 12, padding: '6px 12px', textDecoration: 'underline' }}
+              >
+                Retry body fetch →
+              </a>
+            </div>
+          )}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+              gap: '8px 24px',
+              fontSize: 12,
+              color: 'var(--color-muted)',
+              borderTop: '1px solid var(--color-hairline)',
+              paddingTop: 12,
+              marginTop: 4,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>signed by</div>
+              <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)', wordBreak: 'break-all' }}>
+                {(local?.agent?.ownerWallet ?? onChain.agentAddress).slice(0, 10)}…{(local?.agent?.ownerWallet ?? onChain.agentAddress).slice(-6)}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>skill</div>
+              <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)' }}>
+                {skill ? `${skill.skillId}@${skill.skillVersion}` : (local?.type ?? `code ${onChain.receiptType}`)}
+              </div>
+            </div>
+            {modelFinal && (
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>model</div>
+                <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)' }}>{modelFinal}</div>
+              </div>
+            )}
+            {convergenceScore !== null && (
+              <div>
+                <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>confidence</div>
+                <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)' }}>
+                  {(convergenceScore * 100).toFixed(0)}% convergence
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
           <ReceiptStateChip state={overallState} />
           <TierBadge tier={tier} providerKind={providerKind} />
