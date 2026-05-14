@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
 import { DemoPanel } from '@/components/DemoPanel';
+import { SovereigntyCircle } from '@/components/SovereigntyCircle';
 import {
   unifiedNextId,
   unifiedGetReceipt,
@@ -432,6 +433,20 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* Sovereignty circle · final-plan.md §1.6 Day 5-9 acceptance.
+          Communicates the trust loop: private input -> TEE -> signed
+          receipt -> chain anchor -> public proof URL. Honest threat-
+          model footer: what it defends, what it does not. */}
+      <section
+        style={{
+          padding: '48px 32px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <SovereigntyCircle />
       </section>
 
       {/* Live receipt feed · final-plan.md §1.6 Day 5-9 acceptance.
