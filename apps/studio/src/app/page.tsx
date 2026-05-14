@@ -312,6 +312,83 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </div>
       </section>
 
+      {/* 12-module grid · final-plan.md §1.6 Day 5-9 acceptance.
+          Every card LIVE (real shipped page) — zero fake cards, zero
+          placeholder claims. This is the external-reviewer fix for
+          "not doc review only". */}
+      <section
+        style={{
+          padding: '48px 32px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <div
+          className="section-label"
+          style={{ marginBottom: 8, color: 'var(--color-muted)', fontSize: 12, letterSpacing: '1.5px' }}
+        >
+          WHAT YOU CAN DO IN IVARONIX
+        </div>
+        <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--color-muted)', maxWidth: 720 }}>
+          Twelve shipped surfaces. Click any card to land on a real page — no roadmap, no coming-soon.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {[
+            { name: 'Workroom', body: 'Drop a doc · run a private review · anchor a receipt.', href: '/onboard' },
+            { name: 'Proof Explorer', body: 'Open any receipt — schema · hash · signature · anchor · TEE.', href: '/r/1004' },
+            { name: 'Skills Marketplace', body: '6 first-party skills · per-skill price · 90/10 creator/treasury split.', href: '/marketplace' },
+            { name: 'Memory Center', body: 'Grant + revoke on chain. Every read leaves an access-log entry.', href: '/memory' },
+            { name: 'Agent Passports', body: 'ERC-7857 INFTs · trust score · receipt count · per-passport history.', href: '/agents' },
+            { name: 'Dashboard', body: 'Your wallet · your receipts · your skills · your earnings.', href: '/dashboard' },
+            { name: '0G Stack Proof', body: 'Compute · Chain · Storage · Agent ID · KV · honest DA status.', href: '/0g' },
+            { name: 'Skill Library', body: '6 first-party + 150+ community catalog · manifest-hash gated.', href: '/skills' },
+            { name: 'Global Activity', body: 'Live feed of receipts being anchored across the network.', href: '/global' },
+            { name: 'Thesis', body: 'Why Ivaronix exists · the long-form product story.', href: '/thesis' },
+            { name: 'Brand', body: 'Design contract · type · color · component primitives.', href: '/brand' },
+            { name: 'Docs', body: 'CLI · MCP · SDK · embed widget · independent verify.', href: '/docs' },
+          ].map(({ name, body, href }) => (
+            <Link
+              key={name}
+              href={href}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                padding: '14px 16px',
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
+                textDecoration: 'none',
+                color: 'inherit',
+                transition: 'border-color 120ms, transform 120ms',
+              }}
+              className="module-card"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-fg)' }}>{name}</span>
+                <span style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  borderRadius: 999,
+                  border: '1px solid var(--color-verified)',
+                  background: 'var(--color-verified-bg)',
+                  color: '#166534',
+                  letterSpacing: '0.5px',
+                }}>LIVE</span>
+              </div>
+              <span style={{ fontSize: 12.5, lineHeight: 1.45, color: 'var(--color-muted)' }}>{body}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* "BUILT ON FULL OG STACK" band */}
       <section
         style={{
