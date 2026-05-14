@@ -1,8 +1,8 @@
-# 0G DA Integration · Status, Runbook, Phase 2 Demote
+# 0G DA Integration · Status, Runbook, Path to Live
 
-> Last refresh 2026-05-14.
+> Last refresh 2026-05-14 (corrected).
 >
-> Honest framing per `final-plan.md §1.6 Day 13-17` Option (b): the full disperse + retrieve pipeline is **demoted to Phase 2** because the public 0G DA testnet validator network is not reachable from this client today. The DA entrance contract address remains a `0x0000...0000` placeholder in `da.env.example`. The scaffolding ships; the live wiring waits on a public endpoint.
+> Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA entrance contract address is published** (`0xE75A073dA5bb7b0eC622170Fd268f35E675a957B`) per `oglabs resources/0g-doc/docs/developer-hub/testnet/testnet-overview.md`. The Docker `da-client` service is wired and ready to start once the operator generates a fresh DA signing key + funds it with ~0.005 OG. The full disperse + retrieve loop is a 5-step operator action, not a blocker.
 
 ## What IS shipped today
 
@@ -15,13 +15,14 @@
 | `da.env.example` template | ✅ shipped | top-level |
 | Receipt schema field `storage.daBlobRef` | ✅ shipped | `apps/studio/src/lib/local-receipt.ts` (`endpoint · requestIdHex · status · blobBytes · dispersedAt`) |
 
-## What does NOT work yet
+## What's NOT yet exercised
 
-1. **0G testnet DA entrance contract address is unknown.** `da.env.example` ships with `DA_ENTRANCE_CONTRACT=0x0000000000000000000000000000000000000000`. Without the real entrance address, `ivaronix da preflight` cannot complete the chain-finalisation handshake.
-2. **Public 0G DA validator network endpoint is not documented.** The `0g-da-client` container reaches out to validators; without published peers, the disperser fails to find quorum.
-3. **End-to-end disperse + retrieve loop is not exercised on chain.** No receipt anchored today carries a real `storage.daBlobRef.requestIdHex`.
+1. ✅ ~~0G testnet DA entrance contract address is unknown~~ — **CORRECTED 2026-05-14**: address is published at `0xE75A073dA5bb7b0eC622170Fd268f35E675a957B`. `da.env.example` updated.
+2. **`da-client` container hasn't been started yet.** The compose service is wired; `docker compose up -d da-client` is a 1-step operator action away. Pending: fresh DA wallet generation + ~0.005 OG funding.
+3. **End-to-end disperse + retrieve loop has not been exercised.** No receipt anchored today carries a real `storage.daBlobRef.requestIdHex`. Pending: container started + `ivaronix da preflight` green + first disperse tx.
+4. **Receipt pipeline integration not wired.** `packages/runtime/src/pipeline.ts` doesn't yet call `daClient.disperse(evidenceBlob)` post-Storage upload. Pending: turn-on flag `IVARONIX_DA_DISPERSE=true` once preflight is green.
 
-These are external blockers, not internal ones. The Ivaronix code path is ready; the network side is not.
+These are operator-action blockers, not "0G network not ready" blockers. The Ivaronix code path is ready; the operator just needs to run the 5 commands in the runbook below.
 
 ## Why this is OK to ship at testnet
 
@@ -32,9 +33,9 @@ The honest shipped surfaces (`/0g` page, `/learn#receipt-anatomy`, receipt-page 
 - The four-light row on `/r/<id>` does NOT include a DA light today. The four lights are Storage · Compute · TEE · Chain. DA would become a fifth light only once it actually attests.
 - The `storage.daBlobRef` schema field is optional and stays unset on every receipt in the current 1683-receipt corpus.
 
-## Day-1-of-endpoint runbook
+## Operator runbook (5 commands to live)
 
-When the 0G team publishes the testnet DA entrance contract address + a reachable validator network, the path to live is mechanical:
+Per the correction above, the path to live is mechanical — no waiting on 0G:
 
 1. **Update `da.env`:**
    - Fresh wallet via `node -e 'const{Wallet}=require("ethers");const w=Wallet.createRandom();console.log(w.address);console.log(w.privateKey);'`
