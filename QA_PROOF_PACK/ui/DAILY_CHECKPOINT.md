@@ -247,3 +247,23 @@ Earlier checkpoint said "Latest V3 id observed: 32" — that's inaccurate. The u
 - `/r/32+` → ReceiptRegistry (V1 LEGACY — V1 has 1,004+ historical ids)
 
 Demo runs anchor `receiptType: 0` which routes to V2. V3 admits the canonical extension slots (10/11/12) per CLAUDE.md §K-17. The route resolver shows the correct registry version per receipt — no drift between rendered chip and on-chain anchor.
+
+### Iter 7 P13 cross-tool consistency · CLI half-bake fix (commit 49fab6b)
+
+Running `pnpm ivaronix receipt verify 31 --tee-independent` against the receipt I just anchored via /api/run/demo revealed a misleading error:
+
+- **Before**: `● No receipt resolves "31"` (implied the id doesn't exist on chain)
+- **Reality**: id 31 IS anchored on V2 (verified via `receipt show 31`), the body JSON just isn't in any local anchored dir because the anchor happened server-side on Vercel
+
+Refactored `resolveReceiptInput()` to return a discriminated union `{kind: 'found'|'not-on-chain'|'body-not-local'}` so the caller can produce honest, actionable errors:
+
+- `verify 1004` (local body present) → CLAIMED ✓ + ANCHORED ✓ V1 LEGACY (full verifier UI)
+- `verify 31` (on chain, body not local) → "Receipt 31 is anchored on V2, but the body JSON is not cached on this machine. receiptRoot: 0x401dff... storageRoot: 0xedbb801a... — fetch from 0G Storage to re-verify locally. Run `ivaronix receipt show 31` for on-chain metadata only."
+- `verify 99999999` (truly not on chain) → "No receipt resolves" + original hint
+
+This is the P13 §11.3a kind of fix — the test plan ASSUMES verify can independently re-verify the receipt anchored from the UI. The pre-fix error made this look broken when in fact only the body-fetch v1.1 polish was missing. Now the error tells the user precisely what to do.
+
+CLI cross-tool consistency for receipt 31 reconfirmed:
+- CLI `receipt show 31`: receiptRoot `0x401dff029f10d5960e23a848e05acc80cf6e7af78b7712a31a2a5f34d24f0e72` · agent `0xaa954c33...8677Ce` · V2
+- UI /r/31: same receiptRoot · same agent · same registry chip
+- Byte-equal cross-tool ✓
