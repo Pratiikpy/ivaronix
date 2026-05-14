@@ -113,6 +113,8 @@ The `/r/<id>` proof page never claims compute integrity it can't back: a TIER 2 
 - **Receipt hashes are canonical across languages.** The receipt's canonical hash is byte-equal across TypeScript, Python, and Rust reference implementations — checked on every PR (see below). RFC-8785 (JSON Canonicalisation Scheme) is the spec.
 - **Creators earn only from receipt-backed runs.** Each skill manifest can declare `og.creator.fee_split`; the split is recorded on the receipt, so a creator's earnings trace back to verifiable executions.
 - **Proof links work without an account.** `/r/<id>` renders the four-light evidence row, the TIER chip, the anchor tx link, and the key fingerprint — to anyone, no wallet, no login.
+- **Legal vertical · live cluster on Galileo.** Five legal skills (`private-doc-review` · `contract-renewal-clause-detector` · `nda-triage-reviewer` · `term-sheet-risk-scanner` · `legal-citation-verifier`) deployed on `SkillRegistryV2` with schema-aware output validation (B-V2-46). Run any of them locally; the receipt body carries the model's structured findings in `outputs.parsed.data` plus the schema-pass/fail flag. See `/legal` for the persona-driven landing page and `/verticals` for the full vertical roadmap.
+- **Schema-aware validation gate.** Skills can declare `og.output_schema.required_keys` in their manifest. The runtime checks the parsed JSON against the schema and marks `outputs.parsed.validationFailed: true` when the model emits the wrong shape — preserving Router credits via mark-and-anchor (default) or fail-closing the run when the manifest requests it. Receipts 68/69/70/74 are the publicly-replay-able proof set.
 
 ## Polyglot canonical hash · RFC-8785
 
@@ -177,28 +179,30 @@ Clone, install, run one command — no account, no wallet:
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs
 pnpm install
-pnpm ivaronix receipt verify 1304 --tee-independent
+pnpm ivaronix receipt verify 74 --tee-independent
 ```
 
 Expected output, when the live 0G Compute provider's TEE channel is reachable:
 
 ```
 schema PASS · hash PASS · signature PASS → CLAIMED
-chain anchor PASS (id=1304 block=1778334585) → ANCHORED
+chain anchor PASS (id=74 block=1778777541) · V2 → ANCHORED
 tee:primary PASS                          → via broker.processResponse
 Status: → FULLY VERIFIED ✓
 ```
 
-When the provider's TEE channel is temporarily unreachable (Router rate limit, provider session rotation, transient network), the last two lines look like this:
+When the provider's TEE channel is temporarily unreachable (Router rate limit, provider session rotation, transient network), the last two lines look like this — **honest yellow banner, exit code 1, no fake-green**:
 
 ```
 tee:primary error             getting signature error
-Status: → ANCHORED (some TEE checks failed)
+Status: → ANCHORED · TEE-independent partial (0 of 1 attestations passed · 1 failed; see above)
 ```
 
 The first four checks — `schema · hash · signature · chain anchor` — are the load-bearing authenticity proof: the receipt body is untampered, the canonical hash recovers, the signature recovers the agent address recorded on the `AgentPassportINFT`, and `ReceiptRegistry` holds the anchor at the given id. `tee:primary` is the additional check that calls back to the live 0G Compute provider — it proves the inference itself ran inside the attested TEE when reachable, and it degrades honestly (not silently) when not.
 
-No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the verify against the public 0G chain. Receipt body is on `/r/1304`; anchor tx on `chainscan-galileo.0g.ai`.
+Receipt **74** is the gold-standard B-V2-46 validation-PASS proof: a real nda-triage v0.1.1 anchored on `ReceiptRegistryV2` with the schema-aware validator confirming all 8 required output keys present (`type · term_years · governing_law · jurisdiction · exclusions_list · red_flags · standard_or_aggressive · signature_recommendation`). View it on the prod Studio at `/r/74` to see the structured output rendered.
+
+No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the verify against the public 0G chain. Receipt body is on `/r/74`; anchor tx on `chainscan-galileo.0g.ai`.
 
 > A global `pnpm install -g @ivaronix/cli` install path lands once `@ivaronix/widget` and `@ivaronix/cli` are npm-published (operator action, tracked in [docs/USER_TODO.md](docs/USER_TODO.md) B-3). Today the repo-clone path above is the only honest entry point — and still verifies a real on-chain receipt in one shell command.
 
