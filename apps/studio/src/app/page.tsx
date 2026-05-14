@@ -376,7 +376,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           WHAT YOU CAN DO IN IVARONIX
         </div>
         <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--color-muted)', maxWidth: 720 }}>
-          Twelve shipped surfaces. Click any card to land on a real page — no roadmap, no coming-soon.
+          Fourteen shipped surfaces. Click any card to land on a real page — no roadmap, no coming-soon.
         </p>
         <div
           style={{
@@ -395,6 +395,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             { name: '0G Stack Proof', body: 'Compute · Chain · Storage · Agent ID · KV · honest DA status.', href: '/0g' },
             { name: 'Skill Library', body: '6 first-party + 150+ community catalog · manifest-hash gated.', href: '/skills' },
             { name: 'Global Activity', body: 'Live feed of receipts being anchored across the network.', href: '/global' },
+            { name: 'Learn', body: 'Four-light, sovereignty, trust gradient, receipt anatomy — explained.', href: '/learn' },
+            { name: 'FAQ', body: '12 honest answers — trust, blockchain, TEE, mainnet, source code.', href: '/faq' },
             { name: 'Thesis', body: 'Why Ivaronix exists · the long-form product story.', href: '/thesis' },
             { name: 'Brand', body: 'Design contract · type · color · component primitives.', href: '/brand' },
             { name: 'Docs', body: 'CLI · MCP · SDK · embed widget · independent verify.', href: '/docs' },
