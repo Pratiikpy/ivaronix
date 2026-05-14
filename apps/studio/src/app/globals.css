@@ -408,7 +408,8 @@ dd.mono, .card .mono {
 }
 
 .landing-loop-card:hover,
-.module-card:hover {
+.module-card:hover,
+.persona-card:hover {
   border-color: var(--color-fg);
   transform: translateY(-1px);
 }

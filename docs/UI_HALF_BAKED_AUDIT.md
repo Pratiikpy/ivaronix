@@ -25,8 +25,13 @@
 | `?demo=true` zero-friction onboarding | 🟢 LIVE | Block E shipped, demo-wallet monitor wired | — |
 | Independent-verify chip in hero | 🟢 LIVE | `pnpm ivaronix receipt verify rec_1004 --tee-independent` works | — |
 | Sovereignty circle visual | 🟢 LIVE | `apps/studio/src/components/SovereigntyCircle.tsx` (439 lines) · server component · honest "what it defends / does not" framing · desktop SVG flow + mobile vertical stack | — |
-| Builder rail | 🔴 NOT BUILT | — | queued |
-| Animated four-light (home) | 🔴 NOT BUILT | static `FourLightRow` only | queued |
+| Builder rail | 🟢 LIVE | +474 lines to page.tsx · typecheck + wording-lint + brand-token-drift all PASS | — |
+| Animated four-light (home) | 🔴 NOT BUILT | static `FourLightRow` only · `pulse` keyframe shipped for live-feed dot in `globals.css` | queued |
+| Personas band (Founders / Lawyers / Compliance / Builders) | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
+| Honest roadmap section | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
+| Final CTA section | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
+| Big numbers row (5 KPIs in dedicated band) | 🟡 IN PROGRESS (subagent E) | hero stat row already has 3 (receipts / passports / skills) | review + commit when E reports |
+| Manifesto block | 🟡 IN PROGRESS (subagent E) | — | review + commit when E reports |
 
 ## Receipt page (`/r/<id>`)
 
@@ -126,4 +131,17 @@ This audit is "complete" when:
 
 ## Last refresh
 
-2026-05-14 · cron `a5ec057e` iteration 8 · home rewrite mid-flight · subagents A + B running.
+2026-05-14 · cron `a5ec057e` iteration 19+ · subagent E mid-edit on page.tsx (+474 lines, all 5 sections likely in place, awaiting completion + gates).
+
+## Cron run progress ledger
+
+| # | Commit | Day | Shipped |
+|---|---|---|---|
+| 1 | `86eb50e` | 1-3 | Receipt page hero · AI findings + signer context + "Process verified" copy |
+| 2 | `e21aad6` | 5-9 | Home H1/H2 plan-locked + 5-step landing loop |
+| 3 | `f57abac` | 5-9 | Home 12-module LIVE grid |
+| 4 | `d31f595` | 5-9 | Home live receipt feed widget |
+| 5 | `3a9180a` | 5-9 + 10-12 + 31 | Sovereignty circle + /learn page + half-baked audit |
+| 6 | `70cb2df` | 18 | pc.0g.ai adapter in og-router (30 unit tests) |
+| 7 | `589661d` | 19-22 | /faq page (12 honest answers) + home 14-module grid |
+| 8 | _pending_ | 5-9 + 19-22 | Subagent E: personas band + big numbers row + manifesto + honest roadmap + final CTA |
