@@ -1,0 +1,26 @@
+{
+  "runAt": "2026-05-14T12:32:25.772Z",
+  "network": "testnet",
+  "chainId": 16602,
+  "burner": {
+    "address": "0x087aFF8B762F5B8Eb961bB8882A5Fcdb6A63Ff83",
+    "fundingTxHash": "0x7970fd2eb739dddd3b632400b97bff858022d82e9537ed88c770fe4f03082926",
+    "fundingBlock": 33275316,
+    "fundedAmountOg": "0.05"
+  },
+  "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "skill": "contract-renewal-clause-detector",
+  "vector": "tests/sample-vendor-contract.txt",
+  "question": "Scan this contract for auto-renewal and price-uplift clauses.",
+  "receipt": {
+    "receiptId": "rcpt_01KRK7J1F3GSQPXGNAFCVKHR20",
+    "onChainId": 66,
+    "block": 33275427,
+    "txHash": "0xae3d6e88c7b7c543da9fa7ca1d6d8f1cad6a9be813eb10cb49b56e144687188a",
+    "receiptUrl": "https://ivaronix.vercel.app/r/66",
+    "chainscanTx": "https://chainscan-galileo.0g.ai/tx/0xae3d6e88c7b7c543da9fa7ca1d6d8f1cad6a9be813eb10cb49b56e144687188a",
+    "receiptPageStatus": 200
+  },
+  "cliExitCode": 0,
+  "verdict": "PASS · burner-driven receipt anchored + receipt page resolves on prod"
+}
