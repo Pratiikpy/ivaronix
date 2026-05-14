@@ -1,4 +1,4 @@
-// v1-passport-allow: writes delegate ops against V1 passport; V2-first migration tracked in USER_TODO §B-V2-38 (delegate flow does not yet exercise K-1/K-4/K-6 V2 fixes).
+// Delegate flow mints fresh passports against V2 (with V1 fallback) so K-1 multi-mint + K-4 trustScore + K-6 memoryRoot fixes apply. Closes the V1-only waiver originally queued in USER_TODO §B-V2-38.
 // v1-capability-allow: delegate flow issues + revokes V1 grants for hand-off lifecycle; V2-first migration tracked in USER_TODO §B-V2-39 (delegate-flow grants leak via V1's public reverse indexes).
 import { Command } from 'commander';
 import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';
@@ -194,7 +194,11 @@ delegateCommand
       process.exitCode = 1;
       return;
     }
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first passport target — K-1/K-4/K-6 fixes apply to delegate mints.
+    const passportAddrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+    const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+    const passportAddr = passportAddrV2 ?? passportAddrV1;
+    const passportVersion: 'v1' | 'v2' = passportAddrV2 ? 'v2' : 'v1';
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -260,7 +264,7 @@ delegateCommand
     const metadataBytes = toUtf8Bytes(JSON.stringify(metadata));
     const metadataRoot = sha256(metadataBytes) as Hash;
 
-    ui.pending('minting AgentPassportINFT for delegate...');
+    ui.pending(`minting ${passportVersion.toUpperCase()} AgentPassportINFT for delegate...`);
     let tokenId = 0n;
     let mintTxHash: string | null = null;
     try {
@@ -268,7 +272,7 @@ delegateCommand
       mintTxHash = mintTx.hash;
       const mintReceipt = await mintTx.wait();
       tokenId = await passport.passportOf!(delegateAddress);
-      ui.pass(`mint tx              ${mintTxHash}  block ${mintReceipt?.blockNumber ?? '?'}`);
+      ui.pass(`mint tx              ${mintTxHash}  block ${mintReceipt?.blockNumber ?? '?'} · ${passportVersion.toUpperCase()}`);
       ui.pass(`tokenId              ${tokenId.toString()}`);
     } catch (err) {
       ui.fail(`mint failed`, ((err as Error).message.split('\n')[0] ?? '').slice(0, 120));
