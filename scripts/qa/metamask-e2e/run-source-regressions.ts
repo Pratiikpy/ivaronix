@@ -91,6 +91,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-no-direct-legacy-env-reads/, // §15 · no process.env.<LEGACY> read without canonical fallback (sweep 114 · locks 10 amnesty-mined bugs)
       /^verify-api-route-rate-limit/, // K-8 family · every operator-write Studio API route gates on checkRateLimit (sweep 119 · /api/onboard/metadata gap fix)
       /^verify-studio-security-headers/, // HALF_BAKED §G Tier-A item 6 · X-Frame-Options + nosniff + Referrer-Policy + HSTS (sweep 130)
+      /^verify-studio-public-manifest-cache-headers/, // B-V2-45 closure · Cache-Control on /r/:id /embed/r/:id /data-room/:id per PRIVACY_NOTES.md §1
       /^verify-privacy-terms-routes/, // HALF_BAKED §G Tier-A item 7 · /privacy + /terms routes + footer links (sweep 131)
       /^verify-share-surface-fonts/, // HALF_BAKED §G Tier-A item 8 · brand fonts on /r/[id]/print + /embed/r/[id] (sweep 132)
       /^verify-first-party-slugs-canonical/, // §15 · FIRST_PARTY_SLUGS lives only in lib/first-party-skills.ts; no inline array drift across consumers (2026-05-14)

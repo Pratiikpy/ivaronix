@@ -138,6 +138,20 @@ const config: NextConfig = {
     //                                     — leaks scheme+host but no path on cross-origin
     //   Strict-Transport-Security        — HSTS · 2 years + subdomains + preload-eligible.
     //                                     Browsers ignore on HTTP so safe in dev too.
+    // B-V2-45 closure · edge-cache headers on public-manifest routes
+    // (`docs/PRIVACY_NOTES.md §1` recommendation). Without these the
+    // operator wallet signs an indexer read for every distinct viewer
+    // of /r/<id>, /embed/r/<id>, /data-room/<id>. With `s-maxage=86400`
+    // the Vercel edge caches the public manifest for 24h and only the
+    // FIRST viewer triggers an operator-signed fetch; subsequent viewers
+    // hit the edge cache. Reduces operator-wallet appearance in indexer
+    // logs by ~99% on popular receipts.
+    //
+    // `stale-while-revalidate=604800` (7d) keeps the cache warm even
+    // when the underlying manifest hasn't changed in a week — the next
+    // viewer gets the stale copy instantly, Vercel re-validates in
+    // background. Receipt bodies are immutable (canonical-hash-bound)
+    // so stale-while-revalidate has no correctness risk.
     return [
       {
         source: '/(.*)',
@@ -146,6 +160,30 @@ const config: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+      {
+        source: '/r/:id',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/r/:id/print',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/embed/r/:id',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
+        ],
+      },
+      {
+        source: '/data-room/:id',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=86400, stale-while-revalidate=604800' },
         ],
       },
     ];
