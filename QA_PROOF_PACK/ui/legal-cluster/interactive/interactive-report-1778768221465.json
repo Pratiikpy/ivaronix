@@ -1,0 +1,147 @@
+{
+  "runAt": "2026-05-14T14:17:01.464Z",
+  "studioUrl": "https://ivaronix.vercel.app",
+  "checks": [
+    {
+      "action": "verticals · LIVE chip count >= 5",
+      "pass": true,
+      "detail": "found 5"
+    },
+    {
+      "action": "verticals · /skill/private-doc-review card link present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "verticals · /skill/contract-renewal-clause-detector card link present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "verticals · /skill/nda-triage-reviewer card link present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "verticals · /skill/term-sheet-risk-scanner card link present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "verticals · /skill/legal-citation-verifier card link present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "verticals · mailto notify-me links >= 10",
+      "pass": true,
+      "detail": "found 14"
+    },
+    {
+      "action": "verticals · clicking private-doc-review card navigates to /skill/private-doc-review",
+      "pass": true,
+      "detail": "https://ivaronix.vercel.app/skill/private-doc-review"
+    },
+    {
+      "action": "legal · H1 \"The AI second opinion you can give your lawyer.\" renders",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · primary CTA href = /?skill=private-doc-review",
+      "pass": true,
+      "detail": "/?skill=private-doc-review"
+    },
+    {
+      "action": "legal · /r/53 link present in before/after",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "legal · /r/55 link present in before/after",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "legal · /r/58 link present in before/after",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "legal · /r/62 link present in before/after",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "legal · /r/64 link present in before/after",
+      "pass": true,
+      "detail": "count=1"
+    },
+    {
+      "action": "legal · FAQ details elements >= 6",
+      "pass": true,
+      "detail": "count=6"
+    },
+    {
+      "action": "legal · FAQ details[0] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · FAQ details[1] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · FAQ details[2] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · FAQ details[3] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · FAQ details[4] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · FAQ details[5] expands on click",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "action": "legal · clicking /r/53 link navigates and receipt page renders",
+      "pass": true,
+      "detail": "https://ivaronix.vercel.app/r/53"
+    },
+    {
+      "action": "zero pageerrors across all desktop drives",
+      "pass": true,
+      "detail": "0 errors"
+    },
+    {
+      "action": "zero console.errors across all desktop drives",
+      "pass": true,
+      "detail": "0 errors"
+    },
+    {
+      "action": "mobile · drawer opens · Legal nav link visible",
+      "pass": true,
+      "detail": "count=2"
+    },
+    {
+      "action": "mobile · drawer · Verticals nav link visible",
+      "pass": true,
+      "detail": "count=3"
+    }
+  ],
+  "summary": {
+    "pass": 27,
+    "fail": 0,
+    "total": 27
+  },
+  "verdict": "PASS · all interactive drives green"
+}
