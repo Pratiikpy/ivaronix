@@ -1,5 +1,7 @@
-// v3-lookup-allow: serve API exposes V1+V2 receipts via /v1/receipt/<id>; V3 receipts resolve via the V2-first read path in apps/cli/src/commands/receipt.ts (which IS V3-aware). serve.ts V3 lookup tracked in USER_TODO §B-V2-37.
-// v1-passport-allow: serve API exposes V1 passport state via /v1/passport/<addr>; V2-first migration tracked in USER_TODO §B-V2-38.
+// /v1/receipt/<id> walks V3 → V2 → V1 + reports registry version (matches studio + mcp).
+// /v1/passport/<addr> reads V2 → V1 + reports contract version (matches CLI passport show + mcp).
+// /healthz returns receiptsV1, receiptsV2, receiptsV3 separately + passports (V2-first count).
+// Closes V3 lookup waiver (USER_TODO §B-V2-37) and V1 passport waiver (USER_TODO §B-V2-38) for this surface.
 import { Command } from 'commander';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { resolve, dirname } from 'node:path';
@@ -8,6 +10,7 @@ import { JsonRpcProvider } from 'ethers';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   AgentPassportClient,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
@@ -89,21 +92,33 @@ export const serveCommand = new Command('serve')
           const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
           const regV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
           const regV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
-          const passport = getDeployedAddress(env.network, 'AgentPassportINFT');
+          const regV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+          // Passport count from V2 (active target post-K-2); V1 fallback
+          // for chains that haven't deployed V2 yet. Total counts mirror
+          // CLI doctor + Studio /global headline.
+          const passportV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+          const passportV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
           // Anchored count = nextId - 1 on each registry (1-indexed).
-          // Sum V1 + V2 for the total receipts count exposed via /healthz.
-          const [v1, v2, p] = await Promise.all([
+          // Sum V1 + V2 + V3 for the total receipts count exposed via /healthz.
+          const [v1, v2, v3, p] = await Promise.all([
             regV1 ? new ReceiptRegistryClient(regV1, provider).nextId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
             regV2 ? new ReceiptRegistryV2Client(regV2, provider).nextId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
-            passport ? new AgentPassportClient(passport, provider).nextTokenId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
+            regV3 ? new ReceiptRegistryV3Client(regV3, provider).nextId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null) : null,
+            // V2 passport is the active target; V1 fallback when V2 is not deployed
+            (passportV2
+              ? new AgentPassportClient(passportV2, provider).nextTokenId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null)
+              : passportV1
+                ? new AgentPassportClient(passportV1, provider).nextTokenId().then((n) => Math.max(0, Number(n) - 1)).catch(() => null)
+                : null),
           ]);
-          const receipts = (v1 ?? 0) + (v2 ?? 0);
+          const receipts = (v1 ?? 0) + (v2 ?? 0) + (v3 ?? 0);
           return json(res, 200, {
             ok: true,
             network: env.network,
             receipts,
             receiptsV1: v1,
             receiptsV2: v2,
+            receiptsV3: v3,
             passports: p,
           });
         }
@@ -129,10 +144,27 @@ export const serveCommand = new Command('serve')
         const passportMatch = url.pathname.match(/^\/v1\/passport\/(0x[0-9a-fA-F]{40})$/);
         if (req.method === 'GET' && passportMatch) {
           const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-          const addr = getDeployedAddress(env.network, 'AgentPassportINFT');
-          if (!addr) return json(res, 503, { error: `AgentPassportINFT not deployed on ${env.network}` });
-          const client = new AgentPassportClient(addr, provider);
-          const profile = await client.getPassportByWallet(passportMatch[1] as `0x${string}`);
+          // V2-first read (matches CLI passport show + Studio dashboard).
+          // Operator-funded V2 is the active passport target.
+          const addrV2 = getDeployedAddress(env.network, 'AgentPassportINFTV2');
+          const addrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
+          if (!addrV1 && !addrV2) {
+            return json(res, 503, { error: `AgentPassportINFT not deployed on ${env.network}` });
+          }
+          let profile;
+          let passportVersion: 'v1' | 'v2' | null = null;
+          if (addrV2) {
+            profile = await new AgentPassportClient(addrV2, provider)
+              .getPassportByWallet(passportMatch[1] as `0x${string}`)
+              .catch(() => null);
+            if (profile) passportVersion = 'v2';
+          }
+          if (!profile && addrV1) {
+            profile = await new AgentPassportClient(addrV1, provider)
+              .getPassportByWallet(passportMatch[1] as `0x${string}`)
+              .catch(() => null);
+            if (profile) passportVersion = 'v1';
+          }
           if (!profile) return json(res, 404, { error: `no passport for ${passportMatch[1]}` });
           return json(res, 200, {
             tokenId: profile.tokenId.toString(),
@@ -140,6 +172,7 @@ export const serveCommand = new Command('serve')
             trustScore: profile.trustScore.toString(),
             receiptCount: profile.receiptCount.toString(),
             violationCount: profile.violationCount.toString(),
+            contract: passportVersion ?? 'unknown',
             network: env.network,
           });
         }
@@ -149,24 +182,34 @@ export const serveCommand = new Command('serve')
           const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
           const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
           const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
-          if (!v1Addr && !v2Addr) {
-            return json(res, 503, { error: `ReceiptRegistry (V1 or V2) not deployed on ${env.network}` });
+          const v3Addr = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+          if (!v1Addr && !v2Addr && !v3Addr) {
+            return json(res, 503, { error: `ReceiptRegistry (V1, V2, or V3) not deployed on ${env.network}` });
           }
           const id = receiptMatch[1]!;
-          // V2-first read pattern (per .claude/rules/og-chain.md): try V2,
-          // fall back to V1. New anchors land on V2; V1 holds the legacy
-          // receipts. Either path can resolve depending on which
-          // registry the receipt was anchored to.
+          // V3 → V2 → V1 read order matches apps/studio/src/lib/chain.ts
+          // unifiedGetReceipt + apps/mcp-server/src/server.ts. V3 admits
+          // canonical slots 10/11/12; V2 is active type-0 anchor target;
+          // V1 holds 1644+ legacy receipts.
           let onChain;
-          if (v2Addr) {
+          let registryVersion: 'v1' | 'v2' | 'v3' | null = null;
+          if (v3Addr) {
+            const reg = new ReceiptRegistryV3Client(v3Addr, provider);
+            if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id)).catch(() => null);
+            else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000).catch(() => null);
+            if (onChain) registryVersion = 'v3';
+          }
+          if (!onChain && v2Addr) {
             const reg = new ReceiptRegistryV2Client(v2Addr, provider);
             if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id)).catch(() => null);
             else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000).catch(() => null);
+            if (onChain) registryVersion = 'v2';
           }
           if (!onChain && v1Addr) {
             const reg = new ReceiptRegistryClient(v1Addr, provider);
             if (/^\d+$/.test(id)) onChain = await reg.getReceipt(BigInt(id)).catch(() => null);
             else if (/^0x[0-9a-f]{64}$/i.test(id)) onChain = await reg.findByReceiptRoot(id as `0x${string}`, 200_000).catch(() => null);
+            if (onChain) registryVersion = 'v1';
           }
           if (!onChain) return json(res, 404, { error: `no receipt for ${id}` });
           return json(res, 200, {
@@ -175,6 +218,7 @@ export const serveCommand = new Command('serve')
             agent: onChain.agentAddress,
             type: onChain.receiptType,
             timestamp: onChain.timestamp.toString(),
+            registry: registryVersion ?? 'unknown',
             state: 'ANCHORED',
           });
         }
