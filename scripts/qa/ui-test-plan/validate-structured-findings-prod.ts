@@ -50,7 +50,11 @@ function check(receipt: number, surface: 'desktop' | 'mobile' | 'http', name: st
   console.log(`  ${ico} /r/${receipt} [${surface}] ${name}${detail ? ' · ' + detail : ''}`);
 }
 
-const TARGET_RECEIPTS = [68, 69, 70];
+// 68 contract-renewal · array-shape findings
+// 69 nda-triage v0.1.0 · object-shape (legacy · pre-schema-validator)
+// 70 term-sheet · array-shape findings (8 entries)
+// 74 nda-triage v0.1.1 · object-shape · ALL 8 KEYS · validationFailed: undefined (PASS)
+const TARGET_RECEIPTS = [68, 69, 70, 74];
 
 async function fetchHeaders(url: string): Promise<Record<string, string>> {
   const res = await fetch(url, { method: 'HEAD' });
