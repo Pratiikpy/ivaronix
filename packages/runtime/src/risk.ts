@@ -22,6 +22,19 @@ const HIGH_RX = /\bseverity:\s*(critical|high)\b/i;
 const MED_RX = /\bseverity:\s*medium\b/i;
 const LOW_RX = /\bseverity:\s*(low|informational)\b/i;
 
+// JSON-shape risk markers · the legal cluster's output schemas use these:
+// contract-renewal/term-sheet findings carry `risk_level: "low|medium|high"`,
+// nda-triage carries `signature_recommendation: "refuse|negotiate|sign"`.
+// Pre-extension, the audit ("ai-quality-audit-legal-cluster.md") logged
+// that `outputs.riskLevel` always returned 'low' because the regex
+// only caught `severity:` prefixes; the model's JSON used `risk_level:`
+// instead. Detection now covers both shapes case-insensitively.
+const JSON_HIGH_RX = /["']?risk[_-]?level["']?\s*:\s*["'](critical|high)["']/i;
+const JSON_MED_RX = /["']?risk[_-]?level["']?\s*:\s*["']medium["']/i;
+// nda-triage's signature_recommendation is the verdict-equivalent.
+const JSON_REFUSE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["']refuse["']/i;
+const JSON_NEGOTIATE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["']negotiate["']/i;
+
 // Bare-keyword fallback when the response doesn't use the explicit
 // `severity:` prefix. Conservative: require the keyword to appear at
 // a word boundary AND not inside the phrases "no high-risk" or
@@ -35,7 +48,11 @@ export function deriveRiskLevel(finalText: string): RiskLevel {
 
   // Explicit severity markers win.
   if (HIGH_RX.test(finalText)) return 'high';
+  // JSON-shape risk markers tie with severity: prefixes — both are
+  // structured signal from the model. Highest tier wins via order.
+  if (JSON_HIGH_RX.test(finalText) || JSON_REFUSE_RX.test(finalText)) return 'high';
   if (MED_RX.test(finalText)) return 'medium';
+  if (JSON_MED_RX.test(finalText) || JSON_NEGOTIATE_RX.test(finalText)) return 'medium';
   if (LOW_RX.test(finalText)) return 'low';
 
   // Bare-keyword fallback.

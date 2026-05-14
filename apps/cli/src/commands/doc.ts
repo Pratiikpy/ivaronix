@@ -18,7 +18,7 @@ import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
 import { addBulkCommand } from './doc-bulk.js';
-import { deriveRiskLevel } from '@ivaronix/runtime';
+import { deriveRiskLevel, tryParseJson } from '@ivaronix/runtime';
 
 /** Walk up directories to find seed-skills + .ivaronix/skills */
 function skillSearchDirs(): string[] {
@@ -522,6 +522,39 @@ docCommand
       ?? '';
     const outputHash = sha256HexAsync(finalOutput);
 
+    // Structured-output extraction · closes the cluster-wide "manifest
+    // promises JSON, runtime never parses it" gap surfaced in the legal
+    // cluster AI quality audit (QA_PROOF_PACK/notes/ai-quality-audit-
+    // legal-cluster.md). Manifests like contract-renewal-clause-detector
+    // and term-sheet-risk-scanner declare `Output schema` sections
+    // returning `{findings: Finding[]}`; the model emits those as a
+    // markdown-fenced JSON block embedded in prose. `tryParseJson`
+    // (packages/runtime/src/json-repair.ts) strips the fence, peels
+    // leading/trailing prose, fixes trailing commas + smart quotes,
+    // and recovers the JSON value. The result lands on the receipt
+    // as `outputs.parsed` so machine consumers can read structured
+    // findings from the canonical receipt body. ok=false records the
+    // attempt honestly when the model emitted prose-only.
+    const parseAttempt = tryParseJson<unknown>(finalOutput);
+    const parsedField = parseAttempt.ok
+      ? {
+          ok: true as const,
+          data: parseAttempt.value,
+          repaired: parseAttempt.repaired,
+          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+        }
+      : {
+          ok: false as const,
+          error: parseAttempt.error,
+          attempted: parseAttempt.attempted,
+          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+        };
+    if (parseAttempt.ok) {
+      ui.pass(`structured output   parsed ok (${parseAttempt.repaired.length === 0 ? 'raw' : parseAttempt.repaired.join('+')})`);
+    } else {
+      ui.info(`structured output   prose-only · ${parseAttempt.error}`);
+    }
+
     // ─── 4. Build + sign receipt ──────────────────────────────────────────
     if (!opts.receipt) {
       ui.hint('--receipt skipped; not building/anchoring receipt.');
@@ -716,6 +749,12 @@ docCommand
           headline: finalOutput.slice(0, 200).replace(/\n+/g, ' '),
           doNotSay: ['truth score', 'verified by AI', 'guaranteed safe'],
         },
+        // Structured output extraction · closes the legal-cluster audit
+        // RED. Receipts where the model emitted no JSON record
+        // ok: false honestly (the audit trail of the parse attempt
+        // is preserved; downstream consumers see "prose-only" rather
+        // than a misleading empty-array).
+        parsed: parsedField,
       },
       createdBy: 'ivaronix-forge/0.0.1',
     });

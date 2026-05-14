@@ -506,6 +506,42 @@ export const ReceiptV1Schema = z.object({
         doNotSay: z.array(z.string()),
       })
       .optional(),
+    /**
+     * Structured-output extraction from the model's prose. Populated when
+     * the runtime ran `tryParseJson(finalOutput)` and recovered a JSON
+     * value (e.g. legal skills that declare `Output schema` in SKILL.md
+     * — contract-renewal returns `{findings: Finding[]}`, nda-triage
+     * returns the NDA triage object, term-sheet returns `{findings: ...}`).
+     *
+     *   - `ok: true`  · model emitted parseable JSON · `data` holds it,
+     *                   `repaired` lists the transforms applied
+     *                   (codeFence/leadingTrailingProse/trailingCommas/etc).
+     *   - `ok: false` · model emitted prose-only or malformed JSON · the
+     *                   receipt records the parse attempt honestly so
+     *                   downstream consumers don't false-positive an
+     *                   empty `data` field.
+     *
+     * Optional + default-absent so receipts written before this field
+     * shipped (ids 1-67 on testnet) parse unchanged and their canonical
+     * hash stays byte-stable. `rawBytes` records the prose length so a
+     * verifier can sanity-check "the model returned 0 bytes" claims.
+     */
+    parsed: z
+      .union([
+        z.object({
+          ok: z.literal(true),
+          data: z.unknown(),
+          repaired: z.array(z.string()),
+          rawBytes: z.number().int().nonnegative(),
+        }),
+        z.object({
+          ok: z.literal(false),
+          error: z.string(),
+          attempted: z.array(z.string()),
+          rawBytes: z.number().int().nonnegative(),
+        }),
+      ])
+      .optional(),
   }),
 
   createdAt: z.number().int(),
