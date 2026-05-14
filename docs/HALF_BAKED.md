@@ -200,7 +200,7 @@ The root `README.md` has **no** License section, **no** Contributing section, **
 - **`stats`, `memory list`, `memory log`, `memory log-emit`, `init` failure paths** call `ui.fail` and `return` without setting `process.exitCode = 1`. Scripts can't detect failures.
 
 ### Other
-- **`receipt verify` with partial TEE failure** prints green `'→ ANCHORED (some TEE checks failed)'` and exits 0. The green banner says success while saying failure.
+- **`receipt verify` with partial TEE failure** prints green `'→ ANCHORED (some TEE checks failed)'` and exits 0. The green banner says success while saying failure. **✅ FIXED 2026-05-14** · `apps/cli/src/commands/receipt.ts:543-558` now uses `ui.banner('pending', ...)` (yellow) when TEE-independent checks fail and sets `process.exitCode = 1` so scripts gating on the verify don't proceed past a half-verified receipt. Banner text now reports `(N of M attestations passed · N failed)` counts instead of vague "some failed".
 - **`debug receipt <id>` rejects ULIDs and hex roots** — `receipt verify` accepts them. Inconsistent input contracts.
 - **`da retrieve` without `--out`** writes binary to stdout when stdout is a TTY. Will corrupt the terminal.
 - **`doc bulk` runs N files with no aggregate progress bar** — 20 files = 400+ output lines, no ETA.

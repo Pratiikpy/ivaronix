@@ -506,11 +506,12 @@ receiptCommand
 
     ui.pending(`verifying ${attestations.length} attestation${attestations.length > 1 ? 's' : ''} via broker.processResponse...`);
 
-    let allPass = true;
+    let passCount = 0;
+    let failCount = 0;
     for (const att of attestations) {
       if (!att.chatId) {
         ui.fail(`tee:${att.role.padEnd(15)}  no chatId in receipt`);
-        allPass = false;
+        failCount++;
         continue;
       }
       try {
@@ -527,25 +528,35 @@ receiptCommand
         if (ok === true) {
           const depth = hasContent ? 'PASS' : 'PASS (chatId-only; legacy receipt)';
           ui.pass(`tee:${att.role.padEnd(15)}  ${depth}  (provider ${att.providerAddress.slice(0, 10)}…)`);
+          passCount++;
         } else if (ok === false) {
           ui.fail(`tee:${att.role.padEnd(15)}  FAIL  (signature mismatch)`);
-          allPass = false;
+          failCount++;
         } else {
           ui.pending(`tee:${att.role.padEnd(15)}  inconclusive (${String(ok)})`);
-          allPass = false;
+          failCount++;
         }
       } catch (err) {
         ui.fail(`tee:${att.role.padEnd(15)}  error`, (err as Error).message);
-        allPass = false;
+        failCount++;
       }
     }
 
     ui.divider();
+    const allPass = failCount === 0;
     if (allPass) {
       ui.pass(`                    → FULLY VERIFIED`);
-      ui.banner(true, '→ FULLY VERIFIED ✓');
+      ui.banner('ok', '→ FULLY VERIFIED ✓');
     } else {
-      ui.banner(true, '→ ANCHORED (some TEE checks failed; see above)');
+      // HALF_BAKED honesty fix · do NOT print this in green. A receipt
+      // where TEE-independent checks failed is NOT a success — it's an
+      // anchored-but-not-fully-verified result. Use 'pending' (yellow)
+      // for the banner so a stranger replaying this run can't mistake
+      // partial failure for success. Set exitCode so scripts that gate
+      // on `pnpm ivaronix receipt verify <id> --tee-independent && next-step`
+      // don't proceed past a half-verified receipt.
+      ui.banner('pending', `→ ANCHORED · TEE-independent partial (${passCount} of ${attestations.length} attestations passed · ${failCount} failed; see above)`);
+      process.exitCode = 1;
     }
   });
 
