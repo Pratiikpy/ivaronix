@@ -1,0 +1,156 @@
+{
+  "runAt": "2026-05-14T20:24:08.817Z",
+  "studioUrl": "https://ivaronix.vercel.app",
+  "records": [
+    {
+      "route": "/verticals",
+      "index": 0,
+      "text": "iIvaronix",
+      "href": "https://ivaronix.vercel.app/",
+      "destination": "https://ivaronix.vercel.app/",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 1,
+      "text": "Why",
+      "href": "https://ivaronix.vercel.app/thesis",
+      "destination": "https://ivaronix.vercel.app/thesis",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 2,
+      "text": "0G",
+      "href": "https://ivaronix.vercel.app/0g",
+      "destination": "https://ivaronix.vercel.app/0g",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 3,
+      "text": "Verticals",
+      "href": "https://ivaronix.vercel.app/verticals",
+      "destination": "https://ivaronix.vercel.app/verticals",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 4,
+      "text": "Legal",
+      "href": "https://ivaronix.vercel.app/legal",
+      "destination": "https://ivaronix.vercel.app/legal",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 5,
+      "text": "Skills",
+      "href": "https://ivaronix.vercel.app/skills",
+      "destination": "https://ivaronix.vercel.app/skills",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 6,
+      "text": "Agents",
+      "href": "https://ivaronix.vercel.app/agents",
+      "destination": "https://ivaronix.vercel.app/agents",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/verticals",
+      "index": 7,
+      "text": "Dashboard",
+      "href": "https://ivaronix.vercel.app/dashboard",
+      "destination": "https://ivaronix.vercel.app/dashboard",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 0,
+      "text": "iIvaronix",
+      "href": "https://ivaronix.vercel.app/",
+      "destination": "https://ivaronix.vercel.app/",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 1,
+      "text": "Why",
+      "href": "https://ivaronix.vercel.app/thesis",
+      "destination": "https://ivaronix.vercel.app/thesis",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 2,
+      "text": "0G",
+      "href": "https://ivaronix.vercel.app/0g",
+      "destination": "https://ivaronix.vercel.app/0g",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 3,
+      "text": "Verticals",
+      "href": "https://ivaronix.vercel.app/verticals",
+      "destination": "https://ivaronix.vercel.app/verticals",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 4,
+      "text": "Legal",
+      "href": "https://ivaronix.vercel.app/legal",
+      "destination": "https://ivaronix.vercel.app/legal",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 5,
+      "text": "Skills",
+      "href": "https://ivaronix.vercel.app/skills",
+      "destination": "https://ivaronix.vercel.app/skills",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 6,
+      "text": "Agents",
+      "href": "https://ivaronix.vercel.app/agents",
+      "destination": "https://ivaronix.vercel.app/agents",
+      "status": "ok",
+      "note": ""
+    },
+    {
+      "route": "/legal",
+      "index": 7,
+      "text": "Dashboard",
+      "href": "https://ivaronix.vercel.app/dashboard",
+      "destination": "https://ivaronix.vercel.app/dashboard",
+      "status": "ok",
+      "note": ""
+    }
+  ],
+  "summary": {
+    "ok": 16,
+    "redirect": 0,
+    "fail": 0,
+    "total": 16
+  }
+}
