@@ -31,7 +31,12 @@
 
 services:
   da-client:
-    image: ghcr.io/0glabs/0g-da-client:latest
+    # Source-built locally per docs/0G_DA_INTEGRATION.md (the ghcr.io
+    # path returns "denied" anonymously; 0G distributes the client as
+    # source). Build with:
+    #   git clone https://github.com/0gfoundation/0g-da-client.git
+    #   cd 0g-da-client && docker build -t 0g-da-client:local -f combined.Dockerfile .
+    image: 0g-da-client:local
     container_name: ivaronix-0g-da-client
     restart: unless-stopped
     ports:

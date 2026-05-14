@@ -1,6 +1,6 @@
-# 0G DA Integration · Status, Runbook, Path to Live
+# 0G DA Integration · LIVE locally · preflight green
 
-> Last refresh 2026-05-14 (corrected twice).
+> Last refresh 2026-05-14 (CORRECTED + RUNNING). Source-built image + full env file + funded wallet · `ivaronix da preflight` returns `endpoint reachable localhost:51001 · max blob size 31,744 KiB · preflight ok`.
 >
 > Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA is real and reachable** but the path is more involved than initially thought:
 >
