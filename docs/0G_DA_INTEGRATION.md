@@ -1,6 +1,21 @@
-# 0G DA Integration · LIVE locally · preflight green
+# 0G DA Integration · preflight green · disperse needs encoder service
 
-> Last refresh 2026-05-14 (CORRECTED + RUNNING). Source-built image + full env file + funded wallet · `ivaronix da preflight` returns `endpoint reachable localhost:51001 · max blob size 31,744 KiB · preflight ok`.
+> Last refresh 2026-05-14 (CORRECTED, partial-live).
+>
+> **What works today:**
+> - `0g-da-client:local` source-built from `github.com/0gfoundation/0g-da-client` (combined.Dockerfile · 90 MB image)
+> - Container `ivaronix-0g-da-client` running healthy, gRPC listening on `localhost:51001`, finalizer goroutine syncing blocks
+> - `pnpm --filter @ivaronix/cli dev da preflight` returns `endpoint reachable · max blob size 31,744 KiB · preflight ok` ✅
+> - DA wallet funded (`0xeE07e769ca82617AA76a0631869bdde841bBdEC8` · 0.01 OG) — fund tx `0xc079ecac…`
+> - da.env carries the full 27-key env per 0G's `da-integration.md`
+>
+> **What does NOT work yet — the encoder gap:**
+> - `pnpm --filter @ivaronix/cli dev da disperse <file>` submits the blob but **never finalizes** (300s timeout).
+> - Container logs show repeating: `error encoding blob: rpc error: code = Unavailable · transport: Error while dialing: dial tcp: address DA_ENCODER_SERVER: missing port in address`.
+> - Root cause: `BATCHER_ENCODER_ADDRESS=DA_ENCODER_SERVER` in 0G's `da-integration.md` is a **literal placeholder** — no real testnet encoder address is published anywhere in the bundled 0G docs.
+> - The encoder source is in a SEPARATE GitHub repo (`0gfoundation/0g-da-encoder` — git submodule of the client repo, empty after a shallow clone of just `0g-da-client`).
+>
+> **Honest current scope:** the local da-client can ACCEPT blobs and ANCHOR finalized commits on chain, but the encoder gap means the disperse loop is incomplete. The receipt pipeline can't yet write a real `storage.daBlobRef.requestIdHex` because no blob finalizes.
 >
 > Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA is real and reachable** but the path is more involved than initially thought:
 >
