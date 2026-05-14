@@ -1,5 +1,5 @@
 // Delegate flow mints fresh passports against V2 (with V1 fallback) so K-1 multi-mint + K-4 trustScore + K-6 memoryRoot fixes apply. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
-// Delegate flow issues + revokes grants against V2 CapabilityRegistry (with V1 fallback) — V2 gates reverse-index reads so delegate-flow grants don't leak via the social-graph side channel. Closes the V1-only writer waiver from USER_TODO §B-V2-39.
+// Delegate flow issues + revokes grants against V2 CapabilityRegistry (with V1 fallback) — V2 gates reverse-index reads so delegate-flow grants don't leak via the social-graph side channel. Closes the V1-only writer waiver from USER_TODO §B-V2-39 (✅ shipped).
 import { Command } from 'commander';
 import { Wallet, JsonRpcProvider, Contract, parseEther, sha256, toUtf8Bytes, keccak256 } from 'ethers';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';

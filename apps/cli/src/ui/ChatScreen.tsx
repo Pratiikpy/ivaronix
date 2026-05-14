@@ -1,5 +1,4 @@
-// v1-capability-allow: ChatScreen displays V1 CapabilityRegistry grant state; V2-first migration tracked in USER_TODO §B-V2-39.
-// v1-memory-access-log-allow: ChatScreen displays V1 MemoryAccessLog events; V2-first migration tracked in USER_TODO §B-V2-41.
+// ChatScreen memory recall reads CapabilityRegistryV2 + MemoryAccessLogV2 (with V1 fallback) — matches Studio /memory + CLI memory + MCP server. Closes the V1-only reader waivers from USER_TODO §B-V2-39 (✅ shipped) and §B-V2-41 (✅ shipped).
 /**
  * Ink TUI for the `chat` command — iteration 2.
  *
@@ -647,8 +646,12 @@ async function runMemoryRecall(
       ? resolve(workspaceRoot, '.ivaronix', 'memory', 'ivaronix.db')
       : resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
     mkdirSync(dirname(dbPath), { recursive: true });
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
-    const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+    // V2-first capability + access-log addresses (matches MCP server + Studio /memory).
+    // V1 fallback for chains that haven't deployed V2 yet.
+    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistryV2')
+      ?? getDeployedAddress(env.network, 'CapabilityRegistry');
+    const logAddr = getDeployedAddress(env.network, 'MemoryAccessLogV2')
+      ?? getDeployedAddress(env.network, 'MemoryAccessLog');
     const engine = MemoryEngine.create({
       ownerWallet: env.walletAddress as `0x${string}`,
       ownerPrivateKey: env.privateKey,

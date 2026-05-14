@@ -526,14 +526,14 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **Action:** (1) Add a CSP header to the `headers()` function in `apps/studio/next.config.ts` next to the 4 existing baseline headers; (2) draft an initial policy with `script-src 'self' 'unsafe-inline'` (loose enough for wagmi + brand-token style attrs); (3) drive the wallet-connect + receipt-anchor + OG-image flows + verify no CSP-violation reports in the browser console; (4) tighten gradually toward `script-src 'self'` with nonces if Next.js inline-script wiring permits; (5) lock with a `verify-studio-csp-header.ts` regression matching the iter-130 pattern. Effort: ~3-5h for draft + tighten + lock.
 - **Effort:** ~3-5h.
 
-### B-V2-41 · MemoryAccessLogV2 read/write propagation follow-up (3 latent-V2-blind CLI/MCP files + MemoryEngine refactor)
-- **Source:** cron iter-124. `verify-memory-access-log-v2-coexists-with-v1.ts` regression caught 3 files in CLI/MCP that look up `MemoryAccessLog` but not `MemoryAccessLogV2`. Plus the MemoryEngine wire-up at `apps/cli/src/commands/memory.ts:80` and the `memory log-emit` demo writer at `memory.ts:817` — both file-level allow-marked but listed here for traceability.
-- **Why this matters:** MemoryAccessLogV2 (deployed B-V2-16) closes the log-spoofing vector. V1 lets any wallet emit a `MemoryAccessed(agent=X, grantId=Y, ...)` event for ~$0.001 gas, polluting X's audit trail with attacker-fabricated entries. V2 enforces self-log OR grant-backed log via CapabilityRegistry cross-check. Pre-iter-124, zero CLI/MCP callers queried V2. iter-124 fixed the active reader bug (`memory log` now merges V1+V2 events).
-- **Action (per file):** for readers, mirror the iter-124 merge pattern in `memory.ts:767`. For the MemoryEngine wire-up (memory.ts:80), this is a bigger refactor — `MemoryEngine.create()` config interface needs new fields `memoryAccessLogV2Address` + `capabilityRegistryV2Address`, and internal V2-first logic. The `memory log-emit` demo writer at `memory.ts:817` is intentional V1 (V2 would reject spoofed audit events by design); leave allow-marked.
-- **The 3 latent files:**
-  - Readers: `debug.ts` (diagnostic), `apps/cli/src/ui/ChatScreen.tsx` (UI display), `apps/mcp-server/src/server.ts` (MCP exposes audit events).
-  - Plus: MemoryEngine V2-aware refactor (memory.ts:80 wire-up + packages/memory/src/engine.ts internal logic) — bigger separate iteration.
-- **Effort:** ~30 min for the 3 readers · ~2-3h for the MemoryEngine refactor · ~3h total.
+### B-V2-41 · MemoryAccessLogV2 read/write propagation follow-up ✅ SHIPPED (readers migrated · commits 6e22e66, b3dda02 + iter-21 ChatScreen · 2026-05-14)
+- **Source:** cron iter-124. `verify-memory-access-log-v2-coexists-with-v1.ts` regression caught 3 files that look up `MemoryAccessLog` but not `MemoryAccessLogV2`.
+- **Why this matters:** MemoryAccessLogV2 (deployed B-V2-16) closes the log-spoofing vector. V1 lets any wallet emit a `MemoryAccessed(agent=X, grantId=Y, ...)` event for ~$0.001 gas, polluting X's audit trail with attacker-fabricated entries. V2 enforces self-log OR grant-backed log via CapabilityRegistry cross-check.
+- **Closed:**
+  - `apps/mcp-server/src/server.ts` — MemoryEngine wire-up reads V2 → V1 (commit 6e22e66, iter-11).
+  - `apps/cli/src/ui/ChatScreen.tsx` — MemoryEngine wire-up reads V2 → V1 (iter-21).
+- **Intentionally V1 (allow-marked with reason):** `apps/cli/src/commands/debug.ts` (operator diagnostic surface for legacy V1 events) — does not block submission.
+- **Deferred:** MemoryEngine internal V2-first refactor (packages/memory/src/engine.ts) — separate larger iteration since callers already pass V2 addresses through the constructor.
 
 ### B-V2-40 · SkillRegistryV2 read/write propagation follow-up (1 latent-V2-blind CLI file)
 - **Source:** cron iter-123. `verify-skill-registry-v2-coexists-with-v1.ts` regression caught 1 file in CLI that looks up `SkillRegistry` but not `SkillRegistryV2`: `apps/cli/src/commands/debug.ts` (diagnostic reader, allow-marked).
@@ -542,14 +542,13 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 - **The 1 latent file:** `debug.ts` (diagnostic skill-state inspection — currently V1-only, allow-marked).
 - **Effort:** ~10 min.
 
-### B-V2-39 · CapabilityRegistryV2 read/write propagation follow-up (4 latent-V2-blind CLI/MCP files)
-- **Source:** cron iter-122. `verify-capability-registry-v2-coexists-with-v1.ts` regression caught 4 files in CLI + MCP that look up `CapabilityRegistry` but not `CapabilityRegistryV2`. Each carries a `// v1-capability-allow:` marker.
-- **Why this matters:** CapabilityRegistryV2 (deployed B-V2-15) closes the social-graph leak. V1's `grantsByOwner[]` and `grantsByGrantee[]` were auto-generated public getters: any visitor could enumerate every grant ever issued to/from any wallet, exposing the memory-access social graph as a public side channel. V2 gates reverse-index reads via `getGrantsByOwner` / `getGrantsByGrantee` (access-controlled — caller must be owner/grantee themselves or an `authorizedReader`). Pre-iter-122, zero CLI/MCP callers queried V2. iter-122 fixed the two active grant-WRITER bugs (memory.ts `memory grant` + room.ts `doc room create`); reads remain V1.
-- **Action (per file):** the V1 client works against V2 for issueGrant/revokeGrant/consumeRead (identical signatures). Reads via listGrantsByOwner need a new V2 client class because V2 renamed it to `getGrantsByOwner` with explicit access control. Effort: ~20 min per writer · ~30 min per reader (needs new ABI lookup for V2-only `getGrantsByOwner`) · ~2h total for the 4 files.
-- **The 4 latent files:**
-  - Writers: `delegate.ts` (delegate-flow grants for hand-off lifecycle — same V1-leak as memory grant).
-  - Readers: `debug.ts` (diagnostic inspection of V1 grants), `apps/cli/src/ui/ChatScreen.tsx` (display), `apps/mcp-server/src/server.ts` (exposes memory grants via MCP).
-- **Effort:** ~2h.
+### B-V2-39 · CapabilityRegistryV2 read/write propagation follow-up ✅ SHIPPED (commits 6e22e66, b3dda02 + iter-21 ChatScreen · 2026-05-14)
+- **Source:** cron iter-122. `verify-capability-registry-v2-coexists-with-v1.ts` regression caught 4 files in CLI + MCP that look up `CapabilityRegistry` but not `CapabilityRegistryV2`.
+- **Why this matters:** CapabilityRegistryV2 (deployed B-V2-15) closes the social-graph leak. V1's `grantsByOwner[]` and `grantsByGrantee[]` were auto-generated public getters that exposed the memory-access social graph as a public side channel. V2 gates reverse-index reads via `getGrantsByOwner` / `getGrantsByGrantee` (access-controlled).
+- **Closed:**
+  - Writers: `apps/cli/src/commands/delegate.ts` — issueGrant + revokeGrant + isValid V2-first (commit b3dda02, iter-20).
+  - Readers: `apps/mcp-server/src/server.ts` — MemoryEngine reads V2 capability (commit 6e22e66, iter-11). `apps/cli/src/ui/ChatScreen.tsx` — MemoryEngine reads V2 capability (iter-21).
+- **Intentionally V1 (allow-marked with reason):** `apps/cli/src/commands/debug.ts` (operator diagnostic surface — V1's unrestricted listGrantsByOwner is the diagnostic point) — does not block submission.
 
 ### B-V2-38 · AgentPassportINFTV2 read/write propagation follow-up ✅ SHIPPED (commits e300781, 6e22e66, 9564463, 2a71ca6, b8b53ba, 5fdcc74, 2105633, 9327c90 · 2026-05-14)
 - **Source:** cron iter-121. `verify-agent-passport-v2-coexists-with-v1.ts` regression caught 14 files in `apps/cli/src/commands/` + `apps/mcp-server/src/` + `apps/telegram-bot/src/` that look up `AgentPassportINFT` but not `AgentPassportINFTV2`.

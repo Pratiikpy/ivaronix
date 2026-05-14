@@ -1,6 +1,6 @@
 // Receipt verify path reads V3 → V2 → V1 (operator-funded V3 deployed; lookup matches studio/lib/chain.ts unifiedGetReceipt order). Anchor branch for slot 10+ MCP flows (doc_room_*, memory_consolidation) still queued — tracked in USER_TODO §B-V2-37.
 // Passport tool reads V2 → V1 (matches CLI passport show + Studio dashboard). Closes V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
-// Memory search reads V2 → V1 for both CapabilityRegistry + MemoryAccessLog (matches Studio /memory). Closes the V1-only waivers originally queued in USER_TODO §B-V2-39 + §B-V2-41.
+// Memory search reads V2 → V1 for both CapabilityRegistry + MemoryAccessLog (matches Studio /memory). Closes the V1-only waivers from USER_TODO §B-V2-39 (✅ shipped) and §B-V2-41 (✅ shipped).
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import {
   CallToolRequestSchema,
