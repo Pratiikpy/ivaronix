@@ -207,3 +207,43 @@ Total reduction: **74 → 8 → 2 → 0 violations** across 3 iter cycles.
 - `POST /api/run/estimate` with `userWallet` claim + no SIWE → 401 `"userWallet claim requires active SIWE session"` (K-8/K-9 security gate)
 - `POST /api/run/estimate` anonymous on paid skill → 402-style `"paid skill requires userWallet claim"` + reveals `priceWei: 5000000000000000` (honest, actionable)
 - `/r/31/print` 200 text/html, `/r/31/opengraph-image` 200 image/png, `/embed/r/31` 200 text/html with ANCHORED chip rendered
+
+### Iter 6 P14 perf re-baseline post-CSS-bump
+
+Re-running P14 perf against live `6e80902c72c0f1ab.css` (the 3-fix mobile CSS).
+
+| Page | Desktop FCP | Mobile FCP | Gate (D / M) | Status |
+|---|---:|---:|---:|---|
+| / | 1376 ms | 1500 ms | < 2000 / < 3000 | ✓ ✓ |
+| /r/1004 | 1536 ms | 1068 ms | < 2000 / < 3000 | ✓ ✓ |
+| /marketplace | 1808 ms | 1572 ms | < 2000 / < 3000 | ✓ ✓ |
+| /thesis | 1084 ms | 1040 ms | < 2000 / < 3000 | ✓ ✓ |
+| /0g | 720 ms | 628 ms | < 2000 / < 3000 | ✓ ✓ |
+
+**All 10 measurements PASS.** Compared to pre-fix baseline (2026-05-13T22:29), perf actually improved:
+- Home FCP 2900 → 1376 ms (-53%)
+- /marketplace 2636 → 1808 ms (-31%)
+- /thesis 1336 → 1084 ms (-19%)
+- /0g 900 → 720 ms (-20%)
+
+Improvement attributable to the `/marketplace` first-party-only pre-load (commit 8540a11) + warm Vercel edge. The mobile-only CSS additions (~30 lines under `@media (max-width: 480px)`) don't affect desktop perf.
+
+### Iter 6 mobile visual proof (§17.7)
+
+8 mobile captures at 375×812 written to `QA_PROOF_PACK/ui/P11-mobile/after-tap-fix/`. Agent `Read` inspected each one and confirmed visually:
+
+| Capture | Visual confirmation |
+|---|---|
+| home.png | Hero "A founder reviewing a term sheet shouldn't have to trust the AI" wraps cleanly · "1,681 receipts on-chain · live" chip · only hamburger nav (Why/0G/Agents correctly hidden) |
+| marketplace.png | "Verified skill economy" header · 3-chip stack ("6 skills available · Settlement: native 0G · Data source") · first card "0g-integration-auditor · 0.0050 OG · 90/10 split · Run with payment" |
+| receipt-31.png | ANCHORED (green) · TIER 1 · TEE (green) · 0GM chips · 4-light row (STORAGE green · COMPUTE amber · TEE amber · CHAIN green) · receiptRoot + agent + registry chainscan link |
+
+### Iter 6 registry routing semantics (clarified)
+
+Earlier checkpoint said "Latest V3 id observed: 32" — that's inaccurate. The unified V3→V2→V1 router behaves as:
+
+- `/r/1..5` → ReceiptRegistryV3 (early slot 10/11/12 receipts)
+- `/r/28..31` → ReceiptRegistryV2 (recent type-0 demo + marketplace receipts)
+- `/r/32+` → ReceiptRegistry (V1 LEGACY — V1 has 1,004+ historical ids)
+
+Demo runs anchor `receiptType: 0` which routes to V2. V3 admits the canonical extension slots (10/11/12) per CLAUDE.md §K-17. The route resolver shows the correct registry version per receipt — no drift between rendered chip and on-chain anchor.
