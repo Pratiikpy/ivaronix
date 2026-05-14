@@ -400,3 +400,19 @@ dd.mono, .card .mono {
   font-family: var(--font-mono);
   font-size: 12px;
 }
+
+/* Live feed pulse · final-plan.md §1.6 Day 5-9 acceptance */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+.landing-loop-card:hover,
+.module-card:hover {
+  border-color: var(--color-fg);
+  transform: translateY(-1px);
+}
+
+.live-feed-row:hover {
+  background: var(--color-tonal);
+}

@@ -2,7 +2,14 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { RunPanel } from '@/components/RunPanel';
 import { DemoPanel } from '@/components/DemoPanel';
-import { unifiedNextId, livePassportCount, getNetwork } from '@/lib/chain';
+import {
+  unifiedNextId,
+  unifiedGetReceipt,
+  livePassportCount,
+  getNetwork,
+  receiptTypeLabel,
+  type UnifiedReceipt,
+} from '@/lib/chain';
 import { loadAllSkills } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic'; // always read live chain state
@@ -17,6 +24,43 @@ async function liveReceiptCount(): Promise<bigint | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * Live feed · final-plan.md §1.6 Day 5-9 acceptance · proves the network
+ * is alive. Walks the latest registry (V3 → V2 → V1) backward N steps,
+ * returns the resolved on-chain rows. Errors degrade silently — feed
+ * shrinks to whatever resolved.
+ */
+async function recentReceipts(n: number): Promise<UnifiedReceipt[]> {
+  try {
+    const { v3, v2, v1, total } = await unifiedNextId();
+    // Walk the latest non-empty registry down.
+    const [topRegistry, topNextId]: ['v3' | 'v2' | 'v1', bigint] =
+      v3 > 0n ? ['v3', v3]
+      : v2 > 0n ? ['v2', v2]
+      : ['v1', v1];
+    if (total === 0n) return [];
+    const ids: bigint[] = [];
+    for (let i = topNextId - 1n; i >= 0n && ids.length < n; i--) {
+      ids.push(i);
+    }
+    const rows = await Promise.all(
+      ids.map((id) => unifiedGetReceipt(id, topRegistry).catch(() => null)),
+    );
+    return rows.filter((r): r is UnifiedReceipt => r !== null);
+  } catch {
+    return [];
+  }
+}
+
+function timeAgo(unixSec: bigint | number): string {
+  const sec = typeof unixSec === 'bigint' ? Number(unixSec) : unixSec;
+  const diff = Math.max(0, Math.floor(Date.now() / 1000) - sec);
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
 }
 
 // Sweep 187: livePassportCount moved to @/lib/chain so home, thesis,
@@ -38,9 +82,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const { isDemoModeActive } = await import('@/lib/demo-mode');
   const demoActive = demoMode && isDemoModeActive();
 
-  const [totalReceipts, totalPassports] = await Promise.all([
+  const [totalReceipts, totalPassports, liveFeed] = await Promise.all([
     liveReceiptCount(),
     livePassportCount(),
+    recentReceipts(5),
   ]);
   const network = getNetwork();
   // First-party skill set — the 6 we signed and maintain. The 150+
@@ -388,6 +433,94 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           ))}
         </div>
       </section>
+
+      {/* Live receipt feed · final-plan.md §1.6 Day 5-9 acceptance.
+          Server-rendered against the latest registry on every request
+          (force-dynamic). Proves the network is alive. Each row links
+          to its proof page. */}
+      {liveFeed.length > 0 && (
+        <section
+          style={{
+            padding: '48px 32px',
+            maxWidth: 1200,
+            margin: '0 auto',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'baseline',
+              justifyContent: 'space-between',
+              gap: 16,
+              marginBottom: 24,
+              flexWrap: 'wrap',
+            }}
+          >
+            <div
+              className="section-label"
+              style={{ color: 'var(--color-muted)', fontSize: 12, letterSpacing: '1.5px' }}
+            >
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: 'var(--color-verified)',
+                  marginRight: 8,
+                  verticalAlign: 'middle',
+                  animation: 'pulse 2s ease-in-out infinite',
+                }}
+              />
+              LIVE · LATEST {liveFeed.length} RECEIPTS
+            </div>
+            <Link href="/global" style={{ fontSize: 12, color: 'var(--color-muted)', textDecoration: 'underline' }}>
+              See full feed →
+            </Link>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              border: '1px solid var(--color-hairline)',
+              borderRadius: 'var(--radius-md)',
+              overflow: 'hidden',
+              background: 'var(--color-bg)',
+            }}
+          >
+            {liveFeed.map((r, idx) => (
+              <Link
+                key={`${r.registryVersion}-${r.id.toString()}`}
+                href={`/r/${r.id.toString()}`}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'auto 1fr auto auto',
+                  gap: 16,
+                  padding: '12px 16px',
+                  borderBottom: idx === liveFeed.length - 1 ? 'none' : '1px solid var(--color-hairline)',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  alignItems: 'center',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                }}
+                className="live-feed-row"
+              >
+                <span style={{ color: 'var(--color-muted)', minWidth: 70 }}>
+                  #{r.id.toString()} · {r.registryVersion.toUpperCase()}
+                </span>
+                <span style={{ color: 'var(--color-fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {receiptTypeLabel(r.receiptType)} · {r.agentAddress.slice(0, 10)}…{r.agentAddress.slice(-4)}
+                </span>
+                <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
+                  {timeAgo(r.timestamp)}
+                </span>
+                <span style={{ color: 'var(--color-muted)' }}>→</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* "BUILT ON FULL OG STACK" band */}
       <section
