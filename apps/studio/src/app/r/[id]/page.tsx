@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Fragment } from 'react';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
 import { FourLightRow } from '@/components/FourLightRow';
@@ -293,6 +294,24 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const headline = local?.outputs?.wording?.headline ?? `Receipt #${onChain.id} anchored on 0G ${getNetwork()}`;
   const citations = local?.outputs?.citations ?? [];
   const skill = local?.request;
+
+  // Structured findings · reads `outputs.parsed` from receipts produced
+  // by the doc-ask runtime extension (commit 4785f6f). Renders the
+  // model's extracted JSON when the parser succeeded; renders an honest
+  // "prose-only" note when it didn't. Older receipts (pre-parser) omit
+  // the field entirely — fallback to nothing.
+  type ParsedOutput =
+    | { ok: true; data: unknown; repaired: string[]; rawBytes: number }
+    | { ok: false; error: string; attempted: string[]; rawBytes: number };
+  const parsed = (local?.outputs as { parsed?: ParsedOutput } | undefined)?.parsed;
+  const parsedFindings: Array<Record<string, unknown>> =
+    parsed?.ok && parsed.data && typeof parsed.data === 'object' && 'findings' in (parsed.data as object) && Array.isArray((parsed.data as { findings?: unknown }).findings)
+      ? ((parsed.data as { findings: Array<Record<string, unknown>> }).findings)
+      : [];
+  const parsedObject =
+    parsed?.ok && parsed.data && typeof parsed.data === 'object' && parsedFindings.length === 0
+      ? (parsed.data as Record<string, unknown>)
+      : null;
 
   // final-plan.md §1.6 Day 1-3 · AI findings + signer context surfaced as the hero
   const summary = (local?.outputs as { summary?: string } | undefined)?.summary ?? null;
@@ -753,6 +772,109 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
                 <li key={c} className="mono" style={{ marginBottom: 4 }}>{c}</li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Structured findings · ships the model's extracted JSON when
+            the runtime parser succeeded. The receipt body remains the
+            canonical text via outputHash; this section just renders
+            the parsed shape for machine-friendly inspection. Falls
+            through silently for receipts without outputs.parsed (older
+            schema · pre-commit 4785f6f). */}
+        {parsedFindings.length > 0 && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24 }}>
+            <div className="section-label" style={{ marginBottom: 12 }}>
+              structured findings ({parsedFindings.length})
+            </div>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-muted)', maxWidth: 640 }}>
+              The model emitted JSON that the runtime parser extracted from prose. Downstream automation can read these findings directly from <code className="mono" style={{ fontSize: 12 }}>outputs.parsed.data.findings</code> on the receipt body.
+            </p>
+            <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {parsedFindings.map((f, i) => {
+                const section = typeof f.section === 'string' ? f.section : typeof f.type === 'string' ? f.type : typeof f.term_type === 'string' ? f.term_type : `Finding ${i + 1}`;
+                const riskRaw = typeof f.risk_level === 'string' ? f.risk_level : typeof f.riskLevel === 'string' ? f.riskLevel : null;
+                const riskLower = riskRaw?.toLowerCase();
+                const riskColor = riskLower === 'high' || riskLower === 'critical' ? 'var(--color-mismatch)' : riskLower === 'medium' ? 'var(--color-pending)' : 'var(--color-muted)';
+                const recommendation = typeof f.recommendation === 'string' ? f.recommendation : typeof f.counter_recommendation === 'string' ? f.counter_recommendation : null;
+                const clauseText = typeof f.clause_text === 'string' ? f.clause_text : typeof f.term === 'string' ? f.term : null;
+                return (
+                  <li
+                    key={i}
+                    style={{
+                      padding: 16,
+                      border: '1px solid var(--color-hairline)',
+                      borderRadius: 'var(--radius-md)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 8,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <strong style={{ fontSize: 14 }}>{section}</strong>
+                      {riskRaw && (
+                        <span
+                          style={{
+                            padding: '2px 8px',
+                            fontSize: 11,
+                            letterSpacing: '0.5px',
+                            color: riskColor,
+                            border: `1px solid ${riskColor}`,
+                            borderRadius: 999,
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {riskRaw}
+                        </span>
+                      )}
+                    </div>
+                    {clauseText && (
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.5 }}>{clauseText.slice(0, 240)}{clauseText.length > 240 ? '…' : ''}</p>
+                    )}
+                    {recommendation && (
+                      <p style={{ margin: 0, fontSize: 13, color: 'var(--color-fg)', lineHeight: 1.5 }}>
+                        <strong style={{ color: 'var(--color-muted)' }}>→</strong> {recommendation}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
+        {parsedObject && Object.keys(parsedObject).length > 0 && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24 }}>
+            <div className="section-label" style={{ marginBottom: 12 }}>
+              structured output
+            </div>
+            <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--color-muted)', maxWidth: 640 }}>
+              Parsed JSON from the model. Field-level shape is skill-specific (e.g. nda-triage returns type/term_years/governing_law/jurisdiction/red_flags/signature_recommendation).
+            </p>
+            <dl style={{ display: 'grid', gridTemplateColumns: '180px 1fr', gap: '6px 16px', fontSize: 13, margin: 0 }}>
+              {Object.entries(parsedObject).slice(0, 12).map(([key, value]) => (
+                <Fragment key={key}>
+                  <dt style={{ color: 'var(--color-muted)', wordBreak: 'break-word' }}>{key}</dt>
+                  <dd className={typeof value === 'string' ? '' : 'mono'} style={{ margin: 0, wordBreak: 'break-word' }}>
+                    {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+                      ? String(value)
+                      : Array.isArray(value)
+                        ? `[${value.length} items] ${value.slice(0, 4).map((v) => typeof v === 'string' ? `"${v.slice(0, 40)}"` : JSON.stringify(v).slice(0, 60)).join(', ')}${value.length > 4 ? ' …' : ''}`
+                        : JSON.stringify(value).slice(0, 200)}
+                  </dd>
+                </Fragment>
+              ))}
+            </dl>
+          </div>
+        )}
+
+        {parsed && !parsed.ok && (
+          <div style={{ borderTop: '1px solid var(--color-hairline)', paddingTop: 24 }}>
+            <div className="section-label" style={{ marginBottom: 12, color: 'var(--color-muted)' }}>
+              structured output · prose-only
+            </div>
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--color-muted)', maxWidth: 640 }}>
+              The runtime parser attempted to extract JSON from the model's output but couldn't recover a parseable value. The prose conclusion above is the receipt's text-of-record. <span className="mono" style={{ fontSize: 12 }}>parser error: {parsed.error}</span>
+            </p>
           </div>
         )}
 
