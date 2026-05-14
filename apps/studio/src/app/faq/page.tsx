@@ -566,7 +566,7 @@ export default async function FaqPage(): Promise<React.JSX.Element> {
       </header>
 
       <Section
-        label="The twelve"
+        label="The list"
         title="Answers."
         description="The first three open by default; the rest expand on click. Mono accents point at the exact field, file, or CLI command that backs the claim."
       >
