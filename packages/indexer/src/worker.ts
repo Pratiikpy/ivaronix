@@ -22,10 +22,12 @@ export interface WorkerOptions {
   rpcUrl: string;
   chainId: number;
   contractAddress: Address;
-  /** Sweep 65: V1 = legacy ReceiptRegistry, V2 = ReceiptRegistryV2 with
-   *  EIP-712 signer recovery. The worker tags every indexed row by the
-   *  registry it came from so V1 id=N and V2 id=N coexist in the DB. */
-  registryVersion?: 1 | 2;
+  /** V1 = legacy ReceiptRegistry, V2 = ReceiptRegistryV2 with EIP-712,
+   *  V3 = ReceiptRegistryV3 with canonical slot 10/11/12 admission.
+   *  V2 + V3 share the same `ReceiptAnchored(id, root, agent, type, store, attest, relayer, nonce)`
+   *  event signature so the worker handles both with one ABI; only the
+   *  registryVersion tag differs in the indexed row. */
+  registryVersion?: 1 | 2 | 3;
   /** Max blocks per RPC call. Galileo public RPC caps around 10k; default 5k for safety. */
   blockChunkSize?: number;
 }

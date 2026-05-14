@@ -18,7 +18,7 @@ import type { Address, Hash } from '@ivaronix/core';
 
 export interface IndexedReceipt {
   id: number;
-  registryVersion: 1 | 2; // V1 = legacy ReceiptRegistry, V2 = ReceiptRegistryV2 (sweep 65)
+  registryVersion: 1 | 2 | 3; // V1 = legacy, V2 = active, V3 = canonical slots 10/11/12 (iter 22)
   receiptRoot: Hash;
   storageRoot: Hash;
   attestationHash: Hash;
@@ -32,8 +32,9 @@ export interface IndexedReceipt {
 
 export interface IndexerStats {
   totalReceipts: number;
-  totalV1: number; // sweep 65: split V1 + V2 anchored counts
+  totalV1: number; // sweep 65: split V1 + V2 anchored counts (iter 22: V3 added)
   totalV2: number;
+  totalV3: number;
   byType: Record<number, number>;
   latestBlock: number;
   latestReceiptId: number;
@@ -193,7 +194,7 @@ export class IndexerDb {
     return row ?? null;
   }
 
-  getReceipt(id: number, registryVersion: 1 | 2 = 1): IndexedReceipt | null {
+  getReceipt(id: number, registryVersion: 1 | 2 | 3 = 1): IndexedReceipt | null {
     const row = this.db.prepare(
       `SELECT id, registry_version AS registryVersion,
               receipt_root AS receiptRoot, storage_root AS storageRoot,
@@ -208,7 +209,7 @@ export class IndexerDb {
   listReceipts(opts: {
     agent?: Address;
     receiptType?: number;
-    registryVersion?: 1 | 2; // sweep 65: filter by V1 / V2
+    registryVersion?: 1 | 2 | 3; // sweep 65: filter by V1 / V2 / V3 (iter 22)
     limit?: number;
     offset?: number;
   } = {}): IndexedReceipt[] {
@@ -249,6 +250,9 @@ export class IndexerDb {
     const v2Row = this.db
       .prepare('SELECT COUNT(*) AS n FROM receipts WHERE registry_version = 2')
       .get() as { n: number };
+    const v3Row = this.db
+      .prepare('SELECT COUNT(*) AS n FROM receipts WHERE registry_version = 3')
+      .get() as { n: number };
     const latestRow = this.db.prepare(
       'SELECT MAX(id) AS id, MAX(block_number) AS blk FROM receipts',
     ).get() as { id: number | null; blk: number | null };
@@ -264,6 +268,7 @@ export class IndexerDb {
       totalReceipts: totalRow.n,
       totalV1: v1Row.n,
       totalV2: v2Row.n,
+      totalV3: v3Row.n,
       byType,
       latestBlock: latestRow.blk ?? 0,
       latestReceiptId: latestRow.id ?? -1,

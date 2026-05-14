@@ -1,4 +1,4 @@
-// v3-lookup-allow: demo writer emits slots 0-9 only (burn-mode demo + verify-replay); slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// v3-lookup-allow: demo writer emits slots 0-9 only (burn-mode demo + verify-replay). Reader-side fix shipped for §B-V2-37 (✅ shipped); writer stays grandfathered until/unless a slot 10+ extension lands here — then add V3 anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3.
 // demo reads V2 → V1 passport via getActivePassportClient for the informational snapshot. Closes the V1-only waiver from USER_TODO §B-V2-38 (✅ shipped).
 import { Command } from 'commander';
 import { mkdtempSync, writeFileSync } from 'node:fs';

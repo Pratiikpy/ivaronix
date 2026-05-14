@@ -1,4 +1,4 @@
-// v3-lookup-allow: indexer mirrors V1+V2 ReceiptAnchored events; V3 indexing requires the new event signature ReceiptAnchored(uint256 indexed,bytes32,bytes32,bytes32,address indexed,uint8). V3 backfill tracked in USER_TODO §B-V2-37.
+// Indexer mirrors V1 + V2 + V3 ReceiptAnchored events. V2 and V3 share the same event ABI (id, root, agent, type, store, attest, relayer, nonce) so one worker handles both; V1 uses its 6-field shape. Closes the V3-blind reader part of USER_TODO §B-V2-37 (✅ shipped).
 /**
  * `ivaronix indexer ...` — receipt indexer (PASS 76 S-5).
  *
@@ -39,7 +39,7 @@ function indexerDbPath(): string {
 
 interface RegistryTarget {
   address: Address;
-  registryVersion: 1 | 2;
+  registryVersion: 1 | 2 | 3;
 }
 
 interface IndexerContext {
@@ -59,13 +59,15 @@ function buildContext(): IndexerContext | null {
   const env = loadEnv();
   const v1Addr = getDeployedAddress(env.network, 'ReceiptRegistry');
   const v2Addr = getDeployedAddress(env.network, 'ReceiptRegistryV2');
-  if (!v1Addr && !v2Addr) {
-    ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
+  const v3Addr = getDeployedAddress(env.network, 'ReceiptRegistryV3');
+  if (!v1Addr && !v2Addr && !v3Addr) {
+    ui.fail(`No ReceiptRegistry (V1, V2, or V3) deployed on ${env.network}`);
     return null;
   }
   const registries: RegistryTarget[] = [];
   if (v1Addr) registries.push({ address: v1Addr as Address, registryVersion: 1 });
   if (v2Addr) registries.push({ address: v2Addr as Address, registryVersion: 2 });
+  if (v3Addr) registries.push({ address: v3Addr as Address, registryVersion: 3 });
   const dbPath = indexerDbPath();
   mkdirSync(dirname(dbPath), { recursive: true });
   // address kept for legacy stats output; multi-registry callers use registries[].

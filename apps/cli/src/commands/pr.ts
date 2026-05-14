@@ -1,4 +1,4 @@
-// v3-lookup-allow: pr writer emits slot 6 (code_change) only; slot 10+ types must add V3 address lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// v3-lookup-allow: pr writer emits slot 6 (code_change) only. Reader-side fix shipped for §B-V2-37 (✅ shipped); writer stays grandfathered until/unless a slot 10+ extension lands here.
 /**
  * `ivaronix pr …` — wraps `gh pr` with on-chain receipt provenance (F-8, A2).
  *
