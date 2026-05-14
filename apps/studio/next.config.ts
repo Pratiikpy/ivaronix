@@ -67,6 +67,14 @@ const config: NextConfig = {
       '../../seed-skills/**/prompt.md',
       '../../seed-skills/**/manifest.json',
       '../../seed-skills/**/tests/**',
+      // Bundled cluster proof receipts · read at request time via
+      // `apps/studio/src/lib/local-receipt.ts:findReceiptsDirs()`.
+      // Without explicit inclusion, Vercel's nft tracer doesn't pull
+      // these JSON files into the function bundle (they're not import-
+      // referenced — read via fs.readFileSync). The locked launch-
+      // readiness sequence needs prod /r/<id> to render structured
+      // findings for the cluster proof set (commit 9605c56).
+      'src/data/receipts/anchored/**',
     ],
   },
   outputFileTracingExcludes: {
