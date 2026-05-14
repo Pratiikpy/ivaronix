@@ -73,10 +73,17 @@ export const doctorCommand = new Command('doctor')
         } else {
           const storage = createStorageClient({ network: env.network, privateKey: env.privateKey });
           const ping = await storage.ping();
-          if (ping.ok) {
-            ui.pass(`indexer              ${storage.indexerUrl}  (alive · HTTP ${ping.status})`);
+          if (ping.ok && ping.status >= 200 && ping.status < 400) {
+            ui.pass(`indexer              ${storage.indexerUrl}  (reachable · HTTP ${ping.status})`);
+          } else if (ping.ok && ping.status >= 400 && ping.status < 500) {
+            // 4xx on GET / is expected — the indexer expects POST to specific
+            // API paths, not a GET on the root. Distinguish from 5xx (real error).
+            ui.pass(`indexer              ${storage.indexerUrl}  (reachable · HTTP ${ping.status} on / — POST-only API)`);
+          } else if (ping.ok && ping.status >= 500) {
+            ui.fail(`indexer error · HTTP ${ping.status}`, `Indexer responded but with a 5xx — out of capacity or upstream issue.`);
+            allOk = false;
           } else {
-            ui.fail('indexer unreachable', ping.reason);
+            ui.fail('indexer unreachable', ping.ok ? `unexpected status ${ping.status}` : ping.reason);
             allOk = false;
           }
           if (opts.uploadProbe && ping.ok) {
@@ -126,15 +133,22 @@ export const doctorCommand = new Command('doctor')
         // (active anchor target post-sweep K-2), fall back to V1 for
         // legacy chains. V2 anchor count + V1 anchor count are
         // displayed separately so operators see the migration state.
-        const isReceiptRegistry = name === 'ReceiptRegistry' || name === 'ReceiptRegistryV2';
+        const isReceiptRegistry = name === 'ReceiptRegistry' ||
+          name === 'ReceiptRegistryV2' ||
+          name === 'ReceiptRegistryV3';
         if (isReceiptRegistry && env.privateKey) {
           try {
             const chain = createChainClient({ network: env.network, privateKey: env.privateKey });
+            // Every registry version (V1/V2/V3) exposes nextId() — the
+            // client API is structurally identical for the read path,
+            // so the V1 client wrapper safely reads V3's nextId too.
             const registry = new ReceiptRegistryClient(dep.address, chain.provider);
             const next = await registry.nextId();
             // nextId is 1-indexed; anchored count = nextId - 1.
             const anchored = next > 0n ? next - 1n : 0n;
-            const tag = name === 'ReceiptRegistryV2' ? '(V2 active)' : '(V1 legacy)';
+            const tag = name === 'ReceiptRegistryV3' ? '(V3 — canonical slots 10/11/12)'
+              : name === 'ReceiptRegistryV2' ? '(V2 active)'
+              : '(V1 legacy)';
             ui.info(`${' '.repeat(20)}   ${anchored} receipts anchored ${tag}`);
           } catch {
             /* skip live read on error */
