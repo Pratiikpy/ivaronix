@@ -1,0 +1,61 @@
+SUMMARY OF TERMS — SERIES A PREFERRED STOCK FINANCING
+StartupCo, Inc. ("Company")
+Date: March 15, 2026
+
+This term sheet summarizes the principal terms of the proposed Series A Preferred Stock financing of the Company. This term sheet is non-binding except for the provisions on Confidentiality and No Shop.
+
+INVESTMENT
+
+Investor: Established Ventures Fund III, L.P. and other investors approved by the Company (the "Investors")
+Series A Investment Amount: $8,000,000
+Pre-Money Valuation: $32,000,000
+Post-Money Valuation: $40,000,000
+Investor Ownership Post-Closing: 20%
+
+CAPITALIZATION
+
+The Company shall reserve an aggregate of 12% of the post-financing capitalization for issuance to employees, directors, and consultants pursuant to an Equity Incentive Plan (the "Option Pool"). The Option Pool shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock holders, not the Series A Investors).
+
+LIQUIDATION PREFERENCE
+
+In the event of any Liquidation Event, the holders of Series A Preferred Stock shall be entitled to receive, prior to and in preference to any distribution to holders of Common Stock, an amount equal to one times (1x) the Original Issue Price plus accrued but unpaid dividends (the "Liquidation Preference"). The Liquidation Preference is non-participating: after payment of the Liquidation Preference, holders of Series A Preferred Stock shall convert into Common Stock for purposes of further distributions.
+
+ANTI-DILUTION
+
+The Series A Preferred Stock shall be subject to anti-dilution adjustments based on a weighted-average broad-based formula in the event of a Down Round.
+
+FOUNDER VESTING
+
+All Founder shares shall be subject to vesting over four (4) years, with a one (1) year cliff and monthly vesting thereafter. In the event of a Change of Control, fifty percent (50%) of any unvested Founder shares shall accelerate (double-trigger acceleration: requires both Change of Control AND involuntary termination within twelve months).
+
+DRAG-ALONG
+
+In the event holders of (i) a majority of the Series A Preferred Stock, (ii) a majority of the Common Stock voting as a separate class, and (iii) the Board of Directors approve a sale of the Company, all stockholders shall be required to vote in favor of and participate in such transaction.
+
+PROTECTIVE PROVISIONS
+
+So long as the Series A Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series A Preferred Stock, take any of the following actions:
+- Amend the Company's Certificate of Incorporation or Bylaws in a manner adverse to the Series A
+- Sell or merge the Company
+- Issue any equity securities senior to or pari passu with the Series A Preferred Stock
+- Increase or decrease the authorized number of directors
+- Pay any dividend on the Common Stock
+- Repurchase or redeem any Common Stock (other than from employees on termination)
+
+BOARD COMPOSITION
+
+The Board shall consist of five (5) directors: two (2) appointed by the Founders, two (2) appointed by the Series A Investors, and one (1) independent director mutually agreed by the Founders and Series A Investors.
+
+PAY-TO-PLAY
+
+In the event of a future financing in which the Series A Investors are required to participate pro rata to maintain their anti-dilution protection, any Series A Investor that fails to so participate shall have its Series A Preferred Stock converted automatically into Common Stock.
+
+NO-SHOP
+
+For a period of forty-five (45) days from the date of this term sheet, the Company shall not directly or indirectly solicit, encourage, or accept any offer for the sale of equity, assets, or control of the Company from any party other than the Investors.
+
+GOVERNING LAW
+
+This term sheet shall be governed by the laws of the State of Delaware.
+
+[Signature blocks omitted]

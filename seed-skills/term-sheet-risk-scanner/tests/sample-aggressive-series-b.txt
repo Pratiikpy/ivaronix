@@ -1,0 +1,71 @@
+SERIES B PREFERRED STOCK FINANCING TERM SHEET
+ScaleCo, Inc. ("Company")
+Date: April 12, 2026
+
+This term sheet summarizes the principal terms of the proposed Series B Preferred Stock financing of the Company.
+
+INVESTMENT
+
+Lead Investor: Apex Growth Partners VI, L.P. ("Lead")
+Co-Investors: as approved by the Lead
+Total Series B Investment: $40,000,000
+Pre-Money Valuation: $120,000,000
+Post-Money Valuation: $160,000,000
+
+CAPITALIZATION
+
+The Company shall expand the Equity Incentive Plan such that the post-financing unallocated Option Pool equals fifteen percent (15%) of the fully-diluted post-money capitalization. The Option Pool expansion shall be created from the pre-money capitalization (i.e., the Option Pool dilutes the Common Stock and Series A holders, not the Series B Investors).
+
+LIQUIDATION PREFERENCE
+
+In the event of any Liquidation Event, the holders of Series B Preferred Stock shall be entitled to receive, prior to any distribution to holders of Series A Preferred Stock or Common Stock, an amount equal to three times (3x) the Original Issue Price plus accrued but unpaid dividends (the "Series B Liquidation Preference"). The Series B Liquidation Preference is fully participating: after payment of the Series B Liquidation Preference, holders of Series B Preferred Stock shall participate with the Common Stock on an as-converted basis in the remaining proceeds, without any cap on such participation.
+
+ANTI-DILUTION
+
+The Series B Preferred Stock shall be subject to a full-ratchet anti-dilution adjustment in the event of any future issuance of equity securities at a price per share less than the Series B Original Issue Price. Upon any such Down Round issuance, the Series B Conversion Price shall be reduced to the price per share of the new issuance, regardless of the size of such issuance.
+
+FOUNDER VESTING
+
+All Founder shares previously subject to vesting shall be reset such that vesting begins on the Series B closing date and runs over four (4) years with a one (1) year cliff and monthly vesting thereafter. There shall be no acceleration on Change of Control. Founder shares vested as of the closing date that were subject to vesting under prior agreements shall remain vested; the reset applies to the unvested balance and to any future stock awards.
+
+DRAG-ALONG
+
+In the event the Lead Investor (acting alone) approves a sale of the Company, all stockholders shall be required to vote in favor of, execute customary transaction documents for, and participate in such transaction, without separate approval from the Common Stock or the Series A Preferred Stock. The drag right may be exercised by the Lead in its sole discretion at any time after the second anniversary of the Series B closing.
+
+PROTECTIVE PROVISIONS
+
+So long as the Series B Preferred Stock remains outstanding, the Company shall not, without the approval of holders of a majority of the Series B Preferred Stock (which majority must include the Lead Investor), take any of the following actions:
+- Amend the Certificate of Incorporation or Bylaws
+- Sell or merge the Company
+- Issue any equity securities
+- Incur debt in excess of $500,000 in the aggregate
+- Increase or decrease the authorized number of directors
+- Pay any dividend
+- Repurchase or redeem any equity securities
+- Hire or terminate any officer of the Company (CEO, CFO, COO, CTO)
+- Approve the annual budget or any deviation from such budget in excess of ten percent (10%)
+- Adopt or amend any employee benefit plan or executive compensation plan
+- Enter into any contract with a counterparty obligation in excess of $1,000,000 in the aggregate
+- Initiate or settle any litigation
+
+BOARD COMPOSITION
+
+The Board shall consist of seven (7) directors: two (2) appointed by the Founders, three (3) appointed by the Series B Lead Investor, one (1) appointed by the Series A Investors, and one (1) independent director nominated by the Series B Lead and consented to by the Common.
+
+PAY-TO-PLAY
+
+In the event of any future financing, any Investor that fails to participate pro rata to its then-current preferred ownership shall have all of its preferred stock converted into Common Stock at the then-current conversion ratio.
+
+MFN
+
+The Company shall not issue any equity securities at terms more favorable to the holders than those of the Series B Preferred Stock without offering such favorable terms to the Series B Investors.
+
+NO-SHOP
+
+For a period of one hundred twenty (120) days from the date of this term sheet, the Company shall not directly or indirectly solicit, encourage, accept, or respond to any offer or expression of interest for the sale of equity, assets, or control of the Company from any party other than the Series B Investors. Breach of this provision shall obligate the Company to pay the Lead Investor a break-up fee equal to two percent (2%) of the Series B Investment Amount.
+
+GOVERNING LAW
+
+This term sheet shall be governed by the laws of the State of Delaware.
+
+[Signature blocks omitted]

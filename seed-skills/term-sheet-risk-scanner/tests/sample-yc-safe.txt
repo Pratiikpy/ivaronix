@@ -1,0 +1,47 @@
+SAFE (Simple Agreement for Future Equity)
+Post-Money Valuation Cap, no Discount
+
+THIS CERTIFIES THAT in exchange for the payment by HypotheticalInvestor, LLC (the "Investor") of $500,000.00 (the "Purchase Amount") on or about March 1, 2026 (the "Date of this Safe"), SeedCo, Inc., a Delaware corporation (the "Company"), issues to the Investor the right to certain shares of the Company's Capital Stock, subject to the terms set forth below.
+
+The "Post-Money Valuation Cap" is $10,000,000.
+
+See Section 2 for certain additional defined terms.
+
+1. EVENTS
+
+(a) Equity Financing. If there is an Equity Financing before the expiration or termination of this Safe, the Company will automatically issue to the Investor either: (1) a number of shares of Standard Preferred Stock equal to the Purchase Amount divided by the Standard Preferred Stock Price, or (2) at the option of the Investor, a number of shares of Safe Preferred Stock equal to the Purchase Amount divided by the Safe Price.
+
+In connection with the automatic issuance of Safe Preferred Stock, the Investor will execute and deliver to the Company all of the transaction documents related to the Equity Financing; provided, that such documents (i) are the same documents to be entered into with the purchasers of Standard Preferred Stock, with appropriate variations for Safe Preferred Stock if applicable, and (ii) have customary exceptions to any drag-along applicable to the Investor, including (without limitation) limited representations, warranties, liability and indemnification obligations of the Investor.
+
+(b) Liquidity Event. If there is a Liquidity Event before the expiration or termination of this Safe, the Investor will, at its option, either (i) receive a cash payment equal to the Purchase Amount or (ii) automatically receive from the Company a number of shares of Common Stock equal to the Purchase Amount divided by the Liquidity Price, in each case subject to certain customary terms.
+
+(c) Dissolution Event. If there is a Dissolution Event before this Safe terminates, the Company will pay an amount equal to the Purchase Amount to the Investor.
+
+2. DEFINITIONS
+
+"Liquidity Price" means the price per share equal to the Post-Money Valuation Cap divided by the Liquidity Capitalization.
+
+"Standard Preferred Stock Price" means the lowest price per share of the Standard Preferred Stock sold in the Equity Financing.
+
+"Safe Price" means the price per share equal to the Post-Money Valuation Cap divided by the Company Capitalization.
+
+3. COMPANY REPRESENTATIONS
+(a) The Company is a corporation duly organized, validly existing and in good standing under the laws of the State of Delaware.
+(b) The execution, delivery and performance by the Company of this Safe is within the power of the Company.
+(c) To the knowledge of the Company, it owns or possesses sufficient legal rights to all intellectual property and other proprietary information necessary for its business as now conducted.
+
+4. INVESTOR REPRESENTATIONS
+(a) The Investor has full legal capacity, power and authority to execute and deliver this Safe.
+(b) The Investor is an accredited investor.
+
+5. MISCELLANEOUS
+
+(a) "Most Favored Nation". If the Company issues any other Safes, convertible securities, or similar instruments with terms more favorable to the holder than those of this Safe before the expiration or termination of this Safe, the Investor may elect to amend this Safe to incorporate those more favorable terms.
+
+(b) Any provision of this Safe may be amended, waived or modified by written consent of the Company and either (i) the Investor or (ii) the majority-in-interest of all then-outstanding Safes with the same "Post-Money Valuation Cap" and "Discount Rate" as this Safe.
+
+(c) Neither this Safe nor the rights contained herein may be assigned by either party without the prior written consent of the other.
+
+(d) This Safe is governed by the laws of the State of Delaware.
+
+[Signature blocks omitted]

@@ -36,7 +36,7 @@ const FIRST_PARTY_SLUGS = [
   // Legal cluster (2026-05-14 directive · landed across cron fires 1-4)
   'contract-renewal-clause-detector',
   'nda-triage-reviewer',
-  // 'term-sheet-risk-scanner'  // fire 3 · queued
+  'term-sheet-risk-scanner',
   // 'legal-citation-verifier'  // fire 4 · queued
 ];
 

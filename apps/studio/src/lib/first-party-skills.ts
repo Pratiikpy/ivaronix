@@ -28,8 +28,8 @@ export const FIRST_PARTY_SLUGS = [
   'private-doc-review',
   // Legal cluster (2026-05-14 directive · 5 skills · landing in cron fires 1-4)
   'contract-renewal-clause-detector', // fire 1 · shipped
-  'nda-triage-reviewer',              // fire 2 · this commit
-  // 'term-sheet-risk-scanner'        // fire 3 · queued
+  'nda-triage-reviewer',              // fire 2 · shipped
+  'term-sheet-risk-scanner',          // fire 3 · this commit
   // 'legal-citation-verifier'        // fire 4 · queued (needs HTTP-runner schema extension)
 ] as const;
 
