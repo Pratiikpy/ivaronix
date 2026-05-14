@@ -926,6 +926,104 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         </p>
       </section>
 
+      {/* Builder rail · final-plan.md §1.6 Day 5-9 acceptance.
+          Copy-paste-able CLI + SDK + MCP + embed snippets so a
+          developer lands here and sees an integration path
+          immediately. Surfaces the 33-command CLI and 21-package
+          SDK to the landing surface — operator directive: every
+          backend capability with UI PMF must show on landing. */}
+      <section
+        style={{
+          padding: '64px 32px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <div
+          className="section-label"
+          style={{ marginBottom: 8, color: 'var(--color-muted)', fontSize: 12, letterSpacing: '1.5px' }}
+        >
+          FOR BUILDERS
+        </div>
+        <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--color-muted)', maxWidth: 720 }}>
+          Four ways to plug Ivaronix into a workflow. Every snippet runs against the live testnet.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: 14,
+          }}
+        >
+          {[
+            {
+              name: 'CLI',
+              body: '33 commands. Anchor a receipt from your shell.',
+              code: '$ pnpm ivaronix doc ask contract.pdf "find risks" --quick',
+              href: '/docs#cli',
+            },
+            {
+              name: 'SDK',
+              body: '21 packages. Embed receipt anchoring in your own service.',
+              code: 'import { runSkill } from \'@ivaronix/runtime\';\nawait runSkill({ skillId: \'private-doc-review\' });',
+              href: '/docs#sdk',
+            },
+            {
+              name: 'MCP',
+              body: 'Wire receipts into Claude Desktop / Cursor.',
+              code: '{ "mcpServers": { "ivaronix": { "command": "ivaronix", "args": ["mcp"] } } }',
+              href: '/docs#mcp',
+            },
+            {
+              name: 'Embed widget',
+              body: 'Drop a verified receipt into any page.',
+              code: '<iframe src="https://ivaronix.vercel.app/embed/r/1004" />',
+              href: '/embed/r/1004',
+            },
+          ].map(({ name, body, code, href }) => (
+            <Link
+              key={name}
+              href={href}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                padding: 16,
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
+                textDecoration: 'none',
+                color: 'inherit',
+              }}
+              className="module-card"
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-fg)' }}>{name}</span>
+                <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>open →</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.45, color: 'var(--color-muted)' }}>{body}</p>
+              <pre
+                style={{
+                  margin: 0,
+                  padding: '10px 12px',
+                  background: 'var(--color-tonal)',
+                  border: '1px solid var(--color-hairline)',
+                  borderRadius: 8,
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: 11,
+                  lineHeight: 1.5,
+                  overflowX: 'auto',
+                  color: 'var(--color-fg)',
+                  whiteSpace: 'pre',
+                }}
+              >
+                {code}
+              </pre>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* "BUILT ON FULL OG STACK" band */}
       <section
         style={{
