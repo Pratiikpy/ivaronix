@@ -391,6 +391,103 @@ const FAQS: ReadonlyArray<Faq> = [
       </>
     ),
   },
+  {
+    id: 'what-is-tee',
+    q: 'What is a TEE, and why does it matter here?',
+    short:
+      'A Trusted Execution Environment is a hardware-isolated region where the operator cannot read the data being processed.',
+    body: (
+      <>
+        <p style={pStyle}>
+          A TEE is a CPU feature (Intel TDX, AMD SEV, NVIDIA H100 with confidential
+          compute) that runs your code in an isolated memory region. The host
+          operating system and the operator of the machine see encrypted memory
+          pages only. The TEE produces an attestation — a signed quote that proves
+          which code ran on which hardware.
+        </p>
+        <p style={pStyle}>
+          On 0G Compute, inference for TIER 1 receipts runs inside a TEE. The receipt
+          records the provider address and an attestation hash; any reviewer can
+          re-run <Mono>broker.processResponse</Mono> against the recorded provider
+          and confirm the attestation. The provider cannot read your prompt; the
+          operator cannot read it either. That is the trust improvement over
+          standard API inference.
+        </p>
+        <p style={pStyle}>
+          The TEE does not promise the answer is correct. It promises the run
+          happened on the model and provider it claims, with no operator-side
+          interception. The four-light row on the receipt page shows this status
+          as the TEE light: green when re-attestation passes, grey when the
+          channel is transiently unreachable.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'creator-earnings',
+    q: 'How does a skill creator actually get paid?',
+    short:
+      'Every paid run anchors a SkillRunPayment tx. 90% of the price accrues to the creator wallet; 10% to treasury. Withdraw on demand.',
+    body: (
+      <>
+        <p style={pStyle}>
+          Publishing a skill sets a price in <Mono>SkillPricing</Mono> and a fee-split
+          (default 90% creator / 10% treasury; commoditised categories use 70/30).
+          When a buyer runs the skill, the studio calls{' '}
+          <Mono>SkillRunPayment.paySkillRun</Mono> with the receipt root, creator
+          address, and bps split. The contract holds the OG and credits the
+          creator + treasury balances atomically.
+        </p>
+        <p style={pStyle}>
+          The creator opens <Link href="/marketplace/payouts" style={{ color: 'var(--color-fg)' }}>/marketplace/payouts</Link>{' '}
+          and clicks Withdraw. The contract pays the full earned balance back to
+          the creator wallet in one tx. Every paid run + every withdraw is a real
+          on-chain event; nothing accrues off chain.
+        </p>
+        <p style={pStyle}>
+          The 90/10 split is settable per skill at publish time. Treasury share
+          funds infrastructure (RPC + indexer + KV sidecar). The contract emits
+          a <Mono>SkillRunPaid</Mono> event with creatorShare + treasuryShare so
+          subgraphs and dashboards can reconcile without rescanning every receipt.
+        </p>
+      </>
+    ),
+  },
+  {
+    id: 'provider-compromise',
+    q: 'What if the 0G Compute provider itself is compromised?',
+    short:
+      'The receipt records which provider ran the inference. A reviewer can re-attest against that provider, or refuse to trust it.',
+    body: (
+      <>
+        <p style={pStyle}>
+          A compromised provider could serve a different model than the receipt
+          claims. The TEE attestation is the defence: a fake provider cannot
+          produce a valid attestation that names the real provider's hardware
+          identity. The reviewer re-runs <Mono>broker.processResponse</Mono>{' '}
+          against the recorded provider address; if the attestation does not match,
+          the verify chip stays grey.
+        </p>
+        <p style={pStyle}>
+          A compromised provider that controls a real TEE could still serve a
+          quantised or fine-tuned version of the advertised model. The receipt
+          does not promise model fidelity at that level; it promises the inference
+          ran on the named hardware with the named model identifier. Higher-stakes
+          settings should run the same prompt across multiple providers and compare —
+          the consensus tier (analyst + critic + judge) is the in-product answer
+          for that, but a buyer can also run the same skill on a different operator
+          and diff the receipts.
+        </p>
+        <p style={pStyle}>
+          What the receipt absolutely defends against: a relay (the OpenAI-compatible
+          Router that fronts the 0G Compute network) silently swapping providers.
+          The Router cannot forge an attestation for a provider it does not
+          control. If the Router returns a different model than the receipt claims,
+          the TEE re-attestation fails and the receipt is honest about it.
+        </p>
+      </>
+    ),
+  },
 ];
 
 export default async function FaqPage(): Promise<React.JSX.Element> {
