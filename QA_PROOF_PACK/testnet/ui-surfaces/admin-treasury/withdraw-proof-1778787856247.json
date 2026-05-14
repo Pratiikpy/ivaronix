@@ -1,0 +1,26 @@
+{
+  "capturedAt": "2026-05-14T19:44:16.247Z",
+  "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "skillRunPaymentAddress": "0x9eA5FDba913AC94dA8833Fee21F2832827950A5C",
+  "withdrawTx": "0x9ed5b4c9bfa55a3ee8806564e74c6a31a72c867edd00083c41eeecb2ee3c4781",
+  "chainscan": "https://chainscan-galileo.0g.ai/tx/0x9ed5b4c9bfa55a3ee8806564e74c6a31a72c867edd00083c41eeecb2ee3c4781",
+  "block": 33328414,
+  "before": {
+    "treasuryBalance": "8000000000000000",
+    "treasuryLifetimeEarned": "18000000000000000",
+    "operatorWalletBalance": "66005477559118327839"
+  },
+  "after": {
+    "treasuryBalance": "0",
+    "treasuryLifetimeEarned": "18000000000000000",
+    "operatorWalletBalance": "66012677559118327839"
+  },
+  "event": null,
+  "assertions": {
+    "tBalZero": true,
+    "lifetimeMonotonic": true,
+    "operatorGained": true,
+    "eventOk": false,
+    "allPass": false
+  }
+}
