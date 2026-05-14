@@ -305,9 +305,15 @@ export default async function LegalPage() {
                 }}
               >
                 <h3 style={{ fontSize: 14, margin: 0, fontWeight: 600 }}>{ex.skill}</h3>
-                <span className="chip-pending" style={{ fontSize: 10 }}>
-                  RECEIPT QUEUED
-                </span>
+                {ex.receiptId !== null ? (
+                  <span className="chip-verified" style={{ fontSize: 10 }}>
+                    ANCHORED
+                  </span>
+                ) : (
+                  <span className="chip-pending" style={{ fontSize: 10 }}>
+                    RECEIPT QUEUED
+                  </span>
+                )}
               </div>
               <p
                 style={{
@@ -331,17 +337,34 @@ export default async function LegalPage() {
               >
                 <strong>After:</strong> {ex.after}
               </p>
-              <p
-                style={{
-                  fontSize: 11,
-                  color: 'var(--color-muted)',
-                  margin: 0,
-                  fontStyle: 'italic',
-                }}
-              >
-                Real receipt URL added after the first run of {ex.skill} is anchored on chain
-                (queued · {ex.tx}).
-              </p>
+              {ex.receiptId !== null ? (
+                <p style={{ fontSize: 11, color: 'var(--color-muted)', margin: 0 }}>
+                  <Link
+                    href={`/r/${ex.receiptId}`}
+                    style={{
+                      color: 'var(--color-fg)',
+                      fontWeight: 600,
+                      textDecoration: 'underline',
+                      textUnderlineOffset: 3,
+                    }}
+                  >
+                    Open receipt /r/{ex.receiptId} →
+                  </Link>
+                  <br />
+                  <span style={{ fontStyle: 'italic' }}>{ex.receiptDescription}</span>
+                </p>
+              ) : (
+                <p
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--color-muted)',
+                    margin: 0,
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Real receipt URL added after the first run of {ex.skill} is anchored on chain.
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -744,44 +767,52 @@ const BEFORE_AFTER_EXAMPLES: Array<{
   skill: string;
   before: string;
   after: string;
-  tx: string;
+  receiptId: number | null;
+  receiptDescription: string;
 }> = [
   {
     skill: 'private-doc-review',
-    before: 'Vendor MSA with hidden auto-renewal in §5.1 and asymmetric notice periods.',
+    before: 'Residential lease with auto-renewal language and ambiguous notice clauses.',
     after:
-      '3 findings ranked by risk · evidence quoted from the document · receipt anchored signer-verified on Galileo.',
-    tx: 'first paid run after fire 7 publish',
+      'Multiple findings surfaced · risks ranked · evidence quoted from the document · receipt signer-verified on Galileo.',
+    receiptId: 53,
+    receiptDescription: 'Anchored 2026-05-14 · block 33270447 · v0.4.0 refresh proof',
   },
   {
     skill: 'contract-renewal-clause-detector',
-    before: '12-month SaaS contract with §3.3 7%-or-CPI annual uplift buried in renewal pricing.',
+    before:
+      '12-month vendor MSA with §3.2 180-day auto-renewal, §3.3 7%-or-CPI uplift, §5.1 buried negative-option clause.',
     after:
       'JSON findings array per clause · risk_level + notice_period_days + exit_cost_estimate · structured for downstream cap-table tooling.',
-    tx: 'first paid run after fire 7 publish',
+    receiptId: 55,
+    receiptDescription: 'Anchored 2026-05-14 · block 33270838 · standard tier',
   },
   {
     skill: 'nda-triage-reviewer',
     before:
-      'Cayman exempted LP one-way NDA with perpetual term, $1M liquidated damages, no exclusions list.',
+      'Cayman exempted LP one-way NDA with perpetual term, $1M liquidated damages, broad "Confidential Information" definition.',
     after:
       'Triage object · type/term_years/governing_law/jurisdiction/exclusions/red_flags · signature_recommendation: refuse.',
-    tx: 'first paid run after fire 7 publish',
+    receiptId: 58,
+    receiptDescription: 'Anchored 2026-05-14 · block 33271110 · standard tier',
   },
   {
     skill: 'term-sheet-risk-scanner',
     before:
       'Series B with 3x participating no-cap liquidation preference + full-ratchet anti-dilution + 4-year vesting reset.',
     after:
-      '7 founder-hostile findings · founder_impact_estimate per clause · negotiation_recommendation: walk if not changed.',
-    tx: 'first paid run after fire 7 publish',
+      'Founder-hostile findings · founder_impact_estimate per clause · negotiation_recommendation: walk if not changed.',
+    receiptId: 62,
+    receiptDescription: 'Anchored 2026-05-14 · block 33271825 · high-stakes 5-role tier',
   },
   {
     skill: 'legal-citation-verifier',
-    before: 'Brief with 2 hallucinated cases mixed among 7 real ones — Mata v. Avianca pattern.',
+    before:
+      'Brief with 3 hallucinated cases (Patterson v. Aramburu · Glenwood Capital · Wexler v. Brody-Tonelli) mixed among real cites — the Mata v. Avianca pattern.',
     after:
-      'Each citation HTTP-verified against CourtListener and Cornell LII · 2 not_found rows with corrective notes · verdict: do-not-file.',
-    tx: 'first paid run after fire 7 publish',
+      'Each citation routed through web_fetch to CourtListener and Cornell LII · hallucination_signal per row · verdict: do-not-file.',
+    receiptId: 64,
+    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · high-stakes 5-role tier',
   },
 ];
 
