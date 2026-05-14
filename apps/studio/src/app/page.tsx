@@ -135,6 +135,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         >
           {/* LEFT: copy + CTAs + stat row */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+            {/* H1/H2 locked by final-plan.md §1.6 Day 5-9 (MUST-SHIP #2). The
+                prior persona-led H1 ("A founder reviewing a term sheet…")
+                read as doc-review-only — the plan's product-wide H1 is the
+                external-reviewer fix per "not doc review only" acceptance. */}
             <h1
               style={{
                 fontSize: 72,
@@ -144,15 +148,27 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 fontWeight: 700,
               }}
             >
-              <span>A founder reviewing a term sheet shouldn&apos;t have to </span>
-              <span className="italic-display" style={{ fontWeight: 400 }}>trust the AI.</span>
+              <span>Private AI work.</span>{' '}
+              <span className="italic-display" style={{ fontWeight: 400 }}>Public proof.</span>
             </h1>
-            <p style={{ fontSize: 19, lineHeight: 1.5, color: 'var(--color-muted)', maxWidth: 580, margin: 0 }}>
-              Ivaronix runs a private review of the document you can&apos;t paste into ChatGPT — a term sheet
+            <h2
+              style={{
+                fontSize: 26,
+                lineHeight: 1.25,
+                margin: 0,
+                fontWeight: 500,
+                color: 'var(--color-fg)',
+                maxWidth: 620,
+              }}
+            >
+              Paid skills. Controlled memory. Verifiable end to end.
+            </h2>
+            <p style={{ fontSize: 18, lineHeight: 1.55, color: 'var(--color-muted)', maxWidth: 580, margin: 0 }}>
+              Run a private review of the document you can&apos;t paste into ChatGPT — a term sheet
               under NDA, an indemnity clause, a data room before signing. Every review leaves a{' '}
               <strong style={{ color: 'var(--color-fg)', fontWeight: 600 }}>cryptographic receipt</strong>{' '}
-              independently re-verifiable by anyone, on any machine, in 10 seconds. Paid on chain.
-              Creator credited 90%. Treasury 10%.
+              anyone can re-verify on any machine in 10 seconds. Paid on chain. Creator credited 90%.
+              Treasury 10%.
             </p>
 
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -236,6 +252,63 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="hero-runpanel">
             {demoActive ? <DemoPanel /> : <RunPanel skills={runPanelSkills} />}
           </div>
+        </div>
+      </section>
+
+      {/* 5-step landing loop · final-plan.md §1.6 Day 5-9 acceptance.
+          Run → Verify → Remember → Pay → Share. Each step links to a
+          real shipped surface, no fake cards. */}
+      <section
+        style={{
+          padding: '48px 32px',
+          maxWidth: 1200,
+          margin: '0 auto',
+        }}
+      >
+        <div
+          className="section-label"
+          style={{ marginBottom: 24, color: 'var(--color-muted)', fontSize: 12, letterSpacing: '1.5px' }}
+        >
+          THE LANDING LOOP
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {[
+            { step: '01', name: 'Run', body: 'Drop a doc. Pick a skill. Inference happens in the 0G TEE.', href: '/onboard' },
+            { step: '02', name: 'Verify', body: 'Schema + canonical hash + signature + chain anchor + TEE re-attestation. Five checks, one chip.', href: '/r/1004' },
+            { step: '03', name: 'Remember', body: 'Grant memory access on chain. Revoke on chain. Every read leaves an access-log entry.', href: '/memory' },
+            { step: '04', name: 'Pay', body: 'Per-run nano-payments. 90/10 creator/treasury split. Every run is a real on-chain tx.', href: '/marketplace' },
+            { step: '05', name: 'Share', body: 'Public proof URL. Anyone re-verifies on any machine, no Ivaronix install required.', href: '/r/1004' },
+          ].map(({ step, name, body, href }) => (
+            <Link
+              key={step}
+              href={href}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                padding: 18,
+                background: 'var(--color-bg)',
+                border: '1px solid var(--color-hairline)',
+                borderRadius: 'var(--radius-md)',
+                textDecoration: 'none',
+                color: 'inherit',
+                transition: 'border-color 120ms, transform 120ms',
+              }}
+              className="landing-loop-card"
+            >
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--color-muted)', letterSpacing: '1px' }}>
+                § {step}
+              </span>
+              <span style={{ fontSize: 20, fontWeight: 600, color: 'var(--color-fg)' }}>{name}</span>
+              <span style={{ fontSize: 13, lineHeight: 1.45, color: 'var(--color-muted)' }}>{body}</span>
+            </Link>
+          ))}
         </div>
       </section>
 

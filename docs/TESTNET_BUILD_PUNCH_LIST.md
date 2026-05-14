@@ -6,8 +6,8 @@
 
 | Day | Item | Status | Owner | Acceptance |
 |---|---|---|---|---|
-| **1-3** | **Receipt page rewrite** — `/r/<id>` leads with AI findings + signer context · "Process verified" copy · 0G Storage body fetch · TIER badge + confidence + retry · four-light row BELOW the answer | 🔴 NOT STARTED | cron | full body when present · no `PENDING` on confirmed · screenshot-inspected desktop + mobile |
-| 4 | **Schema bump** — `summary` field + `ARCHIVED` state + tier + confidence + `acceptableModels[]` on skill manifest | 🔴 NOT STARTED | cron | all 13 types serialize · polyglot hash byte-equal · vectors updated |
+| **1-3** | **Receipt page rewrite** — hero + "Process verified" copy + signer/skill/model/confidence + retry CTA | 🟢 SHIPPED commit `86eb50e` | cron | hero renders summary when present + honest fallback when absent · 4-light below the answer · tier badge + confidence visible |
+| 4 | **Schema bump** — `summary` field + `ARCHIVED` state + tier + confidence + `acceptableModels[]` on skill manifest | 🟡 DEFERRED to coordinated polyglot sweep | cron | requires TS+Py+Rust mirror + 29 vectors re-pinned + pipeline-side summarizer · single-fire scope too tight; queued as one focused fire after Day 5-9 |
 | 5-9 | **Home page rewrite** — long-scroll · H1 "Private AI work. Public proof." · 5-step landing loop · 12-module grid · live receipt feed · sovereignty circle · big numbers · builder rail | 🔴 NOT STARTED | cron | every module LIVE or honest ROADMAP · external reviewer confirms not "doc review only" |
 | 10-12 | **`/learn` page** — animated four-light · sovereignty circle · trust-gradient · receipt anatomy · consensus tier compare · burn-mode threat model · FAQ · glossary | 🔴 NOT STARTED | cron | every diagram anchored from home cards |
 | 13-17 | **0G DA full pipeline** OR honest runbook | 🟡 preflight done · pipeline PENDING | cron | either (a) batch 10 → 1 anchor + 10 retrievable + cost delta documented, OR (b) `docs/0G_DA_INTEGRATION.md` Day-1 runbook + Phase 2 demote |
