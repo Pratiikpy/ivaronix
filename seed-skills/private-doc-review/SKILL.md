@@ -26,6 +26,13 @@ og:
   # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
   acceptableModels:
     - "qwen/qwen-2.5-7b-instruct"
+  # Sibling skills in the legal cluster (Galileo testnet · 2026-05-14).
+  # Used by /marketplace + /verticals + /legal to render cross-skill workflows.
+  related_skills:
+    - "contract-renewal-clause-detector"
+    - "nda-triage-reviewer"
+    - "term-sheet-risk-scanner"
+    - "legal-citation-verifier"
   permissions:
     # planning-003 §A.4.8: doc-review queries the user's prior memory for
     # related context (e.g. "I reviewed a similar lease 3 months ago and

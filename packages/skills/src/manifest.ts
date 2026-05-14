@@ -276,6 +276,16 @@ const OgBlock = z.object({
    * Optional for canonical-hash backwards compatibility.
    */
   acceptableModels: z.array(z.string()).optional(),
+  /**
+   * Related skills in the same cluster. Used by the marketplace to render
+   * "you might also need" cards on a skill detail page and by `/verticals`
+   * to highlight cross-skill workflows. Each entry is a first-party slug.
+   *
+   * Optional for canonical-hash backwards compatibility — the 6 pre-bump
+   * first-party manifests don't declare related skills and their
+   * manifestHash stays byte-stable across the schema change.
+   */
+  related_skills: z.array(z.string()).optional(),
   // Hooks is optional so older manifests (published without an `og.hooks` block)
   // produce the SAME canonical-JSON hash they did before this field was added.
   // Adding `.default({})` would silently mutate every old manifest's hash.

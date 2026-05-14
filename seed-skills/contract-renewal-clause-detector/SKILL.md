@@ -25,6 +25,12 @@ og:
   # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
   acceptableModels:
     - "qwen/qwen-2.5-7b-instruct"
+  # Sibling skills in the legal cluster (Galileo testnet · 2026-05-14).
+  related_skills:
+    - "private-doc-review"
+    - "nda-triage-reviewer"
+    - "term-sheet-risk-scanner"
+    - "legal-citation-verifier"
   permissions:
     # Legal review skills query prior reviewed contracts so the model can
     # cite "I flagged the same evergreen clause on the lease I reviewed

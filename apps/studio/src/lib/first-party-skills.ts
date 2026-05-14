@@ -26,6 +26,11 @@ export const FIRST_PARTY_SLUGS = [
   'github-audit',
   'plan-step',
   'private-doc-review',
+  // Legal cluster (2026-05-14 directive · 5 skills · landing in cron fires 1-4)
+  'contract-renewal-clause-detector', // fire 1 · shipped
+  'nda-triage-reviewer',              // fire 2 · this commit
+  // 'term-sheet-risk-scanner'        // fire 3 · queued
+  // 'legal-citation-verifier'        // fire 4 · queued (needs HTTP-runner schema extension)
 ] as const;
 
 export type FirstPartySlug = (typeof FIRST_PARTY_SLUGS)[number];

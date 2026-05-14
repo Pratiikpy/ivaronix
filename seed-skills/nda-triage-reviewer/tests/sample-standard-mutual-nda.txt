@@ -1,0 +1,43 @@
+MUTUAL NON-DISCLOSURE AGREEMENT
+
+This Mutual Non-Disclosure Agreement (this "Agreement") is entered into as of February 3, 2026 (the "Effective Date") by and between Company A, Inc., a Delaware corporation ("Party A"), and Company B, Inc., a California corporation ("Party B") (each a "Party" and together the "Parties").
+
+1. PURPOSE
+The Parties wish to explore a potential business relationship (the "Purpose") and in connection therewith may disclose to each other certain Confidential Information.
+
+2. DEFINITION OF CONFIDENTIAL INFORMATION
+"Confidential Information" means any non-public information disclosed by one Party (the "Disclosing Party") to the other Party (the "Receiving Party") that is identified as confidential at the time of disclosure or that a reasonable person would understand to be confidential under the circumstances.
+
+3. EXCLUSIONS
+Confidential Information does not include information that:
+(a) is or becomes generally available to the public other than through breach of this Agreement;
+(b) was known to the Receiving Party prior to disclosure by the Disclosing Party;
+(c) is independently developed by the Receiving Party without use of or reference to the Confidential Information;
+(d) is received from a third party without restriction and without breach of any obligation of confidentiality; or
+(e) is required to be disclosed by law, regulation, or court order, provided the Receiving Party gives prompt notice to the Disclosing Party where legally permitted.
+
+4. OBLIGATIONS
+The Receiving Party agrees to:
+(a) use the Confidential Information solely for the Purpose;
+(b) maintain the Confidential Information in confidence using the same degree of care it uses to protect its own confidential information of similar importance, but in no event less than reasonable care; and
+(c) not disclose the Confidential Information to any third party except to its employees, contractors, and advisors with a need to know and who are bound by confidentiality obligations no less protective than those in this Agreement.
+
+5. TERM
+This Agreement shall remain in effect for three (3) years from the Effective Date. Confidentiality obligations with respect to Confidential Information disclosed during the term shall survive for three (3) years from the date of disclosure.
+
+6. RETURN OR DESTRUCTION
+Upon written request of the Disclosing Party, the Receiving Party shall promptly return or destroy all Confidential Information of the Disclosing Party in its possession.
+
+7. NO LICENSE
+Nothing in this Agreement grants either Party any right, title, or interest in or to the other Party's intellectual property.
+
+8. NO OBLIGATION
+Nothing in this Agreement obligates either Party to enter into any further agreement or business relationship.
+
+9. GOVERNING LAW; JURISDICTION
+This Agreement is governed by the laws of the State of Delaware, without regard to its conflict of laws principles. The Parties consent to the exclusive jurisdiction of the state and federal courts located in Wilmington, Delaware.
+
+10. ENTIRE AGREEMENT
+This Agreement is the entire agreement between the Parties with respect to its subject matter and supersedes all prior or contemporaneous communications.
+
+[Signature blocks omitted]

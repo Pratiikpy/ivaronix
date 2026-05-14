@@ -1,0 +1,35 @@
+CONFIDENTIALITY AGREEMENT
+
+This Confidentiality Agreement (this "Agreement") is entered into as of February 21, 2026 (the "Effective Date") by and between Innovate Partners, LLC ("Innovate") and Counterparty, Inc. ("Counterparty") (collectively, the "Parties").
+
+1. CONFIDENTIAL INFORMATION
+Each Party (the "Receiving Party") agrees that all non-public information disclosed by the other Party (the "Disclosing Party") shall be considered "Confidential Information" and shall be treated as such.
+
+2. EXCLUSIONS
+Confidential Information does not include information that:
+(a) is publicly available through no breach of this Agreement;
+(b) is independently developed by the Receiving Party; or
+(c) is required to be disclosed by law.
+
+3. OBLIGATIONS
+The Receiving Party agrees to maintain the Confidential Information in confidence and to use it solely for the purpose of evaluating the potential business relationship between the Parties.
+
+4. TERM
+This Agreement shall remain in effect for two (2) years from the Effective Date. Confidentiality obligations shall survive for two (2) years from the date of disclosure.
+
+5. NON-SOLICITATION
+During the term of this Agreement and for a period of twenty-four (24) months following its expiration or termination, neither Party shall directly or indirectly solicit, hire, employ, engage, or contract with any employee, contractor, consultant, or representative of the other Party with whom the Receiving Party had contact in connection with the discussions contemplated hereunder, without the prior written consent of the other Party. Each Party acknowledges that breach of this Section 5 would cause the other Party irreparable harm and that liquidated damages of one hundred fifty thousand dollars ($150,000) per solicited or hired person are a reasonable estimate of such harm.
+
+6. NO LICENSE
+Nothing in this Agreement grants either Party any right, title, or interest in or to the other Party's intellectual property.
+
+7. NO OBLIGATION
+Nothing in this Agreement obligates either Party to enter into any further agreement.
+
+8. GOVERNING LAW
+This Agreement is governed by the laws of the State of New York, without regard to its conflict of laws principles. Disputes shall be resolved in the state and federal courts located in New York County, New York.
+
+9. ENTIRE AGREEMENT
+This Agreement constitutes the entire agreement between the Parties with respect to its subject matter.
+
+[Signature blocks omitted]

@@ -1,0 +1,38 @@
+NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement (this "Agreement") is entered into as of February 14, 2026 (the "Effective Date") between Acme Holdings Group, LP, a Cayman Islands exempted limited partnership ("Acme"), and Recipient ("Recipient").
+
+1. PURPOSE
+Acme is willing to disclose certain information to Recipient in connection with Recipient's evaluation of a potential transaction (the "Purpose"). Recipient agrees to maintain the confidentiality of such information on the terms set forth below.
+
+2. CONFIDENTIAL INFORMATION
+"Confidential Information" means any and all information disclosed by Acme to Recipient, whether written, oral, electronic, visual, or in any other form, including but not limited to: business plans, financial information, strategic plans, customer lists, supplier lists, pricing, technical specifications, trade secrets, intellectual property, methodologies, processes, designs, drawings, samples, prototypes, formulas, source code, algorithms, models, projections, forecasts, market analyses, investor relationships, hiring plans, organizational charts, internal communications, oral statements, written statements, future-tense statements about plans or intent, and any information that Recipient could reasonably infer to be confidential from the context of disclosure or from the nature of the information itself. The fact of the discussions between the parties is itself Confidential Information.
+
+3. OBLIGATIONS OF RECIPIENT
+Recipient shall:
+(a) hold all Confidential Information in strict confidence;
+(b) use the Confidential Information solely for the Purpose and for no other purpose;
+(c) not disclose the Confidential Information to any third party without the prior written consent of Acme in its sole discretion;
+(d) take all measures necessary to protect the Confidential Information, including but not limited to those measures Recipient takes to protect its own most sensitive confidential information;
+(e) immediately notify Acme upon discovery of any unauthorized use or disclosure of the Confidential Information;
+(f) indemnify Acme for any breach of this Agreement, including all attorneys' fees, costs, and consequential damages.
+
+4. NO RECIPROCAL OBLIGATION
+Acme makes no representations or warranties as to the Confidential Information and shall have no obligation to provide any additional information. Acme has no obligation of confidentiality with respect to any information disclosed by Recipient.
+
+5. TERM
+This Agreement shall remain in effect in perpetuity. The confidentiality obligations herein shall survive any expiration or termination of any business relationship between the parties.
+
+6. REMEDIES
+Recipient acknowledges that breach of this Agreement would cause Acme irreparable harm for which monetary damages would be inadequate. Recipient agrees that Acme shall be entitled to seek injunctive relief, specific performance, and liquidated damages of $1,000,000 per breach, in addition to all other available remedies.
+
+7. GOVERNING LAW
+This Agreement shall be governed by the laws of the Cayman Islands. The Parties consent to the exclusive jurisdiction of the courts of the Cayman Islands.
+
+8. NO ASSIGNMENT
+Recipient may not assign this Agreement to any party. Acme may freely assign this Agreement to any affiliate, successor, or acquirer.
+
+9. ENTIRE AGREEMENT
+This Agreement is the entire agreement between the parties.
+
+[Signature blocks omitted]
