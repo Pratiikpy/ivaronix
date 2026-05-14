@@ -22,6 +22,7 @@ export const initCommand = new Command('init')
     if (existsSync(root) && !opts.force) {
       ui.fail(`.ivaronix/ already exists at ${root}`);
       ui.hint('pass --force to overwrite, or rm -rf .ivaronix and re-run');
+      process.exitCode = 1;
       return;
     }
 

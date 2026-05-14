@@ -197,7 +197,7 @@ The root `README.md` has **no** License section, **no** Contributing section, **
 - **`room read` anchors a chain receipt with no `--check-only`** — judge pays gas to look at their own grant.
 
 ### Missing exit codes
-- **`stats`, `memory list`, `memory log`, `memory log-emit`, `init` failure paths** call `ui.fail` and `return` without setting `process.exitCode = 1`. Scripts can't detect failures.
+- **`stats`, `memory list`, `memory log`, `memory log-emit`, `init` failure paths** call `ui.fail` and `return` without setting `process.exitCode = 1`. Scripts can't detect failures. **✅ FIXED 2026-05-14** · `init.ts:23-27`, `memory.ts:522-525,690-693,719-723,775-778,782-786,846-853,865-869` all set `process.exitCode = 1` before returning on hard-fail paths. The intentional warning-level `ui.fail` calls (e.g., "passport_update receipt anchor failed · skipping" where the run continues) stay exit-0 — those are graceful degradations, not failures.
 
 ### Other
 - **`receipt verify` with partial TEE failure** prints green `'→ ANCHORED (some TEE checks failed)'` and exits 0. The green banner says success while saying failure. **✅ FIXED 2026-05-14** · `apps/cli/src/commands/receipt.ts:543-558` now uses `ui.banner('pending', ...)` (yellow) when TEE-independent checks fail and sets `process.exitCode = 1` so scripts gating on the verify don't proceed past a half-verified receipt. Banner text now reports `(N of M attestations passed · N failed)` counts instead of vague "some failed".

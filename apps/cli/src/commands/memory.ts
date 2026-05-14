@@ -521,6 +521,7 @@ memoryCommand
     const capVersion: 'v1' | 'v2' = capAddrV2 ? 'v2' : 'v1';
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
       return;
     }
 
@@ -549,6 +550,7 @@ memoryCommand
     const grantId = await cap.grantIdFromTx(tx);
     if (!grantId) {
       ui.fail('Could not extract grantId from event log');
+      process.exitCode = 1;
       return;
     }
     ui.pass(`grantId              ${grantId}`);
@@ -687,6 +689,7 @@ memoryCommand
     const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
       return;
     }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
@@ -717,6 +720,7 @@ memoryCommand
     const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
+      process.exitCode = 1;
       return;
     }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
@@ -725,6 +729,7 @@ memoryCommand
     const target = (opts.to ?? opts.by ?? env.walletAddress) as Address | undefined;
     if (!target) {
       ui.fail('No target wallet — pass --by/--to or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
+      process.exitCode = 1;
       return;
     }
 
@@ -772,6 +777,7 @@ memoryCommand
     const logAddrV1 = getDeployedAddress(env.network, 'MemoryAccessLog');
     if (!logAddrV2 && !logAddrV1) {
       ui.fail(`MemoryAccessLog not deployed on ${env.network}`);
+      process.exitCode = 1;
       return;
     }
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
@@ -779,6 +785,7 @@ memoryCommand
     const target = (opts.agent ?? env.walletAddress) as Address | undefined;
     if (!target) {
       ui.fail('No target agent — pass --agent or set IVARONIX_WALLET_ADDRESS (legacy: EVM_WALLET_ADDRESS)');
+      process.exitCode = 1;
       return;
     }
 
@@ -838,11 +845,13 @@ memoryCommand
     const env = loadEnv();
     if (!env.privateKey) {
       ui.fail('No private key');
+      process.exitCode = 1;
       return;
     }
     const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
     if (!logAddr) {
       ui.fail(`MemoryAccessLog not deployed`);
+      process.exitCode = 1;
       return;
     }
 
@@ -855,6 +864,7 @@ memoryCommand
     const accessType = typeMap[opts.type.toLowerCase()];
     if (accessType === undefined) {
       ui.fail(`Bad --type ${opts.type}; use read/write/delete/grant_used`);
+      process.exitCode = 1;
       return;
     }
 
