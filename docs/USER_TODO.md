@@ -717,7 +717,7 @@ These are code-complete in the repo. The chain deploy itself needs operator-side
 
 ---
 
-### B-V2-46 · Schema-aware Zod validation per-skill on outputs.parsed.data
+### B-V2-46 · Schema-aware Zod validation per-skill on outputs.parsed.data · ✅ SHIPPED 2026-05-14 · commit 7757132
 
 - **Source:** Breadth-test launch-readiness sweep · 2026-05-14 · receipt #72 (nda-triage re-anchor). The parser-shipping arc (commits `4785f6f` + `83a0fbe`) recovers JSON from prose and writes it to `outputs.parsed.data`, but `data` is typed `z.unknown()` — so a model emitting wrong-shape JSON (e.g., empty `[]` array instead of `{type, term_years, governing_law, ...}`) still anchors with `parsed.ok: true · data: []`. Receipt #72 caught exactly this: nda-triage skill ran, model emitted `[]`, receipt anchored "successfully", `outputs.riskLevel: low` (no data to infer from), prose headline correctly identified "one-way" + "AGREEMENT" but the structured field is empty.
 - **Why this matters:** machine consumers reading `receipt.outputs.parsed.data.signature_recommendation` get `undefined` instead of the verdict the model actually produced in prose. The marketplace promises structured output; today's contract holds for ~2/3 of runs (model variance is 33% on this prompt). Production CLM/Notion/Zapier integrations would silently get empty data and not know they should refetch prose.
