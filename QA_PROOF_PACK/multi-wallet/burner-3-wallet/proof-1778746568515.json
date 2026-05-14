@@ -1,0 +1,67 @@
+{
+  "timestamp": "2026-05-14T08:16:08.512Z",
+  "elapsedSec": 73.97,
+  "wallets": {
+    "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "alice": {
+      "address": "0xbBfA58f7F01E12f1506d6f61f7c5fD14C46c35a1",
+      "role": "creator",
+      "privateKey": "0x8dbec597268b3bd611fe0e0b85672099655eb7eb49b9371eec55d557098ceae5"
+    },
+    "bob": {
+      "address": "0x4Dfc3dDAeeF8690E134Efb0e750AD1A1D5Ab88C6",
+      "role": "buyer",
+      "privateKey": "0x539faec92428bee0ae99e051ba070dda826dca359897ff343f96185c13ae5554"
+    }
+  },
+  "skill": {
+    "slug": "burner-test-mp57r19p",
+    "skillId": "0xa6eada003f228fd63acaf9f49cb0378c88a292d5deaa07d1355e1e60cdb64d01",
+    "versionId": "0xe32e703a20098305652a91ed3370235a27f244557ddae05f8afc0fc46e3bdc8a",
+    "version": "0.1.0",
+    "manifestHash": "0xb0252972300c335fb6ea76c8aa1125324f1ba328a52043bc8436197e73635a77",
+    "price": "0.005",
+    "creatorBps": 9000,
+    "treasuryBps": 1000
+  },
+  "txs": {
+    "fundAlice": {
+      "hash": "0xb74a63559a4af266a839bf36de232c37630036ecfc05fcec928bd6e67813aed9",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0xb74a63559a4af266a839bf36de232c37630036ecfc05fcec928bd6e67813aed9"
+    },
+    "fundBob": {
+      "hash": "0x926468d6ef53c57e72f5d74a497fc0c03b5b66bccf87241496b238a2207afb88",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x926468d6ef53c57e72f5d74a497fc0c03b5b66bccf87241496b238a2207afb88"
+    },
+    "publishVersion": {
+      "hash": "0x4c3b9c65e6369be642fdc6e2bae7bc3ce9382b59e7e9937342ea83ba79c58c92",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x4c3b9c65e6369be642fdc6e2bae7bc3ce9382b59e7e9937342ea83ba79c58c92"
+    },
+    "setPrice": {
+      "hash": "0x3ea7cae272423e5ac96879b740eb33f369e7ff43b71f7d92b2cbca54daa81ed9",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x3ea7cae272423e5ac96879b740eb33f369e7ff43b71f7d92b2cbca54daa81ed9"
+    },
+    "paySkillRun": {
+      "hash": "0xc1ca72f352e08778c31f099334c20fc74d7dfc30943282f29092c2d5ed7a687c",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0xc1ca72f352e08778c31f099334c20fc74d7dfc30943282f29092c2d5ed7a687c"
+    },
+    "withdrawCreator": {
+      "hash": "0x2e092980e2353eaab71cc16b6ebac15caf6c35c72fc738d750e9375c0e0471b6",
+      "chainscan": "https://chainscan-galileo.0g.ai/tx/0x2e092980e2353eaab71cc16b6ebac15caf6c35c72fc738d750e9375c0e0471b6"
+    }
+  },
+  "split": {
+    "creatorReceived": "0.0045",
+    "treasuryReceived": "0.003",
+    "expectedCreator": "0.0045",
+    "expectedTreasury": "0.0005",
+    "bpsObserved": {
+      "creator": 9000,
+      "treasury": 1000
+    }
+  },
+  "finalState": {
+    "aliceWalletBalance": "0.0209",
+    "aliceUnpaidBalance": "0.0"
+  }
+}
