@@ -1,0 +1,23 @@
+{
+  "runAt": "2026-05-14T10:22:53.317Z",
+  "studioUrl": "https://ivaronix.vercel.app",
+  "rows": [
+    {
+      "url": "https://ivaronix.vercel.app/",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "hydrationHits": [],
+      "passed": true
+    },
+    {
+      "url": "https://ivaronix.vercel.app/r/1004",
+      "pageerrors": [],
+      "consoleErrors": [],
+      "hydrationHits": [],
+      "passed": true
+    }
+  ],
+  "verdict": "PASS",
+  "commit": "6715278",
+  "fixOf": "React #418 hydration mismatch on home"
+}
