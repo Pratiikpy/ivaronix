@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-05-14T17:22:25.316Z",
+  "runAt": "2026-05-14T17:29:50.916Z",
   "studioUrl": "https://ivaronix.vercel.app",
   "receipts": [
     68,
@@ -54,7 +54,7 @@
       "surface": "desktop",
       "check": "risk-level chip(s) render",
       "pass": true,
-      "detail": "count=3"
+      "detail": "count=4"
     },
     {
       "receipt": 68,
@@ -88,8 +88,8 @@
       "receipt": 69,
       "surface": "desktop",
       "check": "risk-level chip(s) render",
-      "pass": false,
-      "detail": "count=0"
+      "pass": true,
+      "detail": "count=1"
     },
     {
       "receipt": 69,
@@ -123,8 +123,8 @@
       "receipt": 70,
       "surface": "desktop",
       "check": "risk-level chip(s) render",
-      "pass": false,
-      "detail": "count=0"
+      "pass": true,
+      "detail": "count=1"
     },
     {
       "receipt": 70,
@@ -159,7 +159,7 @@
       "surface": "mobile",
       "check": "risk-level chip(s) render",
       "pass": true,
-      "detail": "count=3"
+      "detail": "count=4"
     },
     {
       "receipt": 68,
@@ -193,8 +193,8 @@
       "receipt": 69,
       "surface": "mobile",
       "check": "risk-level chip(s) render",
-      "pass": false,
-      "detail": "count=0"
+      "pass": true,
+      "detail": "count=1"
     },
     {
       "receipt": 69,
@@ -228,8 +228,8 @@
       "receipt": 70,
       "surface": "mobile",
       "check": "risk-level chip(s) render",
-      "pass": false,
-      "detail": "count=0"
+      "pass": true,
+      "detail": "count=1"
     },
     {
       "receipt": 70,
@@ -240,9 +240,9 @@
     }
   ],
   "summary": {
-    "pass": 26,
-    "fail": 7,
+    "pass": 30,
+    "fail": 3,
     "total": 33
   },
-  "verdict": "FAIL · 7 of 33 checks failed"
+  "verdict": "FAIL · 3 of 33 checks failed"
 }

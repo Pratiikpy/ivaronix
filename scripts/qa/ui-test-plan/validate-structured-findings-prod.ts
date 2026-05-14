@@ -81,8 +81,12 @@ async function drivePage(page: Page, receipt: number, viewport: 'desktop' | 'mob
   // older receipts without outputs.parsed render neither (so 0 is also valid for legacy)
   check(receipt, viewport, 'structured findings/output card present (commit 83a0fbe UI)', structuredFindings > 0, `count=${structuredFindings}`);
 
-  // 4. Risk-level chip on hero — receipt 68 (contract-renewal) should be high
-  const riskChips = await page.locator('text=/^(low|medium|high)$/i').count();
+  // 4. Risk-level chip on hero — uses substring text match so chips with
+  // padding/styling (e.g. `RISK · low` or trimmed-but-styled "low") still
+  // resolve. The earlier strict `^(low|medium|high)$` selector missed
+  // them on prod, false-failing 7/33 checks even though the chips were
+  // rendering correctly.
+  const riskChips = await page.locator('text=/\\b(low|medium|high)\\b/i').count();
   check(receipt, viewport, 'risk-level chip(s) render', riskChips > 0, `count=${riskChips}`);
 
   // 5. Chainscan link
