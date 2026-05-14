@@ -44,6 +44,20 @@ async function main(): Promise<void> {
     method: 'tools/list',
     params: {},
   });
+  // After Iter 10 V3-aware fix: verify_receipt now walks V3 → V2 → V1.
+  // Call it for: V3 id 1 (should report registry V3), V2 id 31 (V2).
+  const callVerifyV3 = JSON.stringify({
+    jsonrpc: '2.0',
+    id: 3,
+    method: 'tools/call',
+    params: { name: 'ivaronix_verify_receipt', arguments: { id: '1' } },
+  });
+  const callVerifyV2 = JSON.stringify({
+    jsonrpc: '2.0',
+    id: 4,
+    method: 'tools/call',
+    params: { name: 'ivaronix_verify_receipt', arguments: { id: '31' } },
+  });
 
   // Wait for child to be ready (pnpm dev needs to print its banner first)
   await new Promise((r) => setTimeout(r, 2_000));
@@ -51,7 +65,11 @@ async function main(): Promise<void> {
   child.stdin?.write(init + '\n');
   await new Promise((r) => setTimeout(r, 500));
   child.stdin?.write(listTools + '\n');
-  await new Promise((r) => setTimeout(r, 2_000));
+  await new Promise((r) => setTimeout(r, 1_000));
+  child.stdin?.write(callVerifyV3 + '\n');
+  await new Promise((r) => setTimeout(r, 4_000));
+  child.stdin?.write(callVerifyV2 + '\n');
+  await new Promise((r) => setTimeout(r, 4_000));
 
   child.kill('SIGTERM');
   await new Promise((r) => setTimeout(r, 500));
@@ -88,6 +106,36 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   console.log(`✓ All 5 expected tools enumerated.`);
+
+  // Now check that the verify_receipt CALL responses (id 3 + 4) hit V3 and V2.
+  let v3Resp: { result?: { content?: Array<{ text?: string }> } } | null = null;
+  let v2Resp: { result?: { content?: Array<{ text?: string }> } } | null = null;
+  for (const line of lines) {
+    try {
+      const parsed = JSON.parse(line);
+      if (parsed.id === 3) v3Resp = parsed;
+      if (parsed.id === 4) v2Resp = parsed;
+    } catch { /* skip */ }
+  }
+  if (!v3Resp || !v2Resp) {
+    console.error('✗ Did not receive both verify_receipt responses (id 3 + 4)');
+    console.error('stdout tail:', stdoutBuf.slice(-1500));
+    process.exit(1);
+  }
+  const v3Text = v3Resp.result?.content?.[0]?.text ?? '';
+  const v2Text = v2Resp.result?.content?.[0]?.text ?? '';
+  if (!/registry\s+V3/.test(v3Text) || !/state\s+ANCHORED/.test(v3Text)) {
+    console.error('✗ V3 verify_receipt did not return registry V3 + ANCHORED:');
+    console.error(v3Text);
+    process.exit(1);
+  }
+  if (!/registry\s+V2/.test(v2Text) || !/state\s+ANCHORED/.test(v2Text)) {
+    console.error('✗ V2 verify_receipt did not return registry V2 + ANCHORED:');
+    console.error(v2Text);
+    process.exit(1);
+  }
+  console.log(`✓ verify_receipt id=1 → V3 ANCHORED`);
+  console.log(`✓ verify_receipt id=31 → V2 ANCHORED`);
 }
 
 main().catch((err) => { console.error(err); process.exit(1); });

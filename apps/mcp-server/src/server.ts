@@ -1,4 +1,4 @@
-// v3-lookup-allow: MCP server exposes receipt verify/anchor against V1+V2; slot 10+ MCP flows (doc_room_*, memory_consolidation) must add V3 lookup + anchor branch per packages/runtime/src/pipeline.ts SLOTS_REQUIRING_V3. Tracked in USER_TODO §B-V2-37.
+// Receipt verify path reads V3 → V2 → V1 (operator-funded V3 deployed; lookup matches studio/lib/chain.ts unifiedGetReceipt order). Anchor branch for slot 10+ MCP flows (doc_room_*, memory_consolidation) still queued — tracked in USER_TODO §B-V2-37.
 // v1-passport-allow: MCP exposes V1 passport state via the passport tool; V2-first migration tracked in USER_TODO §B-V2-38.
 // v1-capability-allow: MCP exposes V1 CapabilityRegistry grant state via the memory-grant tools; V2-first migration tracked in USER_TODO §B-V2-39.
 // v1-memory-access-log-allow: MCP exposes V1 MemoryAccessLog events; V2-first migration tracked in USER_TODO §B-V2-41.
@@ -13,6 +13,7 @@ import { JsonRpcProvider, Wallet } from 'ethers';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   AgentPassportClient,
   SkillRegistryClient,
   getDeployedAddress,
@@ -94,22 +95,31 @@ async function handleAsk(params: z.infer<typeof AskInput>): Promise<CallToolResu
 async function handleVerifyReceipt(params: z.infer<typeof VerifyReceiptInput>): Promise<CallToolResult> {
   const env = loadEnv();
   const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
-  // V2-first read per .claude/rules/og-chain.md. New receipts anchor on
-  // V2 (K-2 EIP-712 path); legacy receipts remain readable via V1 fallback.
+  // V3 → V2 → V1 read order matches apps/studio/src/lib/chain.ts
+  // unifiedGetReceipt. V3 admits canonical slots 10/11/12 (doc_room_*,
+  // memory_consolidation); V2 is the active type-0 anchor target; V1
+  // is the legacy registry with 1644+ historical receipts.
+  const addrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
   const addrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
   const addrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-  if (!addrV1 && !addrV2) {
+  if (!addrV1 && !addrV2 && !addrV3) {
     return { content: [{ type: 'text', text: `ReceiptRegistry not deployed on ${env.network}` }], isError: true };
   }
+  const regV3 = addrV3 ? new ReceiptRegistryV3Client(addrV3, provider) : null;
   const regV2 = addrV2 ? new ReceiptRegistryV2Client(addrV2, provider) : null;
   const regV1 = addrV1 ? new ReceiptRegistryClient(addrV1, provider) : null;
   let onChain;
+  let registryVersion: 'v1' | 'v2' | 'v3' | null = null;
   if (/^\d+$/.test(params.id)) {
     const id = BigInt(params.id);
-    onChain = (regV2 ? await regV2.getReceipt(id) : null) ?? (regV1 ? await regV1.getReceipt(id) : null);
+    if (regV3) { const r = await regV3.getReceipt(id); if (r) { onChain = r; registryVersion = 'v3'; } }
+    if (!onChain && regV2) { const r = await regV2.getReceipt(id); if (r) { onChain = r; registryVersion = 'v2'; } }
+    if (!onChain && regV1) { const r = await regV1.getReceipt(id); if (r) { onChain = r; registryVersion = 'v1'; } }
   } else if (/^0x[0-9a-f]{64}$/i.test(params.id)) {
     const root = params.id as `0x${string}`;
-    onChain = (regV2 ? await regV2.findByReceiptRoot(root, 200_000) : null) ?? (regV1 ? await regV1.findByReceiptRoot(root, 200_000) : null);
+    if (regV3) { const r = await regV3.findByReceiptRoot(root, 200_000); if (r) { onChain = r; registryVersion = 'v3'; } }
+    if (!onChain && regV2) { const r = await regV2.findByReceiptRoot(root, 200_000); if (r) { onChain = r; registryVersion = 'v2'; } }
+    if (!onChain && regV1) { const r = await regV1.findByReceiptRoot(root, 200_000); if (r) { onChain = r; registryVersion = 'v1'; } }
   }
   if (!onChain) return { content: [{ type: 'text', text: `No receipt found for ${params.id}` }] };
   const lines = [
@@ -118,6 +128,7 @@ async function handleVerifyReceipt(params: z.infer<typeof VerifyReceiptInput>): 
     `agent           ${onChain.agentAddress}`,
     `type            code ${onChain.receiptType}`,
     `anchored        block ${onChain.timestamp}`,
+    `registry        ${registryVersion?.toUpperCase() ?? '?'}`,
     `state           ANCHORED`,
   ].join('\n');
   return { content: [{ type: 'text', text: lines }] };
