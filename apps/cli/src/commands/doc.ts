@@ -13,6 +13,7 @@ import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
 import { runConsensus, TIER_COST_OG } from '@ivaronix/consensus';
 import { findSkill, scanSkill, evaluateSandbox, SkillRegistryClient, resolveHooks, runHooks, type LoadedSkill, type ScanResult, type HookEvent_PreConsensus, type HookEvent_PostConsensus, type HookEvent_SessionStart, type HookEvent_SessionEnd } from '@ivaronix/skills';
+import { TOOL_DEFS, dispatchTool as dispatchSkillTool } from '../lib/chat-tools.js';
 import { TIER_COST_OG as TIER_COST_OG_LOOKUP } from '@ivaronix/consensus';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -413,6 +414,25 @@ docCommand
     // Inject the skill's prompt body as the role-shared instruction prefix
     const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
 
+    // Tool-loop wiring · fire 10E. When the skill manifest declares
+    // og.tools.builtins (e.g. legal-citation-verifier with web_fetch),
+    // build the tools array + a dispatchTool callback so each consensus
+    // role can iteratively call tools mid-inference per the runWithTools
+    // pattern in @ivaronix/consensus. Empty/undefined manifest tools =>
+    // existing single-pass keyring.chat behaviour (zero impact on the 4
+    // non-tool-bearing legal cluster skills).
+    const skillBuiltins = skill.manifest.og.tools?.builtins ?? [];
+    const tools = skillBuiltins.length > 0
+      ? TOOL_DEFS.filter((d) => skillBuiltins.includes(d.function.name as typeof skillBuiltins[number]))
+      : undefined;
+    const cwd = process.cwd();
+    const dispatchTool = tools
+      ? async (name: string, args: string): Promise<{ ok: boolean; output: string }> => {
+          const r = await dispatchSkillTool(cwd, name, args, new Map());
+          return { ok: r.ok, output: r.output };
+        }
+      : undefined;
+
     const consensusResult = await runConsensus({
       tier,
       keyring,
@@ -423,7 +443,33 @@ docCommand
       // Forward the operator's signer key so gate 2 can exact-match
       // against an accidental paste. Per planning-003 §A.5.15.
       signerPrivateKey: env.privateKey,
+      ...(tools && dispatchTool ? { tools, dispatchTool } : {}),
     });
+
+    // Fail-closed runtime gate · the Mata v. Avianca architectural closure.
+    // When a skill declares web_fetch in og.tools.builtins, the runtime
+    // MUST observe at least one actual web_fetch tool_call in the
+    // aggregate trace before the receipt is allowed to anchor. Otherwise
+    // the model produced a "verified" verdict without external HTTP
+    // verification — the exact pattern the skill exists to prevent.
+    if (skillBuiltins.includes('web_fetch')) {
+      const trace = consensusResult.toolCallTrace ?? [];
+      const webFetchCalls = trace.filter((t) => t.tool === 'web_fetch').length;
+      if (webFetchCalls === 0) {
+        ui.fail(
+          `Runtime gate: skill ${skill.id} declares og.tools.builtins=['web_fetch'] but the run produced 0 web_fetch tool_calls. ` +
+          `Refusing to anchor a receipt that would claim citation verification without making real HTTP requests to CourtListener/Cornell LII. ` +
+          `This is the Mata v. Avianca runtime closure (QA_PROOF_PACK/legal-cluster/citation-verifier-audit.md).`
+        );
+        ui.hint(
+          `Possible causes: the 7B model didn't emit tool_calls (mainnet promotion with a stronger model · 0GM-1.0 · is the proper fix). ` +
+          `Re-run if intermittent.`
+        );
+        process.exitCode = 1;
+        return;
+      }
+      ui.pass(`runtime gate: ${webFetchCalls} web_fetch tool_call(s) recorded · Mata v. Avianca contract upheld`);
+    }
 
     const elapsedMs = Date.now() - startTime;
 
@@ -582,6 +628,14 @@ docCommand
               };
             })()
           : undefined,
+        // Tool-call trace · fire 10E · closes the Mata v. Avianca runtime
+        // contract. Optional + only present when the skill declared
+        // og.tools.builtins (e.g. legal-citation-verifier with web_fetch).
+        // Verifiers can re-run any URL from this trace to confirm the
+        // skill's external verification really happened.
+        ...(consensusResult.toolCallTrace && consensusResult.toolCallTrace.length > 0
+          ? { toolCallTrace: consensusResult.toolCallTrace }
+          : {}),
       },
       routerTrace: {
         requestId: `doc-ask-${Date.now()}`,

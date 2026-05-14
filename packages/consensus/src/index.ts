@@ -1,10 +1,11 @@
 import type { Address, ConsensusTier, Hash } from '@ivaronix/core';
 import { ROLES_BY_TIER } from '@ivaronix/core';
-import type { Keyring, RouterCallResult } from '@ivaronix/og-router';
+import type { Keyring, RouterCallResult, ToolDef } from '@ivaronix/og-router';
 import { ROLE_PROMPTS, type RoleId } from './prompts.js';
 import { computeConvergence, type ConvergenceResult } from './convergence.js';
 import { runGates, type GateInput, type GateResult } from './gates.js';
 import { applyPolicy, type ConsensusPolicy, type PolicyDecision } from './policy.js';
+import { runWithTools, type ToolCallTrace } from './tool-loop.js';
 
 export * from './prompts.js';
 export * from './convergence.js';
@@ -42,6 +43,20 @@ export interface ConsensusInput {
    * → numeric weight. Reviewers without an entry default to weight 1.
    */
   weights?: Record<string, number>;
+  /**
+   * Tool definitions the model is permitted to call during each role's
+   * inference. When both `tools` and `dispatchTool` are provided, the
+   * runner uses `keyring.chatRich` + the `runWithTools` tool-call loop
+   * instead of the single-pass `keyring.chat`. Without both, behaviour
+   * is unchanged from pre-fire-10C.
+   *
+   * The tools array comes from the active skill's `og.tools.builtins`
+   * declaration (e.g. legal-citation-verifier with `['web_fetch']`).
+   * The dispatchTool callback executes the named tool with raw JSON
+   * arguments and returns the response body fed back to the model.
+   */
+  tools?: ToolDef[];
+  dispatchTool?: (name: string, args: string) => Promise<{ ok: boolean; output: string }>;
 }
 
 export interface RoleAttestation {
@@ -82,6 +97,20 @@ export interface ConsensusResult {
    * (the policy layer is meaningless on a single-reviewer run).
    */
   policyDecision: PolicyDecision | null;
+  /**
+   * Aggregate tool-call trace across every role's inference loop.
+   * Populated only when the caller provided `tools` + `dispatchTool`
+   * on `ConsensusInput`. Empty array if all roles ran tool-free.
+   *
+   * Closes the Mata v. Avianca runtime gap: a skill that declares
+   * `og.tools.builtins: ['web_fetch']` produces a non-empty trace only
+   * if the model actually emitted tool_calls. The fail-closed gate at
+   * receipt-assembly time inspects this field; if a citation-bearing
+   * skill produced an empty trace, the run is rejected before chain
+   * anchor. See `apps/cli/src/commands/doc.ts` + the receipt schema's
+   * `execution.toolCallTrace` field (packages/receipts/src/schema.ts).
+   */
+  toolCallTrace?: ToolCallTrace[];
 }
 
 /**
@@ -133,11 +162,49 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
   // Standard tier (3 reviewers) runs in parallel; high-stakes (4 reviewers)
   // runs sequentially to stay under the testnet 10-req/min Router cap. Once
   // the rate limit lifts on mainnet we can flip back to parallel.
+  //
+  // Tool-loop branch (fire 10C): when the caller provided `tools` AND
+  // `dispatchTool`, route each role's inference through `runWithTools`
+  // (keyring.chatRich + the canonical tool-call loop). Otherwise stay on
+  // the single-pass keyring.chat path that the 4 non-tool legal cluster
+  // skills depend on — zero behaviour change for them.
+  const useTools = Boolean(input.tools && input.dispatchTool);
+  const perRoleTraces: Map<RoleId, ToolCallTrace[]> = new Map();
+
   const runReviewer = async (roleId: RoleId) => {
     const prompt = ROLE_PROMPTS[roleId];
+    const systemPrompt = prompt.systemPrompt(input.context, input.userPrompt);
+    if (useTools) {
+      const result = await runWithTools({
+        keyring: input.keyring,
+        model: input.model,
+        systemPrompt,
+        userPrompt: input.userPrompt,
+        tools: input.tools!,
+        dispatchTool: input.dispatchTool!,
+        verifyTee: true,
+      });
+      perRoleTraces.set(roleId, result.toolCallTrace);
+      // Map runWithTools result into the RouterCallResult shape downstream
+      // expects. providerAddress + zgResKey come from a path chatRich does
+      // not currently surface, so they're undefined for tool-using runs;
+      // attestationFromRaw filters these out of individualAttestations,
+      // and the toolCallTrace IS the proof channel for tool-using skills.
+      const synthRaw: RouterCallResult = {
+        content: result.content,
+        providerAddress: undefined,
+        zgResKey: undefined,
+        attestationHash: null,
+        inputTokens: result.finalRaw?.inputTokens,
+        outputTokens: result.finalRaw?.outputTokens,
+        routerVerified: result.finalRaw?.routerVerified,
+        rawResponse: result.finalRaw?.rawResponse,
+      } as unknown as RouterCallResult;
+      return { role: roleId, content: result.content, raw: synthRaw };
+    }
     const raw = await input.keyring.chat({
       model: input.model,
-      systemPrompt: prompt.systemPrompt(input.context, input.userPrompt),
+      systemPrompt,
       userPrompt: input.userPrompt,
       verifyTee: true,
     });
@@ -169,13 +236,39 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
     const reviewerSummary = reviewerResults
       .map((r) => `=== ${r.role.toUpperCase()} ===\n${r.content}`)
       .join('\n\n');
-    judgeRaw = await input.keyring.chat({
-      model: input.model,
-      systemPrompt: judgePrompt.systemPrompt(input.context, input.userPrompt),
-      userPrompt: `User question: ${input.userPrompt}\n\nReviewer outputs:\n${reviewerSummary}\n\nDeliver the synthesized judgment now.`,
-      verifyTee: true,
-    });
-    judgement = { role: judgeRoleId, content: judgeRaw.content };
+    const judgeSystem = judgePrompt.systemPrompt(input.context, input.userPrompt);
+    const judgeUser = `User question: ${input.userPrompt}\n\nReviewer outputs:\n${reviewerSummary}\n\nDeliver the synthesized judgment now.`;
+    if (useTools) {
+      const result = await runWithTools({
+        keyring: input.keyring,
+        model: input.model,
+        systemPrompt: judgeSystem,
+        userPrompt: judgeUser,
+        tools: input.tools!,
+        dispatchTool: input.dispatchTool!,
+        verifyTee: true,
+      });
+      perRoleTraces.set(judgeRoleId, result.toolCallTrace);
+      judgeRaw = {
+        content: result.content,
+        providerAddress: undefined,
+        zgResKey: undefined,
+        attestationHash: null,
+        inputTokens: result.finalRaw?.inputTokens,
+        outputTokens: result.finalRaw?.outputTokens,
+        routerVerified: result.finalRaw?.routerVerified,
+        rawResponse: result.finalRaw?.rawResponse,
+      } as unknown as RouterCallResult;
+      judgement = { role: judgeRoleId, content: result.content };
+    } else {
+      judgeRaw = await input.keyring.chat({
+        model: input.model,
+        systemPrompt: judgeSystem,
+        userPrompt: judgeUser,
+        verifyTee: true,
+      });
+      judgement = { role: judgeRoleId, content: judgeRaw.content };
+    }
   }
 
   // ─── Per-role attestations ──────────────────────────────────────────
@@ -208,6 +301,17 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
         })
       : null;
 
+  // Aggregate the per-role tool-call traces in role order. The receipt's
+  // execution.toolCallTrace field stores this flattened list (with the
+  // tool, argumentsHash, ok, durationMs, responseHash, responseSize shape
+  // declared in packages/receipts/src/schema.ts).
+  const toolCallTrace: ToolCallTrace[] | undefined = useTools
+    ? [
+        ...reviewerResults.flatMap((r) => perRoleTraces.get(r.role) ?? []),
+        ...(judgeRoleId ? perRoleTraces.get(judgeRoleId) ?? [] : []),
+      ]
+    : undefined;
+
   return {
     tier,
     roles: roleIds,
@@ -218,6 +322,7 @@ export async function runConsensus(input: ConsensusInput): Promise<ConsensusResu
     billing: { totalInputTokens, totalOutputTokens, estimatedCostOg },
     gateResult,
     policyDecision,
+    ...(toolCallTrace !== undefined ? { toolCallTrace } : {}),
   };
 }
 
