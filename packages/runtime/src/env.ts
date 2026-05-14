@@ -51,6 +51,12 @@ const ROUTER_PROVIDER_ALIASES = ['IVARONIX_ROUTER_PROVIDER', 'OG_COMPUTE_PROVIDE
 const DEFAULT_MODEL_ALIASES = ['IVARONIX_DEFAULT_MODEL', 'OG_DEFAULT_MODEL'] as const;
 
 const warnedAliases = new Set<string>();
+// Accumulates legacy aliases used during a single loadEnv() call so we
+// can emit ONE consolidated deprecation banner instead of one line per
+// alias. Pre-sweep, an operator with a legacy .env saw 9 separate
+// `[ivaronix env] using legacy alias "X"` lines on every CLI run — same
+// info repeated 9× — which buried real output in noise.
+let pendingDeprecations: Array<{ legacy: string; canonical: string }> = [];
 
 function resolveAlias(aliases: readonly string[]): { value: string | undefined; key: string | undefined } {
   for (const k of aliases) {
@@ -62,19 +68,31 @@ function resolveAlias(aliases: readonly string[]): { value: string | undefined; 
 
 function readWithDeprecation(aliases: readonly string[]): string | undefined {
   const r = resolveAlias(aliases);
-  if (r.key && r.key !== aliases[0] && !warnedAliases.has(r.key)) {
+  const canonical = aliases[0];
+  if (r.key && canonical && r.key !== canonical && !warnedAliases.has(r.key)) {
     warnedAliases.add(r.key);
-    // eslint-disable-next-line no-console
-    console.warn(
-      `[ivaronix env] using legacy alias "${r.key}" — please migrate to canonical "${aliases[0]}" (planning-003 §A.3.4).`,
-    );
+    pendingDeprecations.push({ legacy: r.key, canonical });
   }
   return r.value;
 }
 
+function flushDeprecationBanner(): void {
+  if (pendingDeprecations.length === 0) return;
+  if (process.env.IVARONIX_QUIET_ALIAS_WARNINGS) {
+    pendingDeprecations = [];
+    return;
+  }
+  const pairs = pendingDeprecations.map((p) => `${p.legacy} → ${p.canonical}`).join(', ');
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[ivaronix env] ${pendingDeprecations.length} legacy alias${pendingDeprecations.length === 1 ? '' : 'es'} in use: ${pairs} (planning-003 §A.3.4 · set IVARONIX_QUIET_ALIAS_WARNINGS=1 to silence)`,
+  );
+  pendingDeprecations = [];
+}
+
 export function loadEnv(): Env {
   const network = ((readWithDeprecation(NETWORK_ALIASES) as Network) ?? 'testnet') as Network;
-  return {
+  const env: Env = {
     network,
     chainId: Number(readWithDeprecation(CHAIN_ID_ALIASES) ?? (network === 'mainnet' ? 16661 : 16602)),
     rpcUrl:
@@ -88,6 +106,8 @@ export function loadEnv(): Env {
     routerProvider: readWithDeprecation(ROUTER_PROVIDER_ALIASES),
     defaultModel: readWithDeprecation(DEFAULT_MODEL_ALIASES) ?? 'qwen/qwen-2.5-7b-instruct',
   };
+  flushDeprecationBanner();
+  return env;
 }
 
 /**
