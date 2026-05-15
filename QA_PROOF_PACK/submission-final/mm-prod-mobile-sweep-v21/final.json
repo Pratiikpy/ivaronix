@@ -1,0 +1,200 @@
+{
+  "viewport": "375x812",
+  "deviceScaleFactor": 3,
+  "userAgent": "iPhone Safari",
+  "studio": "https://ivaronix.vercel.app",
+  "routes": [
+    {
+      "route": "/",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 17926,
+      "hamburgerVisible": true,
+      "chipsFound": 9
+    },
+    {
+      "route": "/onboard",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2607,
+      "hamburgerVisible": true,
+      "chipsFound": 1
+    },
+    {
+      "route": "/skills",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 1,
+      "docHeight": 50491,
+      "hamburgerVisible": true,
+      "chipsFound": 2
+    },
+    {
+      "route": "/memory",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2754,
+      "hamburgerVisible": true,
+      "chipsFound": 0
+    },
+    {
+      "route": "/marketplace",
+      "title": "Marketplace · Ivaronix",
+      "errors": 0,
+      "docHeight": 3891,
+      "hamburgerVisible": true,
+      "chipsFound": 1
+    },
+    {
+      "route": "/dashboard",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2129,
+      "hamburgerVisible": true,
+      "chipsFound": 0
+    },
+    {
+      "route": "/global",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 3055,
+      "hamburgerVisible": true,
+      "chipsFound": 1
+    },
+    {
+      "route": "/agents",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2684,
+      "hamburgerVisible": true,
+      "chipsFound": 1
+    },
+    {
+      "route": "/thesis",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 7187,
+      "hamburgerVisible": true,
+      "chipsFound": 2
+    },
+    {
+      "route": "/brand",
+      "title": "Brand · Ivaronix",
+      "errors": 0,
+      "docHeight": 17285,
+      "hamburgerVisible": true,
+      "chipsFound": 9
+    },
+    {
+      "route": "/docs",
+      "title": "Docs · CLI · SDK · MCP · Embed widget · Ivaronix",
+      "errors": 1,
+      "docHeight": 4827,
+      "hamburgerVisible": true,
+      "chipsFound": 6
+    },
+    {
+      "route": "/privacy",
+      "title": "Privacy · Ivaronix",
+      "errors": 0,
+      "docHeight": 3793,
+      "hamburgerVisible": true,
+      "chipsFound": 5
+    },
+    {
+      "route": "/terms",
+      "title": "Terms · Ivaronix",
+      "errors": 0,
+      "docHeight": 3608,
+      "hamburgerVisible": true,
+      "chipsFound": 3
+    },
+    {
+      "route": "/verticals",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 7330,
+      "hamburgerVisible": true,
+      "chipsFound": 4
+    },
+    {
+      "route": "/legal",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 14620,
+      "hamburgerVisible": true,
+      "chipsFound": 24
+    },
+    {
+      "route": "/admin/treasury",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2115,
+      "hamburgerVisible": true,
+      "chipsFound": 0
+    },
+    {
+      "route": "/admin/health",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 1,
+      "docHeight": 2275,
+      "hamburgerVisible": true,
+      "chipsFound": 0
+    },
+    {
+      "route": "/skill/new",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 4502,
+      "hamburgerVisible": true,
+      "chipsFound": 2
+    },
+    {
+      "route": "/marketplace/payouts",
+      "title": "Ivaronix — AI review for the documents you can't paste into ",
+      "errors": 0,
+      "docHeight": 2166,
+      "hamburgerVisible": true,
+      "chipsFound": 0
+    },
+    {
+      "route": "/r/1",
+      "title": "Receipt #1 · Ivaronix",
+      "errors": 0,
+      "docHeight": 3310,
+      "hamburgerVisible": true,
+      "chipsFound": 8
+    },
+    {
+      "route": "/r/2",
+      "title": "Receipt #2 · Ivaronix",
+      "errors": 0,
+      "docHeight": 3310,
+      "hamburgerVisible": true,
+      "chipsFound": 8
+    },
+    {
+      "route": "/r/3",
+      "title": "Receipt #3 · Ivaronix",
+      "errors": 0,
+      "docHeight": 3310,
+      "hamburgerVisible": true,
+      "chipsFound": 8
+    },
+    {
+      "route": "/r/4",
+      "title": "Receipt #4 · Ivaronix",
+      "errors": 0,
+      "docHeight": 3310,
+      "hamburgerVisible": true,
+      "chipsFound": 8
+    },
+    {
+      "route": "/r/5",
+      "title": "Receipt #5 · Ivaronix",
+      "errors": 0,
+      "docHeight": 3310,
+      "hamburgerVisible": true,
+      "chipsFound": 8
+    }
+  ]
+}
