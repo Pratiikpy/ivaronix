@@ -1,288 +1,356 @@
 # Ivaronix
 
-> **A founder reviewing a term sheet shouldn't have to trust the AI.**
-> With Ivaronix, every AI review leaves a cryptographic receipt — independently re-verifiable by anyone, on any machine, in 10 seconds.
+> **Private AI work. Public proof.**
+>
+> Every AI review leaves a signed, chain-anchored receipt — independently re-verifiable by anyone, on any machine, in 10 seconds, without an account.
+
+[![mainnet](https://img.shields.io/badge/0G_Aristotle_Mainnet-Live%202026--05--15-16a34a)](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297)
+[![testnet](https://img.shields.io/badge/0G_Galileo_Testnet-Live-16a34a)](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257)
+[![tests](https://img.shields.io/badge/Foundry-227%2F227_green-16a34a)](contracts/test/) <!-- numbers-bare:allow: badge URL embeds value; shields.io requires URL-encoded literal; numbers.json contracts.foundryTests is the SoT for this value -->
+[![receipts](https://img.shields.io/badge/Receipts_anchored-1%2C750%2B-16a34a)](docs/numbers.json)
 
 ```text
-[ Drop a document ]  ──▶  [ 0G Compute TEE ]  ──▶  [ 0G Chain anchor ]  ──▶  [ Public Proof URL ]
-   contract.pdf            specialist runs           receipt signed +          /r/<id> renders
-   never leaves            inside attested           hash anchored on          evidence anyone
-   unencrypted             hardware enclave          ReceiptRegistry V2/V3     can re-verify
+[ Drop a document ]  →  [ 0G Compute TEE ]  →  [ 0G Chain anchor ]  →  [ Public Proof URL ]
+   contract.pdf          specialist runs        receipt signed +        /r/<id> renders
+   stays private         inside attested        hash anchored on        evidence anyone
+   throughout            hardware enclave       ReceiptRegistryV3       can re-verify
 ```
 
-## How it works
+---
 
-1. **Drop a document.** Studio's drop-zone or `ivaronix doc ask <file>`.
-2. **The specialist runs in a 0G Compute TEE.** Plaintext is invisible outside the run — the Router sees the request, but the inference output never leaves the TEE unencrypted.
-3. **A receipt is signed and hashed.** Every claim ties back to verifiable evidence; the receipt's canonical hash is byte-equal across TS / Python / Rust reference implementations.
-4. **The receipt anchors on `ReceiptRegistryV2` or `ReceiptRegistryV3`** (V3 for the canonical-slot-10/11/12 types post-B-V2-32; V2 for slots 0-9). Chain confirms the signer, the hash, and the exact moment the audit happened.
-5. **Anyone replays the verification.** From any machine, in any of three languages, without an account.
+## For OG APAC Hackathon judges — 60-second path
 
-> AI review for documents you can't paste into ChatGPT. Burn-Mode encrypts; the session key dies after the run. Every audit anchors a verifiable receipt on 0G Chain. Anyone can re-verify it from any machine, in any language.
->
-> **Verifiability over volume.**
-
-## Quick start (60 seconds, no wallet)
-
-```bash
-git clone https://github.com/Pratiikpy/ivaronix
-cd ivaronix && pnpm install
-pnpm ivaronix receipt verify 1644
-# → ANCHORED ✓ (chain anchor + canonical hash + signature recovery)
-```
-
-For TEE re-attestation, add `--tee-independent` against a recent receipt:
-
-```bash
-pnpm ivaronix receipt verify <id> --tee-independent
-# → FULLY VERIFIED ✓ (also re-runs broker.processResponse against the
-#                    original 0G Compute provider — works on receipts
-#                    anchored within the last ~30 days; older receipts
-#                    stop at ANCHORED because the provider rotates
-#                    attestation history)
-```
-
-The wedge: this works on a stranger's clean machine, against a receipt anchored by someone else, on testnet, today.
-
-> <!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+ receipts anchored on 0G Galileo Testnet · <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> deployed contracts (V1 + V2 active) · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
-
-## Track 1 (Agentic Infrastructure) · by the numbers
-
-The metrics this product is optimised for. Receipts as the unit of trust, primitives integrated end-to-end, persona-locked use case.
-
-| Metric | Value | Where to look |
-|---|---|---|
-| Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
-| 0G primitives integrated | **5** | Chain · Compute · Storage · Router · AgentID (Memory KV scaffolding ships separately at `infra/0g-kv/`; defaults to in-memory fallback until operator runs the real KV stack) |
-| Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal -->** | <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
-| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` + `ReceiptRegistryV3` |
-| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + V3 + Guard + Capability + Skill + Subscription |
-| Deployed contracts | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed -->** | Receipt V1 + V2 + V3 · Passport V1 + V2 · Capability V1 + V2 · Memory V1 + V2 · Skill V1 + V2 · Subscription V1 + V2 · Verifier on Galileo |
-| Packages typecheck-clean | **<!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean -->** | `pnpm -r --filter "@ivaronix/*" run typecheck` green |
-| First-party test files | **<!-- numbers:auto:packages.testFiles -->27<!-- /numbers:auto:packages.testFiles -->** | `*.test.ts` under `packages/` + `apps/` (excludes `_design`, `opencode-*`, compiled output) |
-| Polyglot canonical hash | **<!-- numbers:auto:polyglotHash.languages -->3<!-- /numbers:auto:polyglotHash.languages --> languages** | TS + Python + Rust byte-equal in `.github/workflows/jcs-roundtrip.yml` (29/29 vectors) |
-
-> Track positioning: Ivaronix targets **Track 1 (Agentic Infrastructure)** as primary and **Track 3 (Agentic Economy)** as automatic-secondary. We do not compete on Track 2 (Verifiable Finance) production-rigor metrics — Aegis Vault holds that bar with 235 Hardhat tests + sealed strategies on mainnet. Track 1 rewards the metric set above.
-
-## Visual tour
-
-Six product surfaces, captured by `pnpm screenshots:refresh` at 1200×800 against a live Studio dev server. Each shot is a real screen, not a mockup. Source script: [`scripts/qa/metamask-e2e/capture-readme-shots.ts`](scripts/qa/metamask-e2e/capture-readme-shots.ts). When the captures haven't been refreshed against the latest deploy, the operator runs `pnpm screenshots:refresh` per the runbook in [USER_TODO §B-V2-23](docs/USER_TODO.md).
-
-A 30-second tour video at [`screenshots/readme/tour.webm`](screenshots/readme/tour.webm) walks the same six surfaces in motion (home → skills → `/r/<id>` → agents → `/0g` → memory). Refresh via `pnpm tour:refresh` against the same dev server (`scripts/qa/metamask-e2e/capture-readme-tour.ts`).
-
-| | | |
-|---|---|---|
-| ![Studio home with hero + receipt counter](screenshots/readme/01-home.png) | ![Run panel mid-execution · four lights pending](screenshots/readme/02-runpanel-mid.png) | ![Receipt page · all four lights green · TIER 1 chip](screenshots/readme/03-receipt-tier1.png) |
-| **Studio home** · hero + live receipt counter rendered from chain | **Run panel** · four-light row mid-flight on a real run | **/r/&lt;id&gt;** · TIER 1 verified, all four lights green |
-| ![Burn Mode · AES-256-GCM key fingerprint visible](screenshots/readme/04-burn-mode.png) | ![Agents leaderboard · 4 minted passports](screenshots/readme/05-agents.png) | ![/onboard · 5-row stepper with green checkmarks](screenshots/readme/06-onboard.png) |
-| **Burn Mode** · 256-bit session key + on-chain fingerprint | **/agents** · ERC-7857 Agent Passports with trust scores | **/onboard** · five steps to first share-able receipt |
-
-## Track 3 (Agentic Economy) · by the numbers
-
-Receipt-gated fee splits, on-chain creator wallet, marketplace primitive on every action.
-
-| Primitive | Where it ships | Verify on chain |
-|---|---|---|
-| `SkillRegistry` (skill catalog + creator + fee-split) | `0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1` | [chainscan-galileo](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
-| `og.creator.fee_split` per skill manifest | `seed-skills/<skill>/SKILL.md` frontmatter | `private-doc-review` 90/10 · `content-pitch-review` 70/30 (per-skill economic policy) |
-| Paid creator runs of `private-doc-review` | **36** | `ivaronix skill earn-history private-doc-review` returns chain numbers |
-| Creator earnings (testnet) | **0.0018 OG** | exact 90/10 split per receipt, settled on anchor (iter-63 cron refresh · numbers.json B-V2-34 fix queued) |
-
-Why receipt-gated splits, not a static registry? A creator only earns when:
-1. The run completes inside a TEE-attested 0G Compute provider, AND
-2. The receipt's signature recovers to an `AgentPassport`-resolvable wallet, AND
-3. The receipt anchors on `ReceiptRegistryV2` or `ReceiptRegistryV3` (per slot · V3 for canonical 10/11/12) with the correct fee-split block.
-
-No receipt → no payment. No TEE → no green badge. Trustless monetisation, not a self-claimed leaderboard.
-
-## Honest tier disclosure
-
-Every Ivaronix receipt is **TIER 1** (TEE-attested on 0G Compute, rendered green) or **TIER 2** (external provider — NVIDIA NIM / Gemini / OpenAI / Ollama — signed and chain-anchored, rendered amber). We refuse to render an external-provider receipt as if it were TEE-attested.
-
-| Tier | Compute | Storage proof | Chain anchor | Re-verify command |
-|---|---|---|---|---|
-| **TIER 1** | TEE-attested 0G Compute | `evidenceRoot` on 0G Storage | `ReceiptRegistry` / V2 | `ivaronix receipt verify <id> --tee-independent` returns FULLY VERIFIED ✓ |
-| **TIER 2** | External (NIM / Gemini / etc.) | optional | yes | `ivaronix receipt verify <id>` returns ANCHORED (not FULLY VERIFIED) |
-
-The `/r/<id>` proof page never claims compute integrity it can't back: a TIER 2 receipt renders an explicit "verifies storage integrity ✓ · verifies compute integrity ⚠ external provider" line. Storage-integrity and compute-integrity are separate claims and the page labels each one (CLAUDE.md §6).
-
-## What makes Ivaronix different
-
-- **Receipts are independently re-verifiable.** `ivaronix receipt verify <id> --tee-independent` re-runs `broker.processResponse` against the original 0G Compute provider — on any machine, in any of three languages, without an account. A TIER 1 receipt that passes returns `FULLY VERIFIED ✓`.
-- **TIER 1 vs TIER 2 is labeled honestly.** Green chip when the inference ran inside a TEE-attested 0G Compute provider; amber chip when it ran on an external provider (NIM / Gemini / etc.). Both are signed and chain-anchored; the page never conflates the two.
-- **Receipt hashes are canonical across languages.** The receipt's canonical hash is byte-equal across TypeScript, Python, and Rust reference implementations — checked on every PR (see below). RFC-8785 (JSON Canonicalisation Scheme) is the spec.
-- **Creators earn only from receipt-backed runs.** Each skill manifest can declare `og.creator.fee_split`; the split is recorded on the receipt, so a creator's earnings trace back to verifiable executions.
-- **Proof links work without an account.** `/r/<id>` renders the four-light evidence row, the TIER chip, the anchor tx link, and the key fingerprint — to anyone, no wallet, no login.
-- **Legal vertical · live cluster on Galileo.** Five legal skills (`private-doc-review` · `contract-renewal-clause-detector` · `nda-triage-reviewer` · `term-sheet-risk-scanner` · `legal-citation-verifier`) deployed on `SkillRegistryV2` with schema-aware output validation (B-V2-46). Run any of them locally; the receipt body carries the model's structured findings in `outputs.parsed.data` plus the schema-pass/fail flag. See `/legal` for the persona-driven landing page and `/verticals` for the full vertical roadmap.
-- **Schema-aware validation gate.** Skills can declare `og.output_schema.required_keys` in their manifest. The runtime checks the parsed JSON against the schema and marks `outputs.parsed.validationFailed: true` when the model emits the wrong shape — preserving Router credits via mark-and-anchor (default) or fail-closing the run when the manifest requests it. Receipts 68/69/70/74 are the publicly-replay-able proof set.
-
-## Polyglot canonical hash · RFC-8785
-
-Three reference implementations of the receipt's canonical hash, byte-equal across all three on every PR:
-
-- **TS reference** · `packages/core/src/jcs.ts` · 17 self-tests
-- **Python reference** · `scripts/verifier-py/` · 14 self-tests
-- **Rust reference** · `ivaronix-verifier-rs/` · 11 self-tests · `cargo install ivaronix-verifier`
-
-Cross-impl proof runs in `.github/workflows/jcs-roundtrip.yml` on every push: each language hashes the same 29 vectors, `scripts/verifier-py/cross_check.py` asserts byte-equality across all three. The CI workflow blocks merge on any divergence. Go support queued ([USER_TODO §A-V2-K15-Go](docs/USER_TODO.md)).
-
-Why this matters: "re-verify on any machine, in any language" is only true if the canonical hash is language-independent. RFC-8785 (JSON Canonicalisation Scheme) is the spec; `docs/HASH_FUNCTION.md` is the design doc, including the `schemaVersion` migration plan that lets v1 and v2 receipts coexist forever.
-
-## Documentation
-
-> Every depth artifact a careful reviewer would look for. None hidden behind a build step.
-
-- [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) · five minutes, three commands, three URLs — the demo path
-- [docs/PITCH.md](docs/PITCH.md) · what · who · why now (3-page pitch)
-- [docs/MAINNET_READINESS.md](docs/MAINNET_READINESS.md) · 13/13 mainnet-readiness checklist
-- [docs/RECEIPT_SCHEMA.md](docs/RECEIPT_SCHEMA.md) · receipt field-level reference
-- [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) · RFC-8785 canonical receipt hash spec
-- [docs/CRYPTO_NOTES.md](docs/CRYPTO_NOTES.md) · threat models for every primitive (memory AES-GCM, Burn Mode, receipt signing, anchor sigs, capability grants, ERC-7857 attestors)
-- [docs/PHASE_B_DISCLOSURES.md](docs/PHASE_B_DISCLOSURES.md) · half-baked surfaces, what we shipped, what's left
-- [docs/HALF_BAKED.md](docs/HALF_BAKED.md) · audit ledger from 5 parallel subagents (snapshot frozen 2026-05-09; closures live in `CHANGELOG.md` + `pnpm audit:list`)
-- [docs/USER_TODO.md](docs/USER_TODO.md) · operator action list (mainnet redeploy, Vercel deploy, npm publish, etc.)
-- [docs/CI_WALLET.md](docs/CI_WALLET.md) · runbook for the chain-smoke CI wallet
-- [docs/planning-003.md](docs/planning-003.md) · no-compromise plan with full coverage map
-- [docs/PRIVACY_NOTES.md](docs/PRIVACY_NOTES.md) · operator-as-proxy threat model + read-proxy-key mitigation
-- [docs/QUALITY.md](docs/QUALITY.md) · evergreen quality philosophy (CLI as gold standard, TIER 1 vs TIER 2 honesty, stop condition)
-- [SECURITY.md](SECURITY.md) · what the receipt system defends + what it does NOT (8 specific threats + 5 honest non-defenses · file:line citations)
-- [CONTRIBUTING.md](CONTRIBUTING.md) · pre-PR command list, commit conventions, audit-trailer convention, NatSpec discipline
-- [BRAND.md](BRAND.md) · brand-asset license (separate from MIT code grant); rules for forks + attribution + widget embedding
-- [CHANGELOG.md](CHANGELOG.md) · audit-fix ledger with `Closes audit <ID>` commit trailers (queryable via `pnpm audit:list`)
-
-## Memory primitive · portable, encrypted, on-chain audit trail
-
-`MemoryEngine` is an encrypted hybrid memory layer — vector similarity + FTS keyword, encrypted at rest with AES-256-GCM (fresh per-call nonce) — wired to `CapabilityRegistry` (on-chain access grants) and `MemoryAccessLog` (on-chain access trail). It's portable across machines: `memory stream-id` derives a deterministic 0G KV stream-ID from any wallet, so memory moves without a server-side index.
-
-```bash
-# Write an observation to your hybrid memory (encrypted, indexed, optional on-chain log)
-ivaronix memory remember "Vendor X's contract has a 90-day notice asymmetry" --tags work,legal
-
-# Recall by hybrid score (vector similarity + FTS keyword)
-ivaronix memory recall "asymmetric notice clauses" --top-k 5
-
-# Grant another wallet read access to a scoped slice
-ivaronix memory grant 0xPartner --scope "memory:work" --expires 1735689600
-
-# See on-chain access events for your wallet
-ivaronix memory log --agent $IVARONIX_WALLET_ADDRESS --limit 10
-```
-
-10 sub-commands total: `remember`, `recall`, `forget`, `grant`, `revoke`, `list`, `log`, `log-emit`, `stream-id`, `snapshot`. The `stream-id` command derives a deterministic 0G KV stream-ID from any wallet so memory is portable across machines without a server-side index. Studio `/memory` page mirrors the surface: SIWE-gated, real-time event feed from `MemoryAccessLog`, grant management UI for `CapabilityRegistry`.
-
-Every `memory remember` anchors a `memory_access` receipt on chain (unless `--no-log` is passed). The receipt records the access type plus the encrypted blob's storage root — so a memory write isn't just stored, it's attested. The same applies to reads and grants: each access is a receipt.
-
-## Verify a real receipt right now
-
-Clone, install, run one command — no account, no wallet:
-
-```bash
-git clone https://github.com/Pratiikpy/ivaronix.git oglabs && cd oglabs
-pnpm install
-pnpm ivaronix receipt verify 74 --tee-independent
-```
-
-Expected output, when the live 0G Compute provider's TEE channel is reachable:
-
-```
-schema PASS · hash PASS · signature PASS → CLAIMED
-chain anchor PASS (id=74 block=1778777541) · V2 → ANCHORED
-tee:primary PASS                          → via broker.processResponse
-Status: → FULLY VERIFIED ✓
-```
-
-When the provider's TEE channel is temporarily unreachable (Router rate limit, provider session rotation, transient network), the last two lines look like this — **honest yellow banner, exit code 1, no fake-green**:
-
-```
-tee:primary error             getting signature error
-Status: → ANCHORED · TEE-independent partial (0 of 1 attestations passed · 1 failed; see above)
-```
-
-The first four checks — `schema · hash · signature · chain anchor` — are the load-bearing authenticity proof: the receipt body is untampered, the canonical hash recovers, the signature recovers the agent address recorded on the `AgentPassportINFT`, and `ReceiptRegistry` holds the anchor at the given id. `tee:primary` is the additional check that calls back to the live 0G Compute provider — it proves the inference itself ran inside the attested TEE when reachable, and it degrades honestly (not silently) when not.
-
-Receipt **74** is the gold-standard B-V2-46 validation-PASS proof: a real nda-triage v0.1.1 anchored on `ReceiptRegistryV2` with the schema-aware validator confirming all 8 required output keys present (`type · term_years · governing_law · jurisdiction · exclusions_list · red_flags · standard_or_aggressive · signature_recommendation`). View it on the prod Studio at `/r/74` to see the structured output rendered.
-
-No account required. No wallet connection. The receipt was anchored on a different machine; you re-run the verify against the public 0G chain. Receipt body is on `/r/74`; anchor tx on `chainscan-galileo.0g.ai`.
-
-> A global `pnpm install -g @ivaronix/cli` install path lands once `@ivaronix/widget` and `@ivaronix/cli` are npm-published (operator action, tracked in [docs/USER_TODO.md](docs/USER_TODO.md) B-3). Today the repo-clone path above is the only honest entry point — and still verifies a real on-chain receipt in one shell command.
-
-That's the spine. Everything else in this repo exists to make that command produce useful answers about real documents.
-
-## Run a fresh receipt of your own in 30 seconds
+> Every item below is a real on-chain artifact at submission time. No mocks.
 
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix
 pnpm install
-cp .env.example .env   # add your IVARONIX_ROUTER_KEY + IVARONIX_SIGNER_KEY (faucet at faucet.0g.ai is free)
-pnpm ivaronix demo
+pnpm ivaronix receipt verify 1644
+# → ANCHORED ✓  (schema · hash · signature · chain anchor)
 ```
 
-`ivaronix demo` anchors one real receipt on 0G Galileo Testnet (~0.0001 OG, ~3 seconds) and prints three independent proof URLs:
-
-- `/r/<id>` — Studio public proof page (start `pnpm --filter @ivaronix/studio dev` for the UI)
-- `chainscan-galileo.0g.ai/tx/<hash>` — third-party explorer
-- `ivaronix receipt verify <id> --tee-independent` — your own command, run on your own machine, against the chain
-
-Want a richer view? `demo --tier standard` runs 3-role consensus (analyst/critic/judge); `--tier high-stakes` runs 5 roles. Real disagreement surfaces; the judge synthesis is the receipt body. Drop a sensitive document into `ivaronix doc ask <file> "..." --burn --quick` for AES-256-GCM encrypted evidence + session-key destruction (TIER 1 burn-mode). The bare `ivaronix` invocation drops you into the Ink TUI chat with streaming, tool panels, slash palette, and 19 slash commands; `ivaronix chat-classic` is the readline fallback for SSH / piped workflows.
-
-## Install one of the Ivaronix skills via OpenClaw
-
-Every first-party skill ships with the OpenClaw `metadata.openclaw.install` block already populated. An OpenClaw user can install any of them in one command:
+Add `--tee-independent` for the full 5-step proof against the live 0G Compute provider:
 
 ```bash
-openclaw skills install Pratiikpy/ivaronix#seed-skills/private-doc-review
-openclaw skills install Pratiikpy/ivaronix#seed-skills/0g-integration-auditor
-openclaw skills install Pratiikpy/ivaronix#seed-skills/github-audit
-openclaw skills install Pratiikpy/ivaronix#seed-skills/plan-step
-openclaw skills install Pratiikpy/ivaronix#seed-skills/code-edit
+pnpm ivaronix receipt verify 74 --tee-independent
+# → FULLY VERIFIED ✓  (5 of 5: schema · hash · signature · chain · TEE)
 ```
 
-The skill's `SKILL.md` declares the exact runtime requirement — `kind: node`, `package: @ivaronix/cli`, `bins: [ivaronix]` — and the env vars it needs (`IVARONIX_SIGNER_KEY`, `IVARONIX_WALLET_ADDRESS`, `IVARONIX_ROUTER_KEY` · legacy aliases `EVM_PRIVATE_KEY`, `EVM_WALLET_ADDRESS`, `ZG_API_SECRET` still resolve). After install, every run produces an Action Receipt anchored on `ReceiptRegistry` (chainId 16602) with creator/treasury fee split per `og.creator.fee_split` (90/10 for `private-doc-review`).
+No wallet. No account. The receipt was anchored from a different machine; you re-run the verification against the public 0G chain.
 
-To verify a receipt independently after a skill run:
-
-```bash
-ivaronix receipt verify <id> --tee-independent
-```
-
-This calls `broker.processResponse` against 0G Compute. If TEE verification passes, the receipt status flips to `→ FULLY VERIFIED ✓` (proven on receipts #994 and #1004). External-provider runs (NVIDIA NIM via `OG_PROVIDER=nvidia`) anchor as TIER 2 with `verificationMethod: external-signed` and render amber on `/r/<id>` per the brand contract — never green-washed.
+| Want… | Open this |
+|---|---|
+| **5-minute demo path** | [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) |
+| **3-page pitch (non-technical)** | [docs/PITCH.md](docs/PITCH.md) |
+| **Technical whitepaper (PDF)** | [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) |
+| **Mainnet receipt registry on chainscan** | [`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297) |
+| **Reviewer notes (faucet, test wallet, networks)** | [Reviewer notes](#reviewer-notes) below |
 
 ---
 
-## Phase A · Live testnet (Galileo, chainId 16602)
+## 1 · Project overview
+
+**Problem.** Professional AI adoption accelerated sharply in 2024–2025: 26% of legal organisations now actively use generative AI, up from 14% a year earlier ([Thomson Reuters, 2025](https://www.thomsonreuters.com/en/press-releases/2025/april/from-incubation-to-integration-generative-ai-adoption-nearly-doubles-as-professional-services-reach-crossroads)). At the same time, the EU AI Act Article 12 record-keeping mandate enters full application on **2 August 2026** for high-risk systems ([artificialintelligenceact.eu/article/12](https://artificialintelligenceact.eu/article/12/)). Yet the default consumer AI surface gives a user no cryptographic record of which model ran, what data was touched, or whether the answer was edited afterward. The audit log, when it exists at all, is controlled by the same vendor being audited.
+
+**Solution.** Ivaronix gives every important AI action a verifiable receipt — RFC-8785 canonical-hashed, EIP-712 signed by the agent's on-chain identity, anchored on `ReceiptRegistryV3` (0G Chain), with the inference itself running inside a TEE-attested 0G Compute provider. The receipt is independently re-verifiable by a stranger on a clean machine, in one shell command, in any of three languages (TypeScript / Python / Rust).
+
+**Persona.** The deal lawyer scanning a contract before signing. The founder reviewing a vendor agreement. The analyst sweeping a private data room. Anyone whose work demands an AI second opinion *and* an audit trail other people can verify.
+
+**Tracks.** Track 1 (Agentic Infrastructure) primary; Track 3 (Agentic Economy) automatic-secondary via `SkillRegistryV2` and `og.creator.fee_split`.
+
+---
+
+## 2 · System architecture
+
+```
+                ┌──────────────────────────────────────────────────────┐
+                │                       USER                            │
+                │            Studio (Next.js 15) · CLI · MCP            │
+                └──────────────────────┬───────────────────────────────┘
+                                       │ skill run
+                                       ▼
+        ┌────────────────────────────────────────────────────────┐
+        │                  IVARONIX RUNTIME                       │
+        │  manifest → consensus orchestrator → receipt builder    │
+        └──┬──────────────────┬──────────────────┬──────────────┘
+           │                  │                  │
+           ▼                  ▼                  ▼
+    ┌───────────┐      ┌───────────┐      ┌────────────┐
+    │ 0G Router │      │ 0G Compute│      │ 0G Storage │
+    │ (rotation │      │   (TEE)   │      │ (evidence  │
+    │ + billing)│      │ attested  │      │  + Burn    │
+    │           │      │ inference │      │  ciphertext│
+    └─────┬─────┘      └─────┬─────┘      └──────┬─────┘
+          │                  │                   │
+          └──────────────────┴───────────────────┘
+                             │
+                             ▼
+              ┌──────────────────────────────┐
+              │   Receipt (RFC-8785 + JCS    │
+              │   + Zod-validated + EIP-712  │
+              │   signed by passport wallet) │
+              └──────────────┬───────────────┘
+                             │
+                             ▼
+        ┌────────────────────────────────────────────────────┐
+        │              0G CHAIN — ANCHORS                     │
+        │  ReceiptRegistryV3 · AgentPassportINFTV2            │
+        │  CapabilityRegistryV2 · MemoryAccessLogV2           │
+        │  SkillRegistryV2 · SkillPricing · SkillRunPayment   │
+        │  SubscriptionEscrowV2 · Erc7857Verifier             │
+        └────────────────────────────────────────────────────┘
+                             │
+                             ▼
+             ┌──────────────────────────────────┐
+             │   /r/<id> — public proof page     │
+             │   ivaronix receipt verify <id>    │
+             │       --tee-independent           │
+             │                                   │
+             │   →  FULLY VERIFIED ✓             │
+             │      (5 checks · no account       │
+             │       · works on a clean machine) │
+             └──────────────────────────────────┘
+```
+
+The five steps `schema → hash → signature → chain anchor → TEE re-attest` are the load-bearing claim of the whole product. Step 5 (`broker.processResponse` against the live 0G Compute provider) is what makes the receipt verifiable to a third party weeks after the original inference.
+
+Detailed architecture in [HLD.md](HLD.md). Receipt-schema reference in [RECEIPTS_SPEC.md](RECEIPTS_SPEC.md). Canonical-hash spec in [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md).
+
+---
+
+## 3 · 0G modules used (and how each supports the product)
+
+Five primitives live today; one (0G DA) is on the roadmap. We do not claim integration we have not shipped.
+
+| 0G Primitive | How Ivaronix uses it | User-visible value | Where it lives |
+|---|---|---|---|
+| **0G Chain** | Anchors every receipt via `ReceiptRegistryV3` EIP-712 typed-data with per-agent monotonic nonce. Anchors passport mints, capability grants, memory access logs, skill registrations, subscription escrow. | A verification two years from now produces the same answer as a verification ten seconds after the run. | [`@ivaronix/og-chain`](packages/og-chain/) · [contracts/](contracts/) |
+| **0G Compute** | The specialist model runs inside a TEE on 0G Compute. After the run, `broker.processResponse` is re-invoked from any machine to confirm the attestation against the live network. | `verificationMethod: 'compute_sdk_process_response'` is an honest claim that any stranger can re-check. This is the load-bearing step. | [`@ivaronix/og-router`](packages/og-router/) |
+| **0G Storage** | The encrypted blob (Burn Mode) and the signed receipt JSON live on 0G Storage. The blob's storage root is recorded inside the receipt; anyone can fetch the ciphertext and confirm it matches. | Evidence is content-addressed on infrastructure no single party controls — exactly what EU AI Act Article 12 expects from a "non-operator-controlled" record. | [`@ivaronix/og-storage`](packages/og-storage/) |
+| **0G Router** | Routes inference to 0G Compute providers. Records per-provider rate-limits and cost telemetry on the receipt. Multi-credential `Keyring` with three failure-mode taxonomy (`'402'` permanent, `'auth'` permanent, `'429'` transient). | A reviewer can read the receipt body and see exactly how the work was billed, by which provider, with which model. | [`@ivaronix/og-router/keyring`](packages/og-router/src/keyring.ts) |
+| **0G Agent ID (ERC-7857)** | `AgentPassportINFTV2` mints a soulbound INFT per agent, storing trust score, receipt count, and violation history. Every receipt is bound to a passport tokenId. Delegated agents get their own passport so trust accrues to the agent itself. | Buyers can inspect an agent's on-chain track record before purchasing a skill run. Receipt signer is recovered and matched against the passport owner on chain. | [`AgentPassportINFTV2.sol`](contracts/src/AgentPassportINFTV2.sol) |
+| **0G DA** *(roadmap)* | Receipt-batch dispersal once 0G ships a public DA endpoint. Schema slot `og.da.batched` reserved (default `false`); v1.1 wires it without breaking byte-equality of current receipts. | High-volume archival without per-receipt anchor cost. Documented in [docs/0G_DA_INTEGRATION.md](docs/0G_DA_INTEGRATION.md). | scaffolded; no live endpoint claim |
+
+---
+
+## 4 · By the numbers (refreshed via `pnpm numbers:refresh`)
+
+| Metric | Value | Where to look |
+|---|---|---|
+| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->19<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 registries |
+| Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
+| Deployed contracts | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> testnet** · **<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> mainnet** | tables below |
+| Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->** all passing | `cd contracts && forge test` |
+| Workspace packages typecheck-clean | **<!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean -->** | `pnpm -r typecheck` |
+| First-party skills + ported catalog | **<!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty -->** + **<!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored -->** = **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal -->** | `seed-skills/` + `apps/cli/.ivaronix/skills/` |
+| 0G primitives integrated | **5** (Chain · Compute · Storage · Router · Agent ID) | per-module table in §3 above |
+| Polyglot canonical hash | **<!-- numbers:auto:polyglotHash.languages -->3<!-- /numbers:auto:polyglotHash.languages --> languages, byte-equal** | TS + Python + Rust, 29 vectors checked on every PR in `.github/workflows/jcs-roundtrip.yml` |
+| Networks live | **Galileo testnet · Aristotle mainnet** | chainIds 16602 + 16661 |
+
+Source of truth: [`docs/numbers.json`](docs/numbers.json) (refreshed against the live chain via `pnpm numbers:refresh`).
+
+---
+
+## 5 · Reproduction steps for judges
+
+> Tested on a clean macOS / Linux machine. ~5 minutes including pnpm install.
+
+### Prerequisites
+
+```bash
+# Node 20+, pnpm 9+, Foundry (for contract tests, optional)
+node --version   # v20.x or v22.x
+pnpm --version   # 9.x
+```
+
+### Clone, install, verify an existing anchored receipt (no wallet)
+
+```bash
+git clone https://github.com/Pratiikpy/ivaronix.git oglabs
+cd oglabs
+pnpm install
+
+# Receipt 1644 — anchored on ReceiptRegistry V1 (testnet)
+pnpm ivaronix receipt verify 1644
+# Expected: → ANCHORED ✓  (schema · hash · signature · chain anchor)
+```
+
+### Full 5-step verification including live TEE re-attestation
+
+```bash
+# Receipt 74 — TIER 1 TEE-attested, anchored on V2
+pnpm ivaronix receipt verify 74 --tee-independent
+# Expected: → FULLY VERIFIED ✓
+```
+
+If the live 0G Compute provider's TEE channel is temporarily unreachable, the last two lines look like this — **honest amber banner, exit code 1, no fake green**:
+
+```
+tee:primary error
+Status: → ANCHORED · TEE-independent partial
+```
+
+The first four checks are the load-bearing authenticity proof and pass deterministically. The TEE re-attestation is the additional check that calls back to the live 0G Compute provider — it proves the inference itself ran inside the attested TEE when reachable, and degrades honestly when not.
+
+### Run a fresh receipt of your own (~3 seconds, ~0.0001 OG)
+
+```bash
+cp .env.example .env
+# Fill: IVARONIX_ROUTER_KEY, IVARONIX_SIGNER_KEY
+# Faucet for testnet OG: https://faucet.0g.ai
+
+pnpm ivaronix demo
+# → anchors one real receipt on Galileo testnet
+# → prints three independent proof URLs: /r/<id>, chainscan-galileo.0g.ai/tx/<hash>,
+#   and the `ivaronix receipt verify <id> --tee-independent` command
+```
+
+Want a richer view? `demo --tier standard` runs 3-role consensus (analyst / critic / judge); `--tier high-stakes` runs 5 roles; `--tier audit` runs 6 roles including red-team-critic.
+
+For a sensitive document, add `--burn`:
+
+```bash
+pnpm ivaronix doc ask contract.pdf "find risky clauses" --skill private-doc-review --burn
+# → AES-256-GCM session-key encryption, key destroyed post-anchor,
+#   keyFingerprint captured before zero in the receipt body
+```
+
+### Open the Studio UI
+
+```bash
+pnpm --filter @ivaronix/studio dev
+# → http://localhost:3300/
+```
+
+### Run the contract test suite (optional)
+
+```bash
+cd contracts && forge test
+# → 227 tests passing across ReceiptRegistry V1+V2+V3, AgentPassport V1+V2,
+#   CapabilityRegistry V1+V2, MemoryAccessLog V1+V2, SkillRegistry V1+V2,
+#   SkillPricing, SkillRunPayment, SubscriptionEscrowV2, Erc7857Verifier
+```
+
+---
+
+## 6 · Reviewer notes
+
+### Network reference
+
+| | Galileo testnet | Aristotle mainnet |
+|---|---|---|
+| Chain ID | `16602` | `16661` |
+| RPC | `https://evmrpc-testnet.0g.ai` | `https://evmrpc.0g.ai` |
+| Explorer | `https://chainscan-galileo.0g.ai` | `https://chainscan.0g.ai` |
+| Faucet | `https://faucet.0g.ai` (free, no auth) | n/a |
+| Status | <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live | <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts live · deployed 2026-05-15 |
+
+Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (one anchored receipt costs ~0.0001 OG). Receipts are idempotent on the storage and anchor layers; a stalled inference call can be re-run without duplicating chain state.
+
+### Reviewer test account
+
+The operator wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` is funded on Galileo testnet and is the deployer of all 25 contracts above. Reviewers can either:
+
+1. **Reuse the operator wallet** — anchors against the existing passport (tokenId 1), inheriting the test history.
+2. **Generate a fresh wallet** — `cast wallet new`, fund via `https://faucet.0g.ai`, run `pnpm ivaronix passport mint` to mint a new ERC-7857 passport. The whole flow takes ~60 seconds.
+
+### Canonical demo receipts (anchored, replay-able)
+
+| Receipt id | Network | Type | Proof |
+|---|---|---|---|
+| **`1644`** | Galileo | `doc_ask` (TIER 1, TEE) | `pnpm ivaronix receipt verify 1644` returns ANCHORED |
+| **`74`** | Galileo | `doc_ask` (TIER 1, TEE) — gold-standard B-V2-46 validation-PASS | `pnpm ivaronix receipt verify 74 --tee-independent` returns FULLY VERIFIED ✓ |
+| **mainnet `4`** | Aristotle | `doc_ask` (TIER 1, TEE) | `pnpm ivaronix receipt verify 4 --network mainnet --tee-independent` |
+
+If the TEE channel is unreachable at the moment a judge runs `--tee-independent`, the first four checks still pass and the CLI returns ANCHORED + an amber banner. That's by design — honesty beats fake-green.
+
+### Rate-limit caveats
+
+- **0G Router** caps requests at ~30/min per credential. The `Keyring` rotates across multiple credentials when configured.
+- **Public Studio proof pages** (`/r/<id>`) are read-only and have no rate limit.
+- **`broker.processResponse` for TEE re-verify** works against receipts anchored within ~30 days. Older receipts return ANCHORED (the provider rotates attestation history).
+
+---
+
+## 7 · Tier 1 vs Tier 2 — honest disclosure
+
+Every Ivaronix receipt is one of:
+
+| Tier | Compute | Storage proof | Chain anchor | Re-verify CLI |
+|---|---|---|---|---|
+| **TIER 1 · TEE** (green) | TEE-attested 0G Compute | `evidenceRoot` on 0G Storage | yes | `--tee-independent` returns FULLY VERIFIED ✓ |
+| **TIER 2 · EXTERNAL** (amber) | NVIDIA NIM / Gemini / OpenAI / Ollama | optional | yes | returns ANCHORED (not FULLY VERIFIED) |
+
+The `/r/<id>` proof page never claims compute integrity it cannot back. A TIER 2 receipt renders an explicit *"verifies storage integrity ✓ · verifies compute integrity ⚠ external provider"* line. Storage-integrity and compute-integrity are separate claims and the page labels each one (per CLAUDE.md §6).
+
+---
+
+## 8 · What ships today (vs what's queued for v1.1)
+
+### Shipped on both networks
+
+- 13-type receipt schema with RFC-8785 canonical hash (TS / Python / Rust, byte-equal across all three, checked on every PR)
+- `ReceiptRegistryV3` EIP-712 typed-data anchoring with per-agent monotonic nonces
+- Independent TEE re-verification via `broker.processResponse`
+- `AgentPassportINFTV2` (ERC-7857) — trust score, receipt count, violation history
+- Consensus Mode — 6 roles, 4 tiers (`quick` / `standard` / `high-stakes` / `audit`), Jaccard + cosine convergence scoring
+- Burn Mode — AES-256-GCM session-key encryption, key destroyed post-anchor, `keyFingerprint` captured before zeroing
+- `SkillRegistryV2` marketplace primitive with `og.creator.fee_split` recorded on every receipt body
+- <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party skills + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> ported skills (<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal --> total in catalog)
+- Studio (Next.js 15, SIWE session auth, mobile + desktop), CLI (`ivaronix(1)`), MCP server, IETF AAT-format export
+
+### Queued for v1.1 (honest disclosure)
+
+- **Live OG fee settlement.** `SkillRunPayment.sol` is deployed; wiring it into the Studio run flow so OG transfers at 90/10 split occur atomically on every marketplace purchase is the v1.1 headline item. Today the declared fee split is recorded on every receipt body and is enforceable off-chain against the receipt; live settlement adds the on-chain transfer.
+- **0G DA integration.** Schema slot `og.da.batched` reserved; integration lands once 0G ships a public DA disperser endpoint. Documented in [docs/0G_DA_INTEGRATION.md](docs/0G_DA_INTEGRATION.md).
+- **Multi-agent receipt chains.** Single receipt spanning a chain of agent delegations, with EIP-712 signatures from each passport.
+- **ZK receipt compression.** SNARK proving receipt validity without revealing content — privacy-preserving compliance reporting.
+
+---
+
+## 9 · Polyglot canonical hash · RFC-8785
+
+Three reference implementations of the receipt's canonical hash, byte-equal across all three on every PR:
+
+- **TypeScript** · `packages/core/src/jcs.ts` · 17 self-tests
+- **Python** · `scripts/verifier-py/` · 14 self-tests
+- **Rust** · `ivaronix-verifier-rs/` · 11 self-tests · `cargo install ivaronix-verifier`
+
+Cross-impl proof runs in `.github/workflows/jcs-roundtrip.yml` on every push: each language hashes the same 29 vectors, `scripts/verifier-py/cross_check.py` asserts byte-equality across all three. CI blocks merge on any divergence.
+
+Why this matters: *"re-verify on any machine, in any language"* is only true if the canonical hash is language-independent. RFC-8785 (JSON Canonicalisation Scheme) is the spec; [`docs/HASH_FUNCTION.md`](docs/HASH_FUNCTION.md) is the design doc, including the `schemaVersion` migration plan so v1 and v2 receipts coexist forever.
+
+---
+
+## 10 · Deployed contracts
+
+### Phase A · Galileo testnet (chainId 16602)
 
 All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts deployed and feeding live data into Studio + CLI + MCP:
 
 <!-- contracts:auto:start -->
 | Contract              | Address                                                                                                                                            |
 |-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
-| `AgentPassportINFT`    | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) — stays live for 4 minted passports (tokenIds 1-4) |
-| `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) — K-1 + K-4 + K-6 fix |
-| `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) — stays live for any existing grants |
-| `CapabilityRegistryV2` | [`0x1351CD87360f0366D0A0068164e606B3c320F3E1`](https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1) — B-V2-15 |
-| `Erc7857Verifier`      | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) — V1 verifier reused by AgentPassportINFTV2 |
-| `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) — stays live for any existing log entries (chain history im… |
-| `MemoryAccessLogV2`    | [`0xCbfE1f526483283Bba80c2Bed3622a56904bF96d`](https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d) — B-V2-16 |
-| `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the existing anchored receipts (chain hist… |
-| `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) — K-2 fix |
-| `ReceiptRegistryV3`    | [`0x7396D536594e2BE833070c7EB441A10906046257`](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257) — B-V2-32 fix |
-| `SkillPricing`         | [`0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F`](https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F) — FINAL_BUILD_PLAN |
-| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) — stays live for existing skill registrations (chain histor… |
-| `SkillRegistryV2`      | [`0xF05113E83146160024326ff30979c57f5adc2193`](https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193) — B-V2-17 |
-| `SkillRunPayment`      | [`0x9eA5FDba913AC94dA8833Fee21F2832827950A5C`](https://chainscan-galileo.0g.ai/address/0x9eA5FDba913AC94dA8833Fee21F2832827950A5C) — FINAL_BUILD_PLAN |
-| `SubscriptionEscrowV2` | [`0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`](https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5) — B-V2-18 |
+| `AgentPassportINFT`    | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) |
+| `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) |
+| `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) |
+| `CapabilityRegistryV2` | [`0x1351CD87360f0366D0A0068164e606B3c320F3E1`](https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1) |
+| `Erc7857Verifier`      | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) |
+| `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) |
+| `MemoryAccessLogV2`    | [`0xCbfE1f526483283Bba80c2Bed3622a56904bF96d`](https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d) |
+| `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) |
+| `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) |
+| `ReceiptRegistryV3`    | [`0x7396D536594e2BE833070c7EB441A10906046257`](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257) |
+| `SkillPricing`         | [`0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F`](https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F) |
+| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) |
+| `SkillRegistryV2`      | [`0xF05113E83146160024326ff30979c57f5adc2193`](https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193) |
+| `SkillRunPayment`      | [`0x9eA5FDba913AC94dA8833Fee21F2832827950A5C`](https://chainscan-galileo.0g.ai/address/0x9eA5FDba913AC94dA8833Fee21F2832827950A5C) |
+| `SubscriptionEscrowV2` | [`0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`](https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5) |
 <!-- contracts:auto:end -->
 
-Live data path:
+### Phase B · Aristotle mainnet (chainId 16661)
 
-- **Receipts anchored:** read live via `ReceiptRegistry.nextId()` — Studio `/global` + CLI `ivaronix receipt list`.
-- **Passport profile:** `AgentPassportINFT.passportOf(wallet)` — `did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1` (tokenId 1, trustScore + receiptCount climbing per anchor).
-- **Skill catalog:** <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party skills + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> awesome-claude-skills ports = **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal --> skills** discoverable via `ivaronix skill list` and Studio `/skills`.
-- **First-party skills published on-chain via `SkillRegistry`:** `0g-integration-auditor`, `github-audit`, `private-doc-review` (v0.1.0 + v0.2.0), `plan-step`, `code-edit`. Each `verify` returns `MATCH` against the local manifestHash.
-
-## Phase B · Live mainnet (Aristotle, chainId 16661)
-
-10 contracts deployed on 0G Aristotle mainnet 2026-05-15. **15 receipts anchored across all 13 receipt-type slots** (quick · standard · high-stakes · audit · burn · doc_room_create · doc_room_read · memory_consolidation · code_change · swarm · subscription_skill_exec · passport_update · skill_exec · memory_access), cryptographically replayable from canonical JSON. Real TEE attestation via `broker.processResponse` on V3 receipt 4 · real 0G Storage upload on receipts 3-14. Honest open items for v1.1 listed in `QA_PROOF_PACK/judge-review/FINAL_JUDGE_REPORT.md`.
+<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->19<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Total deploy spend ~0.085 OG across 10 transactions; deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |
@@ -299,205 +367,90 @@ Live data path:
 | `SubscriptionEscrowV2` | [`0x937cfE76dEdB25CCf6c7C56fF16F53270794311e`](https://chainscan.0g.ai/address/0x937cfE76dEdB25CCf6c7C56fF16F53270794311e) |
 <!-- contracts:auto:mainnet:end -->
 
-Mainnet receipt URLs (open from any machine, no auth):
+Sample mainnet receipt anchor transactions (open from any machine, no auth):
 
-- Receipt 0 · quick-tier (0GM-1.0): tx [`0xd9a48ded…`](https://chainscan.0g.ai/tx/0xd9a48dedd80b88f166da56988c6b3923925476491eb6805dd6e87e0d351d4482) · body at `QA_PROOF_PACK/mainnet/smoke/01-first-tier1-receipt.json`
-- Receipt 1 · standard 3-role (nda-triage): tx [`0xbc40fd41…`](https://chainscan.0g.ai/tx/0xbc40fd41c0ff4af78af91dcd598d3618b9c8bd7995069143e58d46c1886e8743)
-- Receipt 2 · high-stakes 5-role (private-doc-review): tx [`0x280d4548…`](https://chainscan.0g.ai/tx/0x280d45489569a5ee5c927f064e26465857e54f0b8dd35d09678dd8938c07ac29)
+- Receipt 0 · `quick` tier · tx [`0xd9a48ded…`](https://chainscan.0g.ai/tx/0xd9a48dedd80b88f166da56988c6b3923925476491eb6805dd6e87e0d351d4482)
+- Receipt 1 · `standard` 3-role · tx [`0xbc40fd41…`](https://chainscan.0g.ai/tx/0xbc40fd41c0ff4af78af91dcd598d3618b9c8bd7995069143e58d46c1886e8743)
+- Receipt 2 · `high-stakes` 5-role · tx [`0x280d4548…`](https://chainscan.0g.ai/tx/0x280d45489569a5ee5c927f064e26465857e54f0b8dd35d09678dd8938c07ac29)
 
-Run end-to-end on the **public testnet** today:
+---
+
+## Visual tour
+
+Six canonical surfaces a judge sees on the live production deploy at https://ivaronix.vercel.app (Aristotle mainnet, chainId 16661):
+
+| # | Surface | Path |
+|---|---|---|
+| 01 | Home + Run panel | `screenshots/readme/01-home.png` |
+| 02 | Run panel mid-flight, four-light row pending | `screenshots/readme/02-runpanel-mid.png` |
+| 03 | Receipt page `/r/<id>` with TIER 1 + ANCHORED chips | `screenshots/readme/03-receipt-tier1.png` |
+| 04 | Burn Mode dialog with `keyFingerprint` | `screenshots/readme/04-burn-mode.png` |
+| 05 | Agents leaderboard `/agents` with minted passports | `screenshots/readme/05-agents.png` |
+| 06 | Onboard passport-mint flow `/onboard` | `screenshots/readme/06-onboard.png` |
+
+Captures generated by Playwright at 1200×800 @ 2x scale. Refresh against a running Studio dev server via `pnpm screenshots:refresh`. Live judge-facing surfaces beyond the 6 canonical PNGs (printable receipt, embed view, marketplace, payouts, memory, system health, /skill/new) are captured under `QA_PROOF_PACK/submission-final/` per Playwright run.
+
+---
+
+## 11 · What makes Ivaronix different
+
+- **Receipts are independently re-verifiable on a clean machine.** `pnpm ivaronix receipt verify <id> --tee-independent` runs the full 5-step check — schema · hash · signature · chain anchor · live TEE re-attestation via `broker.processResponse`. No account. No wallet. No Ivaronix server.
+- **TIER 1 vs TIER 2 is labelled honestly.** Green chip when inference ran inside a TEE-attested 0G Compute provider; amber chip for external providers (NIM / Gemini / OpenAI / Ollama). Both signed and anchored; the page never conflates the two.
+- **Receipt hashes are byte-equal across TypeScript, Python, and Rust** — checked on every PR against 29 cross-impl vectors. RFC-8785 is the spec.
+- **Creators earn from receipt-bound runs.** Each skill manifest declares `og.creator.fee_split`; the declared split is written to every receipt body. Today, this is enforceable off-chain against the receipt; live atomic OG settlement via `SkillRunPayment.sol` is the v1.1 headline (see §8).
+- **Proof links work without an account.** `/r/<id>` renders the four-light evidence row, the TIER chip, the anchor tx link, and the key fingerprint to anyone, no wallet, no login.
+- **Legal vertical, live cluster on Galileo.** Five legal skills (`private-doc-review` · `contract-renewal-clause-detector` · `nda-triage-reviewer` · `term-sheet-risk-scanner` · `legal-citation-verifier`) deployed on `SkillRegistryV2` with schema-aware output validation. Receipt body carries the model's structured findings in `outputs.parsed.data` plus the schema-pass/fail flag.
+
+---
+
+## 12 · Memory primitive
+
+`MemoryEngine` is an encrypted hybrid memory layer (vector similarity + FTS keyword, AES-256-GCM at rest with fresh per-call nonce), wired to `CapabilityRegistryV2` (on-chain grants) and `MemoryAccessLogV2` (on-chain access trail). Portable across machines via `memory stream-id` — a deterministic 0G KV stream-ID derived from any wallet.
 
 ```bash
-# CLI
-ivaronix doc ask contract.pdf "find risky clauses" \
-  --skill private-doc-review --consensus --burn
-
-# Studio
-pnpm --filter @ivaronix/studio dev
-# → http://localhost:3300/  drop a file, pick a skill, click Run
-
-# MCP server (Claude Desktop / Cursor / Codex)
-pnpm --filter @ivaronix/mcp-server dev
-# stdio: tools/list returns ivaronix_ask, verify_receipt, passport_show, …
+ivaronix memory remember "Vendor X's contract has a 90-day notice asymmetry" --tags work,legal
+ivaronix memory recall  "asymmetric notice clauses" --top-k 5
+ivaronix memory grant   0xPartner --scope "memory:work" --expires 1735689600
+ivaronix memory log     --agent $IVARONIX_WALLET_ADDRESS --limit 10
 ```
+
+Every memory write anchors a `memory_access` receipt by default — a memory write isn't just stored, it's attested. Same applies to reads and grants.
+
+Ten sub-commands: `remember` · `recall` · `forget` · `grant` · `revoke` · `list` · `log` · `log-emit` · `stream-id` · `snapshot`. Studio `/memory` mirrors the surface with SIWE-gated grant management and a real-time event feed from `MemoryAccessLogV2`.
 
 ---
 
-## What is Ivaronix?
-
-> **Catch the risks. Keep the receipts.**
-
-AI review for documents you can't paste into ChatGPT. The persona is the deal lawyer scanning a contract before signing, the founder reviewing a vendor agreement, the analyst sweeping a private data room — anyone whose work demands an AI second opinion *and* an audit trail other people can verify. Every Ivaronix action ends in an **AI Action Receipt** anchored on 0G Chain — live on Galileo testnet (chainId 16602) and Aristotle mainnet (chainId 16661), with encrypted artifacts on 0G Storage, independent TEE verification via 0G Compute, and an ERC-7857 Agent Passport that follows your wallet.
-
-Five surfaces share that spine: Studio (web), Forge CLI, API + MCP server, the Skill Registry, and the Trust Layer schema. The receipt is the unit; the surfaces are how you reach it.
-
-Plus `@ivaronix/og-toolkit` — clean DX wrappers around `@0gfoundation/0g-storage-ts-sdk` + `@0gfoundation/0g-compute-ts-sdk` + `@0glabs/0g-serving-broker`. New 0G builders will adopt it because it's nicer than raw SDKs *and* it defaults to producing receipts. Quiet long-term moat.
-
-```bash
-ivaronix doc ask contract.pdf "find risky clauses" \
-  --burn --consensus --receipt
-```
-
-Or in Studio: drop file → click "Run" → see verifiable audit report → click "Share" → copy public Proof URL.
-
-→ encrypted upload to 0G Storage
-→ 5-role consensus (analyst / risk-reviewer / evidence-checker / red-team-critic / judge)
-→ independent TEE verification per role
-→ Burn Mode (session key destroyed)
-→ Receipt JSON → 0G Storage → 0G Chain anchor
-→ ERC-7857 Agent Passport trustScore updated
-→ shareable public Proof Explorer URL
-
-**Ships with 50+ skills out of the box** (ports of awesome-claude-skills + 3 first-party 0G-native skills).
-
----
-
-## How it works
-
-```
-         ┌─────────────┐
-         │  Studio UI  │  user drops a doc, watches the receipt anchor
-         └──────┬──────┘
-                │
-         ┌──────▼──────┐
-         │   Runtime   │  skill manifest selected (private-doc-review,
-         └──────┬──────┘  github-audit, 0g-integration-auditor, …)
-                │
-   ┌────────────┼────────────────┐
-   │            │                │
-   ▼            ▼                ▼
-0G Storage   0G Compute        0G Router
-encrypted    TEE-attested      provider routing
-blob         inference         + telemetry
-   │            │                │
-   └────────────┼────────────────┘
-                │
-         ┌──────▼──────┐  receipt JSON, canonical-hashed,
-         │  Receipts   │  signed by AgentPassport-resolvable wallet
-         └──────┬──────┘
-                ▼
-       ┌──────────────────┐
-       │ ReceiptRegistry  │  anchor on 0G Chain
-       │ AgentPassportINFT│  ERC-7857 — trustScore, receiptCount
-       │ CapabilityReg.   │  user grants/revokes capabilities
-       │ MemoryAccessLog  │  every memory access on chain
-       │ SkillRegistry    │  manifests, fee splits, version history
-       └──────────────────┘
-                │
-                ▼
-   `ivaronix receipt verify <id> --tee-independent`
-   → broker.processResponse → FULLY VERIFIED ✓
-```
-
-The receipt is the spine. Every other surface is plumbing that makes the receipt real.
-
-## Built on 0G
-
-> Live receipt-grade proof at **[ivaronix.app/0g](https://ivaronix.vercel.app/0g)** — six-module grid with live `getDeployedAddress` lookups + chainscan links.
-
-Each 0G primitive carries a specific user-visible value. We adopted the modules where the product needed them, and we say so honestly when one is on the roadmap rather than wired today.
-
-- **0G Chain** — every receipt anchors here. The chain is what makes a verification two years from now produce the same answer as the verification ten seconds after the run.
-- **0G Compute** — the specialist runs inside a TEE so the plaintext is invisible outside the run. The TEE attestation is what makes `verificationMethod: 'router_flag'` and `'compute_sdk_process_response'` honest claims; reach `--tee-independent` and the broker check re-runs on a separate machine.
-- **0G Storage** — the encrypted blob and the signed receipt JSON live here. The blob's storage root is recorded inside the receipt; anyone can fetch the ciphertext later and confirm it matches.
-- **0G Router** — carries the inference traffic and supplies the per-provider rate-limit and cost telemetry the receipt records. A reviewer can read the receipt and see how the work was billed.
-- **Agent ID (ERC-7857)** — every receipt is bound to a passport tokenId. A delegated agent (planning-01 §2A) gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an `AgentPassport`-resolvable wallet — the chain confirms the signer matches.
-- **0G DA** — on the roadmap. We don't claim integration we haven't shipped; the path is documented in `docs/PHASE_B_DISCLOSURES.md` and reserved on the receipt schema (`og.da.batched`).
-
-The toolkit at `@ivaronix/og-toolkit` wraps `@0gfoundation/0g-storage-ts-sdk`, `@0gfoundation/0g-compute-ts-sdk`, and `@0glabs/0g-serving-broker` with receipt-defaulting helpers — easier than the raw SDKs, and every helper produces a receipt by default rather than as an opt-in.
-
-### 0G DA · honest roadmap
-
-Ivaronix is DA-ready for high-volume receipt batching. v1 uses 0G Storage + 0G Chain because individual receipts need persistent evidence and direct verification first. The receipt schema reserves `og.da.batched` (default `false`) so v1.1 can wire DA without breaking byte-equality with current receipts.
-
-When 0G Foundation ships a public DA disperser endpoint, the integration path is:
-
-1. Batch N receipts (default 100) into a single blob.
-2. Disperse via `disperse_blob` against the 0G DA Rust SDK (`oglabs resources/0g-da-rust-sdk/`).
-3. Anchor the batch's Merkle root via a new `ReceiptBatchRegistry` contract.
-4. Per-receipt verifier walks: batch root → DA blob retrieve → individual receipt → existing 5-check binding.
-
-We didn't force DA in v1 because that would have been vapor. The architecture is queued; the schema slot exists; the migration is forward-only (existing receipts stay valid with `og.da.batched: false`). See `subgraph/README.md` for the indexing layer that will route DA-batched receipts when they ship.
-
-### IETF Agent Audit Trail export
-
-Ivaronix receipts export to IETF Agent Audit Trail format (`draft-rosenberg-aat-01`) via `pnpm ivaronix receipt verify <id> --format aat`. Designed to satisfy EU AI Act Article 14 human-in-the-loop documentation requirements. 34 mapped fields across 10 AAT sections; see [`docs/AAT_MAPPING.md`](docs/AAT_MAPPING.md) for the full mapping table.
-
-## Network reference
-
-| What         | Galileo testnet                       | Aristotle mainnet                          |
-| ------------ | ------------------------------------- | ------------------------------------------ |
-| Chain id     | `16602`                               | `16661`                                    |
-| RPC          | `https://evmrpc-testnet.0g.ai`        | `https://evmrpc.0g.ai`                     |
-| Explorer     | `https://chainscan-galileo.0g.ai`     | `https://chainscan.0g.ai`                  |
-| Faucet       | `https://faucet.0g.ai`                | n/a                                        |
-| Status       | All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live (table above) | <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts live (see Phase B below) · <!-- numbers:auto:mainnet.receiptsAnchored -->19<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` |
-
-Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (one anchored receipt costs ~0.0001 OG). Receipts are idempotent on the storage and anchor layers, so a stalled inference call can be re-run without duplicating chain state.
-
-A few addresses worth landing on directly:
-
-- `/thesis` — non-technical product page
-- `/r/1004` — TIER 1 (TEE-attested) FULLY VERIFIED receipt
-- `/r/1204` — receipt signed by a delegated AI agent
-- `/data-room/01KR66C1GJVR57MHQPJCW1HQQY` — Confidential Data Room (planning-01 §1B)
-- `/delegate/01KR67PT76V9AQTHN413PYWB1J` — delegated agent profile
-
-Every known limit is enumerated in `docs/PHASE_B_DISCLOSURES.md` with the file path, current behaviour, and the intended fix. No surface in the Studio claims something the chain cannot verify.
-
----
-
-## Doc Map
-
-This folder is the **single source of truth** for Ivaronix planning. Read in order:
-
-| # | Doc | Purpose | When to read |
-|---|---|---|---|
-| 1 | **[PRD.md](PRD.md)** | Wedge, 5 surfaces, 7 layers, MVP scope, monetization, success criteria | Start here |
-| 2 | **[HLD.md](HLD.md)** | Architecture: monorepo, contracts, CLI, Studio, daemon, hybrid memory, lifecycle hooks | Before coding |
-| 3 | **[BUILD.md](docs/build/BUILD.md)** | 30-day testnet-then-mainnet plan, network profiles, SDK quirks, deploy steps | During implementation |
-| 4 | **[UI_UX_GUIDE.md](UI_UX_GUIDE.md)** | Visual source of truth: design tokens, typography, logo anatomy, layout rules, motion, a11y, Playwright workflow. Pairs with `brand/Ivaronix.html` mockup | Before any Studio / Hub / Proof Explorer code |
-| 5 | **[COMPONENTS.md](COMPONENTS.md)** | Per-component UX decisions (Studio screens, CLI surfaces, visual language) sourced from cross-folder analysis | Before designing or building any UI surface |
-| 6 | **[RECEIPTS_SPEC.md](RECEIPTS_SPEC.md)** | Canonical receipt JSON schema (RFC-style) with 9 types + 3-state verification | Before touching `packages/receipts` |
-| 7 | **[REFERENCE_PATTERNS.md](docs/reference/REFERENCE_PATTERNS.md)** | Extracted contract + pipeline patterns from 0G showcase + entry winners | When designing contracts or pipelines |
-| 8 | **[0G_RESOURCES.md](docs/reference/0G_RESOURCES.md)** | Full 0G Builder Hub catalog: URLs, repos, SDK names, CLI flow, addresses, conflicts | When integrating any 0G primitive |
-| 9 | **[PITCH.md](docs/pitch/PITCH.md)** | Grant pitch + per-audience positioning + bounty mapping + 2-gate submission checklist | Before grant submission |
-
-### Operational notes (kept alongside)
+## 13 · Documentation
 
 | Doc | Purpose |
 |---|---|
-| **[brand/Ivaronix.html](brand/Ivaronix.html)** | Bundled visual mockup — the design source of truth. Open in browser to see the rendered reference. Use Playwright to capture screenshots at 1440×900 / 1280×800 / 390×844. |
-| **[brand/](brand/)** | Logo SVG assets: `ivaronix-mark.svg` (full), `ivaronix-icon.svg` (brackets-with-i), `ivaronix-dot.svg` (favicon), `ivaronix-wordmark.svg` (text). |
-| **[0G_TESTNET_NOTES.md](docs/reference/0G_TESTNET_NOTES.md)** | Live testnet state: Wallet A `0xaa95...`, current Router pricing, confirmed inference endpoint. |
-| **[entries.md](docs/reference/entries.md)** | Internal field-reference notes on other 0G APAC entries (local reference, not part of the public submission). Companion to `REFERENCE_PATTERNS.md`. |
-| **[.env.example](.env.example)** | Template for credentials (real `.env` is gitignored). |
-
-Single source of truth ordering (when docs disagree):
-```
-brand/Ivaronix.html (visual) > UI_UX_GUIDE > RECEIPTS_SPEC > docs/reference/REFERENCE_PATTERNS > COMPONENTS > docs/build/BUILD > HLD > PRD > docs/pitch/PITCH
-```
-
-For visual decisions specifically: `Ivaronix.html` (open in browser, screenshot via Playwright) wins, then `UI_UX_GUIDE.md` (the codified rules), then `COMPONENTS.md` (per-component UX).
-
-When in doubt, **link, don't duplicate.**
-
-**Component-level rule:** if a doc describes how a Studio screen, CLI surface, or visual chip should look, it MUST link to `COMPONENTS.md` rather than restate.
-
----
-
-## Companion folders
-
-| Folder | Holds |
-|---|---|
-| `oglabs resources/` | Official 0G docs, SDKs, agent-skills patterns, awesome-0g curated list |
-| `og-projects-showcase/` | Projects featured by the OG Labs team — reference patterns |
-| `entries/` · `new-entries/` | Other 0G APAC Hackathon entries — local reference, not edited |
-| `CLI Open Source Project/` | CLI projects synthesised from (OpenCode, HermesAgent, Octogent, claude-mem, awesome-claude-skills) |
-| `_archive/` | Pre-v2 planning docs (kept for history; do not edit) |
+| [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) | 5-minute demo path for OG APAC judges |
+| [docs/PITCH.md](docs/PITCH.md) | 3-page non-technical pitch |
+| [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) | Technical whitepaper (PDF, May 2026) |
+| [HLD.md](HLD.md) | High-level architecture |
+| [PRD.md](PRD.md) | Product requirements |
+| [RECEIPTS_SPEC.md](RECEIPTS_SPEC.md) | Canonical receipt JSON schema |
+| [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) | RFC-8785 canonical receipt hash spec |
+| [docs/MAINNET_READINESS.md](docs/MAINNET_READINESS.md) | 13/13 mainnet-readiness checklist |
+| [docs/RECEIPT_SCHEMA.md](docs/RECEIPT_SCHEMA.md) | Receipt field-level reference |
+| [docs/CRYPTO_NOTES.md](docs/CRYPTO_NOTES.md) | Threat models for every primitive |
+| [docs/AAT_MAPPING.md](docs/AAT_MAPPING.md) | IETF Agent Audit Trail draft mapping |
+| [docs/PHASE_B_DISCLOSURES.md](docs/PHASE_B_DISCLOSURES.md) | Half-baked surfaces — what shipped, what's queued |
+| [docs/PRIVACY_NOTES.md](docs/PRIVACY_NOTES.md) | Operator-as-proxy threat model |
+| [SECURITY.md](SECURITY.md) | What the receipt system defends · what it does NOT |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Pre-PR command list, commit conventions, audit-trailer convention |
+| [BRAND.md](BRAND.md) | Brand-asset license (separate from MIT code grant) |
+| [CHANGELOG.md](CHANGELOG.md) | Audit-fix ledger with `Closes audit <ID>` trailers |
+| [UI_UX_GUIDE.md](UI_UX_GUIDE.md) | Visual contract, design tokens, brand reference |
 
 ---
 
-## Contact
+## License & contact
 
-Personal project — single maintainer.
+Code: MIT. Brand assets: see [BRAND.md](BRAND.md) (separate grant — for fork/widget-embedding terms).
+
+Open source at [github.com/Pratiikpy/ivaronix](https://github.com/Pratiikpy/ivaronix). Contributions, audits, and partnership inquiries welcome.
+
+---
+
+*Submission for the 0G APAC Hackathon · May 2026 · Track 1 (Agentic Infrastructure) primary · Track 3 (Agentic Economy) automatic-secondary.*

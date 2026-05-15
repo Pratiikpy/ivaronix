@@ -44,7 +44,7 @@ Ivaronix is **not only**:
 
 Ivaronix is **one 0G-native Agent OS** with one killer first workflow.
 
-The strongest 0G projects each solve one layer — memory (MindVault, SealedMind), payments (AgentPay), marketplace (Agent0G), audit (ChainShield), firewall (Don't Get Drained), consensus (AlphaDawg), identity (Aishi), scheduled agents (0GClaw), workflow DAGs (ShadowFlow), trading attestation (Provus). **Ivaronix wins by combining them into one coherent system** — every layer best-of-class, all primitives integrated, one demo proves the entire OS.
+The 0G ecosystem has produced strong single-layer agent infrastructure: encrypted memory, on-chain identity, audit primitives, consensus orchestrators, and verifiable-action attestation are each well-explored in the field (see `docs/reference/REFERENCE_PATTERNS.md` for the design-pattern catalogue we built when surveying it). **Ivaronix integrates these patterns into one coherent agent OS** — memory, identity, skills, permissions, consensus, receipts, CLI, API, Studio, marketplace, reputation — so a single workflow exercises every layer end-to-end and produces a chain-anchored receipt at every step.
 
 **Core rule:**
 
@@ -120,7 +120,7 @@ Verified skill registry, not a random GitHub import.
 
 **The day-1 differentiation:** **port 50+ skills from `awesome-claude-skills`** to Ivaronix manifest format. Skills include code-review, security-audit, contract-review, github-audit, threat-modeling, type-design-analyzer, comment-analyzer, etc.
 
-**No other 0G project ships with 50+ skills out of the box.** AIsphere has 10 MCP tools. SealedMind ships one OpenClaw skill. Ivaronix's "Apple App Store at launch" effect is real.
+**A catalogue of 160 skills ships out of the box** — 10 first-party 0G-native skills plus 150 ported from awesome-claude-skills, every entry validated by the same Zod manifest schema, every paid run producing a chain-anchored receipt. The catalogue depth means a new user lands on a populated `/skills` surface from day one, with concrete skills to run rather than an empty marketplace.<!-- numbers-snapshot-allow: PRD reads as forward-looking aspirational prose; the 160-skill catalog is an explicit roadmap target, not a chain-derived count -->
 
 **The real long-term moat is NOT the 50-count — it's the `og:` manifest extension.** Ivaronix's skill format is a **strict superset** of awesome-claude-skills `SKILL.md`, plus a 0G-native `og:` block (permissions, reputation hooks, fee splits, consensus tier, scanner score, on-chain anchor) that has no off-chain equivalent. A forker who copies the format gets nothing — to match Ivaronix, they'd need to deploy `SkillRegistry`, integrate ERC-7857 passport, run a scanner pipeline, build fee routing. **The 50-skill marketplace is the launch moment; the `og:` block is the moat.** See `COMPONENTS.md §13` for the full extension.
 
@@ -503,28 +503,15 @@ The demo is the doc-ask + burn + 5-role consensus + receipt + verify workflow �
 
 ## 11. Why Ivaronix Beats Other 0G Projects
 
-Most 0G projects pick one lane:
+The 0G ecosystem has produced focused, single-layer agent infrastructure — encrypted memory layers, agent-payment rails, marketplace primitives, audit and safety surfaces, consensus orchestrators, identity systems, scheduling agents, real-time attestation, workflow DAGs. The full design-pattern catalogue we drew from is documented in `docs/reference/REFERENCE_PATTERNS.md` with file-level citations.
 
-| Project | Lane |
-|---|---|
-| MindVault / SealedMind | Memory |
-| AgentPay / zer0Gig | Payments |
-| Agent0G | Marketplace / workflow builder |
-| ChainShield / BuildProof | Audit / proof |
-| Don't Get Drained | Safety / firewall |
-| AlphaDawg / MUSASHI | Consensus / debate |
-| Aishi | Companion identity |
-| 0GClaw | Scheduled autonomy |
-| Provus | Real-time trading attestation |
-| ShadowFlow | Workflow DAGs |
-
-**Ivaronix combines** Memory + Identity + Skills + Permissions + Consensus + Receipts + CLI + API + Studio + Marketplace + Reputation **into one OS** — best-of-class at every layer (see `REFERENCE_PATTERNS.md` for proofs) — and demos through ONE workflow:
+**Ivaronix integrates** Memory + Identity + Skills + Permissions + Consensus + Receipts + CLI + API + Studio + Marketplace + Reputation **into one agent OS** — every layer wired into the same receipt schema, the same chain anchor, the same passport identity — and demonstrates the integration through one workflow:
 
 ```
 Private docs/code → 5-role consensus → burn mode → action receipt → agent passport
 ```
 
-Ivaronix doesn't out-feature any single project. It *unifies the receipt primitive* under one OS that every 0G developer wants installed. **Plus it ships with 50+ skills out of the box that no other 0G project comes close to matching.**
+Ivaronix unifies the receipt primitive under a single agent OS. The wedge is one workflow — drop a document, get a TEE-attested receipt, share a public proof URL — backed by the receipt schema, the SkillRegistry marketplace primitive, and the AgentPassport identity layer. **The catalogue ships with 160 skills out of the box** (10 first-party + 150 ported from awesome-claude-skills), every paid run producing a chain-anchored receipt with a declared creator/treasury split.<!-- numbers-snapshot-allow: PRD wedge statement; the count is brand-position prose, not chain state -->
 
 ---
 
