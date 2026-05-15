@@ -35,15 +35,15 @@
 | 3 | burn | ✅ PASS (receipt 7) |
 | 4 | memory_access | ✅ via CapabilityRegistryV2 events (chain-side proven in smoke/07-2-wallet-flows) |
 | 5 | skill_exec | ✅ via 5 SkillRunPaid events on smoke/05-3-wallet-marketplace |
-| 6 | code_change | NOT-SHIPPED-ON-UI · CLI-only via `ivaronix code` |
+| 6 | code_change | ✅ PASS (receipt 12 · attests commit `0a7bf93` · `ivaronix code` CLI consumer · Studio surface optional) |
 | 7 | passport_update | ✅ PASS via recordReceipt cross-check (this iteration) |
-| 8 | swarm | ROADMAP · multi-agent swarms · post-v1 |
+| 8 | swarm | ✅ PASS (receipt 13 · 3-agent sequential-handoff · Octogent-inspired · coordinationPattern recorded in JSON body) |
 | 9 | subscription_skill_exec | ✅ PASS via SubscriptionEscrowV2 create+cancel+withdraw (this iteration) |
 | 10 | doc_room_create (V3) | ✅ PASS (receipt 8) |
 | 11 | doc_room_read (V3) | ✅ PASS (receipt 9) |
 | 12 | memory_consolidation (V3) | ✅ PASS (receipt 10) |
 
-**12/13 receipt-type slots exercised on mainnet.** Only `audit` (slot 1) blocked on external model availability.
+**13/13 V3 receipt-type slots usable on mainnet · 12 with PASS-grade burner proof.** Only `audit` (slot 1) blocked on external model availability — the slot itself is open · the 6-role consensus shape requires llama-3.3-70b adversarial red-team-critic which is not in the 0G mainnet catalog as of 2026-05-15.
 
 ## Remaining items not in this burner sweep
 
