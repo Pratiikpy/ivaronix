@@ -6,8 +6,9 @@
 
 - **8 / 8 user-spec UI flows verified end-to-end via real MetaMask popups** on the deployed Studio at https://ivaronix.vercel.app
 - **24 / 24 Studio routes** render at iPhone 375×812 with hamburger nav + page-specific titles + brand chips
-- **7 real product bugs found + fixed + shipped to production this session** — every fix went through `git push` → Vercel auto-deploy → re-verify on live
-- **Cross-machine CLI verifier** confirms Receipt 1 ANCHORED status on Aristotle V3 registry (schema · hash · signature · chain anchor all PASS)
+- **8 / 8 desktop routes** at 1440×900 verified via v22 sweep + visual inspection — caught the /admin/health 404 and shipped a real page
+- **9 real product bugs found + fixed + shipped to production this session** — every fix went through `git push` → Vercel auto-deploy → re-verify on live
+- **Cross-machine CLI verifier** confirms Receipts 1-5 ALL ANCHORED on Aristotle V3 registry (schema · hash · signature · chain anchor all PASS, 5/5)
 
 ## 8 user-spec flows · all PROVEN
 
@@ -22,7 +23,7 @@
 | 7 | Proof page /r/<id> stranger-replay | v18 | /r/1–5 ALL PASSED (ANCHORED · TIER 1 · 0GM · VERIFIED · 13 chainscan links each · 0 errors) |
 | 8 | /skill/new full UI flow | v19d | UI + form + SIWE auto-trigger + manifest YAML build all working · hosted Vercel deploys correctly gate publish with honest CLI-redirect 503 (read-only FS) |
 
-## 7 product bugs fixed live
+## 9 product bugs fixed live
 
 | # | Commit | Bug | Fix |
 |---|---|---|---|
@@ -33,6 +34,8 @@
 | 5 | (v15b script) | SIWE auto-popup-race on /memory page mount blocking writeContract | Pre-drive auto-fired SIWE popup before Issue grant |
 | 6 | `0984146` | /skill/new Save failed silently with 401 (no SIWE prompt) | Auto-trigger `ensureSiweSession` on 401, then retry Save |
 | 7 | `f1a8f4a` | /skill/new manifest YAML parse error on ISO dates / colons / unicode | `JSON.stringify()` form values so YAML treats them as quoted scalars |
+| 8 | `8255f5a` | `deriveRiskLevel` heuristic missed plain-text "Risk Level: high" trailer · 5 legal-cluster receipts reported riskLevel=low despite identifying $4,800 non-refundable deposits + tenant indemnification clauses | Added PLAIN_HIGH/MED/LOW regex patterns matching the prompt-instructed trailer (with optional **bold** markdown) · 4 new tests, 44/44 risk-suite pass |
+| 9 | `5a4eda9` | /admin/health returned the generic 404 page on production · FINAL_BUILD_PLAN.md §D-18 specced it but the page was never built | Shipped real `apps/studio/src/app/admin/health/page.tsx` server-rendered with live chain reads (RPC reachability + current block + V3 receipt count + V1/V2 passport count via canonical `livePassportCount` helper + auto-derived contracts table from `contracts/deployments/<network>.json` with chainscan links per row) |
 
 ## Mobile sweep (v21 · iPhone 375×812 · iOS 17 Safari user-agent)
 
@@ -61,27 +64,42 @@
 
 24 / 24 mobile routes accessible · 3 false-positive "error" word matches (likely "error handling" copy, "error rate" telemetry).
 
-## Cross-machine CLI verifier
+## Cross-machine CLI verifier · Receipts 1-5 ALL ANCHORED
 
-Receipt 1 (Aristotle V3 registry):
-```
-● schema       PASS
-● hash         PASS
-● signature    PASS  →  CLAIMED
-● chain anchor PASS  (block ≈ 1778614477)  →  ANCHORED
-Status: → ANCHORED ✓
-```
+Each mainnet receipt re-verified via `pnpm ivaronix receipt verify N --tee-independent`:
 
-Verifier produces same status on a fresh-machine load · proves the receipt model is **independently replayable** — the core trust claim of Ivaronix.
+| Receipt | Block | Status |
+|---|---|---|
+| 1 | 1778614477 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+| 2 | 1778614563 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+| 3 | 1778615723 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+| 4 | 1778615981 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+| 5 | 1778631879 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+
+5/5 PASS. Verifier produces same status on a fresh-machine load · proves the receipt model is **independently replayable** — the core trust claim of Ivaronix.
+
+## /admin/health · public system-status page
+
+Post Bug #9 fix (commit `5a4eda9`), live values rendered on first paint of https://ivaronix.vercel.app/admin/health :
+
+- Network: mainnet · chainId 16661 · RPC https://evmrpc.0g.ai · RPC OK chip green
+- Receipts (V3): 18 · Passports (V1 + V2 via canonical helper): 4 · Contracts deployed: 10 / 10
+- 10-row contracts table with chainscan link per row · sorted alphabetically · auto-derived from `contracts/deployments/mainnet.json`
+- Brand-aligned cream/ink palette · `--color-verified` status chip · `--color-hairline` table dividers
+- No auth, no wallet, no cookie · judge can load on fresh machine in incognito
+
+v23 Playwright verification (`scripts/qa/metamask-e2e/verify-admin-health-v23.ts`) PASS:
+- `is404=false hasSystemHealth=true hasRpcOk=true contractsTableRows=10`
+- Capture: `QA_PROOF_PACK/submission-final/mm-prod-admin-health-v23/001-admin-health-loaded.png`
 
 ## What's NOT yet done (honest backlog)
 
-- Marketplace creator earnings/withdraw (3-wallet flow · creator wallet receives payout)
-- Admin/treasury withdraw (operator-seed gated · MM v13.30 raw-private-key import path removed)
-- AI output quality re-audit on the 5 legal skills against current production (last done Phase 3)
-- README + JUDGE_GUIDE prose update reflecting this session's proof index
+- Marketplace creator-earnings withdraw on mainnet — needs a fresh creator wallet derived via Add Account on operator MM seed (per `feedback_never_fund_public_test_wallets`), funded by operator-to-operator transfer, then sells at least one skill run, then withdraws via real MM popup. Heavy 3-wallet flow.
+- Admin/treasury withdraw — operator-seed gated · MM v13.30 raw-private-key import path removed · same Add Account derivation pattern applies
+- AI output quality re-audit on the 5 legal skills against current production — partially covered by Bug #8 (the `riskLevel` heuristic fix lands on every new run; legacy receipts are immutable)
+- README + JUDGE_GUIDE prose updates — this SESSION doc serves as the canonical proof index until the operator promotes content to the public-facing README
 
-Backlog items are not user-blocking · the 8 user-facing flows + mobile + cross-machine verifier are all green.
+Backlog items are not user-blocking. The 8 user-facing flows + 8 desktop routes + 24 mobile routes + 5/5 cross-machine verifier + /admin/health are all green.
 
 ## How a judge reproduces this
 
@@ -103,3 +121,5 @@ Every receipt on chain is independently replayable. Every flow is autonomously t
 - `f1a8f4a` · /skill/new buildManifest YAML quoting
 - `b93aa33` · v19d /skill/new full UI verified end-to-end
 - `781e83f` · v21 mobile 375×812 sweep · 24 routes
+- `8255f5a` · `deriveRiskLevel` plain-text trailer regex · 4 new tests · 44/44 pass
+- `5a4eda9` · /admin/health public system-status page · auto-derived contracts + canonical livePassportCount + brand tokens
