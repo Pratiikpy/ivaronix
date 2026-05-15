@@ -115,6 +115,50 @@ test('deriveRiskLevel: plain "Risk Level: low" trailer → low (explicit)', () =
   assert.equal(deriveRiskLevel(finalText), 'low');
 });
 
+test('deriveRiskLevel: legal-citation-verifier hallucinated-cases shape → high (5th skill)', () => {
+  // Simulates legal-citation-verifier output for the
+  // sample-two-hallucinated-cases.txt fixture. The 5th legal-cluster
+  // skill was Router-rate-limited at paid-run time (parallel CLI agent
+  // saturated the shared single-credential 10 req/min cap); this test
+  // proves the regex coverage independent of paid inference.
+  const finalText = `Citation review:
+{
+  "verified_count": 1,
+  "hallucinated_count": 2,
+  "citations": [
+    {"text": "Smith v. Jones 100 F.3d 200 (5th Cir. 2010)", "verified": true, "risk_level": "low"},
+    {"text": "Doe v. Roe 999 F.4d 1 (1st Cir. 2099)", "verified": false, "risk_level": "high"},
+    {"text": "Acme v. State 42 U.S. 42 (1789)", "verified": false, "risk_level": "high"}
+  ],
+  "overall_risk": "high"
+}
+
+Two of three citations could not be matched to a real case in the
+reference corpus. Filing this brief would risk court sanctions for
+non-existent precedent.
+
+Risk Level: high`;
+  assert.equal(deriveRiskLevel(finalText), 'high');
+});
+
+test('deriveRiskLevel: legal-citation-verifier all-real-citations shape → low', () => {
+  // Companion: when all citations check out, the output should be low.
+  const finalText = `Citation review:
+{
+  "verified_count": 3,
+  "hallucinated_count": 0,
+  "citations": [
+    {"text": "Brown v. Board 347 U.S. 483 (1954)", "verified": true, "risk_level": "low"},
+    {"text": "Roe v. Wade 410 U.S. 113 (1973)", "verified": true, "risk_level": "low"},
+    {"text": "Miranda v. Arizona 384 U.S. 436 (1966)", "verified": true, "risk_level": "low"}
+  ],
+  "overall_risk": "low"
+}
+
+Risk Level: low`;
+  assert.equal(deriveRiskLevel(finalText), 'low');
+});
+
 test('deriveRiskLevel: prompt meta-instruction "low / medium / high" does NOT trigger', () => {
   // The literal SKILL.md instruction line itself includes "low / medium / high"
   // but with that exact spacing the regex correctly requires the value
