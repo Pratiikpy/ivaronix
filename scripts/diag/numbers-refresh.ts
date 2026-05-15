@@ -42,7 +42,15 @@ interface NumbersFile {
   };
   packages: { workspaceTotal: number; apps: number; typecheckClean: number; testFiles: number; appsList: string[] };
   polyglotHash: { languages: number; languageList: string[]; tests: Record<string, number>; ciWorkflow: string; queued: string[] };
-  mainnet: { readinessChecklistGreen: string; deployedContractsToday: number; blockedOn: string };
+  mainnet: {
+    readinessChecklistGreen: string;
+    deployedContractsToday: number;
+    list: string[];
+    addresses: Record<string, string>;
+    deployedAt: string | null;
+    receiptsAnchored: number;
+    blockedOn: string | null;
+  };
 }
 
 async function fetchReceiptCounts(): Promise<{ v1: number; v2: number; v3: number; total: number }> {
@@ -243,6 +251,36 @@ function readDeployments(): Deployments {
     return JSON.parse(readFileSync(path, 'utf8')) as Deployments;
   } catch {
     return { contracts: {} };
+  }
+}
+
+interface MainnetDeployments {
+  contracts: Record<string, { address: string }>;
+  deployedAt?: string;
+}
+
+function readMainnetDeployments(): MainnetDeployments {
+  const path = resolve(REPO_ROOT, 'contracts', 'deployments', 'mainnet.json');
+  if (!existsSync(path)) return { contracts: {} };
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as MainnetDeployments;
+  } catch {
+    return { contracts: {} };
+  }
+}
+
+async function fetchMainnetReceiptCount(): Promise<number> {
+  const dep = readMainnetDeployments();
+  const v3Addr = dep.contracts['ReceiptRegistryV3']?.address as `0x${string}` | undefined;
+  if (!v3Addr) return 0;
+  const RPC = 'https://evmrpc.0g.ai';
+  try {
+    const provider = new JsonRpcProvider(RPC, { chainId: 16661, name: 'aristotle' });
+    const v3 = new ReceiptRegistryV3Client(v3Addr, provider);
+    return Number(await v3.nextId());
+  } catch (err) {
+    console.warn(`mainnet v3.nextId() failed: ${(err as Error).message}`);
+    return 0;
   }
 }
 
@@ -495,7 +533,28 @@ async function buildSnapshot(): Promise<NumbersFile> {
         crossImplVectors: countCrossImplVectors(),
       },
     },
-    mainnet: existing.mainnet,
+    mainnet: await (async () => {
+      // Auto-derive from contracts/deployments/mainnet.json + on-chain
+      // ReceiptRegistryV3.nextId() rather than preserving existing.mainnet.
+      // The pre-fix hand-freeze drifted: numbers.json claimed
+      // `deployedContractsToday: 0 · blockedOn: operator funding` for days
+      // after the 10-contract Aristotle mainnet deploy landed. Caught by
+      // §36 claims audit. Closes CLAUDE.md §15 bookkeeping rule.
+      const md = readMainnetDeployments();
+      const list = Object.keys(md.contracts).sort();
+      const addresses: Record<string, string> = {};
+      for (const name of list) addresses[name] = md.contracts[name]!.address;
+      const receiptsAnchored = await fetchMainnetReceiptCount();
+      return {
+        readinessChecklistGreen: existing.mainnet.readinessChecklistGreen,
+        deployedContractsToday: list.length,
+        list,
+        addresses,
+        deployedAt: md.deployedAt ?? null,
+        receiptsAnchored,
+        blockedOn: list.length === 0 ? existing.mainnet.blockedOn : null,
+      };
+    })(),
   };
 }
 

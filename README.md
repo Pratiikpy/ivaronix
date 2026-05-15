@@ -280,6 +280,31 @@ Live data path:
 - **Skill catalog:** <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party skills + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> awesome-claude-skills ports = **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal --> skills** discoverable via `ivaronix skill list` and Studio `/skills`.
 - **First-party skills published on-chain via `SkillRegistry`:** `0g-integration-auditor`, `github-audit`, `private-doc-review` (v0.1.0 + v0.2.0), `plan-step`, `code-edit`. Each `verify` returns `MATCH` against the local manifestHash.
 
+## Phase B · Live mainnet (Aristotle, chainId 16661)
+
+10 contracts deployed on 0G Aristotle mainnet 2026-05-15. Three receipts anchored across `quick` · `standard` · `high-stakes` consensus tiers, cryptographically replayable from canonical JSON. Honest open items for v1.1 listed in `QA_PROOF_PACK/mainnet/PHASE_3_DONE.md`.
+
+<!-- contracts:auto:mainnet:start -->
+| Contract              | Address                                                                                                                                            |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| `AgentPassportINFTV2`  | [`0x5D724659A7d4B0B0917F5DAe9579423D2c85a6Ad`](https://chainscan.0g.ai/address/0x5D724659A7d4B0B0917F5DAe9579423D2c85a6Ad) |
+| `CapabilityRegistryV2` | [`0x41fEad4b86DE042845D25Be71aae857E19a8089E`](https://chainscan.0g.ai/address/0x41fEad4b86DE042845D25Be71aae857E19a8089E) |
+| `Erc7857Verifier`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) |
+| `MemoryAccessLogV2`    | [`0xA2c3420242aE2BdD7e0970B1DfB28b3055DC4E65`](https://chainscan.0g.ai/address/0xA2c3420242aE2BdD7e0970B1DfB28b3055DC4E65) |
+| `ReceiptRegistryV2`    | [`0x27a54F64F3A8578B39fE1E61dF7014813F325adf`](https://chainscan.0g.ai/address/0x27a54F64F3A8578B39fE1E61dF7014813F325adf) |
+| `ReceiptRegistryV3`    | [`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297) |
+| `SkillPricing`         | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) |
+| `SkillRegistryV2`      | [`0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde`](https://chainscan.0g.ai/address/0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde) |
+| `SkillRunPayment`      | [`0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A`](https://chainscan.0g.ai/address/0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A) |
+| `SubscriptionEscrowV2` | [`0x937cfE76dEdB25CCf6c7C56fF16F53270794311e`](https://chainscan.0g.ai/address/0x937cfE76dEdB25CCf6c7C56fF16F53270794311e) |
+<!-- contracts:auto:mainnet:end -->
+
+Mainnet receipt URLs (open from any machine, no auth):
+
+- Receipt 0 · quick-tier (0GM-1.0): tx [`0xd9a48ded…`](https://chainscan.0g.ai/tx/0xd9a48dedd80b88f166da56988c6b3923925476491eb6805dd6e87e0d351d4482) · body at `QA_PROOF_PACK/mainnet/smoke/01-first-tier1-receipt.json`
+- Receipt 1 · standard 3-role (nda-triage): tx [`0xbc40fd41…`](https://chainscan.0g.ai/tx/0xbc40fd41c0ff4af78af91dcd598d3618b9c8bd7995069143e58d46c1886e8743)
+- Receipt 2 · high-stakes 5-role (private-doc-review): tx [`0x280d4548…`](https://chainscan.0g.ai/tx/0x280d45489569a5ee5c927f064e26465857e54f0b8dd35d09678dd8938c07ac29)
+
 Run end-to-end on the **public testnet** today:
 
 ```bash
@@ -302,7 +327,7 @@ pnpm --filter @ivaronix/mcp-server dev
 
 > **Catch the risks. Keep the receipts.**
 
-AI review for documents you can't paste into ChatGPT. The persona is the deal lawyer scanning a contract before signing, the founder reviewing a vendor agreement, the analyst sweeping a private data room — anyone whose work demands an AI second opinion *and* an audit trail other people can verify. Every Ivaronix action ends in an **AI Action Receipt** anchored on 0G Chain (testnet 16602 today, mainnet 16661 post-redeploy), with encrypted artifacts on 0G Storage, independent TEE verification via 0G Compute, and an ERC-7857 Agent Passport that follows your wallet.
+AI review for documents you can't paste into ChatGPT. The persona is the deal lawyer scanning a contract before signing, the founder reviewing a vendor agreement, the analyst sweeping a private data room — anyone whose work demands an AI second opinion *and* an audit trail other people can verify. Every Ivaronix action ends in an **AI Action Receipt** anchored on 0G Chain — live on Galileo testnet (chainId 16602) and Aristotle mainnet (chainId 16661), with encrypted artifacts on 0G Storage, independent TEE verification via 0G Compute, and an ERC-7857 Agent Passport that follows your wallet.
 
 Five surfaces share that spine: Studio (web), Forge CLI, API + MCP server, the Skill Registry, and the Trust Layer schema. The receipt is the unit; the surfaces are how you reach it.
 
@@ -406,7 +431,7 @@ Ivaronix receipts export to IETF Agent Audit Trail format (`draft-rosenberg-aat-
 | RPC          | `https://evmrpc-testnet.0g.ai`        | `https://evmrpc.0g.ai`                     |
 | Explorer     | `https://chainscan-galileo.0g.ai`     | `https://chainscan.0g.ai`                  |
 | Faucet       | `https://faucet.0g.ai`                | n/a                                        |
-| Status       | All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live (table above) | Promotion blocked on deployer funding      |
+| Status       | All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live (table above) | <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts live (see Phase B below) · <!-- numbers:auto:mainnet.receiptsAnchored -->3<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` |
 
 Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (one anchored receipt costs ~0.0001 OG). Receipts are idempotent on the storage and anchor layers, so a stalled inference call can be re-run without duplicating chain state.
 

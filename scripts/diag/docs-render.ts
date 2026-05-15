@@ -36,6 +36,7 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..');
 const NUMBERS_PATH = resolve(REPO_ROOT, 'docs', 'numbers.json');
 const DEPLOYMENTS_PATH = resolve(REPO_ROOT, 'contracts', 'deployments', 'testnet.json');
+const MAINNET_DEPLOYMENTS_PATH = resolve(REPO_ROOT, 'contracts', 'deployments', 'mainnet.json');
 
 /** Markdown docs that consume `<!-- numbers:auto:KEY -->` markers. */
 const TARGET_DOCS = [
@@ -76,6 +77,7 @@ const MARKER = /<!--\s*numbers:auto:([\w.]+)\s*-->([\s\S]*?)<!--\s*\/numbers:aut
 // chainscan link inline; V1/V2 rows get a context tag pulled from the
 // deployments file's `note` field (truncated for table density).
 const CONTRACTS_BLOCK = /<!--\s*contracts:auto:start\s*-->([\s\S]*?)<!--\s*contracts:auto:end\s*-->/g;
+const CONTRACTS_MAINNET_BLOCK = /<!--\s*contracts:auto:mainnet:start\s*-->([\s\S]*?)<!--\s*contracts:auto:mainnet:end\s*-->/g;
 
 interface ContractEntry { address: string; explorer: string; note?: string }
 interface DeploymentManifest { contracts: Record<string, ContractEntry> }
@@ -118,11 +120,48 @@ function renderContractsTable(): string {
 
 function renderContractsBlocks(source: string): { rendered: string; replacements: number } {
   let replacements = 0;
-  const rendered = source.replace(CONTRACTS_BLOCK, () => {
+  let rendered = source.replace(CONTRACTS_BLOCK, () => {
     replacements++;
     return `<!-- contracts:auto:start -->${renderContractsTable()}<!-- contracts:auto:end -->`;
   });
+  rendered = rendered.replace(CONTRACTS_MAINNET_BLOCK, () => {
+    replacements++;
+    return `<!-- contracts:auto:mainnet:start -->${renderMainnetContractsTable()}<!-- contracts:auto:mainnet:end -->`;
+  });
   return { rendered, replacements };
+}
+
+interface MainnetContractEntry { address: string; txHash?: string }
+interface MainnetDeploymentManifest { contracts: Record<string, MainnetContractEntry>; deployedAt?: string }
+
+function loadMainnetDeployments(): MainnetDeploymentManifest {
+  try {
+    return JSON.parse(readFileSync(MAINNET_DEPLOYMENTS_PATH, 'utf8')) as MainnetDeploymentManifest;
+  } catch {
+    return { contracts: {} };
+  }
+}
+
+function renderMainnetContractsTable(): string {
+  const m = loadMainnetDeployments();
+  const names = Object.keys(m.contracts).sort();
+  if (names.length === 0) {
+    return '\n\n_Mainnet contracts not yet deployed — see `docs/MAINNET_PROMOTION_PLAN.md` for the promotion runbook._\n\n';
+  }
+  const lines: string[] = [
+    '',
+    '| Contract              | Address                                                                                                                                            |',
+    '|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|',
+  ];
+  for (const name of names) {
+    const c = m.contracts[name]!;
+    const explorer = `https://chainscan.0g.ai/address/${c.address}`;
+    const nameCell = `\`${name}\``.padEnd(22);
+    const cell = `[\`${c.address}\`](${explorer})`;
+    lines.push(`| ${nameCell} | ${cell} |`);
+  }
+  lines.push('');
+  return lines.join('\n');
 }
 
 function renderDoc(source: string, numbers: Record<string, unknown>): { rendered: string; replacements: number; misses: string[] } {

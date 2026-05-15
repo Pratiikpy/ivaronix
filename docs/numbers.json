@@ -119,7 +119,33 @@
   },
   "mainnet": {
     "readinessChecklistGreen": "13/13",
-    "deployedContractsToday": 0,
-    "blockedOn": "operator funding 0.1 OG to deployer wallet · USER_TODO §A-2"
+    "deployedContractsToday": 10,
+    "list": [
+      "AgentPassportINFTV2",
+      "CapabilityRegistryV2",
+      "Erc7857Verifier",
+      "MemoryAccessLogV2",
+      "ReceiptRegistryV2",
+      "ReceiptRegistryV3",
+      "SkillPricing",
+      "SkillRegistryV2",
+      "SkillRunPayment",
+      "SubscriptionEscrowV2"
+    ],
+    "addresses": {
+      "AgentPassportINFTV2": "0x5D724659A7d4B0B0917F5DAe9579423D2c85a6Ad",
+      "CapabilityRegistryV2": "0x41fEad4b86DE042845D25Be71aae857E19a8089E",
+      "Erc7857Verifier": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+      "MemoryAccessLogV2": "0xA2c3420242aE2BdD7e0970B1DfB28b3055DC4E65",
+      "ReceiptRegistryV2": "0x27a54F64F3A8578B39fE1E61dF7014813F325adf",
+      "ReceiptRegistryV3": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+      "SkillPricing": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
+      "SkillRegistryV2": "0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde",
+      "SkillRunPayment": "0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A",
+      "SubscriptionEscrowV2": "0x937cfE76dEdB25CCf6c7C56fF16F53270794311e"
+    },
+    "deployedAt": "2026-05-15T02:50:00Z",
+    "receiptsAnchored": 3,
+    "blockedOn": null
   }
 }
