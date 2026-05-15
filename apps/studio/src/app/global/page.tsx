@@ -79,12 +79,19 @@ async function loadSnapshot(): Promise<GlobalSnapshot> {
 
 export default async function GlobalPage() {
   const snap = await loadSnapshot();
+  const network = getNetwork();
+  // Bug #21 (v33 UI sweep · 2026-05-16): heading was hardcoded "Live
+  // testnet stats" even on mainnet builds, contradicting the sub-text
+  // immediately below it which already resolved the network from
+  // getNetwork(). The heading now matches the sub-text — both binding
+  // to the active network at render.
+  const networkLabel = network === 'mainnet' ? 'mainnet' : 'testnet';
 
   return (
     <Section
       label="§ 01 · GLOBAL"
-      title="Live testnet stats"
-      description={`Reads from ReceiptRegistry, AgentPassportINFT, and MemoryAccessLog on ${getNetwork()}. Cached 60s.`}
+      title={`Live ${networkLabel} stats`}
+      description={`Reads from ReceiptRegistry, AgentPassportINFT, and MemoryAccessLog on ${network}. Cached 60s.`}
     >
       <div
         style={{
