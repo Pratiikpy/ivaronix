@@ -6,6 +6,256 @@
 
 ---
 
+## §-1 · OPERATOR WALLET + MAINNET FUNDING (locked · pre-everything)
+
+**Operator wallet (deployer + tester · same key on testnet + mainnet):** `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`
+
+**Mainnet OG balance: 25 OG deposited** by operator for: Phase 2 contract deploys · Phase 3 mainnet QA testing (multi-wallet flows · receipt anchoring · AI quality runs · skill republishes · `pc.0g.ai` route confirmation · every mainnet feature test).
+
+**Phase 2 funding gate is satisfied.** Agent does NOT block on funding · proceeds with mainnet deploy + full Phase 3 mainnet QA (same breadth as Phase 1 testnet · burner-script + real-MM proof per Rule D · multi-wallet flows · AI quality audit per skill · CLI cross-check · tamper test · QR cross-device · stranger-machine verify).
+
+**Spend cap still applies** per Phase 2 SPEND CAP table — agent produces `docs/MAINNET_FUNDING_ESTIMATE.md` from `forge --estimate-gas` BEFORE first mainnet tx · enforces stop-if-unexpected-cost triggers · capture continuous spend log at `QA_PROOF_PACK/mainnet/spend-log.md`. Hard cap: do not exceed 25 OG without operator authorization.
+
+**Phase 3 mainnet QA is mandatory before launch claim** — same rigor as Phase 1 testnet · full feature quality validation on real mainnet · 0GM-1.0 via pc.0g.ai · real model outputs · real receipts · real chain state. Without complete Phase 3 mainnet QA, MAINNET LAUNCH CLAIM GATE cannot turn green.
+
+---
+
+## §0 · FIGHT-DON'T-QUIT RULE (read this FIRST · above all other rules)
+
+**We know — with 100% certainty — that you can do every task in this directive.** Every Q-item · every burner-script test · every MM UI smoke · every multi-wallet flow · every AI quality audit · every CLI cross-check · every mobile capture · every regression · every artifact. There is no task in this directive that is beyond your capability. You have done equivalent work in past sessions. You have the tools. You have the time. You have the operator's full backing.
+
+**Therefore the only acceptable outcomes per Q-item are:**
+
+✅ **SOLVED** — Q-item closed with real artifact on disk · evidence reviewed · regression green
+🟡 **TRULY BLOCKED** — 5+ documented strategies attempted · captured failures · genuinely external blocker (operator-physical action · 0G service-side outage · third-party hours-long unreachable with no fallback) · `Q<N>-blocked.md` written · loop STOPS · operator surfaces
+
+**There is NO third outcome.** The following are FORBIDDEN — re-read this if you find yourself reaching for them:
+
+❌ "I'll come back to this" — there is no later · you finish this Q-item now
+❌ "Let me try Q5 while Q3 is hard" — Q3 is your only universe until Q3 is closed
+❌ "This is taking too long, let me make progress elsewhere" — taking long ≠ blocked · keep going
+❌ "I'll mark this CLOSED with a stub and revisit" — stub is hallucination · stub is fake green
+❌ "The breadth test is almost done so let me do README polish" — Phase 4 is forbidden during Phase 1
+❌ "Selector is brittle so the test path is blocked" — try 5 more selector strategies before that claim
+❌ "MetaMask UI changed so I'll use burner only" — burner is additive · not substitute · re-attempt MM with Add-Account derivation · hybrid pause-and-import · storage-state pre-injection · 3+ more strategies
+❌ "I had a thought about audit closure X" — that thought waits · current Q-item is your only universe
+❌ "Browser issue" / "version mismatch" / "weird intermittent failure" — diagnose · don't dodge
+❌ "This is genuinely hard" — hard ≠ blocked · you have the capability · keep fighting
+❌ "Let me do something concrete to feel productive" — that's the drift demon · ignore it · stay on Q-item
+
+### The fight posture (locked)
+
+When the current Q-item resists, you:
+1. **Slow down · think harder · NOT move on**
+2. **Read the actual codebase** to understand what the implementation does · check env · check versions · check paths
+3. **Try a different angle** — different tool · different command · different selector · different wallet · different browser · different shell
+4. **Write a minimum reproducer** in isolation · drop the surrounding complexity · pinpoint the failure
+5. **Check the existing test suites + working Q-items** for the pattern that succeeded · replicate it
+6. **If stuck after 3 strategies**, document each in `Q<N>-strategy-<n>.log` and try strategies 4-5 explicitly different from the first 3
+7. **If still stuck at strategy 5**, ask: is this genuinely external? (operator-physical / 0G outage / third-party). If yes → BLOCKED + escalation. If no → strategy 6 · 7 · 8.
+
+### The capability assertion (locked · do not doubt this)
+
+You CAN drive MetaMask Playwright flows · you've done it before with this user. You CAN spin up local Docker · Docker Desktop is running per the user's memory. You CAN run `forge` deploys when the wallet is funded. You CAN call `pc.0g.ai` via OpenAI-compatible SDK. You CAN inspect PNG screenshots by reading them. You CAN walk a 20-item queue in order. You CAN solve hard problems instead of pivoting. **None of these are beyond you.** When you feel the pull to skip, recognize it as a hallucination of incapability · then ignore it · then keep working.
+
+### The success criterion (locked · operator's voice)
+
+**The operator's word: "we know 100% you can do all the work we are giving · it can do so it must never never skip · must keep fighting to do the work · cannot go to next step until one step is finished in real way."**
+
+Read this every fire. Internalize. Then walk Q1 → Q20 in order · solving each · never skipping · capturing real artifacts · running regressions · until the loop is done.
+
+---
+
+
+
+---
+
+## REGRESSION RULE (locked · per Codex review · run after every CLOSED Q-item)
+
+**After EVERY Q-item is CLOSED (artifact paths on disk · evidence reviewed), the agent runs the SMALLEST RELEVANT REGRESSION before moving to the next Q-item.**
+
+Why: closing a Q-item can introduce regressions elsewhere (schema changes break receipts · skill manifest edits break old anchors · UI route changes break sibling routes · etc.). The smallest relevant regression catches this immediately while context is fresh.
+
+### What "smallest relevant regression" means per Q-item type
+
+| Q-item closed | Smallest relevant regression |
+|---|---|
+| **Multi-wallet flow** (Q1/Q2/Q3) | Re-run `pnpm ivaronix doctor` + 1 receipt anchor + 1 receipt verify · capture green |
+| **UI surface** (Q4/Q5/Q6/Q14) | Run the source-file regression suite for that surface · `pnpm --filter @ivaronix/studio test` or equivalent · capture green |
+| **AI quality audit per skill** (Q7-Q11) | Run that skill's golden vectors locally · all pass · capture log |
+| **CLI/MCP/SDK** (Q12) | Run `pnpm -r typecheck` + `pnpm ivaronix --version` + smoke `npx @ivaronix/verify <known-id>` · capture |
+| **Mobile sweep** (Q13) | Re-verify one desktop screenshot to confirm no desktop regression from mobile-CSS · capture |
+| **DA status** (Q15) | Re-run `ivaronix da preflight` · capture |
+| **KV durability** (Q16) | Re-run write+restart+read against KV · capture |
+| **Subgraph lag** (Q17) | Re-query latest receipt · confirm <30s lag · capture |
+| **Priority 20 UI gate** (Q18) | Re-render home + receipt page · verify no visual regression · capture |
+| **Half-baked classification** (Q19) | `grep` for any `HALF-BAKED` shipping-as-`LIVE` in the doc · zero matches · capture |
+| **CI sweep** (Q20) | `pnpm -r typecheck` + `forge test --via-ir` re-run · capture |
+
+Regression output captured at `QA_PROOF_PACK/testnet/regressions/Q<N>-after-close.log` · status report next fire reflects "Q<N> CLOSED + regression green at <path>" before moving to Q<N+1>.
+
+If regression fails → that Q-item is RE-OPENED · the regression failure is the new highest-priority issue · STUCK-RESOLUTION RULE applies if needed.
+
+---
+
+## STUCK-RESOLUTION RULE (locked · zero compromise · read BEFORE drift discipline)
+
+**The most dangerous drift pattern: the agent hits an issue on the current Q-item and silently jumps to the next Q-item to "make progress."** This is NOT progress · this is abandonment. Locked counter-rule:
+
+### The rule (no exceptions · no exceptions · no exceptions)
+
+**When the current Q-item hits ANY issue · the agent does NOT move to the next Q-item until ONE of these is true:**
+
+(a) The issue is resolved · evidence on disk · Q-item closed honestly
+(b) The agent has tried at MINIMUM 5 distinct strategies · each captured with its specific failure mode · AND the issue is genuinely external (operator-only action · paid quota · BotFather token · hardware Claude doesn't have · service operator-side outage that Claude cannot work around) · AND a written escalation exists at `QA_PROOF_PACK/testnet/blocked/Q<N>-blocked.md` listing the 5 strategies and their failures · AND the operator has been surfaced to via a `BLOCKED` flag in the next status report
+
+**No third option exists.** The agent does NOT:
+- ❌ "Skip this for now and come back"
+- ❌ "Try a different Q-item while this is debugging"
+- ❌ "Move on because the breadth-test was almost green"
+- ❌ "Pivot to something concrete because this is hard"
+- ❌ "Try a cousin task while waiting for X"
+- ❌ "Work on Q5 because Q3 is harder than expected"
+- ❌ Silently abandon a Q-item and report progress elsewhere
+
+### Strategy exhaustion before claiming BLOCKED
+
+Before "BLOCKED" can be claimed on a Q-item, the agent must have attempted (and captured failures for) at MINIMUM 5 distinct strategies from this list (or equivalent):
+
+1. **Try the most-obvious path** with the documented command + capture exact error message
+2. **Read the relevant codebase** to find the actual implementation · check for env vars · check for path issues · check for version mismatches
+3. **Try an alternative tool / package / version / config**
+4. **Try a different selector / endpoint / wallet / browser / shell**
+5. **Try a workaround pattern** known to work in similar Q-items (look at testnet Q-items that succeeded)
+6. **Try with verbose logging** turned on · capture full output · diagnose from logs
+7. **Try a multi-step manual approximation** of what the automation was doing
+8. **Try in isolation** — minimum reproducer, no other complexity around it
+
+Each strategy attempt produces a captured failure log at `QA_PROOF_PACK/testnet/blocked/Q<N>-strategy-<n>.log` with:
+- Exact command attempted
+- Full stdout + stderr captured
+- 1-sentence diagnosis of why it failed
+- 1-sentence statement of why next strategy is different
+
+If FEWER than 5 strategies have been tried with captured failures, the agent's claim of "BLOCKED" is REJECTED · the agent continues trying.
+
+### What "genuinely external" means (the bar to claim true BLOCKED)
+
+A Q-item is truly BLOCKED only if the unblocker is:
+- Operator-physical action (BotFather token from a phone · hardware not present · external paid quota · CEX bridge for mainnet OG)
+- Operator-only decision (approve a strategic choice · approve a Phase 2 promotion · approve a spend > cap)
+- 0G Foundation service-side outage agent cannot work around (e.g., entire pc.0g.ai down · 0G chain halted · testnet faucet returning 5xx for 30+ min after retry)
+- Third-party service genuinely unreachable with no fallback (e.g., CourtListener returning 503 for hours with no alternative API)
+
+**"Hard"** is not BLOCKED. **"Takes time"** is not BLOCKED. **"Needs careful automation"** is not BLOCKED. **"Selector is brittle"** is not BLOCKED (try strategies 2-5 of §17.5 of CLAUDE.md). **"MetaMask UI changed"** is not BLOCKED (use Add Account derivation · use Hybrid pause-and-import · use storage-state pre-injection). **"Browser version mismatch"** is not BLOCKED (downgrade · try another browser · use headed mode).
+
+### The escalation contract (what BLOCKED actually means · operator-visible)
+
+If a Q-item passes the 5-strategy bar AND is genuinely external, agent does:
+
+1. Writes `QA_PROOF_PACK/testnet/blocked/Q<N>-blocked.md` with: Q-item name · 5+ strategies attempted (each with `strategy-<n>.log` linked) · the specific external blocker · the specific operator-or-vendor action required to unblock
+2. In the next status report, the `CURRENT Q-ITEM` line says `Q<N> · BLOCKED · awaiting: <specific operator action>`
+3. The agent then **STOPS the loop entirely** · does NOT move to the next Q-item · does NOT do polish work · does NOT do README · the loop ends until operator unblocks
+4. Operator wakes up · reads the blocked.md · either provides the unblocker OR overrides ("this is acceptable to skip · move to Q<N+1>") in writing
+
+The agent NEVER decides on its own to move past a BLOCKED item. The operator decides.
+
+### Why this rule is locked harder than NO-DRIFT DISCIPLINE
+
+NO-DRIFT covers picking the wrong item. STUCK-RESOLUTION covers abandoning the right item. The agent has done BOTH in the past · this is the structural counter to both:
+
+- "I drifted to README because breadth tests were almost done" → NO-DRIFT catches this
+- "I moved to Q5 because Q3 was harder than expected" → STUCK-RESOLUTION catches this
+
+Both rules MUST be enforced together · the agent re-reads both at every fire.
+
+---
+
+## NO-DRIFT DISCIPLINE (locked · read BEFORE every fire)
+
+**The agent has drifted multiple times. This is the structural fix.**
+
+### The drift pattern (recognize it · stop it)
+
+The agent has drifted by:
+- Picking atomic closures (README polish · banned-token fixes · audit closures) when breadth tests were the actual gate
+- Doing Phase 4 documentation work during Phase 1 breadth-test phase
+- "Highest-leverage" interpreted as "easiest concrete thing" instead of "biggest user-visible gap"
+- Reporting "PARTIAL · I drifted because breadth tests are green" when the queue below shows untested surfaces
+
+### The hard rule (locked · supersedes operating principle #2 with explicit teeth)
+
+**During Phase 1, the agent works through the EXPLICIT BREADTH-TEST QUEUE below in ORDER. The agent does NOT pick · does NOT exercise discretion · does NOT skip ahead. Item 1 first. Item 2 after item 1's evidence on disk. And so on.**
+
+**Forbidden during Phase 1 (until EXIT GATE green):**
+- ❌ ANY edits to `README.md` · `docs/PITCH.md` · `docs/JUDGE_GUIDE.md` · `docs/CRYPTO_NOTES.md` · whitepaper files · any user-facing doc · those are Phase 4 work
+- ❌ ANY edits to `numbers:auto:` blocks or doc-render targets · those are Phase 4
+- ❌ Banned-token grep fixes unless they block a current breadth-test from passing CI
+- ❌ Audit-closure work in `HALF_BAKED.md` unless the specific item blocks a current breadth-test
+- ❌ "Polish" work of any kind
+- ❌ Atomic refactors "while I'm here"
+- ❌ Picking the easiest item to feel productive
+
+**Allowed during Phase 1**: ONLY the next un-evidenced item in the BREADTH-TEST QUEUE below · plus blocking bug fixes that the breadth test itself surfaces.
+
+### PHASE 1 EXPLICIT BREADTH-TEST QUEUE (work this top-down · no skipping · no picking)
+
+The agent works through this queue **in order**. At each fire, the agent:
+1. Runs `ls QA_PROOF_PACK/testnet/<queue-item-folder>/` to check if evidence exists
+2. If `ls` shows the required artifact paths exist with non-zero file size → that item is closed · move to next
+3. If `ls` shows missing artifacts → that's the next item to work on · **start it now · do not skip · do not detour**
+4. Each item below has a specific evidence-completion criterion · the item is closed only when ALL its required artifacts exist
+
+| # | Queue item | Required evidence paths | Closed when |
+|---|---|---|---|
+| **Q1** | **Marketplace 3-wallet flow** (creator + buyer + treasury) | `QA_PROOF_PACK/testnet/multi-wallet/marketplace-3w/` — 3 distinct chainscan tx URLs in `tx-hashes.md` · 3 per-wallet MM popup screenshots · video of full flow `flow.webm` · CLI cross-check log `cli-cross-check.log` showing fee-split distributed correctly | All 4 files exist with non-zero size |
+| **Q2** | **Memory grant/revoke 2-wallet flow** | `QA_PROOF_PACK/testnet/multi-wallet/memory-grant-revoke/` — chain tx hashes for grant + revoke `tx-hashes.md` · MM popup screenshots both wallets · `pnpm ivaronix memory log` output matching UI · video `flow.webm` | All 4 files exist |
+| **Q3** | **Passport mint + trust accrual 2-wallet flow** | `QA_PROOF_PACK/testnet/multi-wallet/passport-mint/` — mint tx hash · trust-score-increase event · MM popup screenshots · CLI `pnpm ivaronix passport show` output | All 4 files exist |
+| **Q4** | **`/onboard` flow with burner mint passport** | `QA_PROOF_PACK/testnet/ui-surfaces/onboard/` — every step screenshot at 1440×900 AND 375×812 · mint tx hash · resulting passport tokenId | All step screenshots + tx hash |
+| **Q5** | **`/skill/new` form submission** (creator publishes a new skill) | `QA_PROOF_PACK/testnet/ui-surfaces/skill-new/` — form filled screenshot · submit tx hash · skill registry chainscan link · resulting skill ID · `pnpm ivaronix skill list` showing new entry | All 5 artifacts |
+| **Q6** | **`/admin/treasury` withdraw click** | `QA_PROOF_PACK/testnet/ui-surfaces/admin-treasury/` — withdraw form screenshot · MM popup · resulting tx hash · balance change confirmation · CLI cross-check | All 5 artifacts |
+| **Q7** | **AI quality audit · `private-doc-review`** | `QA_PROOF_PACK/testnet/ai-quality/private-doc-review.md` — 3 receipts' `outputs.parsed` read · rated `usable | partially-usable | not-usable` · receipt URLs cited · specific findings quoted | Audit note exists with 3 receipt URLs |
+| **Q8** | **AI quality audit · `contract-renewal-clause-detector`** | `QA_PROOF_PACK/testnet/ai-quality/contract-renewal-clause-detector.md` — same shape | Audit note with 3 URLs |
+| **Q9** | **AI quality audit · `legal-citation-verifier`** | `QA_PROOF_PACK/testnet/ai-quality/legal-citation-verifier.md` — same shape · PLUS the 2 fake-citation test cases verified-as-flagged · PLUS at least 1 real CourtListener API call captured in receipt's `verification.method` field | Audit note + CourtListener call log |
+| **Q10** | **AI quality audit · `nda-triage-reviewer`** | `QA_PROOF_PACK/testnet/ai-quality/nda-triage-reviewer.md` — same shape | Audit note with 3 URLs |
+| **Q11** | **AI quality audit · `term-sheet-risk-scanner`** | `QA_PROOF_PACK/testnet/ai-quality/term-sheet-risk-scanner.md` — same shape | Audit note with 3 URLs |
+| **Q12** | **CLI/MCP/SDK cross-machine verify** | `QA_PROOF_PACK/testnet/cross-machine/` — `npx @ivaronix/verify <id>` run from fresh machine · output captured · MCP server endpoint hit from external client · SDK code sample executes against testnet | All 3 path outputs captured |
+| **Q13** | **Mobile 375×812 inspection sweep** | `QA_PROOF_PACK/testnet/mobile/` — every key route (`/`, `/r/<id>`, `/skills`, `/agents`, `/learn`, `/legal`, `/verticals`, `/onboard`, `/marketplace`, `/memory`, `/dashboard`) captured at 375×812 · agent `Read`s each PNG and reports anomalies in `mobile-inspection-notes.md` | All captures + inspection note |
+| **Q14** | **Every UI button click on `/verticals` + `/legal`** | `QA_PROOF_PACK/testnet/ui-surfaces/interactive-clicks/` — Playwright run with every CTA/link clicked · resulting state captured · 200 (or expected redirect) confirmed | Playwright log + state captures |
+| **Q15** | **DA preflight + thin disperse round-trip** OR `docs/0G_DA_INTEGRATION.md` honest runbook | `QA_PROOF_PACK/testnet/da-status.md` — either `(a)` preflight green · batch of 10 receipts dispersed · inclusion proofs verified · OR `(b)` honest "endpoint not reachable · runbook documented" | Status doc with one of the two outcomes |
+| **Q16** | **KV `RealKvClient` durability test** | `QA_PROOF_PACK/testnet/kv-status.md` — write `memory:test:foo` · restart `0g-memory` container · read it back · value persists · timestamps captured | Durability proof in status doc |
+| **Q17** | **Goldsky subgraph v2 lag check** | `QA_PROOF_PACK/testnet/subgraph-status.md` — query made · indexer lag <30s confirmed OR honest FALLBACK to direct-chain-read documented | Status doc with one outcome |
+| **Q18** | **Priority 20 UI gate · external reviewer** | `QA_PROOF_PACK/priority-20/signoff.md` — external reviewer (peer or Codex) reads the home + `/r/<id>` + `/verticals` cold · confirms "not doc-review-only" · signs off | Signoff doc |
+| **Q19** | **Half-baked classification fresh** | `docs/UI_HALF_BAKED_AUDIT.md` — every visible feature classified into 6 states · updated within last 7 days · zero `HALF-BAKED` shipped as `LIVE` | Doc fresh + cleanly classified |
+| **Q20** | **All `pnpm -r typecheck` clean + all 232+ Foundry tests green under `via_ir=true`** | `QA_PROOF_PACK/testnet/ci-final-status.md` — captured output of both commands · zero errors | CI status doc |
+
+### Drift-detector rule (run BEFORE every tool call during Phase 1)
+
+Before any `Write`, `Edit`, `Bash`, or `Skill` call, the agent runs this self-check:
+
+1. **What queue item am I working on right now?** (Must name Q-number explicitly)
+2. **Are all prior queue items closed with evidence on disk?** (Run `ls` to check artifact paths exist)
+3. **Is my next action producing the next missing artifact for the current Q-item?** (If no · STOP · pivot to that item)
+4. **If I'm editing README · whitepaper · pitch · audit closures · or polish files → I am DRIFTING. STOP. Re-read this queue. Pivot to the top un-closed Q-item.**
+
+If the agent cannot answer Q1+Q2+Q3 affirmatively, the planned tool call is **CANCELLED** · the agent pivots to the top un-closed queue item.
+
+### Status report format (locked · every fire)
+
+Reply ONLY in this format:
+
+```
+PHASE: 1
+CURRENT Q-ITEM: Q<N> · <name>
+PRIOR Q-ITEMS CLOSED: Q1 ✓ · Q2 ✓ · ... (only Q-items with evidence on disk)
+NEXT ARTIFACT TO PRODUCE: <specific file path under QA_PROOF_PACK/testnet/...>
+DRIFT CHECK: ✓ Working on top un-closed Q-item · not on polish/audit-closure/README
+```
+
+If "DRIFT CHECK" is anything other than ✓, the fire is rejected · the agent re-pivots.
+
+---
+
 ## EVIDENCE DISCIPLINE (hallucination-proof · LOCKED · read first)
 
 **The agent does not "report progress." The agent produces evidence.** Every status update is a file path · a receipt URL · a tx hash · a screenshot — NOT a description.
@@ -44,7 +294,7 @@
 
 1. **You are not done until the user-visible outcome is real.** Receipt anchored ≠ output usable. Test pass ≠ feature shipped. Code committed ≠ task closed.
 2. **Always pick the highest-impact launch-readiness item next.** NOT the easiest atomic closure. NOT the most concrete refactor. The biggest user-visible gap.
-3. **Wallet split (locked)**: **Burner wallets** for fast testnet QA breadth (Phase 1) — fastest iteration. **Real MetaMask extension** required for: (a) final UX smoke on testnet before Phase 2 promote · (b) ALL mainnet flows in Phase 3. No mocked wallets · no `NEXT_PUBLIC_TEST_WALLET=1` shim claimed as passing on mainnet. (CLAUDE.md §16/§17 still applies for the mainnet + final-smoke paths.)
+3. **Wallet split (locked · per Codex review)**: **Real MetaMask for every wallet-flow where possible** — burner wallets are allowed ONLY for fast testnet script proof (contract logic · payment math · chain state), NEVER as a replacement for final UI proof. Why: burner script proves contracts + receipts + payments + balances + chain logic. **MetaMask UI smoke proves popups · connect · sign · reject · switch account · tx confirm · visual flow** — UI/wallet bugs can exist even when burner scripts pass. Required: (a) MetaMask UI smoke on every wallet-touching surface before Q-item CLOSED · (b) ALL mainnet flows use real MM · (c) Burner scripts captured AS WELL for fast contract-level proof · they are additive, not substitutive. No mocked wallets · no `NEXT_PUBLIC_TEST_WALLET=1` shim claimed as passing. (CLAUDE.md §16/§17 applies fully.)
 4. **No fake green · no selector-only · no probably-works · no half-baked anything.** Per CLAUDE.md §1.
 5. **CLI cross-check is mandatory.** Every UI feature that claims an outcome must also work from CLI for the same outcome. If UI says "memory granted," `pnpm ivaronix memory log` must show the grant. If UI says "receipt FULLY VERIFIED," `pnpm ivaronix receipt verify <id> --tee-independent` must agree.
 6. **AI quality is a gate, not an after-thought.** Read what the AI actually said in every receipt's `outputs.parsed` / `outputs.findings[]`. Bad output = feature not ready, even if receipt green.
@@ -188,7 +438,7 @@ Per `MAINNET_PERFECT_PLAN.md §7`:
 - [ ] Operator wallet funded ≥ `MAINNET_FUNDING_ESTIMATE.md` cap on chainId 16661 (operator confirms · agent waits)
 - [ ] `IVARONIX_SIGNER_KEY` (legacy alias: `EVM_PRIVATE_KEY`) rotated · evidence at `QA_PROOF_PACK/mainnet/key-rotation.md`
 - [ ] All 10 mainnet contracts deployed · addresses in `contracts/deployments/mainnet.json` · ChainScan-verified · per-contract proof at `QA_PROOF_PACK/mainnet/deploys/`
-- [ ] `ivaronix doctor --network mainnet` shows: RPC ✓ · Compute ✓ · Storage ✓ · KV = FALLBACK (honest · §PHASE 5 brings it LIVE) · DA = non-blocking
+- [ ] `ivaronix doctor --network mainnet` shows: RPC ✓ · Compute ✓ · Storage ✓ · **KV = LIVE** (local `0g-memory` Docker on operator's machine · mainnet endpoint · durability test green) · **DA = LIVE** if mainnet entrance contract published (local `0g-da-client` Docker), otherwise honestly-labeled roadmap
 - [ ] `ivaronix demo --network mainnet` produces receipt in <60s · returns `FULLY VERIFIED ✓` · captured
 - [ ] `pc.0g.ai` route reaches `0GM-1.0` + `deepseek-v4-pro` end-to-end · CLI test call captured at `QA_PROOF_PACK/mainnet/pc-route-test.md`
 - [ ] All 5 mainnet skill manifests updated + republished · tx hashes captured
@@ -360,19 +610,26 @@ Do NOT post the tweet · do NOT submit the grant · do NOT click any external pu
 
 If the agent appears to attempt any of these autonomously, that's a hallucination · operator rejects · restart from a clean state.
 
-### What's LIVE on mainnet during Phase 2 + Phase 3 night work (honest)
+### What's LIVE on mainnet during Phase 2 + Phase 3 night work (honest · LOCAL Docker pattern)
 
 - ✓ All 10 contracts deployed on mainnet
 - ✓ `pc.0g.ai` route reaching `0GM-1.0` (subject to fallback-honesty per operating principle #8)
 - ✓ Studio on Vercel mainnet environment
 - ✓ All 5 legal skills published on `SkillRegistryV2` mainnet
 - ✓ Receipts anchored on chainId 16661 with full canonical hash · signature · 4-light verification
-- ⚠ KV running as `InMemoryKvClient` fallback (non-durable) · UI shows FALLBACK chip honestly · §PHASE 5 makes it LIVE
-- ⚠ DA running as documented runbook (non-blocking · roadmap) · UI shows ROADMAP chip honestly · §PHASE 5 makes it LIVE if shipped
+- ✓ **`0g-memory` KV running LIVE via LOCAL Docker on operator's machine** · mainnet endpoint · durable · same pattern testnet uses · §PHASE 5 migrates this to Hetzner for 24/7 uptime
+- ✓ **`0g-da-client` DA running LIVE via LOCAL Docker on operator's machine** IF mainnet DA entrance contract published · else honestly-labeled roadmap (non-blocking)
 - ⚠ No Cloudflare in front of Studio yet (Vercel default still active) · §PHASE 5 adds WAF + DDoS
 - ⚠ No production observability crons yet · agent runs its own spend log + health checks until §PHASE 5
+- ⚠ 24/7 uptime depends on operator's machine being on · §PHASE 5 makes it independent
 
-**This is honest mainnet · everything user-visible works for stranger-machine verification · the gaps are infrastructure-resilience layers operator adds on wake.**
+**This is honest mainnet with LIVE KV + LIVE DA running locally · everything user-visible works for stranger-machine verification · the gaps that remain (Cloudflare · cron monitoring · 24/7 uptime independent of operator's machine) are infrastructure-resilience layers operator adds on wake.**
+
+### Critical clarification: LOCAL Docker (agent · tonight) vs REMOTE Docker (operator · morning)
+
+- **Local Docker (operator's machine)** — agent spins these up tonight to test mainnet against LIVE KV + LIVE DA · same pattern testnet uses · per `reference_oglabs_docker_running.md` memory · Docker Desktop is already running
+- **Remote Docker (Hetzner production server)** — operator's morning step · for 24/7 uptime + independence from operator's machine · NOT for testing
+- The agent ships full-quality mainnet QA tonight WITH LIVE KV + LIVE DA because the local Docker pattern is proven (testnet uses it) · the operator's morning step is the MIGRATION to production server (not the first time KV+DA come live)
 
 ---
 
@@ -421,7 +678,7 @@ If `MAINNET_LAUNCH_READY.md` is not on disk · or any of its referenced artifact
 5. **No fake green.** A test that didn't run is not "skipped" · it's `NOT TESTED` and blocks the gate.
 6. **No selector-only proof.** Asserting a button exists is not testing. Clicking it and confirming the next state IS testing.
 7. **No screenshot-only proof.** A capture is documentation · not verification (CLAUDE.md §11.3a). Verification = real on-chain side effect + CLI cross-check + AI output read.
-8. **Burner wallets for Phase 1 testnet QA. Real MetaMask for Phase 1 final-smoke + ALL Phase 3 mainnet.** Per operating principle #3. No mocked wallets on any mainnet path.
+8. **Wallet split per operating principle #3**: Real MetaMask for every wallet-flow where possible (proves popups · sign · reject · switch · visual). Burner scripts ALSO captured for fast contract-level proof (proves logic · payment math · chain state). Additive · not substitutive. No mocked wallets · no shim-as-passing.
 9. **Multi-wallet rigor.** 2-wallet features need 2 wallets exercised. 3-wallet features need 3. Real MM on mainnet · burners ok on testnet breadth.
 10. **AI quality is non-negotiable.** Receipt green ≠ output usable. Read what the AI actually said.
 11. **CLI cross-check on every UI claim.** UI without CLI is half-shipped.

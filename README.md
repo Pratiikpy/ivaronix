@@ -44,7 +44,7 @@ pnpm ivaronix receipt verify <id> --tee-independent
 
 The wedge: this works on a stranger's clean machine, against a receipt anchored by someone else, on testnet, today.
 
-> <!-- numbers:auto:receipts.total -->1665<!-- /numbers:auto:receipts.total -->+ receipts anchored on 0G Galileo Testnet · <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> deployed contracts (V1 + V2 active) · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
+> <!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+ receipts anchored on 0G Galileo Testnet · <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> deployed contracts (V1 + V2 active) · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> workspace packages typecheck-clean. Numbers refreshed via `pnpm numbers:refresh` against the live chain — single source of truth in [`docs/numbers.json`](docs/numbers.json).
 
 ## Track 1 (Agentic Infrastructure) · by the numbers
 
@@ -54,12 +54,12 @@ The metrics this product is optimised for. Receipts as the unit of trust, primit
 |---|---|---|
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
 | 0G primitives integrated | **5** | Chain · Compute · Storage · Router · AgentID (Memory KV scaffolding ships separately at `infra/0g-kv/`; defaults to in-memory fallback until operator runs the real KV stack) |
-| Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal -->** | <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
-| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1665<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` + `ReceiptRegistryV3` |
+| Skills in catalog | **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal -->** | <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> vendored under `seed-skills/` and `apps/cli/.ivaronix/skills/` |
+| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+** | live `nextId()` on `ReceiptRegistry` + `ReceiptRegistryV2` + `ReceiptRegistryV3` |
 | Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->** | full suite green; V1 + V2 + V3 + Guard + Capability + Skill + Subscription |
 | Deployed contracts | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed -->** | Receipt V1 + V2 + V3 · Passport V1 + V2 · Capability V1 + V2 · Memory V1 + V2 · Skill V1 + V2 · Subscription V1 + V2 · Verifier on Galileo |
 | Packages typecheck-clean | **<!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean -->** | `pnpm -r --filter "@ivaronix/*" run typecheck` green |
-| First-party test files | **<!-- numbers:auto:packages.testFiles -->22<!-- /numbers:auto:packages.testFiles -->** | `*.test.ts` under `packages/` + `apps/` (excludes `_design`, `opencode-*`, compiled output) |
+| First-party test files | **<!-- numbers:auto:packages.testFiles -->27<!-- /numbers:auto:packages.testFiles -->** | `*.test.ts` under `packages/` + `apps/` (excludes `_design`, `opencode-*`, compiled output) |
 | Polyglot canonical hash | **<!-- numbers:auto:polyglotHash.languages -->3<!-- /numbers:auto:polyglotHash.languages --> languages** | TS + Python + Rust byte-equal in `.github/workflows/jcs-roundtrip.yml` (29/29 vectors) |
 
 > Track positioning: Ivaronix targets **Track 1 (Agentic Infrastructure)** as primary and **Track 3 (Agentic Economy)** as automatic-secondary. We do not compete on Track 2 (Verifiable Finance) production-rigor metrics — Aegis Vault holds that bar with 235 Hardhat tests + sealed strategies on mainnet. Track 1 rewards the metric set above.
@@ -277,7 +277,7 @@ Live data path:
 
 - **Receipts anchored:** read live via `ReceiptRegistry.nextId()` — Studio `/global` + CLI `ivaronix receipt list`.
 - **Passport profile:** `AgentPassportINFT.passportOf(wallet)` — `did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1` (tokenId 1, trustScore + receiptCount climbing per anchor).
-- **Skill catalog:** <!-- numbers:auto:skills.firstParty -->6<!-- /numbers:auto:skills.firstParty --> first-party skills + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> awesome-claude-skills ports = **<!-- numbers:auto:skills.catalogTotal -->156<!-- /numbers:auto:skills.catalogTotal --> skills** discoverable via `ivaronix skill list` and Studio `/skills`.
+- **Skill catalog:** <!-- numbers:auto:skills.firstParty -->10<!-- /numbers:auto:skills.firstParty --> first-party skills + <!-- numbers:auto:skills.vendored -->150<!-- /numbers:auto:skills.vendored --> awesome-claude-skills ports = **<!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal --> skills** discoverable via `ivaronix skill list` and Studio `/skills`.
 - **First-party skills published on-chain via `SkillRegistry`:** `0g-integration-auditor`, `github-audit`, `private-doc-review` (v0.1.0 + v0.2.0), `plan-step`, `code-edit`. Each `verify` returns `MATCH` against the local manifestHash.
 
 Run end-to-end on the **public testnet** today:

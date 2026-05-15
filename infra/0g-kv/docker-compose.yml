@@ -50,19 +50,66 @@ services:
       interval: 10s
       retries: 10
 
+  # Milvus etcd sidecar (per upstream 3-container pattern). The
+  # standalone-with-embedded-etcd mode SIGSEGVs in InitEtcdServer on
+  # Windows Docker Desktop (reproducible across volume wipes); the
+  # 3-container pattern from oglabs resources/0g-memory/docker-compose.yaml
+  # is the known-good config that ships on Hetzner production too.
+  milvus-etcd:
+    image: quay.io/coreos/etcd:v3.5.5
+    container_name: ivaronix-kv-milvus-etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    command: etcd -advertise-client-urls=http://milvus-etcd:2479 -listen-client-urls http://0.0.0.0:2479 --data-dir /etcd
+    volumes:
+      - milvus-etcd-data:/etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2479"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  milvus-minio:
+    image: minio/minio:RELEASE.2024-03-15T01-07-19Z
+    container_name: ivaronix-kv-milvus-minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    command: minio server /minio_data --console-address ":9001"
+    volumes:
+      - milvus-minio-data:/minio_data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
   milvus:
-    image: milvusdb/milvus:v2.5.0
+    image: milvusdb/milvus:v2.5.2
     container_name: ivaronix-kv-milvus
     command: ["milvus", "run", "standalone"]
     environment:
-      ETCD_USE_EMBED: "true"
-      ETCD_DATA_DIR: /var/lib/milvus/etcd
-      ETCD_CONFIG_PATH: /milvus/configs/embedEtcd.yaml
-      COMMON_STORAGETYPE: local
+      ETCD_ENDPOINTS: milvus-etcd:2479
+      MINIO_ADDRESS: milvus-minio:9000
+    depends_on:
+      milvus-etcd:
+        condition: service_healthy
+      milvus-minio:
+        condition: service_healthy
     volumes:
       - milvus-data:/var/lib/milvus
     ports:
       - "19530:19530"
+      - "9091:9091"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 90s
 
   redis:
     image: redis:7-alpine
@@ -104,14 +151,44 @@ services:
       # bring-up failure caught during P0 testing.
       - ./.env.kv:/app/.env:ro
     environment:
-      MONGO_URL: mongodb://mongo:27017
-      ELASTIC_URL: http://elasticsearch:9200
-      MILVUS_URL: milvus:19530
-      REDIS_URL: redis://redis:6379
-      ZG_RPC_URL: https://evmrpc-testnet.0g.ai
-      ZG_INDEXER_URL: https://indexer-storage-testnet-turbo.0g.ai
-      ZG_KV_LOG_CONTRACT: '0x22E03a6A89B950F1c82ec5e74F8eCa321a105296'
-      EVERMEMOS_PORT: 1995
+      # MongoDB — EverMemOS reads MONGODB_HOST/PORT (or MONGODB_URI). Use individual
+      # vars so the noauth compose mongo accepts the connection (upstream's
+      # MONGODB_USERNAME/PASSWORD only apply when mongo is auth-enabled).
+      MONGODB_HOST: mongo
+      MONGODB_PORT: "27017"
+      MONGODB_DATABASE: memsys
+      # Elasticsearch — EverMemOS reads ES_HOSTS (NOT ELASTIC_URL). Container
+      # DNS name `elasticsearch` resolves inside the compose network. The :9200
+      # port is the in-container port (NOT the host-mapped :19200 in upstream's
+      # standalone compose). Fixing this is the Q16 unblocker.
+      ES_HOSTS: "http://elasticsearch:9200"
+      ES_VERIFY_CERTS: "false"
+      SELF_ES_INDEX_NS: memsys
+      # Milvus — EverMemOS reads MILVUS_HOST/PORT (NOT MILVUS_URL).
+      MILVUS_HOST: milvus
+      MILVUS_PORT: "19530"
+      SELF_MILVUS_COLLECTION_NS: memsys
+      # Redis — EverMemOS reads REDIS_HOST/PORT (NOT REDIS_URL).
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      REDIS_DB: "8"
+      REDIS_SSL: "false"
+      # 0G network — EverMemOS reads ZEROG_* (NOT ZG_*). Match upstream
+      # env.template.0g.example exactly so the in-container code sees the
+      # right values.
+      ZEROG_READ_NODE: "http://host.docker.internal:6789"
+      ZEROG_RPC_URL: "https://evmrpc-testnet.0g.ai"
+      ZEROG_INDEXER_URL: "https://indexer-storage-testnet-turbo.0g.ai"
+      ZEROG_FLOW_ADDRESS: "0x22E03a6A89B950F1c82ec5e74F8eCa321a105296"
+      KV_STORAGE_TYPE: zerog
+      # Skip the heavy startup re-sync on every bring-up; this avoids long
+      # bring-up stalls and lets the gateway serve reads quickly. EverMemOS
+      # syncs on write naturally.
+      STARTUP_SYNC_ENABLED: "false"
+      LOG_LEVEL: INFO
+      ENV: dev
+      # Local API port — preserved for HttpKvClient REST baseUrl :1995.
+      API_BASE_URL: "http://localhost:1995"
     ports:
       - "1995:1995"
 
@@ -119,3 +196,5 @@ volumes:
   mongo-data:
   elastic-data:
   milvus-data:
+  milvus-etcd-data:
+  milvus-minio-data:

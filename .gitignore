@@ -124,3 +124,4 @@ cowork-opinion.md
 
 # P3 ephemeral profile dirs (one per test run; safe to delete)
 scripts/qa/ui-test-plan/.p3-profile-*
+.env.mainnet

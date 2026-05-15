@@ -64,7 +64,10 @@ export const KNOWN_RECEIPT_REGISTRIES: Record<Network, ReadonlySet<string>> = {
     '0xf675d4183b34fe8d1981FA9c117065aAcff690ab'.toLowerCase(), // ReceiptRegistryV2 (K-2 fix · EIP-712 anchor)
     '0x7396D536594e2BE833070c7EB441A10906046257'.toLowerCase(), // ReceiptRegistryV3 (B-V2-32 fix · receipt-type slots 10/11/12)
   ]),
-  mainnet: new Set<string>(),
+  mainnet: new Set<string>([
+    '0x27a54f64f3a8578b39fe1e61df7014813f325adf'.toLowerCase(), // ReceiptRegistryV2 (Aristotle mainnet · 2026-05-15)
+    '0xce35af8d75ffb24bc1671ca9f0cf293d82737297'.toLowerCase(), // ReceiptRegistryV3 (Aristotle mainnet · 2026-05-15 · receipt-type slots 10/11/12)
+  ]),
 };
 
 /**
@@ -81,7 +84,9 @@ export const KNOWN_PAYMENT_CONTRACTS: Record<Network, ReadonlySet<string>> = {
   testnet: new Set<string>([
     '0x9eA5FDba913AC94dA8833Fee21F2832827950A5C'.toLowerCase(), // SkillRunPayment (Block A)
   ]),
-  mainnet: new Set<string>(),
+  mainnet: new Set<string>([
+    '0xf8085b43a08e957fea157394dbb0d3eb76a1cd6a'.toLowerCase(), // SkillRunPayment (Aristotle mainnet · 2026-05-15)
+  ]),
 };
 
 /** Receipt type codes per RECEIPTS_SPEC.md §1. */

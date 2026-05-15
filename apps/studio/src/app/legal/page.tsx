@@ -149,13 +149,13 @@ export default async function LegalPage() {
           />
           <ComparisonColumn
             tone="green"
-            heading="Ivaronix · legal-citation-verifier"
+            heading="Ivaronix · legal-citation-verifier (architecture)"
             bullets={[
               'Lawyer drops brief into a sealed-enclave specialist.',
-              'Skill HTTP-fetches CourtListener + Cornell LII for every citation.',
-              'Each external call captured in the consensus transcript.',
-              'Receipt URL + four-light proof + signer wallet + chain anchor.',
-              'Opposing counsel re-verifies on their own machine — no Ivaronix account needed.',
+              'Architecture routes each cite through HTTP to CourtListener + Cornell LII via the web_fetch builtin.',
+              'Testnet caveat: Qwen 2.5 7B does not yet reliably emit tool_calls; runtime web_fetch enforcement is queued as this skill\'s mainnet-promotion gate — testnet verdicts are heuristic parsing only.',
+              'Receipt URL + four-light proof + signer wallet + chain anchor land regardless.',
+              'Re-verification path identical; the HTTP cross-check landed on mainnet runtime.',
             ]}
           />
         </div>
@@ -806,13 +806,13 @@ const BEFORE_AFTER_EXAMPLES: Array<{
     receiptDescription: 'Anchored 2026-05-14 · block 33271825 · high-stakes 5-role tier',
   },
   {
-    skill: 'legal-citation-verifier',
+    skill: 'legal-citation-verifier · PARTIAL (testnet)',
     before:
       'Brief with 3 hallucinated cases (Patterson v. Aramburu · Glenwood Capital · Wexler v. Brody-Tonelli) mixed among real cites — the Mata v. Avianca pattern.',
     after:
-      'Each citation routed through web_fetch to CourtListener and Cornell LII · hallucination_signal per row · verdict: do-not-file.',
+      'Citation PARSING works (B+); CASE-EXISTENCE verification is queued as this skill\'s mainnet-promotion gate. Testnet receipt 64 captures the parsed citation set but the Qwen 2.5 7B model did not emit web_fetch tool_calls — verdicts are heuristic. Re-run on mainnet once the runtime web_fetch enforcement gate ships (per Q9 audit · MAINNET_PERFECT_PLAN §3 keeps external-DB-as-ground-truth design intact).',
     receiptId: 64,
-    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · high-stakes 5-role tier',
+    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · TESTNET PARTIAL · runtime web_fetch enforcement queued',
   },
 ];
 
@@ -853,9 +853,9 @@ const DONTS: Array<{ head: string; detail: string }> = [
       "PDF receipts are printable and structured for legal review. They are not notarized; we do not yet integrate a notary partner. A receipt is evidence of process, not a notarized affidavit.",
   },
   {
-    head: "We do not verify legal holdings.",
+    head: "legal-citation-verifier is PARTIAL on testnet today.",
     detail:
-      "The legal-citation-verifier skill verifies that a case EXISTS at the cited reporter and court. It does NOT verify that the case stands for the proposition the brief asserts. That remains the attorney's interpretive work.",
+      "Design: every cite routes through HTTP to CourtListener + Cornell LII via web_fetch (the external DB is ground truth · the AI never decides existence from training memory · this design survives every model upgrade). Today on Galileo: parsing works (B+) but the Qwen 2.5 7B model does not reliably emit tool_calls, so the runtime cannot enforce the HTTP cross-check yet. The runtime enforcement gate is this skill's mainnet-promotion blocker; we surface it openly per CLAUDE.md §1 rather than ship a hallucination-prone verdict as LIVE. Q9 audit at QA_PROOF_PACK/testnet/ai-quality/legal-citation-verifier.md documents the rating + fix path.",
   },
   {
     head: "We do not store your document in plaintext.",

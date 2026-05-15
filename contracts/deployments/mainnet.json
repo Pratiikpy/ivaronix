@@ -2,7 +2,94 @@
   "network": "mainnet",
   "chainId": 16661,
   "deployer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
-  "deployedAt": null,
-  "note": "Mainnet (Aristotle, chainId 16661) deploy queue. Pre-flight prep complete by the agent per FINAL_BUILD_PLAN.md Block K: foundry mainnet profile shipped, all 10 deploy scripts present, all 232 forge tests pass under via_ir=true. Deploy itself is gated on the operator funding 0xaa95...77Ce with ~0.15 OG on chainId 16661 (CEX bridge — genuinely operator-action only per CLAUDE.md §1). Once funded the runbook in FINAL_BUILD_PLAN.md §9 runs in ~7 minutes; addresses + tx hashes land in this file in deploy order Erc7857Verifier → ReceiptRegistryV3 → AgentPassportINFTV2 → CapabilityRegistryV2 → MemoryAccessLogV2 → SkillRegistryV2 → SubscriptionEscrowV2 → SkillPricing → SkillRunPayment.",
-  "contracts": {}
+  "deployedAt": "2026-05-15T02:50:00Z",
+  "note": "Mainnet (Aristotle, chainId 16661) initial 10-contract deploy completed 2026-05-15. All txs status=1, chainscan.0g.ai verified. Total deploy spend ~0.085 OG (well within 16.38 OG autonomous cap per MAINNET_FUNDING_ESTIMATE.md). Operator wallet 25 OG funded; balance after deploys = 25.7713 OG.",
+  "contracts": {
+    "Erc7857Verifier": {
+      "address": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+      "txHash": "0x4d6f1ecc320345a03795bf64108ed7f66b721cd5f43b5fd97f7892d865e6c67e",
+      "blockNumber": "0x1fbd9d6",
+      "gasUsed": 598365,
+      "constructor": {
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+      }
+    },
+    "ReceiptRegistryV3": {
+      "address": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+      "txHash": "0xf262939e34e7605287d533aa98a4bb82165b69aaf028f23ad6fdd1ab7d1a31e8",
+      "gasUsed": 1169855,
+      "constructor": {
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+      }
+    },
+    "AgentPassportINFTV2": {
+      "address": "0x5D724659A7d4B0B0917F5DAe9579423D2c85a6Ad",
+      "txHash": "0xda47f8e7ab73641bf09e5cc8b7deee6b049aa07840e47fa50906c7def410df50",
+      "constructor": {
+        "name": "Ivaronix Agent Passport V2",
+        "symbol": "IVAP2",
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+        "verifier": "0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c",
+        "receiptRegistry": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297"
+      }
+    },
+    "CapabilityRegistryV2": {
+      "address": "0x41fEad4b86DE042845D25Be71aae857E19a8089E",
+      "txHash": "0x3054127eeed1dd4811ec019e5b0aeebfbbc2091bd2abdc78a18ceebe39f9a1d8",
+      "constructor": {
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+      }
+    },
+    "MemoryAccessLogV2": {
+      "address": "0xA2c3420242aE2BdD7e0970B1DfB28b3055DC4E65",
+      "txHash": "0x7440acdbf4f9cb32778c10409db8d5c82b2b64beab926c82a11697f7992c45dc",
+      "constructor": {
+        "capabilityRegistry": "0x41fEad4b86DE042845D25Be71aae857E19a8089E"
+      }
+    },
+    "SkillRegistryV2": {
+      "address": "0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde",
+      "txHash": "0x87fe827db30c9af9879a263246b9a6c77a07f4d8c48c95ca95c9732e0f3274b1",
+      "gasUsed": 1107842,
+      "constructor": {
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+        "reservedSlugs": [
+          "skill:private-doc-review",
+          "skill:github-audit",
+          "skill:0g-integration-auditor",
+          "skill:code-edit",
+          "skill:plan-step",
+          "skill:content-pitch-review"
+        ]
+      }
+    },
+    "ReceiptRegistryV2": {
+      "address": "0x27a54F64F3A8578B39fE1E61dF7014813F325adf",
+      "txHash": "0x391993e8d5e10f2a47b4c8e37ce32624f4e47b73845c9460afe5b6c4bdabfa3c",
+      "constructor": {
+        "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+      }
+    },
+    "SubscriptionEscrowV2": {
+      "address": "0x937cfE76dEdB25CCf6c7C56fF16F53270794311e",
+      "txHash": "0xef3e1b9d4d7d7be22215c9e521726385060fc6137ca5ba9f82e7f05417b3f705",
+      "constructor": {
+        "receiptRegistry": "0x27a54F64F3A8578B39fE1E61dF7014813F325adf"
+      }
+    },
+    "SkillPricing": {
+      "address": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
+      "txHash": "0xb77cb8a655bf1d1c924720d485e396a10040cba59610e87d1b4552bb5fb85ae2",
+      "constructor": {
+        "skillRegistry": "0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde"
+      }
+    },
+    "SkillRunPayment": {
+      "address": "0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A",
+      "txHash": "0x959f264118c8e946f0302699d3ab09c7128f042823480a68e5ef1eb74b380df0",
+      "constructor": {
+        "admin": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+      }
+    }
+  }
 }

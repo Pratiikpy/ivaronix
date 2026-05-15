@@ -1,0 +1,33 @@
+{
+  "runAt": "2026-05-14T18:03:55.806Z",
+  "network": "testnet",
+  "chainId": 16602,
+  "capabilityRegistryV2": "0x1351CD87360f0366D0A0068164e606B3c320F3E1",
+  "burner": {
+    "alice": "0x1Ec78950E2386abAE08Ab9F6217958473769B922",
+    "bob": "0xB324c85DF053a9c16c305521A70896E6A4ee4BBc"
+  },
+  "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "fundTxs": {
+    "alice": "0xda2b265dd14ea36ddad453e215ded1a2ce2062fef45d759a02f8c7c728400d04",
+    "bob": "0x8910f123db9256aef36f94eaf33101f154451d52d58b72d5a4d96d3fa7dabae6"
+  },
+  "grant": {
+    "grantId": "0xd89156672fe020b50e915f0bd8d6434578c6058f830498a5784af0a97541c29e",
+    "scopeHash": "0xf90438b11222cf87f64b3f218cf6a871dcf8f9adc0a5bf7071c138c7dadc2565",
+    "ttlSeconds": 3600,
+    "readsCap": 10,
+    "issueTx": "0x8387b43a96c78e45a136319a07533a271b3a240f1e07f99e49f543d954db0168",
+    "issueBlock": 33316129
+  },
+  "revoke": {
+    "tx": "0x48ba55a9f54505167d073fcace25326c4b0f25dbdc6cd91b1f97cc030db05b82",
+    "block": 33316160
+  },
+  "chainReads": {
+    "isValidBefore": true,
+    "isValidAfter": false
+  },
+  "explorerBase": "https://chainscan-galileo.0g.ai/tx/",
+  "verdict": "PASS · grant lifecycle proven on chain · before=true after=false"
+}

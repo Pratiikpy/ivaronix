@@ -617,4 +617,5 @@ The full UI test catalog lives in **`docs/FINAL_BUILD_TEST_PLAN.md`**, organized
 **Cross-reference:** every Block in `FINAL_BUILD_PLAN.md §4` references its Priority A test rows. Block acceptance criteria gate on these rows being PASS.
 
 Re-read `docs/FINAL_BUILD_TEST_PLAN.md` before starting any UI test. Re-read this §17.10 before deciding "I'm done with A and can move to B." The priority order is non-negotiable.
+> Avyartha-kalatvam: do not waste even one tiny second, and do not compromise on correctness, proof, or product quality.
 

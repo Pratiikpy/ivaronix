@@ -1,0 +1,52 @@
+{
+  "network": "mainnet",
+  "chainId": 16661,
+  "timestamp": "2026-05-15T04:10:53.226Z",
+  "wallets": {
+    "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "alice": {
+      "address": "0x7581a5ef2c1C563a1b071B3472715635B9C15699",
+      "role": "memory-owner+passport-holder",
+      "privateKey": "0x0a226571f105099b3bc228026582a762f0713a572fda3adefac630f2153660a2"
+    },
+    "bob": {
+      "address": "0x092A2b929a5995AEB39dDc1DDeb3733e15ea3c74",
+      "role": "memory-grantee",
+      "privateKey": "0x04f1bd9e0c3e152c1313352d231a5d8d02328fbf674ea9e341441ec7bfd63745"
+    }
+  },
+  "flowA_memory": {
+    "grantId": "0x5c9455670bced5da595617a39f45780ac0edcc287db6ed5de8f957f2807b31d3",
+    "scope": "read:memory",
+    "ttlSeconds": 3600,
+    "readsCap": 100,
+    "issueGrantTx": {
+      "hash": "0x18586f12f7240cd5ddb4ce75b6dd237e455288cd489c5627abe8d0bd70171a3b",
+      "chainscan": "https://chainscan.0g.ai/tx/0x18586f12f7240cd5ddb4ce75b6dd237e455288cd489c5627abe8d0bd70171a3b"
+    },
+    "revokeGrantTx": {
+      "hash": "0xc9c33f5a277ce64171501c938151849756768d7b7bb2c748fc1f7be7a6113047",
+      "chainscan": "https://chainscan.0g.ai/tx/0xc9c33f5a277ce64171501c938151849756768d7b7bb2c748fc1f7be7a6113047"
+    },
+    "isValidAfterGrant": true,
+    "isValidAfterRevoke": false,
+    "passing": true
+  },
+  "flowB_passport": {
+    "tokenId": "1",
+    "metadataRoot": "0x8bf12140fe0bf17dbc085ff0cc1c2aceec12926ef8425e13b88b508ec58dddac",
+    "mintTx": {
+      "hash": "0x5acd1de68f3e3275f2597d28263e5bd0fa9fd195c8f318634ea75bce41e05b13",
+      "chainscan": "https://chainscan.0g.ai/tx/0x5acd1de68f3e3275f2597d28263e5bd0fa9fd195c8f318634ea75bce41e05b13"
+    },
+    "ownerOf": "0x7581a5ef2c1C563a1b071B3472715635B9C15699",
+    "ownerMatches": true,
+    "trustScoreInitial": "0",
+    "passing": true,
+    "note": "recordReceipt + trust accrual deferred to follow-up · requires alice-signed receipt chain (Phase 3 step 2 receipts are operator-signed)"
+  },
+  "fundAlice": {
+    "hash": "0x33f1f93dc1c3ce23d15988b77123f33f0302725e33a75999d5c9ba51f6efacd2",
+    "chainscan": "https://chainscan.0g.ai/tx/0x33f1f93dc1c3ce23d15988b77123f33f0302725e33a75999d5c9ba51f6efacd2"
+  }
+}

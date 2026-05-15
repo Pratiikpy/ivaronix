@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-05-15T03:53:01.442Z",
+  "network": "mainnet",
+  "chainId": 16661,
+  "elapsedSec": 65.273,
+  "wallets": {
+    "operator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "alice": {
+      "address": "0x6263207dad1319B2aEcD7E55B488d43265f8e923",
+      "role": "creator",
+      "privateKey": "0x253683a087abe0a8086c19895bb530c7aefb72c9370a0f523a45234fc3413864"
+    },
+    "bob": {
+      "address": "0x11EcFC9bf71186180CD4E9326D9b6a4f63667410",
+      "role": "buyer",
+      "privateKey": "0xbbd226b48b8e7c0cea27383313b6cfd6922f7833916bc142a3f82aa8caa222ce"
+    }
+  },
+  "skill": {
+    "slug": "mainnet-burner-mp6dsnon",
+    "skillId": "0x6f7d9ad35382c6f5cfea2a6494ca1d7df5396b149e75fb74d4667bc491642130",
+    "versionId": "0xe32e703a20098305652a91ed3370235a27f244557ddae05f8afc0fc46e3bdc8a",
+    "manifestHash": "0xb56f09bb3439fe16c3d59809446ba3096c00820fbbb568d15147ef28b11d3fdd",
+    "price": "0.005",
+    "creatorBps": 9000,
+    "treasuryBps": 1000
+  },
+  "txs": {
+    "fundAlice": {
+      "hash": "0xc8c22b44b5786ff2230976447592e6d798db8314b521391cb793df7f635cd067",
+      "chainscan": "https://chainscan.0g.ai/tx/0xc8c22b44b5786ff2230976447592e6d798db8314b521391cb793df7f635cd067"
+    },
+    "fundBob": {
+      "hash": "0x7368a368a1c711686cd38b4b469bb8c9155b818c70c7f30295e68167376ac68e",
+      "chainscan": "https://chainscan.0g.ai/tx/0x7368a368a1c711686cd38b4b469bb8c9155b818c70c7f30295e68167376ac68e"
+    },
+    "publishVersion": {
+      "hash": "0x036f2c12d061367ad90320dc148541e6c15732263549b4ca5fdb49f8c4d5f125",
+      "chainscan": "https://chainscan.0g.ai/tx/0x036f2c12d061367ad90320dc148541e6c15732263549b4ca5fdb49f8c4d5f125"
+    },
+    "setPrice": {
+      "hash": "0x697d22bf93c95ed4e299d8862f547fb20b82e032f38b4413517ef74bf9386efe",
+      "chainscan": "https://chainscan.0g.ai/tx/0x697d22bf93c95ed4e299d8862f547fb20b82e032f38b4413517ef74bf9386efe"
+    },
+    "paySkillRun": {
+      "hash": "0xc3cbceaca89471dc49cc3e209d516481eb10368aabdabb8313de96943238d077",
+      "chainscan": "https://chainscan.0g.ai/tx/0xc3cbceaca89471dc49cc3e209d516481eb10368aabdabb8313de96943238d077"
+    },
+    "withdrawCreator": {
+      "hash": "0x97275318cc04199e314afe35f6b9daad35ae7f97ae954ddecabbee640dd7cd89",
+      "chainscan": "https://chainscan.0g.ai/tx/0x97275318cc04199e314afe35f6b9daad35ae7f97ae954ddecabbee640dd7cd89"
+    }
+  },
+  "split": {
+    "creatorReceived": "0.0045",
+    "treasuryReceived": "0.0005",
+    "expectedCreator": "0.0045",
+    "expectedTreasury": "0.0005",
+    "bpsObserved": {
+      "creator": 9000,
+      "treasury": 1000
+    }
+  },
+  "finalState": {
+    "aliceWalletBalance": "0.0509",
+    "aliceUnpaidBalance": "0.0"
+  }
+}

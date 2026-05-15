@@ -1026,11 +1026,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             fontWeight: 400,
           }}
         >
-          AI without proof is just opinion. Proof without a real model is theatre.
-          Ivaronix is the third thing: a private review run on a real model, signed by an agent,
-          anchored on chain, and re-verifiable by anyone with the receipt URL. Every claim
-          on this page traces back to bytes you can replay on your own machine.
-          The product is the process — not the answer.
+          AI without proof is opinion. Proof without a model is theatre. We do the third thing — real model · sealed run · signed receipt · anyone can re-verify.
         </p>
       </section>
 
