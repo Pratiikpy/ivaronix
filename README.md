@@ -7,7 +7,7 @@
 [![mainnet](https://img.shields.io/badge/0G_Aristotle_Mainnet-Live%202026--05--15-16a34a)](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297)
 [![testnet](https://img.shields.io/badge/0G_Galileo_Testnet-Live-16a34a)](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257)
 [![tests](https://img.shields.io/badge/Foundry-227%2F227_green-16a34a)](contracts/test/) <!-- numbers-bare:allow: badge URL embeds value; shields.io requires URL-encoded literal; numbers.json contracts.foundryTests is the SoT for this value -->
-[![receipts](https://img.shields.io/badge/Receipts_anchored-1%2C750%2B-16a34a)](docs/numbers.json)
+[![receipts](https://img.shields.io/badge/Receipts_anchored-1%2C778%2B-16a34a)](docs/numbers.json)
 
 ```text
 [ Drop a document ]  →  [ 0G Compute TEE ]  →  [ 0G Chain anchor ]  →  [ Public Proof URL ]
@@ -251,8 +251,10 @@ Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (on
 
 The operator wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` is funded on Galileo testnet and is the deployer of all 25 contracts above. Reviewers can either:
 
-1. **Reuse the operator wallet** — anchors against the existing passport (tokenId 1), inheriting the test history.
+1. **Reuse the operator wallet** — anchors against the existing passport (Galileo testnet tokenId 1 · Aristotle mainnet tokenId 2), inheriting the test history on each chain.
 2. **Generate a fresh wallet** — `cast wallet new`, fund via `https://faucet.0g.ai`, run `pnpm ivaronix passport mint` to mint a new ERC-7857 passport. The whole flow takes ~60 seconds.
+
+For mainnet TEE re-verification, the deployer wallet's first run on a fresh shell needs a one-time Compute provider acknowledgement + ledger deposit (≈0.001 OG). The scripts under `scripts/mainnet/` handle this: `pnpm exec tsx scripts/mainnet/discover-compute-providers.ts` lists registered TEE providers (the sovereign 0GM-1.0-35B-A3B provider at `0x4870CbC4…` is the canonical one); `pnpm exec tsx scripts/mainnet/deposit-compute-ledger.ts` deposits the broker ledger fee. Without these the first `--tee-independent` call returns ANCHORED + amber banner instead of FULLY VERIFIED — the verifier degrades honestly rather than failing silently.
 
 ### Canonical demo receipts (anchored, replay-able)
 
@@ -260,7 +262,7 @@ The operator wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` is funded on Ga
 |---|---|---|---|
 | **`1644`** | Galileo | `doc_ask` (TIER 1, TEE) | `pnpm ivaronix receipt verify 1644` returns ANCHORED |
 | **`74`** | Galileo | `doc_ask` (TIER 1, TEE) — gold-standard B-V2-46 validation-PASS | `pnpm ivaronix receipt verify 74 --tee-independent` returns FULLY VERIFIED ✓ |
-| **mainnet `4`** | Aristotle | `doc_ask` (TIER 1, TEE) | `pnpm ivaronix receipt verify 4 --network mainnet --tee-independent` |
+| **mainnet `21`** | Aristotle | `doc_ask` (TIER 1, TEE — signed by the registered sovereign 0GM-1.0-35B-A3B provider `0x4870CbC4…`) | `pnpm ivaronix receipt verify 21 --network mainnet --tee-independent` returns FULLY VERIFIED ✓ |
 
 If the TEE channel is unreachable at the moment a judge runs `--tee-independent`, the first four checks still pass and the CLI returns ANCHORED + an amber banner. That's by design — honesty beats fake-green.
 
@@ -350,7 +352,7 @@ All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deplo
 
 ### Phase B · Aristotle mainnet (chainId 16661)
 
-<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Total deploy spend ~0.085 OG across 10 transactions; deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
+<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->41<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on mainnet `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Total deploy spend ~0.085 OG across 10 transactions; deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |
