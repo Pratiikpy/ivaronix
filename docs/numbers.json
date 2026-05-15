@@ -3,11 +3,11 @@
   "lastRefreshed": "2026-05-15",
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
-    "v1Anchored": 1644,
-    "v2Anchored": 80,
+    "v1Anchored": 1645,
+    "v2Anchored": 81,
     "v3Anchored": 11,
-    "total": 1735,
-    "headlineLabel": "1,735+ receipts anchored across V1 + V2 + V3 registries"
+    "total": 1737,
+    "headlineLabel": "1,737+ receipts anchored across V1 + V2 + V3 registries"
   },
   "receiptTypes": {
     "count": 13,

@@ -174,10 +174,20 @@ export async function unifiedNextId(): Promise<{ v3: bigint; v2: bigint; v1: big
     v2 ? v2.nextId().catch(() => 0n) : Promise.resolve(0n),
     v1 ? v1.nextId().catch(() => 0n) : Promise.resolve(0n),
   ]);
-  const v3Anchored = v3id > 0n ? v3id - 1n : 0n;
-  const v2Anchored = v2id > 0n ? v2id - 1n : 0n;
-  const v1Anchored = v1id > 0n ? v1id - 1n : 0n;
-  return { v3: v3id, v2: v2id, v1: v1id, total: v3Anchored + v2Anchored + v1Anchored };
+  // All three contracts (V1, V2, V3) use `id = nextId++` starting from
+  // nextId=0 (empty default). After N anchors, slots 0..N-1 are filled
+  // and nextId = N. So `nextId` IS the count of anchored receipts —
+  // no subtraction needed. Verified 2026-05-16 by direct chain reads
+  // of `receipts(0)` on mainnet V2 + V3 and testnet V1 + V2 + V3:
+  // every slot 0 carries a real anchor with non-zero receiptRoot and
+  // the operator agent address. The prior `nextId - 1` subtraction
+  // (sweep that "fixed" /global from 1646 → 1644) was an off-by-one
+  // over-correction — the docs side (numbers-refresh.ts) was also
+  // subtracting 1 for V1+V2, so both surfaces agreed but both were
+  // undercounting by 1 per V1/V2 registry. Mainnet hero chip showed
+  // 41 ("RECEIPTS ON-CHAIN · LIVE") when the chain held 43; the v33
+  // UI sweep caught it by reconciling against direct contract reads.
+  return { v3: v3id, v2: v2id, v1: v1id, total: v3id + v2id + v1id };
 }
 
 /**

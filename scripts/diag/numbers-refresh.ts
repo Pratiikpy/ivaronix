@@ -86,12 +86,20 @@ async function fetchReceiptCounts(): Promise<{ v1: number; v2: number; v3: numbe
       console.warn(`v3.nextId() failed: ${(err as Error).message}`);
     }
   }
-  // V1 + V2 both 1-indexed: anchored = nextId - 1.
-  // V3 is 0-indexed: anchored = nextId (next id IS the count when starting at 0).
-  // V3's first anchor (iter-92) has onChainId=0 and increments nextId from 0 to 1.
-  // So nextId always equals the count of anchored receipts on V3.
-  const v1Anchored = Math.max(0, Number(v1NextId) - 1);
-  const v2Anchored = Math.max(0, Number(v2NextId) - 1);
+  // All three contracts use `id = nextId++` starting from nextId=0,
+  // so nextId IS the count of anchored receipts. Verified 2026-05-16
+  // by direct `receipts(0)` chain reads: V1 testnet slot 0 carries
+  // receiptRoot 0x663a6a2b8804da1c... with operator agent;
+  // V2 testnet slot 0 carries 0xb77087ee364876ed...; V3 testnet
+  // slot 0 carries 0x133aa5b4f318059f.... Mainnet V2 slot 0 carries
+  // 0xa727f7952f6be3...; V3 slot 0 carries 0xb5438f458e290b... So
+  // every registry's slot 0 IS a real anchor — the prior "V1 + V2
+  // are 1-indexed, subtract 1" comment was incorrect (no contract
+  // pre-seeds nextId or reserves slot 0 as a sentinel). Aligning
+  // V1+V2 with V3 closes the off-by-one drift that put Studio's hero
+  // chip at 41 when mainnet had 43 receipts on chain.
+  const v1Anchored = Math.max(0, Number(v1NextId));
+  const v2Anchored = Math.max(0, Number(v2NextId));
   const v3Anchored = Math.max(0, Number(v3NextId));
   return { v1: v1Anchored, v2: v2Anchored, v3: v3Anchored, total: v1Anchored + v2Anchored + v3Anchored };
 }

@@ -137,7 +137,7 @@ Five primitives live today; one (0G DA) is on the roadmap. We do not claim integ
 
 | Metric | Value | Where to look |
 |---|---|---|
-| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1735<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 registries |
+| Receipts anchored on chain | **<!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 registries |
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` enum |
 | Deployed contracts | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> testnet** · **<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> mainnet** | tables below |
 | Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->** all passing | `cd contracts && forge test` |
