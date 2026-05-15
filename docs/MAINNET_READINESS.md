@@ -1,10 +1,13 @@
 # Ivaronix · Mainnet Readiness Checklist
 
-> Per `QA_LOOP_BRIEF.md` operating rule #12, this is the final gate before
-> declaring `READY`. Run on 2026-05-09. All 13 items green on Galileo
-> testnet (chainId 16602). Mainnet (chainId 16661) waits on funding the
-> deployer wallet — the only blocker per CLAUDE.md §1 ("the only blocker
-> is money").
+> Per `QA_LOOP_BRIEF.md` operating rule #12, this is the gate that was
+> cleared before mainnet promotion. Originally run on 2026-05-09 (all 13
+> items green on Galileo testnet, chainId 16602); **mainnet promotion to
+> Aristotle (chainId 16661) shipped 2026-05-15** with <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts
+> deployed (~0.085 OG total gas spend) and <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on
+> `ReceiptRegistryV3` across all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. The checklist
+> below records the pre-promotion state of the testnet system and the
+> evidence used to clear the gate.
 
 ---
 
@@ -16,7 +19,7 @@
 | 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
-| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry` (V1) + `ReceiptRegistryV2` + `ReceiptRegistryV3` (B-V2-32 · canonical slots 10/11/12) |
+| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1735<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry` (V1) + `ReceiptRegistryV2` + `ReceiptRegistryV3` (B-V2-32 · canonical slots 10/11/12) |
 | 6 | Proof Explorer (`/r/<id>`) | ✓ | HTTP 200 on #994, #1004, #1014, #1056, #1069 |
 | 7 | Passport state | ✓ | tokenId 1, trust 1053, receipts 1053, violations 0 |
 | 8 | Memory grant/revoke lifecycle | ✓ | 5 grants on chain; ACTIVE → REVOKED proven via Studio + chain |
@@ -60,7 +63,7 @@ Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08 (V1) + 20
 
 ```
 ivaronix debug chain
-  receipts anchored    <!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->  (ReceiptRegistry V1 + V2 .nextId() · live)
+  receipts anchored    <!-- numbers:auto:receipts.total -->1735<!-- /numbers:auto:receipts.total -->  (ReceiptRegistry V1 + V2 .nextId() · live)
 ```
 
 ### 9. Burn-mode receipt #1069
@@ -117,24 +120,28 @@ GET /v1/receipt/1069                               HTTP 200  state=ANCHORED
 
 ---
 
-## Mainnet promotion gate
+## Mainnet promotion — shipped 2026-05-15
 
-CLAUDE.md §1 ("The only blocker is money") — mainnet promotion requires the
-deployer wallet to be funded on chainId 16661 with enough OG to redeploy all
-<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts. Estimated cost: ≈0.05 OG plus a buffer. The actual deploy
-script is the same `forge script` used on testnet, with `--rpc-url
-https://evmrpc.0g.ai` and the same artefacts already verified by <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->
-Foundry tests.
-
-Once the deployer wallet receives mainnet OG, run:
+Mainnet promotion to Aristotle (chainId 16661) shipped on **2026-05-15**.
+The deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` was funded
+with 25 OG; total deploy spend was ~0.085 OG across <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts. All
+transactions confirmed with status 1 on `chainscan.0g.ai`.
 
 ```bash
+# the deploy that shipped — recorded in contracts/deployments/mainnet.json
 NETWORK=mainnet pnpm --filter @ivaronix/og-chain run deploy
 ```
 
-The deploy script writes `contracts/deployments/mainnet.json` (same shape
+The deploy script wrote `contracts/deployments/mainnet.json` (same shape
 as `contracts/deployments/testnet.json`). Studio reads `IVARONIX_NETWORK=mainnet`
-(legacy: `OG_NETWORK`) and switches all reads/writes accordingly.
+(legacy alias: `OG_NETWORK`) and switches reads/writes accordingly.
+
+Mainnet `ReceiptRegistryV3` lives at
+[`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297);
+<!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts have been anchored on it spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->
+receipt-type slots, with real TEE attestation via `broker.processResponse`
+proven on mainnet receipt #4 and real 0G Storage upload on receipts 3–14.
+Full mainnet contract address table in [README §10 · Phase B](../README.md).
 
 ---
 

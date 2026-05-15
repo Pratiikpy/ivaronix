@@ -4,10 +4,10 @@
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
     "v1Anchored": 1644,
-    "v2Anchored": 78,
-    "v3Anchored": 9,
-    "total": 1731,
-    "headlineLabel": "1,731+ receipts anchored across V1 + V2 + V3 registries"
+    "v2Anchored": 80,
+    "v3Anchored": 11,
+    "total": 1735,
+    "headlineLabel": "1,735+ receipts anchored across V1 + V2 + V3 registries"
   },
   "receiptTypes": {
     "count": 13,
@@ -82,8 +82,8 @@
     ],
     "vendored": 150,
     "catalogTotal": 160,
-    "creatorEarningsOG": "0.0025",
-    "creatorEarningsLabel": "0.0025 OG · 50 paid runs of private-doc-review · 90/10 split"
+    "creatorEarningsOG": "0.0036",
+    "creatorEarningsLabel": "0.0036 OG · 57 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
     "workspaceTotal": 25,
@@ -145,7 +145,7 @@
       "SubscriptionEscrowV2": "0x937cfE76dEdB25CCf6c7C56fF16F53270794311e"
     },
     "deployedAt": "2026-05-15T02:50:00Z",
-    "receiptsAnchored": 19,
+    "receiptsAnchored": 22,
     "blockedOn": null
   }
 }

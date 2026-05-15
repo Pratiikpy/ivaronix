@@ -1,6 +1,6 @@
 # Judge guide · five minutes, three commands, three URLs
 
-> One-page demo path for OG APAC Hackathon judges. Built for a reviewer who has a clean machine, a browser, and five minutes. No wallet required for the first three steps. Every receipt id and URL below is real on-chain state — testnet for steps 1–4, mainnet for step 5. Mainnet (Aristotle, chainId 16661) deployed 2026-05-15: 10 contracts, 19 receipts spanning all 13 receipt-type slots.
+> One-page demo path for OG APAC Hackathon judges. Built for a reviewer who has a clean machine, a browser, and five minutes. No wallet required for the first three steps. Every receipt id and URL below is real on-chain state — testnet for steps 1–4, mainnet for step 5. Mainnet (Aristotle, chainId 16661) deployed 2026-05-15: <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts, <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots.
 
 ---
 
@@ -119,7 +119,7 @@ Every field is **honest by absence**: when the operator hasn't configured a prim
 Five judging criteria, two minutes each:
 
 1. **0G Tech Depth.** Six primitives — 0G Chain, 0G Compute, 0G Storage, 0G Router, Agent ID (ERC-7857), 0G DA — each with a code path you can read in `packages/og-{chain,compute,storage,router,da}` and `contracts/src/AgentPassportINFT.sol`. 0G Persistent Memory wired in `packages/runtime/src/memory-client.ts`. Honest stance on which require operator action vs auto-flow.
-2. **Implementation Completeness.** <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> packages typecheck-clean · <!-- numbers:auto:receipts.total -->1731<!-- /numbers:auto:receipts.total -->+ receipts on testnet · <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts deployed · mainnet-readiness 13/13 green. Mainnet promotion blocked on operator funding (documented in `docs/USER_TODO.md`).
+2. **Implementation Completeness.** <!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests -->/<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> Foundry tests · <!-- numbers:auto:packages.typecheckClean -->21<!-- /numbers:auto:packages.typecheckClean --> packages typecheck-clean · <!-- numbers:auto:receipts.total -->1735<!-- /numbers:auto:receipts.total -->+ receipts on testnet · <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts deployed · mainnet-readiness 13/13 green. Mainnet promotion blocked on operator funding (documented in `docs/USER_TODO.md`).
 3. **Product Value.** Two locked personas: deal lawyer (single-doc review · `/r/1304/print`) and DD analyst (bulk audit · `ivaronix doc bulk <dir>`). Marketing-persona skill `content-pitch-review` with TIER 1 receipt fixture. <!-- numbers:auto:skills.catalogTotal -->160<!-- /numbers:auto:skills.catalogTotal -->-skill public registry at `skills/registry.json`. Track-3 economic teeth: TIER-1 receipts release 100% of declared creator bps; TIER-2 release 85% (the zer0Gig "Efficiency Game" pattern, in code).
 4. **UX & Demo Quality.** "Use sample contract" → receipt anchored in 30 seconds with no wallet. Live receipt counter on the home hero (server-rendered from `ReceiptRegistry.nextId()`). Editorial cream-on-black brand, mobile-clean, brand-HTML side-by-side verified.
 5. **Team & Documentation.** This guide. Plus `PITCH.md` (3 pages · non-technical), `RECEIPT_SCHEMA.md` (technical depth · sequence diagrams), `MAINNET_READINESS.md` (13/13 ops checklist), `PHASE_B_DISCLOSURES.md` (every half-baked surface named honestly), `USER_TODO.md` (operator-action items), `planning-01.md` + `planning-002.md` (every shipped feature with on-chain artefact reference).
@@ -133,8 +133,8 @@ If you want depth, every commit message in `git log --oneline` cites the plannin
 Per `CLAUDE.md §1` brutal honesty — what's shipped vs what's queued:
 
 **Live on mainnet today** (Aristotle, chainId 16661, deployed 2026-05-15):
-- 10 contracts: `ReceiptRegistryV3`, `ReceiptRegistryV2`, `AgentPassportINFTV2`, `CapabilityRegistryV2`, `MemoryAccessLogV2`, `SkillRegistryV2`, `SkillPricing`, `SkillRunPayment`, `SubscriptionEscrowV2`, `Erc7857Verifier`
-- 19 receipts anchored on `ReceiptRegistryV3`, spanning all 13 receipt-type slots
+- <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts: `ReceiptRegistryV3`, `ReceiptRegistryV2`, `AgentPassportINFTV2`, `CapabilityRegistryV2`, `MemoryAccessLogV2`, `SkillRegistryV2`, `SkillPricing`, `SkillRunPayment`, `SubscriptionEscrowV2`, `Erc7857Verifier`
+- <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots
 - Real TEE attestation via `broker.processResponse` proven on mainnet receipt #4
 
 **Queued for v1.1** (honest disclosure):
