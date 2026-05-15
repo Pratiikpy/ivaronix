@@ -46,6 +46,8 @@ export const CAPABILITY_REGISTRY_ABI = parseAbi([
   'function grants(bytes32 grantId) external view returns (address owner, address grantee, bytes32 scopeHash, uint64 issuedAt, uint64 expiresAt, uint32 readsRemaining, bool revoked)',
   'function getGrantsByOwner(address owner) external view returns (bytes32[])',
   'function getGrantsByGrantee(address grantee) external view returns (bytes32[])',
+  'function listMyOwnerGrants() external view returns (bytes32[])',
+  'function listMyGranteeGrants() external view returns (bytes32[])',
   'event GrantIssued(bytes32 indexed grantId, address indexed owner, address indexed grantee, bytes32 scopeHash, uint64 expiresAt, uint32 readsCap)',
   'event GrantRevoked(bytes32 indexed grantId, address indexed owner)',
   'event GrantConsumed(bytes32 indexed grantId, uint32 readsRemaining)',

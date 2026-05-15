@@ -78,12 +78,15 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
     ? skillScopeHashFor(skillId)
     : scopeHashFor(namespace);
 
-  // Read grants where the connected wallet is the owner
+  // Read grants where the connected wallet is the owner. V2 enforces
+  // access control on getGrantsByOwner(address) — only the owner or an
+  // authorized indexer can call it. Use listMyOwnerGrants() with the
+  // caller's account so msg.sender == owner inside the contract.
   const { data: grantIds, refetch: refetchGrantIds } = useReadContract({
     address: capabilityAddr ? (capabilityAddr as Hex) : undefined,
     abi: CAPABILITY_REGISTRY_ABI,
-    functionName: 'getGrantsByOwner',
-    args: address ? [address] : undefined,
+    functionName: 'listMyOwnerGrants',
+    account: address,
     query: { enabled: !!address && !!capabilityAddr },
   }) as { data: readonly Hex[] | undefined; refetch: () => void };
 
