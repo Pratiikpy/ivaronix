@@ -74,8 +74,13 @@ async function fetchHealth(): Promise<HealthSnapshot> {
   try {
     const v3 = getReceiptRegistryV3();
     if (v3) {
-      const nextId = await v3.nextId();
-      receiptCountV3 = nextId > 0n ? nextId - 1n : 0n;
+      // ReceiptRegistryV3 uses `id = nextId++` from nextId=0, so nextId
+      // IS the count of anchored receipts (slot 0 holds a real anchor
+      // — verified 2026-05-16 by direct receipts(0) chain read). The
+      // prior `nextId - 1n` undercounted by 1 (mainnet showed 21 when
+      // chain held 22). Bug #16 caught by v33 UI sweep — same shape as
+      // Bug #15 in unifiedNextId.
+      receiptCountV3 = await v3.nextId();
     }
   } catch {
     receiptCountV3 = null;
