@@ -431,7 +431,7 @@ Ivaronix receipts export to IETF Agent Audit Trail format (`draft-rosenberg-aat-
 | RPC          | `https://evmrpc-testnet.0g.ai`        | `https://evmrpc.0g.ai`                     |
 | Explorer     | `https://chainscan-galileo.0g.ai`     | `https://chainscan.0g.ai`                  |
 | Faucet       | `https://faucet.0g.ai`                | n/a                                        |
-| Status       | All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live (table above) | <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts live (see Phase B below) · <!-- numbers:auto:mainnet.receiptsAnchored -->3<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` |
+| Status       | All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> contracts live (table above) | <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts live (see Phase B below) · <!-- numbers:auto:mainnet.receiptsAnchored -->19<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` |
 
 Funding ~0.5 OG from the testnet faucet covers a full afternoon of demo runs (one anchored receipt costs ~0.0001 OG). Receipts are idempotent on the storage and anchor layers, so a stalled inference call can be re-run without duplicating chain state.
 
