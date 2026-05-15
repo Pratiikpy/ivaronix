@@ -164,6 +164,7 @@ const FILTERS: Record<string, Filter> = {
       /^verify-memory-snapshot-upload/, // sweep 201 · HALF_BAKED §I-12 partial closure · memory snapshot --upload wires createStorageClient.upload
       /^verify-cli-disk-json-safety/, // sweep 206 · HALF_BAKED §J-3 CLI-half closure · no CLI file casts disk JSON to a named type without going through validator/unknown narrow
       /^verify-passport-mint-storage-upload/, // sweep 208 · HALF_BAKED §I-11 closure · passport mint uploads metadata to 0G Storage before computing chain metadataRoot (sha256 fallback only on upload failure)
+      /^verify-cross-machine-network-resolution/, // 2026-05-16 · CLI receipt verify honors receipt.chainAnchor.network for cross-machine ANCHORED lookup · locks the JUDGE_GUIDE Step 1 'independently replayable' trust claim
     ],
   },
   contracts: {
