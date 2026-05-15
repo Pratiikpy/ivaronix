@@ -1,0 +1,14 @@
+{
+  "ownerWallet": "0xd3dd37612f703cEAD89cD85984B81721CBc0A186",
+  "grantee": "0xC34A9a17bFa61C4E7D49D7Ef5c5ec47aAaaa9410",
+  "nonceAfterIssue": 1,
+  "nonceAfterRevoke": 1,
+  "balanceFinal": "0.049532167498690069",
+  "capabilityRegistry": {
+    "address": "0x41fEad4b86DE042845D25Be71aae857E19a8089E",
+    "txHash": "0x3054127eeed1dd4811ec019e5b0aeebfbbc2091bd2abdc78a18ceebe39f9a1d8",
+    "constructor": {
+      "initialOwner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce"
+    }
+  }
+}

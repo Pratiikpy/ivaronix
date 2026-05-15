@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
-import { keccak256, toBytes, parseAbiItem, type Hex, type Address } from 'viem';
+import { keccak256, toBytes, parseAbiItem, getAddress, isAddress, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 
 /**
@@ -82,7 +82,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
   const { data: grantIds, refetch: refetchGrantIds } = useReadContract({
     address: capabilityAddr ? (capabilityAddr as Hex) : undefined,
     abi: CAPABILITY_REGISTRY_ABI,
-    functionName: 'listGrantsByOwner',
+    functionName: 'getGrantsByOwner',
     args: address ? [address] : undefined,
     query: { enabled: !!address && !!capabilityAddr },
   }) as { data: readonly Hex[] | undefined; refetch: () => void };
@@ -112,12 +112,13 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
   }
 
   const onIssue = () => {
-    if (!grantee.startsWith('0x') || grantee.length !== 42) return;
+    if (!isAddress(grantee, { strict: false })) return;
+    const normalized = getAddress(grantee);
     writeContract({
       address: capabilityAddr as Hex,
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'issueGrant',
-      args: [grantee as Hex, activeScopeHash, BigInt(ttlSeconds), MAX_READS],
+      args: [normalized, activeScopeHash, BigInt(ttlSeconds), MAX_READS],
       ...GALILEO_GAS_PARAMS,
     });
   };
