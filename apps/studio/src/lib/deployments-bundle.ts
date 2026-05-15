@@ -23,14 +23,15 @@
 import type { Address, Network } from '@ivaronix/core';
 
 import testnetManifest from '../../../../contracts/deployments/testnet.json';
+import mainnetManifest from '../../../../contracts/deployments/mainnet.json';
 
 type ContractRow = { address: string; txHash?: string; explorer?: string };
 type Manifest = { contracts: Record<string, ContractRow> };
 
 const MANIFESTS: Record<Network, Manifest | null> = {
-  // Mainnet manifest is not yet deployed; falls back to the og-chain `process.cwd()`
-  // walk if Studio is ever pointed at mainnet before the redeploy.
-  mainnet: null,
+  // Aristotle mainnet (chainId 16661) · 10 contracts deployed 2026-05-15 ·
+  // see contracts/deployments/mainnet.json for the canonical address record.
+  mainnet: mainnetManifest as Manifest,
   testnet: testnetManifest as Manifest,
 };
 
