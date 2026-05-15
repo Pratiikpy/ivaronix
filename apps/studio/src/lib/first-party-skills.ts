@@ -62,6 +62,29 @@ export async function resolveSkillSlug(idOrHex: string): Promise<string> {
 }
 
 /**
+ * Forward lookup: slug → hex manifestHash. The inverse of resolveSkillSlug.
+ *
+ *   skillSlugToHex('private-doc-review') → '0x0934cfc2...860dcb'
+ *   skillSlugToHex('0xdeadbeef...')      → '0xdeadbeef...' (pass-through)
+ *   skillSlugToHex('unknown-slug')       → 'unknown-slug' (pass-through)
+ *
+ * Closes Bug #22 (v33 UI sweep · 2026-05-16): /marketplace/[skillId]
+ * was doing a case-insensitive find against the skillId returned by
+ * the subgraph/chain (always hex). When the URL carries a slug like
+ * 'private-doc-review' (the marketplace card link target), the find
+ * never matches and renders "Skill not found". This helper makes the
+ * detail page accept either form by converting slugs to hex before
+ * the lookup. Same shape as the previously-shipped /skill/<hex> →
+ * slug resolver in /skill/[id]/page.tsx.
+ */
+export async function skillSlugToHex(slugOrHex: string): Promise<string> {
+  if (/^0x[0-9a-fA-F]{64}$/.test(slugOrHex)) return slugOrHex;
+  if (!(FIRST_PARTY_SLUGS as readonly string[]).includes(slugOrHex)) return slugOrHex;
+  const { keccak256, toUtf8Bytes } = await import('ethers');
+  return keccak256(toUtf8Bytes(`skill:${slugOrHex}`));
+}
+
+/**
  * Synchronous (test-mode) version — used by tests and by anywhere
  * we already have ethers in scope and don't want the dynamic-import
  * overhead. Caller must provide the keccak256 + toUtf8Bytes pair.

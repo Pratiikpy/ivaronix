@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, skillReceipts, subgraphAvailable } from '@/lib/subgraph';
 import { BuyAndRunButton } from '@/components/BuyAndRunButton';
-import { resolveSkillSlug } from '@/lib/first-party-skills';
+import { resolveSkillSlug, skillSlugToHex } from '@/lib/first-party-skills';
 import { findSkillByIdServer } from '@/lib/skills';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,17 @@ interface PageProps {
 
 export default async function SkillDetailPage({ params }: PageProps) {
   const { skillId: encodedSkillId } = await params;
-  const skillId = decodeURIComponent(encodedSkillId);
+  const skillIdRaw = decodeURIComponent(encodedSkillId);
+
+  // Bug #22 (v33 UI sweep · 2026-05-16): the URL param may be either
+  // the human slug ('private-doc-review') or the on-chain hex
+  // manifestHash. The marketplace listing renders card links as
+  // /marketplace/<slug> for the 5 first-party skills, but the
+  // subgraph/chain stores skillId as keccak256("skill:"+slug). The
+  // pre-fix code did a case-insensitive find with no slug-to-hex
+  // conversion, so the slug routes 404'd while hex routes worked.
+  // Now we resolve the slug to hex up-front and match in either form.
+  const skillId = await skillSlugToHex(skillIdRaw);
 
   // Find the skill in the list (subgraph or chain-fallback)
   const all = await skillsList({ limit: 100 });
