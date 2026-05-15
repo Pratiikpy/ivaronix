@@ -368,21 +368,23 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
             <p style={{ margin: 0, fontSize: 16, lineHeight: 1.6, color: 'var(--color-fg)' }}>{summary}</p>
           ) : hasLocalBody ? (
             <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--color-muted)' }}>
-              Body summary not in this receipt (older schema · pre-Day-4 bump). The on-chain anchor, signature, citations, and consensus trace below are all verifiable.
+              Body summary not in this receipt (older schema). The on-chain anchor, signature, citations, and consensus trace below are all verifiable.
             </p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: 'var(--color-muted)' }}>
-                Receipt body not in local cache. Chain anchor + receipt root below are verifiable on chainscan without it. To re-derive the canonical hash + signature locally, fetch the body via{' '}
-                <code className="mono" style={{ fontSize: 12 }}>ivaronix receipt show {onChain.id.toString()}</code> on a machine with the cache, or wait for the 0G Storage fetch (Day 13-17 build).
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--color-fg)' }}>
+                <strong>The chain anchor below is the proof.</strong> The receipt body lives on 0G Storage at the <code className="mono" style={{ fontSize: 12 }}>storageRoot</code> shown below — a stranger fetches it by hash, computes keccak256, matches it byte-for-byte against the <code className="mono" style={{ fontSize: 12 }}>receiptRoot</code> on chain.
               </p>
-              <a
-                href={`/r/${onChain.id.toString()}`}
-                className="btn-ghost"
-                style={{ alignSelf: 'flex-start', fontSize: 12, padding: '6px 12px', textDecoration: 'underline' }}
-              >
-                Retry body fetch →
-              </a>
+              <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--color-muted)' }}>
+                To see the AI&apos;s full reasoning + outputs locally:
+              </p>
+              <pre style={{ margin: 0, padding: '10px 14px', background: 'var(--color-tonal)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--font-mono)', overflow: 'auto' }}>
+{`pnpm ivaronix receipt show ${onChain.id.toString()} --network mainnet
+pnpm ivaronix receipt verify ${onChain.id.toString()} --tee-independent`}
+              </pre>
+              <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--color-muted)' }}>
+                Studio-side body fetch from 0G Storage is on the v1.1 roadmap (replaces this section with the rendered AI output). The CLI commands above produce the same content today.
+              </p>
             </div>
           )}
           <div
