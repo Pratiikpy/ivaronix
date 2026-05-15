@@ -1,0 +1,12 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "id              4\nreceiptRoot     0x6ed8933010d19228588e941d43e82fb062337d5ce5199559436fbe5f7e554092\nagent           0xaa954c33810029a3eFb0bf755FEF17863E8677Ce\ntype            code 0\nanchored        block 1778822526\nregistry        V3\nstate           ANCHORED"
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 3
+}

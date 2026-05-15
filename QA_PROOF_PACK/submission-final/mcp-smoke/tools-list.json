@@ -1,0 +1,106 @@
+{
+  "result": {
+    "tools": [
+      {
+        "name": "ivaronix_ask",
+        "description": "Run an Ivaronix skill against text input. Optionally anchors a verifiable Action Receipt on 0G Chain. Use when the user wants to audit a document/contract/code or get any skill-driven answer.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "skillId": {
+              "type": "string",
+              "description": "Skill id (e.g. github-audit, private-doc-review)"
+            },
+            "question": {
+              "type": "string",
+              "description": "User-facing instruction"
+            },
+            "contentText": {
+              "type": "string",
+              "description": "Plaintext content to analyze"
+            },
+            "tier": {
+              "type": "string",
+              "enum": [
+                "quick",
+                "standard",
+                "high-stakes"
+              ]
+            },
+            "receipt": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          "required": [
+            "skillId",
+            "question",
+            "contentText"
+          ]
+        }
+      },
+      {
+        "name": "ivaronix_verify_receipt",
+        "description": "Resolve a receipt by on-chain numeric id or 0x bytes32 receiptRoot and report its state.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ]
+        }
+      },
+      {
+        "name": "ivaronix_search_memory",
+        "description": "Search the local Ivaronix memory engine (4-way hybrid: vector + FTS + temporal + KV).",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            },
+            "k": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "ivaronix_install_skill",
+        "description": "List available Ivaronix skills, optionally filtered by substring of the skill id.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      {
+        "name": "ivaronix_passport_show",
+        "description": "Read the on-chain AgentPassport profile for a wallet address.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "wallet": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "wallet"
+          ]
+        }
+      }
+    ]
+  },
+  "jsonrpc": "2.0",
+  "id": 2
+}
