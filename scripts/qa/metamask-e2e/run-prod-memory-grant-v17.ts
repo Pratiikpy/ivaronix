@@ -112,14 +112,15 @@ async function drivePopupPatient(popup: Page, label: string, ctaWaitMs = 120_000
       if (visible) {
         log(`  ${label}: step ${step} click "${t}" (multi-strategy)`);
         // Multi-strategy click for MM v13.30 reliability:
-        // 1. locator.click (standard)
+        // 1. locator.click (standard) — often enough; if click succeeds + popup closes, subsequent strategies skipped
         // 2. force-click via dispatchEvent (bypasses pointer events)
         // 3. focus + keyboard Enter (semantic activation)
+        // ALL waitForTimeout / locator calls guarded against closed popup.
         await btn.click({ timeout: 4_000, force: true }).catch(() => {});
-        await popup.waitForTimeout(500);
+        await popup.waitForTimeout(500).catch(() => {});
         if (!popup.isClosed()) {
           await btn.dispatchEvent('click').catch(() => {});
-          await popup.waitForTimeout(500);
+          await popup.waitForTimeout(500).catch(() => {});
         }
         if (!popup.isClosed()) {
           await btn.focus().catch(() => {});

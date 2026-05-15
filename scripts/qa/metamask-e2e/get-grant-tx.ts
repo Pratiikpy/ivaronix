@@ -2,7 +2,7 @@ import { JsonRpcProvider, id } from 'ethers';
 
 async function main() {
   const provider = new JsonRpcProvider('https://evmrpc.0g.ai', { chainId: 16661, name: 'aristotle' });
-  const wallet = '0xd3dd37612f703cEAD89cD85984B81721CBc0A186';
+  const wallet = '0x57A9BD142F74fc66731a97a76b42A4d505673919';
   const cap = '0x41fEad4b86DE042845D25Be71aae857E19a8089E';
   const topic = id('GrantIssued(bytes32,address,address,bytes32,uint64,uint32)');
   const block = await provider.getBlockNumber();
