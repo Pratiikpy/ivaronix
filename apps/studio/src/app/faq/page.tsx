@@ -347,24 +347,28 @@ const FAQS: ReadonlyArray<Faq> = [
     id: 'mainnet',
     q: 'Is this on mainnet?',
     short:
-      'Testnet today (Galileo, chainId 16602). Mainnet (Aristotle, 16661) deploy is operator-funding-gated.',
-    tone: 'amber',
+      'Yes — Aristotle mainnet (chainId 16661) shipped 2026-05-15. 10 contracts, 13 receipt-type slots, real on-chain anchors today. Galileo testnet stays live for the larger receipt history.',
     body: (
       <>
         <p style={pStyle}>
-          Every receipt in the wild today anchors on Galileo. Chainscan
-          links resolve to <Mono>chainscan-galileo.0g.ai</Mono>. The
-          contracts deploy clean; the verifier returns{' '}
-          <Mono>FULLY VERIFIED</Mono>; the marketplace pays in testnet
-          OG.
+          Mainnet is live. Aristotle (chainId 16661) carries 10 deployed
+          contracts and the full set of 13 receipt-type slots. Chainscan
+          links resolve to <Mono>chainscan.0g.ai</Mono> for mainnet
+          addresses. The verifier returns <Mono>FULLY VERIFIED</Mono> on
+          mainnet receipts via{' '}
+          <Mono>broker.processResponse</Mono> attestation, and the
+          marketplace pays in real OG with the same 90/10 creator/
+          treasury split as the testnet build.
         </p>
         <p style={pStyle}>
-          Aristotle mainnet (chainId 16661) is staged but not yet
-          funded. When the deployer wallet is funded and the audit is
-          locked, the same contracts redeploy at new addresses on
-          mainnet and the studio cuts over via{' '}
-          <Mono>IVARONIX_NETWORK=mainnet</Mono>. The on-chain history
-          on Galileo stays readable; it does not migrate.
+          Galileo testnet (chainId 16602) stays live. It carries the
+          larger receipt history (1,737+ anchored across V1+V2+V3),
+          serves the JUDGE_GUIDE walkthrough, and is the default for{' '}
+          <Mono>ivaronix demo</Mono>. The studio reads whichever network{' '}
+          <Mono>IVARONIX_NETWORK</Mono> points at; the build serving
+          this UI right now is whichever one the deployment env says.
+          On-chain history never migrates — each network keeps its own
+          ledger.
         </p>
       </>
     ),

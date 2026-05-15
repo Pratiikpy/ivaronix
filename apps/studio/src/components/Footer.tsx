@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NETWORKS } from '@ivaronix/core';
 // Studio-local manifest loader — imports contracts/deployments/<network>.json at
 // build time so the JSON is traced into the Vercel function bundle. The og-chain
 // version walks up from process.cwd(), which fails on Vercel and was masking
@@ -11,18 +12,25 @@ import { getNetwork } from '@/lib/chain';
  * Columns: Product / Docs / Network / Open Source.
  * Below the grid: brand baseline strip with the canonical tagline + network chip.
  *
- * Network column links resolve to the 0G Galileo Testnet block explorer
- * for real on-chain verification (judging criterion: "Explorer link /
- * contract address must be provided for verification").
+ * Network column links resolve to the chain explorer matching the active
+ * network (testnet → chainscan-galileo.0g.ai, mainnet → chainscan.0g.ai)
+ * — judges visiting the live mainnet build click a contract address and
+ * land on the mainnet explorer, not the wrong-chain testnet view.
  *
  * Pre-sweep-117 the contract addresses were hardcoded constants — same
  * footer would render stale addresses post-mainnet-redeploy or on V2
  * additions to contracts/deployments/<network>.json. Sweep 117 reads
  * each address fresh via getDeployedAddress() so the footer always
  * reflects what's actually in the deployment manifest.
+ *
+ * Bug #17 (v33 UI sweep · 2026-05-16): EXPLORER was hardcoded to
+ * 'https://chainscan-galileo.0g.ai' even on mainnet builds, so every
+ * contract link sent a judge to the wrong chain's explorer (mainnet
+ * addresses, testnet explorer view = empty pages). Fixed by deriving
+ * the explorer from NETWORKS[network].chainExplorer per the canonical
+ * config table.
  */
 
-const EXPLORER = 'https://chainscan-galileo.0g.ai';
 const REPO = 'https://github.com/Pratiikpy/ivaronix';
 const OG_DOCS = 'https://docs.0g.ai';
 const OG_HOME = 'https://0g.ai';
@@ -41,6 +49,11 @@ function shortAddr(a: string): string {
 
 export function Footer() {
   const network = getNetwork();
+  // Resolve the per-network explorer URL — testnet → chainscan-galileo,
+  // mainnet → chainscan.0g.ai. NETWORKS table lives in @ivaronix/core,
+  // same source of truth the CLI prints in `ivaronix doctor` so judge-
+  // facing links and the operator-facing CLI agree.
+  const EXPLORER = NETWORKS[network].chainExplorer;
   // Read the entire contracts manifest from contracts/deployments/<network>
   // .json and iterate every entry. Future V2/V3 deploys appear in the
   // footer automatically without code changes.
@@ -119,7 +132,9 @@ export function Footer() {
             <li>{ext('GitHub repository ↗', REPO)}</li>
             <li>{ext('Issues ↗', `${REPO.replace(/\.git$/, '')}/issues`)}</li>
             <li>{ext('Block explorer ↗', EXPLORER)}</li>
-            <li>{ext('Galileo faucet ↗', 'https://faucet.0g.ai')}</li>
+            {network === 'testnet' && (
+              <li>{ext('Galileo faucet ↗', 'https://faucet.0g.ai')}</li>
+            )}
           </ul>
         </section>
       </div>
