@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { getPassportClient, livePassportCount, getNetwork } from '@/lib/chain';
+import { getStudioDeployments } from '@/lib/deployments-bundle';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -79,6 +80,21 @@ function isoFromTimestamp(ts: bigint): string {
 export default async function AgentsPage() {
   const agents = await loadAgents();
   const network = getNetwork();
+  // Resolve the live passport contract address from the deployment
+  // manifest so the sub-text below reflects the actual contract this
+  // page just read. Prefer V2 (canonical post-K-1); fall back to V1
+  // legacy if V2 isn't deployed on a given network. Bug #20 (v33 UI
+  // sweep · 2026-05-16): the sub-text had a hardcoded testnet V1
+  // address ("0x08d2…563E on testnet") even when mainnet was active,
+  // which read as wrong-network drift to any judge cross-checking on
+  // the explorer.
+  const deployments = getStudioDeployments(network);
+  const passportAddr = (deployments?.contracts.AgentPassportINFTV2?.address
+    ?? deployments?.contracts.AgentPassportINFT?.address
+    ?? '') as string;
+  const passportShort = passportAddr
+    ? `${passportAddr.slice(0, 6)}…${passportAddr.slice(-4)}`
+    : 'not deployed on this network';
 
   return (
     <Section
@@ -174,7 +190,7 @@ export default async function AgentsPage() {
         Trust scores are updated on chain via{' '}
         <code className="mono">AgentPassportINFT.recordReceipt</code>{' '}
         each time the agent anchors a receipt. The contract is at{' '}
-        <code className="mono">0x08d2…563E</code> on testnet — every row above reflects real on-chain state at page-load
+        <code className="mono">{passportShort}</code> on {network} — every row above reflects real on-chain state at page-load
         time.
       </p>
     </Section>
