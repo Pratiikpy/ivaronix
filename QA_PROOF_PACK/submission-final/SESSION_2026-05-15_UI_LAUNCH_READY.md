@@ -94,7 +94,7 @@ v23 Playwright verification (`scripts/qa/metamask-e2e/verify-admin-health-v23.ts
 
 ## What's NOT yet done (honest backlog)
 
-- Marketplace creator-earnings withdraw on mainnet — needs a fresh creator wallet derived via Add Account on operator MM seed (per `feedback_never_fund_public_test_wallets`), funded by operator-to-operator transfer, then sells at least one skill run, then withdraws via real MM popup. Heavy 3-wallet flow.
+- **Marketplace creator-earnings withdraw on mainnet** — `/marketplace/payouts` page + `CreatorPayoutsPanel.tsx` component already shipped. Page renders cleanly (v24 render check at 1440×900: §MARKETPLACE / PAYOUTS eyebrow + "Your creator earnings" headline + clean connect-wallet empty-state card). Operator wallet has **0.054 OG creatorBalance** on mainnet SkillRunPayment (verified via `check-creator-balance.ts`: lifetime earned = 0.054 OG, never withdrawn). Remaining work: v25 real-MM driver that loads /marketplace/payouts with operator account connected, clicks Withdraw, confirms popup, captures chain tx + post-state showing 0 pending. No fresh-wallet derivation needed — operator IS the creator of all 5 published mainnet skills.
 - Admin/treasury withdraw — operator-seed gated · MM v13.30 raw-private-key import path removed · same Add Account derivation pattern applies
 - AI output quality re-audit on the 5 legal skills against current production — partially covered by Bug #8 (the `riskLevel` heuristic fix lands on every new run; legacy receipts are immutable)
 - README + JUDGE_GUIDE prose updates — this SESSION doc serves as the canonical proof index until the operator promotes content to the public-facing README
