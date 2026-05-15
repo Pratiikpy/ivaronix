@@ -282,7 +282,7 @@ Live data path:
 
 ## Phase B · Live mainnet (Aristotle, chainId 16661)
 
-10 contracts deployed on 0G Aristotle mainnet 2026-05-15. Three receipts anchored across `quick` · `standard` · `high-stakes` consensus tiers, cryptographically replayable from canonical JSON. Honest open items for v1.1 listed in `QA_PROOF_PACK/mainnet/PHASE_3_DONE.md`.
+10 contracts deployed on 0G Aristotle mainnet 2026-05-15. **15 receipts anchored across all 13 receipt-type slots** (quick · standard · high-stakes · audit · burn · doc_room_create · doc_room_read · memory_consolidation · code_change · swarm · subscription_skill_exec · passport_update · skill_exec · memory_access), cryptographically replayable from canonical JSON. Real TEE attestation via `broker.processResponse` on V3 receipt 4 · real 0G Storage upload on receipts 3-14. Honest open items for v1.1 listed in `QA_PROOF_PACK/judge-review/FINAL_JUDGE_REPORT.md`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |

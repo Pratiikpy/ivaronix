@@ -15,7 +15,7 @@
 | Mainnet RPC | `https://evmrpc.0g.ai` | `cast chain-id --rpc-url https://evmrpc.0g.ai` → 16661 |
 | Operator wallet | `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` | `cast balance ${WALLET} --rpc-url ${RPC}` |
 | 10 contracts deployed | `contracts/deployments/mainnet.json` | `cast code <addr>` returns non-zero for each |
-| **7 receipts anchored** (was 3 · +4 v1.1) | `ReceiptRegistryV3 0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297` | `cast call <V3> "nextId()(uint256)" --rpc-url ${RPC}` → 7 |
+| **15 receipts anchored** (was 3 pre-v1.1 · post-full-sweep + audit-tier) | `ReceiptRegistryV3 0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297` | `cast call <V3> "nextId()(uint256)" --rpc-url ${RPC}` → 15 (verified 2026-05-15) |
 | 5 legal skills published | `SkillRegistryV2 0x080f87A9E93e9bd0a9e0eB94F97123bf333b1Dde` | `cast call <V2> "latestVersion(bytes32)" <skillId>` |
 | 1 passport minted | `AgentPassportINFTV2 0x5D724659A7d4B0B0917F5DAe9579423D2c85a6Ad` tokenId 1 | `balanceOf(alice)` → 1 |
 
