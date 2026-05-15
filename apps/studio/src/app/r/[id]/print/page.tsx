@@ -208,9 +208,12 @@ export default async function PrintableReceipt({ params }: { params: Promise<{ i
           </p>
           <pre style={preStyle}>
 {`pnpm install -g @ivaronix/cli       # one-time
-ivaronix receipt verify ${onChain.id} --tee-independent
+IVARONIX_NETWORK=${network} ivaronix receipt verify ${onChain.id} --tee-independent
 # Expected: → FULLY VERIFIED ✓`}
           </pre>
+          <p style={{ ...pStyle, fontSize: 11, color: '#666', marginTop: 6 }}>
+            (Windows PowerShell: <code style={{ fontFamily: 'var(--font-mono, ui-monospace)' }}>$env:IVARONIX_NETWORK=&quot;{network}&quot;; ivaronix receipt verify {onChain.id} --tee-independent</code>)
+          </p>
           <p style={pStyle}>
             Or open the public proof URL: <strong style={{ fontFamily: 'var(--font-mono, ui-monospace)' }}>{verifyUrl}</strong>
           </p>

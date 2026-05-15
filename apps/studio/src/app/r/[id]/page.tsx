@@ -379,8 +379,8 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
                 To see the AI&apos;s full reasoning + outputs locally:
               </p>
               <pre style={{ margin: 0, padding: '10px 14px', background: 'var(--color-tonal)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--font-mono)', overflow: 'auto' }}>
-{`pnpm ivaronix receipt show ${onChain.id.toString()} --network mainnet
-pnpm ivaronix receipt verify ${onChain.id.toString()} --tee-independent`}
+{`IVARONIX_NETWORK=mainnet pnpm ivaronix receipt show ${onChain.id.toString()}
+IVARONIX_NETWORK=mainnet pnpm ivaronix receipt verify ${onChain.id.toString()} --tee-independent`}
               </pre>
               <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--color-muted)' }}>
                 Studio-side body fetch from 0G Storage is on the v1.1 roadmap (replaces this section with the rendered AI output). The CLI commands above produce the same content today.
