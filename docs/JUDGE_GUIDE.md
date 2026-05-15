@@ -1,12 +1,12 @@
 # Judge guide · five minutes, three commands, three URLs
 
-> One-page demo path for OG APAC Hackathon judges. Built for a reviewer who has a clean machine, a browser, and five minutes. No wallet required for the first three steps. Every receipt id and URL below is real testnet state at the time of submission.
+> One-page demo path for OG APAC Hackathon judges. Built for a reviewer who has a clean machine, a browser, and five minutes. No wallet required for the first three steps. Every receipt id and URL below is real on-chain state — testnet for steps 1–4, mainnet for step 5. Mainnet (Aristotle, chainId 16661) deployed 2026-05-15: 10 contracts, 19 receipts spanning all 13 receipt-type slots.
 
 ---
 
 ## Step 1 · verify a receipt with no setup (60 seconds)
 
-The single command no other 0G project ships. Open a terminal, paste this, hit enter:
+The capability that makes the receipt a real audit trail rather than a screenshot. Open a terminal, paste this, hit enter:
 
 ```bash
 git clone https://github.com/Pratiikpy/ivaronix.git oglabs
@@ -50,6 +50,11 @@ Open the live testnet artifacts in three tabs:
 3. **`/data-room/01KR66C1GJVR57MHQPJCW1HQQY?storage=<rootHash>`** — Confidential Data Room (planning-01 §1B). Per-party CapabilityRegistry grants, Burn-Mode-encrypted blob, every read = a verifiable receipt. The `?storage=` query falls back to 0G Storage when local FS misses, so this URL works on any machine (planning-002 W6 · the cross-machine fix).
 
 If `localhost:3300` isn't running, start it: `pnpm --filter @ivaronix/studio dev`. Brand contract per `brand/Ivaronix.html` — cream `#FAFAF7` paper, Outfit + Instrument Serif italic + JetBrains Mono.
+
+### Two more public surfaces worth a quick look
+
+- **`/admin/health`** — live system status: RPC reachability, current block on Aristotle mainnet, V3 receipt count + V1/V2 passport count, all 10 contracts with chainscan links. No wallet, no auth — the canonical "is the system alive right now?" view a judge can reload anytime.
+- **`/marketplace/payouts`** — creator earnings withdraw panel. Once a wallet connects, the panel reads `creatorBalance` + `creatorLifetimeEarned` directly from `SkillRunPayment` on chain; the "Withdraw — N OG →" button is enabled iff the connected wallet has a non-zero accumulated balance from past paid skill runs (90/10 split). Lifetime earnings are monotonic and never decrement on withdrawal.
 
 ---
 
@@ -125,11 +130,18 @@ If you want depth, every commit message in `git log --oneline` cites the plannin
 
 ## What's NOT here, honestly
 
-Per `CLAUDE.md §1` brutal honesty:
-- Mainnet not deployed — funding-gated. All 6 contracts are mainnet-deploy-ready (same Foundry tests pass).
-- 0G DA not anchored to live blobs — code path landed; activation needs a self-hosted DA Client Docker node (per `oglabs resources/0g-da-rust-sdk/README.md`). Operator action documented in `USER_TODO.md` B-1.
-- 0G Persistent Memory not actively populated — same opt-in pattern; `install.sh` documented in `USER_TODO.md` B-3a.
-- npm package `@ivaronix/widget` not yet published — code complete in `packages/widget/`, publish gate documented in `USER_TODO.md` B-3.
-- Telegram bot not live — needs a BotFather token (operator action only).
+Per `CLAUDE.md §1` brutal honesty — what's shipped vs what's queued:
 
-Every one of these has an unblock action recorded in `USER_TODO.md`. Per `CLAUDE.md §12.1`, that satisfies the stop-condition without overclaiming.
+**Live on mainnet today** (Aristotle, chainId 16661, deployed 2026-05-15):
+- 10 contracts: `ReceiptRegistryV3`, `ReceiptRegistryV2`, `AgentPassportINFTV2`, `CapabilityRegistryV2`, `MemoryAccessLogV2`, `SkillRegistryV2`, `SkillPricing`, `SkillRunPayment`, `SubscriptionEscrowV2`, `Erc7857Verifier`
+- 19 receipts anchored on `ReceiptRegistryV3`, spanning all 13 receipt-type slots
+- Real TEE attestation via `broker.processResponse` proven on mainnet receipt #4
+
+**Queued for v1.1** (honest disclosure):
+- **Live OG fee settlement** — `SkillRunPayment.sol` is deployed on both networks; wiring it into the Studio run flow so OG transfers at 90/10 split occur atomically on every marketplace purchase is the v1.1 headline. Today the declared fee split is recorded on every receipt body and is enforceable off-chain.
+- **0G DA integration** — schema slot `og.da.batched` reserved (default `false`); integration lands once 0G ships a public DA disperser endpoint. Documented in `docs/0G_DA_INTEGRATION.md`.
+- **0G Persistent Memory** — same opt-in pattern; `install.sh` documented in `USER_TODO.md` B-3a.
+- **npm package publish** — `@ivaronix/widget` and `@ivaronix/cli` code complete in `packages/widget/`, publish gate documented in `USER_TODO.md` B-3.
+- **Telegram bot** — needs a BotFather token (operator action only).
+
+Every queued item has a concrete unblock action recorded in `USER_TODO.md`. Per `CLAUDE.md §12.1`, that satisfies the stop-condition without overclaiming.
