@@ -85,11 +85,13 @@ function buildManifest(f: SkillForm, creatorPassport: string | null): string {
     ? `  creator:\n    passport: "${creatorPassport}"\n    fee_split:\n      creator: ${f.creatorBps}\n      treasury: ${treasuryBps}`
     : `  creator:\n    fee_split:\n      creator: ${f.creatorBps}\n      treasury: ${treasuryBps}`;
 
+  // JSON.stringify produces YAML-safe double-quoted strings: handles colons (ISO dates),
+  // unicode (·), newlines, etc. without parser ambiguity.
   return `---
-name: ${f.name}
-version: ${f.version}
-description: ${f.description}
-license: ${f.license}
+name: ${JSON.stringify(f.name)}
+version: ${JSON.stringify(f.version)}
+description: ${JSON.stringify(f.description)}
+license: ${JSON.stringify(f.license)}
 entrypoint: prompt.md
 og:
   permissions:
