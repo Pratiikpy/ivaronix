@@ -41,6 +41,20 @@ const JSON_NEGOTIATE_RX = /["']?signature[_-]?recommendation["']?\s*:\s*["']nego
 // Matches `"red_flags": [...]` with at least 3 comma-separated entries.
 const JSON_RED_FLAGS_MANY_RX = /["']?red[_-]?flags["']?\s*:\s*\[[^\]]*,[^\]]*,[^\]]*,[^\]]*\]/i;
 
+// Plain-text trailer per the legal cluster's prompt convention:
+// "End with a single line: `Risk Level: low / medium / high`."
+// The legacy JSON regex only caught `"risk_level": "high"` (quoted JSON
+// form); 5 testnet private-doc-review receipts (rcpt_01KR22... →
+// rcpt_01KR23NG7A...) carried riskLevel: "low" because the model's
+// instructed plain-text trailer wasn't structured-JSON. Patterns below
+// accept optional **markdown bold** and underscore/space/hyphen between
+// "risk" and "level". The literal meta-instruction in the prompt
+// itself ("low / medium / high") does NOT match — the value portion
+// must immediately follow `:` after optional whitespace + bold markers.
+const PLAIN_HIGH_RX = /\*{0,2}\s*risk[\s_-]?level\s*\*{0,2}\s*:\s*\*{0,2}\s*(critical|high)\b/i;
+const PLAIN_MED_RX = /\*{0,2}\s*risk[\s_-]?level\s*\*{0,2}\s*:\s*\*{0,2}\s*medium\b/i;
+const PLAIN_LOW_RX = /\*{0,2}\s*risk[\s_-]?level\s*\*{0,2}\s*:\s*\*{0,2}\s*(low|informational)\b/i;
+
 // Bare-keyword fallback when the response doesn't use the explicit
 // `severity:` prefix. Conservative: require the keyword to appear at
 // a word boundary AND not inside the phrases "no high-risk" or
@@ -57,13 +71,17 @@ export function deriveRiskLevel(finalText: string): RiskLevel {
   // JSON-shape risk markers tie with severity: prefixes — both are
   // structured signal from the model. Highest tier wins via order.
   if (JSON_HIGH_RX.test(finalText) || JSON_REFUSE_RX.test(finalText)) return 'high';
+  // Plain-text trailer ("Risk Level: high") — explicit prompt-instructed signal.
+  if (PLAIN_HIGH_RX.test(finalText)) return 'high';
   if (MED_RX.test(finalText)) return 'medium';
   if (JSON_MED_RX.test(finalText) || JSON_NEGOTIATE_RX.test(finalText)) return 'medium';
+  if (PLAIN_MED_RX.test(finalText)) return 'medium';
   // Many red flags (4+ entries) implies at least medium risk even if
   // the model didn't explicitly classify. Conservative — fewer than
   // 4 doesn't escalate.
   if (JSON_RED_FLAGS_MANY_RX.test(finalText)) return 'medium';
   if (LOW_RX.test(finalText)) return 'low';
+  if (PLAIN_LOW_RX.test(finalText)) return 'low';
 
   // Bare-keyword fallback.
   if (BARE_HIGH.test(finalText)) return 'high';

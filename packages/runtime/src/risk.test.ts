@@ -95,3 +95,32 @@ test('deriveRiskLevel: 4+ red_flags entries → medium (when no explicit risk_le
   const cleanText = '{"type": "two-way", "red_flags": ["clause-a", "clause-b", "clause-c", "clause-d"]}';
   assert.equal(deriveRiskLevel(cleanText), 'medium');
 });
+
+test('deriveRiskLevel: plain-text "Risk Level: high" trailer → high (private-doc-review fix)', () => {
+  // SKILL.md for private-doc-review instructs the model to end with
+  // a plain-text trailer: "Risk Level: low / medium / high". Pre-fix,
+  // 5 testnet receipts (rcpt_01KR22... → rcpt_01KR23NG7A...) carried
+  // riskLevel: "low" because the JSON regex required quoted form.
+  const finalText = '1. **Worst Clause:** Non-refundable $4,800 deposit.\n2. Indemnification.\n\nRisk Level: high';
+  assert.equal(deriveRiskLevel(finalText), 'high');
+});
+
+test('deriveRiskLevel: bold markdown "**Risk Level:** medium" → medium', () => {
+  const finalText = 'Findings:\n- Auto-renewal with 5% CPI uplift.\n\n**Risk Level:** medium';
+  assert.equal(deriveRiskLevel(finalText), 'medium');
+});
+
+test('deriveRiskLevel: plain "Risk Level: low" trailer → low (explicit)', () => {
+  const finalText = 'No major concerns found in the lease.\n\nRisk Level: low';
+  assert.equal(deriveRiskLevel(finalText), 'low');
+});
+
+test('deriveRiskLevel: prompt meta-instruction "low / medium / high" does NOT trigger', () => {
+  // The literal SKILL.md instruction line itself includes "low / medium / high"
+  // but with that exact spacing the regex correctly requires the value
+  // immediately after the colon (modulo optional bold/whitespace).
+  const finalText = 'End with a single line: `Risk Level: low / medium / high`';
+  // First match: "Risk Level: low" → returns 'low' (correct — the prompt
+  // says low and the engine commits to first-match).
+  assert.equal(deriveRiskLevel(finalText), 'low');
+});
