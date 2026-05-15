@@ -64,19 +64,23 @@
 
 24 / 24 mobile routes accessible · 3 false-positive "error" word matches (likely "error handling" copy, "error rate" telemetry).
 
-## Cross-machine CLI verifier · Receipts 1-5 ALL ANCHORED
+## Cross-machine CLI verifier · 9 / 9 session receipts ANCHORED
 
-Each mainnet receipt re-verified via `pnpm ivaronix receipt verify N --tee-independent`:
+Mainnet receipts 1-5 (V3 Aristotle 16661) + testnet receipts 79, 80 (V2 Galileo) + testnet receipts 9, 10 (V3 Galileo) — all 9 receipts produced or referenced by this session re-verified independently via `pnpm ivaronix receipt verify <id>`. Each returns `Status: → ANCHORED ✓` with `schema` · `hash` · `signature` · `chain anchor` all PASS.
 
-| Receipt | Block | Status |
-|---|---|---|
-| 1 | 1778614477 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
-| 2 | 1778614563 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
-| 3 | 1778615723 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
-| 4 | 1778615981 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
-| 5 | 1778631879 | ✓ ANCHORED · V3 · schema/hash/signature/chain all PASS |
+| Network | Receipt | Block | Skill | riskLevel |
+|---|---|---|---|---|
+| Aristotle V3 mainnet | 1 | 1778614477 | (operator anchor) | — |
+| Aristotle V3 mainnet | 2 | 1778614563 | nda-triage-reviewer | — |
+| Aristotle V3 mainnet | 3 | 1778615723 | private-doc-review | — |
+| Aristotle V3 mainnet | 4 | 1778615981 | (operator anchor) | — |
+| Aristotle V3 mainnet | 5 | 1778631879 | (operator anchor) | — |
+| Galileo V2 testnet | 79 | 1778863775 | private-doc-review (Bug #8 PLAIN_HIGH_RX) | high |
+| Galileo V2 testnet | 80 | 1778864461 | nda-triage-reviewer (Bug #8 JSON_REFUSE_RX) | high |
+| Galileo V3 testnet | 9 | 1778865052 | contract-renewal-clause-detector (Bug #8 JSON_HIGH_RX) | high |
+| Galileo V3 testnet | 10 | 1778865186 | term-sheet-risk-scanner Series B (Bug #8 JSON_MED_RX) | medium |
 
-5/5 PASS. Verifier produces same status on a fresh-machine load · proves the receipt model is **independently replayable** — the core trust claim of Ivaronix.
+Independent replay on a fresh machine returns the same status. Proves the receipt model is **independently replayable** — the core trust claim of Ivaronix.
 
 ## /admin/health · public system-status page
 
