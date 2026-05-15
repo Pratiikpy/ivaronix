@@ -40,7 +40,7 @@ const SECTIONS: DocSection[] = [
       {
         label: 'Verify a receipt anywhere',
         code:
-          '$ pnpm ivaronix receipt verify rec_1004 --tee-independent\n' +
+          '$ pnpm ivaronix receipt verify 1004 --tee-independent\n' +
           '→ FULLY VERIFIED ✓  schema · hash · signature · anchor · TEE',
       },
     ],
@@ -92,7 +92,7 @@ const SECTIONS: DocSection[] = [
       {
         label: 'Inside the chat',
         code:
-          '> @ivaronix verify rec_1004\n' +
+          '> @ivaronix verify 1004\n' +
           '→ FULLY VERIFIED · schema PASS · hash PASS · signature PASS · anchor 0x… · TEE re-attestation PASS',
       },
     ],
@@ -130,7 +130,7 @@ export default function DocsPage() {
     <Section
       label="§ DOCS · CLI · SDK · MCP · EMBED"
       title="Four ways to plug Ivaronix into a workflow."
-      description="Every snippet runs against the live Galileo testnet. Receipt rec_1004 is the canonical sample; replace with any anchored id you have."
+      description="Every snippet runs against the live Galileo testnet. Receipt id 1004 is the canonical sample; replace with any anchored id you have."
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
         <nav
