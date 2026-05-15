@@ -14,7 +14,7 @@ import { parseAbi } from 'viem';
 import Link from 'next/link';
 import { ShareButton } from '@/components/ShareButton';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import type { Network } from '@ivaronix/core';
+import { NETWORKS, type Network } from '@ivaronix/core';
 
 /**
  * /onboard — 5 visible rows that flip grey → spinner → green-check.
@@ -399,7 +399,7 @@ export function OnboardClient({
             {storageTxHash && (
               <a
                 className="mono"
-                href={`https://chainscan-galileo.0g.ai/tx/${storageTxHash}`}
+                href={`${NETWORKS[network].chainExplorer}/tx/${storageTxHash}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{ color: 'var(--color-storage)' }}
               >
@@ -410,7 +410,7 @@ export function OnboardClient({
             {mintTxHash && (
               <a
                 className="mono"
-                href={`https://chainscan-galileo.0g.ai/tx/${mintTxHash}`}
+                href={`${NETWORKS[network].chainExplorer}/tx/${mintTxHash}`}
                 target="_blank" rel="noopener noreferrer"
                 style={{ color: 'var(--color-chain)' }}
               >

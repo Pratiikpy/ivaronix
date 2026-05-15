@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { Section } from '@/components/Section';
-import { explorerAddrUrl, getNetwork } from '@/lib/chain';
+import { explorerAddrUrl, explorerTxUrl, getNetwork } from '@/lib/chain';
 import { createStorageClient } from '@ivaronix/og-storage';
 
 export const dynamic = 'force-dynamic';
@@ -177,7 +177,7 @@ export default async function DataRoomPage({
                 <dt style={{ color: 'var(--color-muted)' }}>storage tx</dt>
                 <dd className="mono" style={{ margin: 0 }}>
                   <a
-                    href={`https://chainscan-galileo.0g.ai/tx/${manifest.blobStorageTxHash}`}
+                    href={explorerTxUrl(manifest.blobStorageTxHash)}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ color: 'inherit' }}
