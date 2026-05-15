@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useState, useMemo } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useSignMessage } from 'wagmi';
+import { ensureSiweSession } from '@/lib/siwe-client';
 // Direct import from /manifest avoids the @ivaronix/skills barrel
 // which re-exports loader.ts (uses node:fs / node:crypto / node:path).
 // Webpack cannot bundle node: scheme imports for client components,
@@ -115,6 +116,7 @@ ${f.systemPrompt}
 
 export default function SkillNewPage() {
   const { address } = useAccount();
+  const { signMessageAsync } = useSignMessage();
   const [form, setForm] = useState<SkillForm>(DEFAULT_FORM);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [saveMessage, setSaveMessage] = useState<string>('');
@@ -129,19 +131,36 @@ export default function SkillNewPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
+  async function doSave() {
+    return fetch('/api/skill/save', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ skillId: form.name, manifest }),
+      credentials: 'include',
+    });
+  }
+
   async function onSave() {
     setSaveStatus('saving');
     setSaveMessage('');
     try {
-      const res = await fetch('/api/skill/save', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ skillId: form.name, manifest }),
-      });
+      let res = await doSave();
+      // SIWE auto-trigger: if 401, prompt SIWE Sign then retry (same UX pattern as MemoryNotesPanel)
+      if (res.status === 401 && address && signMessageAsync) {
+        setSaveMessage('Sign in with your wallet to publish…');
+        const siwe = await ensureSiweSession(address, signMessageAsync);
+        if (!siwe.ok) {
+          setSaveStatus('error');
+          setSaveMessage(`Sign-in failed: ${siwe.error ?? 'rejected'}`);
+          return;
+        }
+        res = await doSave();
+      }
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? `HTTP ${res.status}`);
       setSaveStatus('saved');
       setSavedPath(json.path);
+      setSaveMessage('');
     } catch (err) {
       setSaveStatus('error');
       setSaveMessage((err as Error).message.slice(0, 200));
