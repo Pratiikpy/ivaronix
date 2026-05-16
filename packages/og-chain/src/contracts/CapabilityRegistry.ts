@@ -7,8 +7,21 @@ export const CAPABILITY_REGISTRY_ABI = [
   'function consumeRead(bytes32 grantId) external returns (bool)',
   'function isValid(bytes32 grantId, address grantee, bytes32 scopeHash) external view returns (bool)',
   'function grants(bytes32 grantId) external view returns (address owner, address grantee, bytes32 scopeHash, uint64 issuedAt, uint64 expiresAt, uint32 readsRemaining, bool revoked)',
+  // V1 read names (legacy testnet deployment). Public — no auth.
   'function listGrantsByOwner(address owner) external view returns (bytes32[])',
   'function listGrantsByGrantee(address grantee) external view returns (bytes32[])',
+  // V2 read names. V2 added a privacy gate (require msg.sender == owner OR
+  // authorized indexer per CapabilityRegistryV2.sol:219-237). Plain
+  // eth_call from a Provider sets msg.sender=0x0, which always fails the
+  // gate. The client uses these via `from: <wallet>` overrides — see
+  // CapabilityRegistryClient.listGrantsByOwner below.
+  'function getGrantsByOwner(address owner) external view returns (bytes32[])',
+  'function getGrantsByGrantee(address grantee) external view returns (bytes32[])',
+  // V2 self-read views — no auth needed because they read msg.sender's
+  // own index. The client prefers these when the target == caller wallet,
+  // which is the common case (CLI's `memory list` with no --by/--to flag).
+  'function listMyOwnerGrants() external view returns (bytes32[])',
+  'function listMyGranteeGrants() external view returns (bytes32[])',
   'event GrantIssued(bytes32 indexed grantId, address indexed owner, address indexed grantee, bytes32 scopeHash, uint64 expiresAt, uint32 readsCap)',
   'event GrantRevoked(bytes32 indexed grantId, address indexed owner)',
   'event GrantConsumed(bytes32 indexed grantId, uint32 readsRemaining)',
@@ -63,11 +76,54 @@ export class CapabilityRegistryClient {
     };
   }
 
-  async listGrantsByOwner(owner: Address): Promise<Hash[]> {
+  /**
+   * List grants issued by `owner`. Walks the deployment versions:
+   *   - V2 self-read (listMyOwnerGrants) when caller wallet == owner: no auth
+   *     required, common case for CLI's `memory list` with no --by/--to flag.
+   *   - V2 indexer read (getGrantsByOwner) when an `eth_call from` override
+   *     can satisfy the V2 privacy gate (caller is owner or authorized).
+   *   - V1 public read (listGrantsByOwner) as legacy testnet fallback.
+   *
+   * The `callerWallet` argument is optional; when omitted only the V1 path
+   * is tried (V2's privacy gate would always revert on `from: 0x0`).
+   */
+  async listGrantsByOwner(owner: Address, callerWallet?: Address): Promise<Hash[]> {
+    // V2 self-read: zero-auth when caller == owner.
+    if (callerWallet && callerWallet.toLowerCase() === owner.toLowerCase()) {
+      try {
+        return (await this.contract.listMyOwnerGrants!({ from: callerWallet })) as Hash[];
+      } catch {
+        // V1 contracts don't have listMyOwnerGrants; fall through to V1 path.
+      }
+    }
+    // V2 indexer read with `from` override (works when caller is owner or
+    // an authorized reader on V2; works on V1 too since V1 ignores `from`).
+    if (callerWallet) {
+      try {
+        return (await this.contract.getGrantsByOwner!(owner, { from: callerWallet })) as Hash[];
+      } catch {
+        // V1 contracts don't have getGrantsByOwner; fall through.
+      }
+    }
+    // V1 public read.
     return (await this.contract.listGrantsByOwner!(owner)) as Hash[];
   }
 
-  async listGrantsByGrantee(grantee: Address): Promise<Hash[]> {
+  async listGrantsByGrantee(grantee: Address, callerWallet?: Address): Promise<Hash[]> {
+    if (callerWallet && callerWallet.toLowerCase() === grantee.toLowerCase()) {
+      try {
+        return (await this.contract.listMyGranteeGrants!({ from: callerWallet })) as Hash[];
+      } catch {
+        // fall through
+      }
+    }
+    if (callerWallet) {
+      try {
+        return (await this.contract.getGrantsByGrantee!(grantee, { from: callerWallet })) as Hash[];
+      } catch {
+        // fall through
+      }
+    }
     return (await this.contract.listGrantsByGrantee!(grantee)) as Hash[];
   }
 

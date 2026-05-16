@@ -744,9 +744,13 @@ memoryCommand
       return;
     }
 
+    // Pass callerWallet so the V2 client path can use listMyOwnerGrants /
+    // listMyGranteeGrants when the target matches the operator's wallet.
+    // V2 added a privacy gate on the by-address reverse-indexes; the self-read
+    // method skips that gate when caller == target, which is the common case.
     const ids = opts.to
-      ? await cap.listGrantsByGrantee(target)
-      : await cap.listGrantsByOwner(target);
+      ? await cap.listGrantsByGrantee(target, env.walletAddress as Address | undefined)
+      : await cap.listGrantsByOwner(target, env.walletAddress as Address | undefined);
 
     ui.title(opts.to ? `Grants issued TO ${target}` : `Grants issued BY ${target}`);
     if (ids.length === 0) {
