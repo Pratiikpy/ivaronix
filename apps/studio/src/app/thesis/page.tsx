@@ -229,7 +229,7 @@ function NumbersGrid({ receipts, passports }: { receipts: string; passports: str
     { value: '10', label: 'verified expert skills', href: '/skills' },
     { value: '< 30s', label: 'first review to receipt', href: '/onboard' },
     { value: '0', label: 'reads of your file after the run', href: '/onboard' },
-    { value: 'Public', label: 'every receipt is verifiable', href: '/r/1004' },
+    { value: 'Public', label: 'every receipt is verifiable', href: getSampleReceiptHref() },
   ];
 
   return (
