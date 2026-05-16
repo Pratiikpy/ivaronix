@@ -1,6 +1,6 @@
 # Ivaronix · Privacy notes
 
-> Closes planning-003 §A.5.3 (WT 46). The product is built around honest receipts; this doc names the specific privacy boundaries the receipt model does NOT cover, so a reviewer or operator can act with their eyes open.
+> The product is built around honest receipts. This doc names the specific privacy boundaries the receipt model does not cover, so a reviewer or operator can act with their eyes open.
 
 ## 1. Operator-as-proxy
 
@@ -11,9 +11,9 @@ The 0G Storage indexer requires a signer for every fetch — uploads AND reads. 
 
 The receipt model does NOT defend against this — receipts attest to inference output, not to read patterns at the storage layer.
 
-### Mitigation: the read-proxy key — **PENDING (declared, no runtime consumer)**
+### Mitigation: the read-proxy key — declared, no runtime consumer yet
 
-> **Honest status (cron iter-170, 2026-05-13):** the env field is declared and the alias chain is locked by 3 source-file regressions, but **no runtime path actually reads `env.readProxyPrivateKey`** today. Setting `IVARONIX_READ_PROXY_KEY` in `.env` has no effect at all in this commit. The operator wallet still signs every indexer call. Tracked in `docs/USER_TODO.md` for closure.
+> **Honest status:** the env field is declared and the alias chain is locked by 3 source-file regressions, but no runtime path actually reads `env.readProxyPrivateKey` today. Setting `IVARONIX_READ_PROXY_KEY` in `.env` has no effect in this revision. The operator wallet still signs every indexer call. Closure is on the roadmap.
 
 The runtime accepts an optional separate signing key for read-only indexer auth, surfaced as either env var:
 
@@ -29,9 +29,9 @@ Wire-up plan: `packages/runtime/src/env.ts` parses the value into `readProxyPriv
 
 The read-proxy address is still public — anyone watching the indexer sees that "this proxy fetched blob X" — but it can't be linked back to the operator unless the operator publishes the binding. Treat the read-proxy as a unique-per-operator-deployment pseudonym.
 
-### Mitigation: edge-cache public manifests — **PENDING (recommendation, not configured)**
+### Mitigation: edge-cache public manifests — recommendation, not configured
 
-> **Honest status (cron iter-170, 2026-05-13):** `apps/studio/next.config.ts:headers()` ships 4 defensive security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS) but **no `cache-control` directives at all**. The recommendation below is correct in principle and worth implementing; it is not currently in effect.
+> **Honest status:** `apps/studio/next.config.ts:headers()` ships 4 defensive security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, HSTS) but no `cache-control` directives. The recommendation below is correct in principle and worth implementing; it is not currently in effect.
 
 Public manifests are deterministic by `rootHash`. The Vercel edge cache should hold them aggressively so the indexer is hit at most once per (rootHash, cache-window) pair:
 
@@ -95,5 +95,4 @@ When users connect a wallet to Ivaronix, they should know:
 
 - `docs/CRYPTO_NOTES.md` — the broader cryptographic primitive choices.
 - `packages/og-storage/src/burn.ts` — Burn Mode threat-model JSDoc.
-- `packages/og-router/src/keyring.ts` — Router credential rotation transparency (planning-003 §A.5.14).
-- CLAUDE.md §6 (TIER 1 vs TIER 2 honesty rule).
+- `packages/og-router/src/keyring.ts` — Router credential rotation transparency.

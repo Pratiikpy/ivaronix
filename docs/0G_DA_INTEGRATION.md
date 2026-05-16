@@ -1,29 +1,21 @@
-# 0G DA Integration · preflight green · disperse needs encoder service
+# 0G DA Integration
 
-> Last refresh 2026-05-14 (CORRECTED, partial-live).
+> Honest status: preflight green; disperse needs the encoder service.
 >
 > **What works today:**
-> - `0g-da-client:local` source-built from `github.com/0gfoundation/0g-da-client` (combined.Dockerfile · 90 MB image)
-> - Container `ivaronix-0g-da-client` running healthy, gRPC listening on `localhost:51001`, finalizer goroutine syncing blocks
-> - `pnpm --filter @ivaronix/cli dev da preflight` returns `endpoint reachable · max blob size 31,744 KiB · preflight ok` ✅
-> - DA wallet funded (`0xeE07e769ca82617AA76a0631869bdde841bBdEC8` · 0.01 OG) — fund tx `0xc079ecac…`
-> - da.env carries the full 27-key env per 0G's `da-integration.md`
+> - `0g-da-client:local` source-built from `github.com/0gfoundation/0g-da-client` (combined.Dockerfile, 90 MB image).
+> - Container `ivaronix-0g-da-client` running healthy, gRPC listening on `localhost:51001`, finalizer goroutine syncing blocks.
+> - `pnpm --filter @ivaronix/cli dev da preflight` returns `endpoint reachable · max blob size 31,744 KiB · preflight ok`.
+> - DA wallet funded (`0xeE07e769ca82617AA76a0631869bdde841bBdEC8`, 0.01 OG).
+> - `da.env` carries the full 27-key env per 0G's `da-integration.md`.
 >
-> **What does NOT work yet — the encoder gap:**
-> - `pnpm --filter @ivaronix/cli dev da disperse <file>` submits the blob but **never finalizes** (300s timeout).
+> **What does not work yet — the encoder gap:**
+> - `pnpm --filter @ivaronix/cli dev da disperse <file>` submits the blob but never finalizes (300s timeout).
 > - Container logs show repeating: `error encoding blob: rpc error: code = Unavailable · transport: Error while dialing: dial tcp: address DA_ENCODER_SERVER: missing port in address`.
-> - Root cause: `BATCHER_ENCODER_ADDRESS=DA_ENCODER_SERVER` in 0G's `da-integration.md` is a **literal placeholder** — no real testnet encoder address is published anywhere in the bundled 0G docs.
-> - The encoder source is in a SEPARATE GitHub repo (`0gfoundation/0g-da-encoder` — git submodule of the client repo, empty after a shallow clone of just `0g-da-client`).
+> - Root cause: `BATCHER_ENCODER_ADDRESS=DA_ENCODER_SERVER` in 0G's `da-integration.md` is a literal placeholder; no real testnet encoder address is published anywhere in the bundled 0G docs.
+> - The encoder source lives in a separate GitHub repo (`0gfoundation/0g-da-encoder`).
 >
-> **Honest current scope:** the local da-client can ACCEPT blobs and ANCHOR finalized commits on chain, but the encoder gap means the disperse loop is incomplete. The receipt pipeline can't yet write a real `storage.daBlobRef.requestIdHex` because no blob finalizes.
->
-> Honest framing per `final-plan.md §1.6 Day 13-17`: the **0G testnet DA is real and reachable** but the path is more involved than initially thought:
->
-> 1. The `ghcr.io/0glabs/0g-da-client:latest` image is **not anonymously pullable** (registry returns `denied`). The 0G team distributes the DA client as **source you build yourself** per `oglabs resources/0g-doc/docs/developer-hub/building-on-0g/da-integration.md`.
-> 2. Two DA contract addresses live on Galileo: `0xE75A073d…` (public submission entrance referenced in `testnet-overview.md`) and `0x857C0A28…` (the DASigner-aware entrance used by your own DA client per `da-integration.md`). The integration doc's address is the one to put in `da.env`.
-> 3. Env var names are `COMBINED_SERVER_*` and `ENTRANCE_CONTRACT_ADDR` (per 0G's integration doc), not the `DA_*` names I had earlier.
->
-> Updated runbook below reflects all three corrections.
+> **Honest current scope:** the local da-client can accept blobs and anchor finalized commits on chain, but the encoder gap means the disperse loop is incomplete. The receipt pipeline cannot yet write a real `storage.daBlobRef.requestIdHex` because no blob finalizes.
 
 ## What IS shipped today
 
@@ -47,7 +39,7 @@ These are operator-action blockers, not "0G network not ready" blockers. The Iva
 
 ## Why this is OK to ship at testnet
 
-Per `final-plan.md` operating principle: "Every item in this plan exists because it improves the product for actual users — not because it impresses judges or checks competitive boxes." DA's product-side value is **batched receipt anchoring** at scale: lower per-receipt cost, reduced indexer round-trips, cleaner mainnet anchor cadence when receipt volume crosses ~1K/day. Until that scale is real and until 0G DA testnet is reachable, the value is theoretical.
+DA's product-side value is **batched receipt anchoring** at scale: lower per-receipt cost, fewer indexer round-trips, cleaner mainnet anchor cadence when receipt volume crosses about 1K/day. Until that scale is real and the 0G DA encoder endpoint is reachable, the value is theoretical.
 
 The honest shipped surfaces (`/0g` page, `/learn#receipt-anatomy`, receipt-page four-light row) mark DA status honestly:
 - `/0g` page lists DA under "scaffolding shipped" — not "live".
@@ -101,16 +93,10 @@ Per the corrections above, the path:
    - Goal: prove the product-side win (lower per-receipt cost, fewer chain anchors). Encode 10 receipt roots into one DA blob, anchor a single Merkle root on `ReceiptRegistryV3` with a `daBlobRef` pointer. Reviewers re-derive each individual receipt from the DA blob.
    - Cost delta documented in `docs/MAINNET_READINESS.md`.
 
-## Why this stays Phase 2 instead of Phase 1
+## What promotes DA to a shipped surface
 
-The plan's Day 13-17 acceptance:
-> "either (a) preflight green + batch of 10 receipts → 1 chain anchor + all 10 retrievable + inclusion proof verified + measured per-receipt-cost delta documented, OR (b) `docs/0G_DA_INTEGRATION.md` with full design + honest Day-1-of-endpoint runbook + Phase 2 queue entry"
-
-Option (a) cannot complete without a reachable DA endpoint. This doc is Option (b). The Phase 2 entry is:
-
-- **Trigger to promote back to Phase 1:** 0G testnet DA entrance contract address published.
-- **Owner:** cron + operator (operator funds the new DA wallet · cron wires the address).
-- **Acceptance:** all 8 runbook steps above complete successfully on Galileo testnet + the 10-receipt-batch demonstrates a real per-receipt cost delta.
+- Trigger: a reachable 0G testnet DA encoder endpoint becomes available.
+- Acceptance: all 8 runbook steps above complete successfully on Galileo, and the 10-receipt-batch demonstrates a real per-receipt cost delta.
 
 ## What the user sees today
 

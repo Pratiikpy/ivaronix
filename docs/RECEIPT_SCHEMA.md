@@ -176,13 +176,9 @@ implementation is one switch on `verificationMethod`.
 
 ---
 
-## 5. Why this matters for the judge
+## 5. Why this matters
 
-The 0G ecosystem analysis surfaced one universal weakness in the field:
-**most projects can prove they invoked 0G Compute, but cannot independently
-re-verify the response they received.** That is the gap the
-`broker.processResponse` re-check closes — the receipt is not just *anchored*,
-it is *re-verifiable from any machine without trusting the original CLI run*.
+A wide gap in the AI-agent-on-chain space is that most projects can prove they invoked an inference provider but cannot independently re-verify the response they received. The `broker.processResponse` re-check closes that gap — the receipt is not just *anchored*, it is *re-verifiable from any machine without trusting the original CLI run*.
 
 The same architecture extends naturally to:
 
@@ -234,7 +230,7 @@ Source of truth: `packages/core/src/types.ts` `RECEIPT_TYPES` mapping
 must list the same 13 names in the same order; the
 `verify-receipt-types-three-way.ts` regression enforces parity).
 
-### Why V3 was needed (B-V2-32 closure · 2026-05-12)
+### Why V3 was needed (2026-05-12)
 
 `ReceiptRegistryV2.sol:135` required `p.receiptType <= TYPE_SUBSCRIPTION_SKILL_EXEC`
 (= 9). The contract had constants for slots 0-9 only. New receipt types

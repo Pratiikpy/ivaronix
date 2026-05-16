@@ -1,6 +1,6 @@
 # Skill publishing · 3 paths
 
-> Where do I put a new skill? What is the trust gradient between paths? Closes planning-003 §A.4.7 (wandering thought #71). Companion: `seed-skills/<id>/SKILL.md` for examples; `packages/skills/src/manifest.ts` for the canonical Zod schema.
+> Where do I put a new skill? What is the trust gradient between paths? Companion: `seed-skills/<id>/SKILL.md` for examples; `packages/skills/src/manifest.ts` for the canonical Zod schema.
 
 ## TL;DR · pick a path by use case
 
@@ -18,7 +18,7 @@ A user-published skill from Studio doesn't auto-anchor on chain. The on-chain st
 
 **Where it lives:** `seed-skills/<id>/SKILL.md` + `seed-skills/<id>/prompt.md` (the body). Committed to the repo; ships in every clone; loaded at boot via `loadAllSkills()`.
 
-**How it ships:** open a PR. CLAUDE.md §1 + §11 + §12 acceptance gates apply. Reviewer checks: (1) the prompt body matches the skill's declared persona, (2) the manifest matches `SkillManifestSchema`, (3) the `creator.fee_split` block is present (90/10 or 70/30 per `MARKETPLACE_DESIGN.md`), (4) hooks are listed if needed (5) `compute_tee_required` is `true` for any skill that handles user data.
+**How it ships:** open a PR. Reviewer checks: (1) the prompt body matches the skill's declared persona, (2) the manifest matches `SkillManifestSchema`, (3) the `creator.fee_split` block is present (90/10 or 70/30 per `MARKETPLACE_DESIGN.md`), (4) hooks are listed if needed, (5) `compute_tee_required` is `true` for any skill that handles user data.
 
 **Trust:** operator-reviewed. The manifest hash is committed to git; tampering is visible in git diff. Loading is deterministic — same hash for everyone who clones the repo.
 
@@ -28,7 +28,7 @@ A user-published skill from Studio doesn't auto-anchor on chain. The on-chain st
 
 **Where it lives:** `apps/cli/.ivaronix/skills/<sessionWallet>/<skillId>/SKILL.md`. The sandbox is per-wallet so two creators publishing the same skill name don't collide.
 
-**How it ships:** SIWE-authenticated POST to `/api/skill/save` with `{ skillId, manifest }` body. Per K-9 + K-8: the route enforces a per-wallet rate limit (5 saves/hr), validates the YAML frontmatter against `SkillManifestSchema`, walks `og.hooks.*` for shell-injection patterns, rejects bad shapes with 400.
+**How it ships:** SIWE-authenticated POST to `/api/skill/save` with `{ skillId, manifest }` body. The route enforces a per-wallet rate limit (5 saves/hr), validates the YAML frontmatter against `SkillManifestSchema`, walks `og.hooks.*` for shell-injection patterns, and rejects bad shapes with 400.
 
 **Trust:** SIWE-authenticated. The session wallet (NOT the body) controls the path namespace — cross-wallet writes are impossible by construction. A second `startsWith(sandboxRoot)` defence-in-depth check rejects any resolved path that escapes the per-wallet sandbox.
 
@@ -50,12 +50,10 @@ A skill published this way runs immediately via `ivaronix doc ask <doc> "..." --
 
 ## Why three paths, not one
 
-Compare to AgentHub (`entries/AgentHub/README.md`) which uses a single database write. Their model: dynamic skills, no PR, no chain. Simpler.
-
-Ivaronix's three-path model is deliberate:
+The three-path model is deliberate:
 - The first-party set must be brand-safe — Path 1 enforces operator review.
 - User-published skills should be runnable immediately — Path 2 ships locally, no chain wait.
-- Marketplace listings need on-chain creator + fee-split — Path 3 is the public surface.
+- Marketplace listings need on-chain creator and fee-split — Path 3 is the public surface.
 
 Each path has a different trust gradient, mapped to a different use case. The schema is the same (`SkillManifestSchema`); the persistence layer changes per path.
 
@@ -77,8 +75,8 @@ Are you a first-party (Ivaronix-operated) creator?
 ## Lint coverage
 
 Three rules govern first-party skill manifests; two are gated by a regression today, one stays runtime-only:
-- **Schema parse** — every `seed-skills/<id>/SKILL.md` parses against the canonical `SkillManifestSchema`. ✅ Gated by `scripts/qa/metamask-e2e/verify-seed-skill-manifests.ts` (sweep 103). Failures show up at pre-commit, not at user-first-run.
-- **`creator.fee_split` block** — required per `MARKETPLACE_DESIGN.md` (creator + treasury === 10000). ✅ Enforced by the Zod schema itself (`SkillManifestSchema` rejects manifests without the block); same regression covers it.
-- **Published manifest hash matches on-chain record** — still queued. The on-chain `SkillRegistry` records each skill's manifest hash at publish time; a deliberate check against `loadAllSkills()` output would catch drift between the seed file and the deployed registry entry. No bounded driver yet; runtime path catches major divergence via `scanSkill(...)` inside `runPipeline`, but a one-shot lint command would be cleaner.
+- **Schema parse** — every `seed-skills/<id>/SKILL.md` parses against the canonical `SkillManifestSchema`. Gated by `scripts/qa/metamask-e2e/verify-seed-skill-manifests.ts`. Failures show up at pre-commit, not at user-first-run.
+- **`creator.fee_split` block** — required per `MARKETPLACE_DESIGN.md` (creator + treasury === 10000). Enforced by the Zod schema itself (`SkillManifestSchema` rejects manifests without the block).
+- **Published manifest hash matches on-chain record** — queued. The on-chain `SkillRegistry` records each skill's manifest hash at publish time; a deliberate check against `loadAllSkills()` output would catch drift between the seed file and the deployed registry entry. The runtime path catches major divergence via `scanSkill(...)` inside `runPipeline`, but a one-shot lint command would be cleaner.
 
 The runtime checks (schema parse at load time via `loadAllSkills()`, per-wallet sandbox check at save time via `/api/skill/save`) remain in place as the defense-in-depth layer.

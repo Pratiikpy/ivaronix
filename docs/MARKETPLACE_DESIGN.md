@@ -1,10 +1,10 @@
 # Marketplace design · per-skill economic policy
 
-> How fees are set per skill, why differentiated skills earn 90/10 and commoditised skills earn 70/30, and where this fits with zer0Gig's quality-conditioned Efficiency Game. Closes planning-003 §A.4.5 (wandering thought #83).
+> How fees are set per skill, why differentiated skills earn 90/10 and commoditised skills earn 70/30, and how a future quality multiplier layers on top.
 
-## TL;DR · per-skill base rate × per-run quality multiplier
+## Summary · per-skill base rate × per-run quality multiplier
 
-Every Ivaronix skill manifest declares its own creator/treasury fee split. The split is **per-skill**, not per-run. A future quality-conditioned multiplier (planning-003 §A.4.4 · zer0Gig Efficiency Game) layers on top:
+Every Ivaronix skill manifest declares its own creator/treasury fee split. The split is **per-skill**, not per-run. A future quality-conditioned multiplier layers on top:
 
 ```
 final_split = base_split (per skill) × quality_multiplier (per run)
@@ -46,10 +46,8 @@ The legal-review specialty: low density, high differentiation, creator earns 90%
 ```yaml
 creator:
   passport: "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1"
-  # Track 3 marketing-persona surface. Lower creator share than
-  # private-doc-review (which is the legal-persona killer demo) because
-  # marketing-review skills are commoditised and we want the field
-  # competition to set price discovery on this one.
+  # Marketing-review skills are commoditised; the floor is 70% so the
+  # field can set price discovery on this category.
   fee_split:
     creator: 7000     # 70%
     treasury: 3000    # 30%
@@ -57,9 +55,9 @@ creator:
 
 The marketing-review surface: high density (every agency offers content review), commoditised, creator earns 70%. Skill creators in the same category know upfront that the floor is 70% and price accordingly.
 
-## How quality multipliers will combine (queued · §A.4.4)
+## How quality multipliers will combine
 
-When zer0Gig's Efficiency Game lands (planning-003 §A.4.4):
+A future per-run quality multiplier will key on receipt tier and retry count:
 
 ```
 TIER 1 + first-attempt    → multiplier 1.00
@@ -78,18 +76,9 @@ Combined with per-skill base rate:
 
 The multiplier is recorded on the receipt's `outcome` block; the chip on `/r/<id>` reads `EFFICIENCY 90% (1.0×)` or `EFFICIENCY 76% (0.85×, 1 retry)`. Honest pricing visible to every party.
 
-## Why competitors don't have this
-
-- **AgentPay** ships generic agent-to-agent payment infrastructure. No per-skill or per-run economic policy.
-- **Trapezohe Ghast** is a static plugin registry — no payment layer at all.
-- **zer0Gig** ships per-run quality conditioning (Efficiency Game) but not per-skill base rates.
-- **Agentra** acknowledges "permissionless infrastructure to monetize AI agents on-chain" but is "Under Development · Not production-ready."
-
-The combination (per-skill × per-run) is unique to Ivaronix. It's what `seed-skills/content-pitch-review/SKILL.md` already encodes; once the multiplier ships, the marketplace has dimensional pricing nobody else offers.
-
 ## How creators set their rate
 
-For new skills published via Path 3 (`SkillRegistry.publish()` per `docs/SKILL_PUBLISHING.md`), the creator chooses a base split from the four discrete rates above. Free-form rates are NOT supported in V1 — discrete categories give judges + users a quick-glance trust signal ("this is a 70/30 commoditised category").
+For new skills published via Path 3 (`SkillRegistry.publish()` per `docs/SKILL_PUBLISHING.md`), the creator chooses a base split from the four discrete rates above. Free-form rates are not supported in V1 — discrete categories give users a quick-glance trust signal ("this is a 70/30 commoditised category").
 
 The Studio `/skill/new` form will surface the choice as a dropdown:
 
@@ -101,16 +90,16 @@ Category (select one):
 ○ Free / loss-leader         50/50
 ```
 
-Default: 70/30 commoditised. Creators must explicitly opt into 90/10 or 80/20 by selecting a higher-trust category. The dropdown is wired to the schema's enum so the option set tracks `MARKETPLACE_DESIGN.md` automatically (planning-003 §A.1.1 + §A.1.6 pattern).
+Default: 70/30 commoditised. Creators must explicitly opt into 90/10 or 80/20 by selecting a higher-trust category. The dropdown is wired to the schema's enum so the option set tracks `MARKETPLACE_DESIGN.md` automatically.
 
 ## Treasury allocation
 
 The treasury share routes to the operator wallet today. Future plan: a `TreasuryVault.sol` contract that splits the treasury share into:
 - 50% protocol operations (Vercel, Sentry, Upstash, RPC fees)
 - 30% creator-fund pool (grants for high-quality early creators)
-- 20% audit + security retainer (ChainGPT or equivalent)
+- 20% audit + security retainer
 
-That allocation is a Track 3 follow-up, captured in `docs/USER_TODO.md` (queued for post-mainnet).
+That allocation is queued for post-mainnet.
 
 ## Render in `/skills` Studio surface
 
