@@ -2,6 +2,38 @@
 
 All notable changes to Ivaronix are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased · 2026-05-16 · 26-session post-mainnet audit hardening
+
+### Fixed
+
+- CLI `receipt verify` accepts `--network` flag now (commit `f7416ec`). README's headline command worked everywhere except where it claimed to.
+- CLI argv-strip for `--network` flag + 30s storage download timeout (`5983264`). `--network testnet` was being silently ignored on default mainnet path.
+- `/marketplace` TTFB cut 5-7× by parallelizing chain reads (`5983264`). 4.3-4.9s → 0.67-1.42s on curl baseline.
+- `memory list` reverted on V2 CapabilityRegistry (`b01d083`). Client now walks V2 self-read (`listMyOwnerGrants`) → privacy-gated indexer read → V1 fallback.
+- `/r/<id>` four-light row showed COMPUTE+TEE pending on TIER 1 receipts (`1135039`). Added `isTier1Receipt` flag.
+- SIWE message popup showed Chain ID 16602 testnet even on mainnet (`8915bf5`). Hardcoded value replaced with `NEXT_PUBLIC_*_NETWORK` env read.
+- README anchor-cost claim was 5.6× LOW: `~0.0001 OG` → actual `~0.00056 OG` (`d7d4b3f`). Verified via `eth_getTransactionReceipt` on receipt 72 tx `0x13844324`.
+- Widget README stale URL `https://ivaronix.studio` → `https://www.ivaronix.xyz` (`cbc6465`). Closes HALF_BAKED table-row #1 of 2.
+- og-toolkit README install was `pnpm add @ivaronix/og-toolkit` against an unpublished npm package (`bf5d045`). Replaced with honest pre-publish banner + workspace/vendor install paths. Closes HALF_BAKED table-row #2 of 2.
+
+### Added
+
+- 3 bundled mainnet receipt fixtures (`apps/cli/src/data/fixtures/receipts/`, commit `20b1dcf`). Receipts 66 quick, 68 high-stakes, 70 audit. Stranger-clone `pnpm ivaronix receipt verify <id> --network mainnet` now returns `ANCHORED ✓` without needing 0G Storage credentials. Closes the README "anyone can verify, no account" claim for the stranger-clone path.
+- `Permissions-Policy` header disabling camera/mic/geolocation/payment/USB/sensors/MIDI/serial/bluetooth/display-capture (`91d803b`). Zero-risk defense-in-depth.
+- RFC 9116 `/.well-known/security.txt` with security contact, expires, in/out-of-scope notes (`d2432c7`). Security researchers' first lookup is now non-404.
+
+### Disclosed
+
+- `/api/run` per-IP rate limit is per-Vercel-lambda in-memory bucket (`1ff9ca3`). `apps/studio/src/lib/rate-limit.ts` comment is honest about this; production fix is `UPSTASH_REDIS_REST_URL` env var (operator-action). Documented in SECURITY.md operator-notes.
+
+### Verified (no code change, fresh proof)
+
+- MM full flow programmatic up to tx-signature popup: password-typed + dApp Connect + chain switch + SIWE all autonomous (commits `3a2397b`, `f15f123`, `6bd4259`).
+- 4 consensus tiers proven mainnet: quick (receipt 66), standard (67), high-stakes (68, 5/5 TEE PASS), audit (70, 6/6 TEE PASS); plus burn mode (69), Studio `/api/run` (71), and v21 demo (72).
+- Whitepaper Appendix A — 10 mainnet contract addresses all match `contracts/deployments/mainnet.json` and return chainscan HTTP 200.
+- 0 console errors across 6 production routes (DevTools-clean for any judge inspecting).
+- Stranger-clone `pnpm ivaronix receipt verify 66 --network mainnet` produces `ANCHORED ✓` without credentials.
+
 ## 1.0.0 — 2026-05-15 · Mainnet launch
 
 Ivaronix ships on 0G Aristotle mainnet (chainId 16661).
