@@ -17,7 +17,7 @@
  * Allow-marker: b-v2-ref-allow:<reason> on the same line. Placeholder
  * IDs (B-V2-N, B-V2-X, B-V2-NN, B-V2-XX) are skipped automatically.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -39,6 +39,12 @@ const ok = (label: string): void => {
   console.log(`OK: ${label}`);
 };
 
+// USER_TODO.md is an internal sprint queue and not always tracked. Skip
+// cleanly when absent so CI does not fail on a fresh checkout.
+if (!existsSync(USER_TODO)) {
+  console.log('SKIP: docs/USER_TODO.md not in working tree (internal doc).');
+  process.exit(0);
+}
 const userTodoSrc = readFileSync(USER_TODO, 'utf8');
 const validIds = new Set<string>();
 const HEADER_RE = /^### (B-V2-[A-Z0-9-]+)/gm;
