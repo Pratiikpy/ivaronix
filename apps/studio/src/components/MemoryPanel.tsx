@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { keccak256, toBytes, parseAbiItem, getAddress, isAddress, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork } from '@/lib/chain';
+import { getNetwork, getChainId } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 
 /**
@@ -124,6 +124,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'issueGrant',
       args: [normalized, activeScopeHash, BigInt(ttlSeconds), MAX_READS],
+      chainId: getChainId(),
       ...GALILEO_GAS_PARAMS,
     });
   };
@@ -134,6 +135,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
       abi: CAPABILITY_REGISTRY_ABI,
       functionName: 'revokeGrant',
       args: [grantId],
+      chainId: getChainId(),
       ...GALILEO_GAS_PARAMS,
     });
   };

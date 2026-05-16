@@ -10,6 +10,7 @@ import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, keccak256, toBytes } from 'viem';
 import { useRouter } from 'next/navigation';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
+import { getChainId } from '@/lib/chain';
 
 interface Props {
   registryAddr: string;
@@ -67,6 +68,7 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
         abi: REGISTRY_ABI,
         functionName: 'publishVersion',
         args: [skillId, versionId, manifestHash],
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
 
@@ -89,6 +91,7 @@ export function NewSkillForm({ registryAddr, pricingAddr }: Props) {
         abi: PRICING_ABI,
         functionName: 'setPrice',
         args: [skillId, priceWei, creatorBps, treasuryBps],
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
 

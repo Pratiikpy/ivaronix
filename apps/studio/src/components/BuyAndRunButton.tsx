@@ -20,7 +20,7 @@ import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { ensureSiweSession } from '@/lib/siwe-client';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork } from '@/lib/chain';
+import { getNetwork, getChainId } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 
 interface Props {
@@ -199,6 +199,11 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
 
       // Paid path
       setState({ kind: 'awaiting-payment', estimate });
+      // chainId enforcement: wagmi v2 throws ChainMismatchError if MM is on a
+      // different chain (e.g. Ethereum mainnet instead of 0G Aristotle), which
+      // is the correct behaviour — without this, MM would render a popup with
+      // ETH as the currency and the user could accidentally sign a 0.015 ETH
+      // tx against a 0G contract address that doesn't exist on Ethereum.
       const txHash = await writeContractAsync({
         address: estimate.paymentContract as `0x${string}`,
         abi: SKILL_RUN_PAYMENT_ABI,
@@ -210,6 +215,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
           estimate.treasuryBps!,
         ],
         value: BigInt(estimate.amount!),
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
 
@@ -291,6 +297,9 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
         setState({ kind: 'error', code: 'FETCH_TIMEOUT', message: 'The server did not respond within 90 seconds. The 0G Router / Compute provider is slow or rate-limited right now. Try again in a minute.' });
       } else if (msg.toLowerCase().includes('user rejected')) {
         setState({ kind: 'error', code: 'USER_REJECTED', message: 'Wallet popup rejected. No charge.' });
+      } else if (msg.toLowerCase().includes('chain') && (msg.toLowerCase().includes('mismatch') || msg.toLowerCase().includes('not configured'))) {
+        const expected = NETWORKS[getNetwork()];
+        setState({ kind: 'error', code: 'CHAIN_MISMATCH', message: `Wallet is on the wrong network. Switch MetaMask to ${expected.name} (chainId ${expected.chainId}) and try again.` });
       } else if (msg.toLowerCase().includes('insufficient')) {
         const net = getNetwork();
         const topupHint = net === 'mainnet'

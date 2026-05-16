@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork } from '@/lib/chain';
+import { getNetwork, getChainId } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 
 interface Props {
@@ -63,6 +63,7 @@ export function CreatorPayoutsPanel({ paymentAddr }: Props) {
         abi: PAYMENT_ABI,
         functionName: 'withdrawCreator',
         args: [],
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
       setWithdrawTxHash(tx);

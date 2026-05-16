@@ -14,6 +14,7 @@ import { parseAbi } from 'viem';
 import Link from 'next/link';
 import { ShareButton } from '@/components/ShareButton';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
+import { getChainId } from '@/lib/chain';
 import { NETWORKS, type Network } from '@ivaronix/core';
 
 /**
@@ -296,6 +297,7 @@ export function OnboardClient({
         address: passportAddr,
         functionName: 'mint',
         args: [json.metadataRoot as `0x${string}`],
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
     } catch (err) {

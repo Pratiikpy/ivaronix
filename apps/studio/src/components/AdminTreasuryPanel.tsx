@@ -10,7 +10,7 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork } from '@/lib/chain';
+import { getNetwork, getChainId } from '@/lib/chain';
 import { NETWORKS } from '@ivaronix/core';
 
 interface Props {
@@ -101,6 +101,7 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
         abi: PAYMENT_ABI,
         functionName: 'withdrawTreasury',
         args: [],
+        chainId: getChainId(),
         ...GALILEO_GAS_PARAMS,
       });
       setWithdrawTxHash(tx);

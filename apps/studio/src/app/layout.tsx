@@ -4,6 +4,7 @@ import { Outfit, Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import { Providers } from '@/lib/providers';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { ChainGuard } from '@/components/ChainGuard';
 import './globals.css';
 
 // Brand typography per CLAUDE.md §10. The HTML reference at
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <Providers>
           <Header />
+          <ChainGuard />
           <main>{children}</main>
           <Footer />
         </Providers>
