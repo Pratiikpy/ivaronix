@@ -1059,7 +1059,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
           <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             {hasLocalBody
               ? 'Full body matches on-chain root. Run `ivaronix receipt verify` for a deep TEE-independent check.'
-              : `Anchored on chain. The body JSON lives on 0G Storage — run \`ivaronix receipt show ${onChain.id.toString()} --network ${getNetwork()}\` to download + re-derive the hash locally. Works on any machine, no Ivaronix account.`}
+              : `Anchored on chain. Run \`ivaronix receipt show ${onChain.id.toString()} --network ${getNetwork()}\` to read the on-chain anchor metadata (no credentials needed). Full body re-verify requires a 0G Storage download — any wallet works for read.`}
           </span>
           <ShareButton url={`/r/${onChain.id.toString()}`} text={`Verified Ivaronix receipt: ${headline.slice(0, 80)}`} />
         </div>
