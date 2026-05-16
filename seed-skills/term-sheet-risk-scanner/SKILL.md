@@ -1,6 +1,6 @@
 ---
 name: term-sheet-risk-scanner
-version: 0.1.1
+version: 0.1.2
 description: Scan a Series A/B term sheet for liquidation preferences, participation rights, anti-dilution, option pool expansion, founder vesting reset, drag-along, MFN, pay-to-play, and protective provisions. Returns structured findings with founder-impact estimates. Output quality scales with the model — Qwen 2.5 7B on testnet validates the pipeline; the sovereign 0GM-1.0-35B-A3B on mainnet catches more subtle terms. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
