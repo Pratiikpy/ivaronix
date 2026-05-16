@@ -55,9 +55,18 @@ async function fetchManifestFromStorage(rootHash: string): Promise<RoomManifest 
   }
 }
 
-/** Walk ancestors of cwd looking for `.ivaronix/rooms/<id>.json`. */
+/** Walk ancestors of cwd looking for `.ivaronix/rooms/<id>.json`, plus
+ * the Studio bundled-rooms path at `apps/studio/src/data/rooms/<id>.json`
+ * (which ships in the Vercel deploy unlike the operator-local
+ * `.ivaronix/rooms/` directory — the latter is gitignored, so production
+ * /data-room/<id> can only resolve manifests bundled in `src/data/rooms/`).
+ *
+ * Mirrors the receipt-fixture pattern in apps/studio/src/lib/local-receipt.ts.
+ */
 function findRoomManifest(roomId: string): RoomManifest | null {
   let dir = process.cwd();
+  let workspaceRoot: string | null = null;
+  let studioRoot: string | null = null;
   for (let i = 0; i < 12; i++) {
     const candidate = resolve(dir, '.ivaronix', 'rooms', `${roomId}.json`);
     if (existsSync(candidate)) {
@@ -66,6 +75,7 @@ function findRoomManifest(roomId: string): RoomManifest | null {
       } catch { return null; }
     }
     if (existsSync(resolve(dir, 'pnpm-workspace.yaml'))) {
+      workspaceRoot = dir;
       // Check workspace siblings (apps/cli/.ivaronix/rooms/) too
       for (const sib of ['apps/cli', 'apps/mcp-server']) {
         const sibCandidate = resolve(dir, sib, '.ivaronix', 'rooms', `${roomId}.json`);
@@ -74,9 +84,22 @@ function findRoomManifest(roomId: string): RoomManifest | null {
         }
       }
     }
+    if (existsSync(resolve(dir, 'next.config.ts')) || existsSync(resolve(dir, 'next.config.js'))) {
+      studioRoot = dir;
+    }
     const parent = dirname(dir);
     if (parent === dir) break;
     dir = parent;
+  }
+  // Studio-bundled rooms — ship with the Vercel deploy.
+  for (const root of [studioRoot, workspaceRoot ? resolve(workspaceRoot, 'apps', 'studio') : null]) {
+    if (!root) continue;
+    const bundled = resolve(root, 'src', 'data', 'rooms', `${roomId}.json`);
+    if (existsSync(bundled)) {
+      try {
+        return JSON.parse(readFileSync(bundled, 'utf8')) as RoomManifest;
+      } catch { return null; }
+    }
   }
   return null;
 }

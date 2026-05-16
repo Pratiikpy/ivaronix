@@ -65,7 +65,13 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       what: 'The encrypted blob and the signed receipt JSON live here. The blob storage root is recorded inside the receipt; anyone can fetch the ciphertext later and confirm it matches.',
       endpoint: { label: '@0gfoundation/0g-storage-ts-sdk v0.4.x' },
       addresses: [],
-      seeItLive: { label: 'Confidential data room', href: '/data-room/01KR66C1GJVR57MHQPJCW1HQQY' },
+      // Bug-19 closure · point at the mainnet room manifest bundled in
+      // apps/studio/src/data/rooms/ (the testnet room id `01KR66C1GJVR57…`
+      // was the previous CTA but its manifest is gitignored, so production
+      // /data-room/<that-id> rendered "Room not found"). The mainnet room
+      // 01KRP4EZ54Y611S7YZ0CGRK6VG ships with the Vercel deploy and
+      // renders the full manifest card with on-chain anchor + storage root.
+      seeItLive: { label: 'Confidential data room', href: getNetwork() === 'mainnet' ? '/data-room/01KRP4EZ54Y611S7YZ0CGRK6VG' : '/data-room/01KR66C1GJVR57MHQPJCW1HQQY' },
     },
     {
       name: '0G Router',

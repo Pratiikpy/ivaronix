@@ -54,6 +54,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entries.push({ url: `${BASE}/r/${sampleId}`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 });
   }
 
+  // Bundled data-room manifest — strangers can see the full room shape
+  // (parties, storage root, key fingerprint, on-chain anchor) without
+  // needing the operator's local FS. Bug-19 closure.
+  entries.push({ url: `${BASE}/data-room/01KRP4EZ54Y611S7YZ0CGRK6VG`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 });
+
   // Low-priority legal/admin pages.
   for (const path of ['/privacy', '/terms']) {
     entries.push({ url: `${BASE}${path}`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 });

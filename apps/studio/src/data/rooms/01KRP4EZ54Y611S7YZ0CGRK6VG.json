@@ -1,0 +1,22 @@
+{
+  "roomId": "01KRP4EZ54Y611S7YZ0CGRK6VG",
+  "creator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+  "parties": [
+    "0x000000000000000000000000000000000000dEaD"
+  ],
+  "blobStorageRoot": "0xed6d662b1d92fcfac44c2a8e0dd84bec2680bd1af4ae5f17b6d4f481ba3840d1",
+  "keyFingerprint": "sha256:226d97cd88f682f6c33055dea9c68d03534b14b313a9ba1bee3c84ea1a58fa5d",
+  "ttlSeconds": 604800,
+  "readsCap": 100,
+  "scopeHash": "0xd2a2dd65daba5fbea6b1401816237bb222b566e900b51c8756d9021c0b5118c6",
+  "grantIds": {
+    "0x000000000000000000000000000000000000dEaD": "0xb1797f36bd867717704aa2336508236b84f6d0ab7cecf576ac8fa5e9261a0518"
+  },
+  "blobStorageTxHash": "0xd7b9afd3737a1bf2e871f6f087085e9d0844dbecf26c51c021b0cf52f32fb020",
+  "blobBytes": 794,
+  "destroyedAt": 1778859343015,
+  "createdAt": 1778859370042,
+  "network": "mainnet",
+  "manifestHash": "sha256:3b6f795c16d5e613b1d87766ea7a93b17b30371da315d7e3d08c5238f5376ad2",
+  "manifestStorageRoot": "0x8df6b50db0dbec081451233d92f2eb0f21cb7fc6e277b114fcb64ed3d2f66deb"
+}
