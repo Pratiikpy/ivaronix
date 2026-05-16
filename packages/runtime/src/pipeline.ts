@@ -300,7 +300,22 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
   }
 
   // 6. Router — branch by provider
-  const providerKind = input.provider ?? '0g';
+  //
+  // Defense in depth: a skill manifest with `compute_tee_required: true`
+  // is declaring that its inference MUST happen inside a TEE. We never
+  // downgrade such a run to NVIDIA NIM (TIER 2 / external-signed) just
+  // because the caller passed `provider: 'nvidia'` or left a stale env
+  // var lying around. The receipt schema's verificationMethod tag and
+  // the four-light row chip on /r/<id> both depend on this invariant —
+  // if it breaks, a TIER 1 receipt can leak a TIER 2 inference into a
+  // TEE-attested envelope. Force '0g' here and log the override so the
+  // operator sees what happened.
+  const wantTee = skill.manifest.og.permissions.compute_tee_required === true;
+  const requestedProvider = input.provider ?? '0g';
+  if (requestedProvider === 'nvidia' && wantTee) {
+    log.info(tag(`tier guard           skill requires TEE; ignoring requested provider=nvidia, using 0G Compute`));
+  }
+  const providerKind: '0g' | 'nvidia' = wantTee ? '0g' : requestedProvider;
   const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
   const startTime = Date.now();
   let consensus: ConsensusResult;
