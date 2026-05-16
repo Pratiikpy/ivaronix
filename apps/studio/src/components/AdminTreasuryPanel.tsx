@@ -10,8 +10,8 @@ import { useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork, getChainId } from '@/lib/chain';
-import { NETWORKS } from '@ivaronix/core';
+import { getNetwork, getChainId } from '@/lib/network';
+import { NETWORKS } from '@ivaronix/core/types';
 
 interface Props {
   paymentAddr: string;

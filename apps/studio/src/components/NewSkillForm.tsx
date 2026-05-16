@@ -10,7 +10,7 @@ import { useAccount, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, keccak256, toBytes } from 'viem';
 import { useRouter } from 'next/navigation';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getChainId } from '@/lib/chain';
+import { getChainId } from '@/lib/network';
 
 interface Props {
   registryAddr: string;

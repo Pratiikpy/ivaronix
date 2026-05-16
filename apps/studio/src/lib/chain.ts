@@ -30,28 +30,12 @@ export function receiptTypeLabel(code: number | bigint): string {
  * handlers add per-call caching where the cost is meaningful (see
  * `lib/dashboard.ts` 60s per-address cache for the findByAgent scan).
  */
-export function getNetwork(): Network {
-  return (process.env.NEXT_PUBLIC_OG_NETWORK as Network) ?? 'testnet';
-}
-
-/**
- * Canonical chainId for the active deployment. Use this for every
- * wagmi writeContract/writeContractAsync call so MM cannot submit a
- * tx on Ethereum (chainId 1) or another network when the user has
- * mis-selected the network. wagmi v2 throws ChainMismatchError when
- * the connected wallet's chainId differs from this value, which is
- * the right behaviour — the alternative is the user seeing "Sending
- * 0.015 ETH" in the MM popup instead of "0.015 OG on Aristotle".
- *
- * Mainnet build → 16661 (Aristotle). Testnet build → 16602 (Galileo).
- *
- * Return type is the literal union wagmi infers from `lib/wagmi.ts`'s
- * registered chains. Generic `number` would fail typecheck because
- * wagmi's writeContract.chainId is typed as `16602 | 16661 | undefined`.
- */
-export function getChainId(): 16602 | 16661 {
-  return NETWORKS[getNetwork()].chainId as 16602 | 16661;
-}
+// Re-export client-safe helpers so server-side code can keep importing from
+// '@/lib/chain'. New 'use client' code MUST import from '@/lib/network'
+// directly to avoid pulling og-chain's deployments.ts into the browser
+// bundle (it uses node:fs, which webpack rejects in client context).
+import { getNetwork, getChainId } from './network';
+export { getNetwork, getChainId };
 
 export function getProvider(): JsonRpcProvider {
   const net = getNetwork();

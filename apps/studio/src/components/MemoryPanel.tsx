@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { keccak256, toBytes, parseAbiItem, getAddress, isAddress, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getNetwork, getChainId } from '@/lib/chain';
-import { NETWORKS } from '@ivaronix/core';
+import { getNetwork, getChainId } from '@/lib/network';
+import { NETWORKS } from '@ivaronix/core/types';
 
 /**
  * Memory Permission Center — wallet-aware grants admin.

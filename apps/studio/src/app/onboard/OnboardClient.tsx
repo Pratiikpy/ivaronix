@@ -14,8 +14,8 @@ import { parseAbi } from 'viem';
 import Link from 'next/link';
 import { ShareButton } from '@/components/ShareButton';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
-import { getChainId } from '@/lib/chain';
-import { NETWORKS, type Network } from '@ivaronix/core';
+import { getChainId } from '@/lib/network';
+import { NETWORKS, type Network } from '@ivaronix/core/types';
 
 /**
  * /onboard — 5 visible rows that flip grey → spinner → green-check.

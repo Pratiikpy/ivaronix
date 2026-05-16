@@ -20,8 +20,10 @@
  */
 
 import { useChainId, useSwitchChain, useAccount } from 'wagmi';
-import { NETWORKS } from '@ivaronix/core';
-import { getChainId, getNetwork } from '@/lib/chain';
+// Import via /types subpath — the barrel pulls hash.ts (node:crypto) which
+// webpack rejects in client bundles. /types is constants + types only.
+import { NETWORKS } from '@ivaronix/core/types';
+import { getChainId, getNetwork } from '@/lib/network';
 
 export function ChainGuard() {
   const { isConnected } = useAccount();
