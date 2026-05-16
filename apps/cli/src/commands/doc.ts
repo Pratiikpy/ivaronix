@@ -542,68 +542,75 @@ docCommand
     // leading/trailing prose, fixes trailing commas + smart quotes,
     // and recovers the JSON value. The result lands on the receipt
     // as `outputs.parsed` so machine consumers can read structured
-    // findings from the canonical receipt body. ok=false records the
-    // attempt honestly when the model emitted prose-only.
-    const parseAttempt = tryParseJson<unknown>(finalOutput);
-    // Schema-aware validation · B-V2-46 closure (launch-readiness).
-    // When the skill manifest declares `og.output_schema.required_keys`,
-    // check the parsed data against the required set. Mismatch → mark
-    // validationFailed: true (mark-and-anchor preserves Router credits +
-    // honest gap signal); if `fail_closed: true`, exit before chain anchor.
+    // findings from the canonical receipt body.
+    //
+    // Skill-gated · only run the parse when the manifest declares
+    // og.output_schema. Skills like private-doc-review intentionally
+    // produce prose (numbered findings with verbatim Section quotes);
+    // running JSON.parse against that prose succeeds at recording an
+    // honest "ok: false" but creates judge-facing noise (cryptic
+    // "Unterminated fractional number at position 2" because the parser
+    // reads "1." as a JSON number prefix). The pipeline.ts path used
+    // by /api/run already omits `parsed` on schemaless skills — gating
+    // here brings CLI doc-ask receipts into alignment.
     type ParsedField =
       | { ok: true; data: unknown; repaired: string[]; rawBytes: number; validationFailed?: boolean; validationError?: string }
       | { ok: false; error: string; attempted: string[]; rawBytes: number };
-    let parsedField: ParsedField;
+    let parsedField: ParsedField | undefined;
     const outputSchema = skill.manifest.og.output_schema;
-    let validationFailed = false;
-    let validationError: string | undefined;
-    if (parseAttempt.ok && outputSchema) {
-      const required = outputSchema.required_keys;
-      const data = parseAttempt.value;
-      if (Array.isArray(data)) {
-        validationFailed = true;
-        validationError = `array shape but object with required keys [${required.join(', ')}] expected`;
-      } else if (data === null || typeof data !== 'object') {
-        validationFailed = true;
-        validationError = `${typeof data} shape but object with required keys [${required.join(', ')}] expected`;
-      } else {
-        const missing = required.filter((k) => !(k in (data as Record<string, unknown>)));
-        if (missing.length > 0) {
+    if (outputSchema) {
+      const parseAttempt = tryParseJson<unknown>(finalOutput);
+      // Schema-aware validation · B-V2-46 closure (launch-readiness).
+      // Check parsed data against required_keys. Mismatch → mark
+      // validationFailed: true (mark-and-anchor preserves Router credits +
+      // honest gap signal); if fail_closed: true, exit before chain anchor.
+      let validationFailed = false;
+      let validationError: string | undefined;
+      if (parseAttempt.ok) {
+        const required = outputSchema.required_keys;
+        const data = parseAttempt.value;
+        if (Array.isArray(data)) {
           validationFailed = true;
-          validationError = `missing required keys: ${missing.join(', ')}`;
+          validationError = `array shape but object with required keys [${required.join(', ')}] expected`;
+        } else if (data === null || typeof data !== 'object') {
+          validationFailed = true;
+          validationError = `${typeof data} shape but object with required keys [${required.join(', ')}] expected`;
+        } else {
+          const missing = required.filter((k) => !(k in (data as Record<string, unknown>)));
+          if (missing.length > 0) {
+            validationFailed = true;
+            validationError = `missing required keys: ${missing.join(', ')}`;
+          }
         }
       }
-    }
-    if (parseAttempt.ok) {
-      parsedField = {
-        ok: true,
-        data: parseAttempt.value,
-        repaired: parseAttempt.repaired,
-        rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
-        ...(validationFailed ? { validationFailed: true, validationError } : {}),
-      };
-    } else {
-      parsedField = {
-        ok: false,
-        error: parseAttempt.error,
-        attempted: parseAttempt.attempted,
-        rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
-      };
-    }
-    if (parseAttempt.ok) {
-      if (!validationFailed) {
-        ui.pass(`structured output   parsed ok (${parseAttempt.repaired.length === 0 ? 'raw' : parseAttempt.repaired.join('+')})`);
+      if (parseAttempt.ok) {
+        parsedField = {
+          ok: true,
+          data: parseAttempt.value,
+          repaired: parseAttempt.repaired,
+          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+          ...(validationFailed ? { validationFailed: true, validationError } : {}),
+        };
+        if (!validationFailed) {
+          ui.pass(`structured output   parsed ok (${parseAttempt.repaired.length === 0 ? 'raw' : parseAttempt.repaired.join('+')})`);
+        } else {
+          ui.fail(`structured output   schema mismatch · ${validationError}`);
+          if (outputSchema.fail_closed) {
+            ui.hint('skill declares fail_closed: true · refusing to anchor with malformed output');
+            process.exitCode = 1;
+            return;
+          }
+          ui.hint(`anchoring receipt anyway (mark-and-anchor preserves Router credits · validationFailed flag is visible)`);
+        }
       } else {
-        ui.fail(`structured output   schema mismatch · ${validationError}`);
-        if (outputSchema?.fail_closed) {
-          ui.hint('skill declares fail_closed: true · refusing to anchor with malformed output');
-          process.exitCode = 1;
-          return;
-        }
-        ui.hint(`anchoring receipt anyway (mark-and-anchor preserves Router credits · validationFailed flag is visible)`);
+        parsedField = {
+          ok: false,
+          error: parseAttempt.error,
+          attempted: parseAttempt.attempted,
+          rawBytes: Buffer.byteLength(finalOutput, 'utf8'),
+        };
+        ui.info(`structured output   prose-only · ${parseAttempt.error}`);
       }
-    } else {
-      ui.info(`structured output   prose-only · ${parseAttempt.error}`);
     }
 
     // ─── 4. Build + sign receipt ──────────────────────────────────────────
@@ -803,12 +810,12 @@ docCommand
           headline: finalOutput.slice(0, 200).replace(/\n+/g, ' '),
           doNotSay: ['truth score', 'verified by AI', 'guaranteed safe'],
         },
-        // Structured output extraction · closes the legal-cluster audit
-        // RED. Receipts where the model emitted no JSON record
-        // ok: false honestly (the audit trail of the parse attempt
-        // is preserved; downstream consumers see "prose-only" rather
-        // than a misleading empty-array).
-        parsed: parsedField,
+        // Structured-output extraction · only attached when the skill
+        // manifest declares og.output_schema (legal-cluster pattern).
+        // Prose-only skills like private-doc-review omit this field so
+        // judge-facing receipt JSON stays clean — pipeline.ts emits the
+        // same shape for /api/run.
+        ...(parsedField ? { parsed: parsedField } : {}),
       },
       createdBy: 'ivaronix-forge/0.0.1',
     });

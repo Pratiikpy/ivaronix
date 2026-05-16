@@ -15,6 +15,7 @@ All notable changes to Ivaronix are documented here. The format is based on [Kee
 - README anchor-cost claim was 5.6× LOW: `~0.0001 OG` → actual `~0.00056 OG` (`d7d4b3f`). Verified via `eth_getTransactionReceipt` on receipt 72 tx `0x13844324`.
 - Widget README stale URL `https://ivaronix.studio` → `https://www.ivaronix.xyz` (`cbc6465`). Closes HALF_BAKED table-row #1 of 2.
 - og-toolkit README install was `pnpm add @ivaronix/og-toolkit` against an unpublished npm package (`bf5d045`). Replaced with honest pre-publish banner + workspace/vendor install paths. Closes HALF_BAKED table-row #2 of 2.
+- CLI `doc ask` emitted `outputs.parsed: { ok: false, error: "Unterminated fractional number..." }` on every prose-only consensus receipt because the runtime tried to JSON-parse markdown-formatted judge output (numbered lists like "1. Customer assumes..."). Aligned with `packages/runtime/src/pipeline.ts` (used by `/api/run`): the `parsed` field is now only attached when the skill manifest declares `og.output_schema` (legal-cluster pattern · 4 skills). `private-doc-review` and other prose-heavy skills now produce clean receipt JSON. Bug-13 closure.
 
 ### Added
 
