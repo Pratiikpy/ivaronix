@@ -1052,13 +1052,13 @@ receiptCommand
 // ─── show ───────────────────────────────────────────────────────────────────
 receiptCommand
   .command('show <id>')
-  .description('Show full receipt by on-chain id (V2-first, V1 fallback)')
+  .description('Show full receipt by on-chain id (V3-first, V2/V1 fallback)')
   .action(async (id: string) => {
     const env = loadEnv();
     const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
     const registries = buildReadRegistries(env.network, provider);
     if (registries.length === 0) {
-      ui.fail(`No ReceiptRegistry (V1 or V2) deployed on ${env.network}`);
+      ui.fail(`No ReceiptRegistry (V1, V2, or V3) deployed on ${env.network}`);
       return;
     }
 
