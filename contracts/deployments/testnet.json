@@ -15,20 +15,20 @@
       "address": "0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
       "txHash": "0x3070e7d3341e271e42ed2ed4a2ce18d31e76e9dc7f78963b4b39406ac09af5af",
       "explorer": "https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab",
-      "note": "K-2 fix · EIP-712 anchor signature recovery · agentAddress is the recovered signer (NOT msg.sender). Per-agent monotonic nonces. See HALF_BAKED.md K-2. Stays live for the 7 V2-anchored receipts; new anchors with slots 10/11/12 land on ReceiptRegistryV3."
+      "note": "EIP-712 anchor signature recovery; agentAddress is the recovered signer, not msg.sender. Per-agent monotonic nonces block replay. Stays live for the 7 V2-anchored receipts; new anchors with slots 10/11/12 land on ReceiptRegistryV3."
     },
     "ReceiptRegistryV3": {
       "address": "0x7396D536594e2BE833070c7EB441A10906046257",
       "txHash": "0x513acfa90473807c00423c97cf55897d04f2fa61c38668958b364985e934bda5",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257",
       "deployedAt": "2026-05-12",
-      "note": "B-V2-32 fix · admits receipt-type slots 10 (doc_room_create), 11 (doc_room_read), 12 (memory_consolidation) that V2 capped at 9. EIP-712 version bumped to '3' so V2 signatures cannot replay (domain separator differs). 6 Foundry tests in ReceiptRegistryV3.t.sol all PASS. Deployed iter-78 of cron c25a7e8b run; closes USER_TODO §B-V2-32."
+      "note": "Admits receipt-type slots 10 (doc_room_create), 11 (doc_room_read), 12 (memory_consolidation) that V2 capped at 9. EIP-712 version bumped to '3' so V2 signatures cannot replay. Six Foundry tests in ReceiptRegistryV3.t.sol all pass."
     },
     "Erc7857Verifier": {
       "address": "0xEAd66Cb90B681720f3aab52d86c289E21106d938",
       "txHash": "0x92eec89896daaea5f4ebe28f262bc8acb91dd0975798f603918c501debcb4b6a",
       "explorer": "https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938",
-      "note": "V1 verifier reused by AgentPassportINFTV2 — see HALF_BAKED.md H-6 (TEE/ZKP-backed attestor is Phase B; current attestor signature scheme is honest documented limitation)."
+      "note": "V1 verifier reused by AgentPassportINFTV2. TEE/ZKP-backed attestor is on the roadmap; current attestor signature scheme is the documented limitation."
     },
     "AgentPassportINFT": {
       "address": "0x08d25653638c3ed40C3b82840fA20CAe9c94563E",
@@ -40,7 +40,7 @@
       "address": "0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d",
       "txHash": "0xbdc828b0444beb2794a39ae18308d40d972755c25ce05f33744c781f3185ce36",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d",
-      "note": "K-1 + K-4 + K-6 fix · authorizedRecorders-only with ReceiptRegistryV2 cross-check + ±100 trustScoreDelta cap; per-token executorVersion bumps on transfer; mint sets passportOf before _safeMint + nonReentrant.",
+      "note": "authorizedRecorders-only with ReceiptRegistryV2 cross-check and a ±100 trustScoreDelta cap. Per-token executorVersion bumps on transfer; mint sets passportOf before _safeMint, nonReentrant.",
       "authorizedRecorders": {
         "operator": {
           "address": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
@@ -66,7 +66,7 @@
       "txHash": "0xdea605e605e6031230bc397d305e48d3b125315eefd10a10da72bcb8be4c6d37",
       "explorer": "https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1",
       "deployedAt": "2026-05-12",
-      "note": "B-V2-15 · private reverse indexes (social-graph leak fix · planning-003 §A.5.10) + authorizedRelayers gate on consumeRead (HALF_BAKED §K-22 DoS fix). 14 Foundry tests all PASS. Post-deploy: operator wallet 0xaa95...77Ce must be added via addAuthorizedRelayer so the off-chain memory engine continues to function."
+      "note": "Private reverse indexes close a social-graph leak; authorizedRelayers gate on consumeRead closes a DoS surface. 14 Foundry tests pass. Post-deploy: operator wallet must be added via addAuthorizedRelayer so the off-chain memory engine continues to function."
     },
     "MemoryAccessLog": {
       "address": "0xEe1aDFe76785377C4430B1325d86E58A6eC92119",
@@ -80,7 +80,7 @@
       "explorer": "https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d",
       "deployedAt": "2026-05-12",
       "capabilityRegistry": "0x1351CD87360f0366D0A0068164e606B3c320F3E1",
-      "note": "B-V2-16 · HALF_BAKED §K-23 fix. logAccess now enforces msg.sender == agent (self-log path) OR CapabilityRegistryV2.isValid(grantId, msg.sender, scopeHash) cross-check (grant-backed path). Random wallets revert. V2 capability registry pinned at construction; passes the cross-check for grants on the V2 registry only. 10/10 Foundry tests PASS."
+      "note": "logAccess enforces msg.sender == agent on the self-log path, or a CapabilityRegistryV2.isValid cross-check on the grant-backed path. Random wallets revert. V2 capability registry pinned at construction; passes the cross-check for grants on the V2 registry only. 10/10 Foundry tests pass."
     },
     "SkillRegistry": {
       "address": "0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1",
@@ -93,7 +93,7 @@
       "txHash": "0x80800054a0758395307484b302af5a1b741b73e691dadef94a2c9616d41278a9",
       "explorer": "https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193",
       "deployedAt": "2026-05-12",
-      "note": "B-V2-17 · squatter risk fix (planning-003 §A.5.11). Constructor pre-reserves 6 first-party skill IDs (private-doc-review, github-audit, 0g-integration-auditor, code-edit, plan-step, content-pitch-review) to the deployer wallet. Owner-arbitration safety valve (reserveSkillName) lets the contract owner reassign squatter-grabbed unreserved skillIds with off-chain evidence. 16/16 Foundry tests PASS.",
+      "note": "Constructor pre-reserves 6 first-party skill IDs (private-doc-review, github-audit, 0g-integration-auditor, code-edit, plan-step, content-pitch-review) to the deployer wallet, closing skill-name squatting risk. Owner arbitration (reserveSkillName) lets the contract owner reassign squatter-grabbed unreserved skillIds with off-chain evidence. 16/16 Foundry tests pass.",
       "reservedSkillIds": [
         "skill:private-doc-review",
         "skill:github-audit",
@@ -109,7 +109,7 @@
       "explorer": "https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5",
       "deployedAt": "2026-05-12",
       "receiptRegistry": "0x7396D536594e2BE833070c7EB441A10906046257",
-      "note": "B-V2-18 · cancelGraceSeconds window between agent-initiated cancel and EXPIRED status closes HALF_BAKED §K-25 AGENT_AUTO griefing surface. ReceiptRegistryV3 pinned at construction (uses canonical slot 9 subscription_skill_exec receipt anchors)."
+      "note": "cancelGraceSeconds window between agent-initiated cancel and EXPIRED status closes an AGENT_AUTO griefing surface. ReceiptRegistryV3 pinned at construction; uses canonical slot 9 subscription_skill_exec receipt anchors."
     },
     "SkillRunPayment": {
       "address": "0x9eA5FDba913AC94dA8833Fee21F2832827950A5C",
@@ -117,7 +117,7 @@
       "explorer": "https://chainscan-galileo.0g.ai/address/0x9eA5FDba913AC94dA8833Fee21F2832827950A5C",
       "deployedAt": "2026-05-13",
       "owner": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
-      "note": "FINAL_BUILD_PLAN.md Block A · per-skill creator/treasury bps fee-split with pull-pattern withdrawals + lifetime accumulators + admin refund w/ 24h timelock. 41 Foundry tests + 2 invariants + 3 fuzz. Closes the marketplace 'estimatedCostOg records to nothing' gap."
+      "note": "Per-skill creator/treasury bps fee-split with pull-pattern withdrawals, lifetime accumulators, and admin refund gated by a 24h timelock. 41 Foundry tests, 2 invariants, 3 fuzz."
     },
     "SkillPricing": {
       "address": "0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F",
@@ -125,7 +125,7 @@
       "explorer": "https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F",
       "deployedAt": "2026-05-13",
       "skillRegistry": "0xF05113E83146160024326ff30979c57f5adc2193",
-      "note": "FINAL_BUILD_PLAN.md Block A.1 · mutable per-skill pricing (priceWei + creator/treasury bps) gated by SkillRegistryV2.ownerOf(skillId). Bps invariants enforced (sum 10000, creator [5000, 9500]). 14 Foundry tests · ownership transfers via the registry transfer pricing authority too."
+      "note": "Mutable per-skill pricing (priceWei + creator/treasury bps) gated by SkillRegistryV2.ownerOf(skillId). Bps invariants enforced: sum 10000, creator [5000, 9500]. 14 Foundry tests; ownership transfers via the registry transfer pricing authority too."
     }
   }
 }

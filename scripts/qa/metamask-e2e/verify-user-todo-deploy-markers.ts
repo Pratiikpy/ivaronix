@@ -16,7 +16,7 @@
  *
  * Pure source-file regression.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -41,7 +41,14 @@ const deployments = JSON.parse(
 const deployedContracts = new Set(Object.keys(deployments.contracts));
 ok(`testnet.json declares ${deployedContracts.size} deployed contracts`);
 
-const userTodo = readFileSync(resolve(REPO_ROOT, 'docs/USER_TODO.md'), 'utf8');
+// USER_TODO.md is an internal sprint queue and not always in the tracked
+// tree. Skip cleanly when absent so CI does not fail on a fresh checkout.
+const userTodoPath = resolve(REPO_ROOT, 'docs/USER_TODO.md');
+if (!existsSync(userTodoPath)) {
+  console.log('SKIP: docs/USER_TODO.md not in working tree (internal doc).');
+  process.exit(0);
+}
+const userTodo = readFileSync(userTodoPath, 'utf8');
 const lines = userTodo.split(/\r?\n/);
 
 // Match headers like:

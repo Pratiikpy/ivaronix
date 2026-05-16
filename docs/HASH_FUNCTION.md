@@ -1,7 +1,7 @@
 # Ivaronix · Receipt Canonical Hash · Specification
 
-> Updated 2026-05-10. Pinned to `packages/core/src/jcs.ts` (TS reference impl).
-> Polyglot reference verifiers (Rust + Go + Python) tracked in HALF_BAKED.md K-15.
+> Pinned to `packages/core/src/jcs.ts` (TypeScript reference implementation).
+> Polyglot reference verifiers in TypeScript, Python, and Rust are shipped and gated by CI.
 
 ---
 
@@ -91,18 +91,16 @@ The verifier branches on `schemaVersion` so v1 + v2 receipts coexist forever. Ex
 
 ---
 
-## 5 · Polyglot reference verifiers (in flight)
-
-K-15 in HALF_BAKED.md tracks the full migration. Status as of 2026-05-10:
+## 5 · Polyglot reference verifiers
 
 | Lang | Path | Status |
 |---|---|---|
-| TypeScript | `packages/core/src/jcs.ts` + `jcs.test.ts` | ✅ shipped (17/17 tests green) |
-| Python | `scripts/verifier-py/jcs.py` + `test_jcs.py` | ✅ shipped (14/14 tests green) |
-| Rust | `ivaronix-verifier-rs/` | ✅ shipped (11/11 tests green) |
-| TS ↔ Python ↔ Rust cross-impl | `scripts/verifier-py/cross_check.py` | ✅ shipped (29/29 byte-equal across all three) |
-| CI cross-impl gate | `.github/workflows/jcs-roundtrip.yml` | ✅ shipped — runs all four self-suites + the cross-impl harness on every PR + push |
-| Go | `verifier-go/` (planned) | queued — operator action: `winget install GoLang.Go` (or apt/brew/etc.) then the next cron firing extends `cross_check.py` with `go run ./cmd/verifier-go` and adds a Go job to the CI workflow |
+| TypeScript | `packages/core/src/jcs.ts` + `jcs.test.ts` | shipped (17/17 tests green) |
+| Python | `scripts/verifier-py/jcs.py` + `test_jcs.py` | shipped (14/14 tests green) |
+| Rust | `ivaronix-verifier-rs/` | shipped (11/11 tests green) |
+| TS ↔ Python ↔ Rust cross-impl | `scripts/verifier-py/cross_check.py` | shipped (29/29 byte-equal across all three) |
+| CI cross-impl gate | `.github/workflows/jcs-roundtrip.yml` | runs all four self-suites + the cross-impl harness on every PR and push |
+| Go | `verifier-go/` | planned |
 
 Each language MUST implement:
 1. The RFC-8785 JCS function over the test vectors above (§3).
@@ -114,13 +112,11 @@ The cross-impl CI test runs all four languages over a fixed corpus of vectors AN
 
 ---
 
-## 6 · Operator-action gates (when polyglot lands)
+## 6 · Distribution
 
-- **`crates.io` publish:** `! cargo login` then `cargo publish` from `ivaronix-verifier-rs/`. The Rust crate will be public + reproducible.
-- **Go module publish:** push the `verifier-go/` repo with the right module path (e.g. `github.com/ivaronix/verifier-go`); Go's module system pulls from the git tag.
-- **Python script:** stays in repo (single file, no package). README documents the run command.
-
-These are the only operator actions; the code work is mine.
+- **`crates.io` publish:** `cargo publish` from `ivaronix-verifier-rs/`.
+- **Go module publish:** the `verifier-go/` repo with the canonical module path; Go's module system pulls from the git tag.
+- **Python script:** stays in repo as a single file, no package. The README documents the run command.
 
 ---
 
@@ -134,12 +130,10 @@ For Unicode: NFC normalisation is applied to every string. Supplementary-plane c
 
 ## 8 · Cross-references
 
-- `packages/core/src/jcs.ts` — TS reference implementation.
+- `packages/core/src/jcs.ts` — TypeScript reference implementation.
 - `packages/core/src/jcs.test.ts` — RFC-8785 test vectors (17 cases).
-- `packages/core/src/canonical.ts` — V1 canonical hash + the new `canonicalHashV2`.
-- `packages/receipts/src/schema.ts` — receipt schema (the `schemaVersion` gate lands when polyglot ships).
-- `packages/receipts/src/verify.ts` — receipt verifier (branch on schemaVersion lands when polyglot ships).
-- `docs/HALF_BAKED.md` Section N · K-15 — execution plan + status for the full migration.
-- `docs/USER_TODO.md` — operator-action gates for crates.io / Go publish.
-- `RECEIPTS_SPEC.md` — receipt body shape + signing rules.
+- `packages/core/src/canonical.ts` — V1 canonical hash plus `canonicalHashV2`.
+- `packages/receipts/src/schema.ts` — receipt schema.
+- `packages/receipts/src/verify.ts` — receipt verifier.
+- `docs/RECEIPT_SCHEMA.md` — receipt body shape and signing rules.
 - `docs/CRYPTO_NOTES.md` — Ivaronix-wide crypto threat models.

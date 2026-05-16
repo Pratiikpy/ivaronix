@@ -94,12 +94,26 @@ function loadDeployments(): DeploymentManifest {
 
 function shortNote(note: string | undefined): string {
   if (!note) return '';
-  // Pull the leading clause up to the first period or em-dash; cap at
-  // 60 chars so the table stays readable. Strip leading "Vx; " prefix
-  // if present (the prefix is implied by the contract name).
-  let snippet = note.split(/[.·—]/)[0] ?? '';
-  snippet = snippet.replace(/^V\d;\s*/, '').trim();
-  if (snippet.length > 60) snippet = snippet.slice(0, 57) + '…';
+  // Strip internal sprint labels so the rendered public table reads as
+  // a clean capability description. The underlying deployment JSON
+  // keeps the audit trail; the table the readers see does not need it.
+  let cleaned = note
+    .replace(/^V\d;\s*/, '')
+    .replace(/^(K-\d+(\s*[+,]\s*K-\d+)*\s*(fix|fix·|closure)?\s*[·—]?\s*)/i, '')
+    .replace(/^(B-V\d+-\d+(\s+fix)?\s*[·—]?\s*)/i, '')
+    .replace(/^FINAL_BUILD_PLAN\.md\s+(Block\s+\w+(\.\d+)?\s*[·—]?\s*)?/i, '')
+    .replace(/planning-\d+\s+§[\w.]+\s*/gi, '')
+    .replace(/HALF_BAKED\.md\s+§?K-\d+\s*(fix|DoS fix)?\s*/gi, '')
+    .replace(/USER_TODO\.md\s+§?[\w-]+\s*/gi, '')
+    .replace(/See\s+HALF_BAKED\.md.*$/i, '')
+    .replace(/Closes\s+USER_TODO\.md.*$/i, '')
+    .replace(/iter-\d+\s+of\s+cron\s+\w+\s+run.*$/i, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  let snippet = cleaned.split(/[.·—]/)[0] ?? '';
+  snippet = snippet.trim();
+  if (snippet.length > 80) snippet = snippet.slice(0, 77) + '…';
   return snippet ? ` — ${snippet}` : '';
 }
 
@@ -152,7 +166,7 @@ function renderMainnetContractsTable(): string {
   const m = loadMainnetDeployments();
   const names = Object.keys(m.contracts).sort();
   if (names.length === 0) {
-    return '\n\n_Mainnet contracts not yet deployed — see `docs/MAINNET_PROMOTION_PLAN.md` for the promotion runbook._\n\n';
+    return '\n\n_Mainnet contracts not yet deployed._\n\n';
   }
   const lines: string[] = [
     '',

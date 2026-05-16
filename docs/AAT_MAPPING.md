@@ -1,9 +1,8 @@
 # IETF AAT Field Mapping · `draft-rosenberg-aat-01`
 
 > Ivaronix receipt → IETF Agent Audit Trail (AAT) field mapping table.
-> Spec version: **`draft-rosenberg-aat-01`** (pinned per FINAL_BUILD_PLAN.md D-8).
+> Spec version: **`draft-rosenberg-aat-01`**.
 > Authoritative source-of-truth for this mapping: `packages/receipts/src/aat-mapping.ts`.
-> Generated at: 2026-05-13 alongside Block H.
 
 ---
 
@@ -174,13 +173,13 @@ The AAT format is the standardized envelope that makes these proofs portable to 
 
 ---
 
-## v1.1 backlog
+## Roadmap
 
-- Track newer AAT drafts (`draft-rosenberg-aat-02` etc.) when finalized; bump pin
-- Add reverse-direction import (`ivaronix receipt import <aat-doc>`) for cross-vendor verification
-- Wire AAT export to a published AAT receiver / registry once IETF publishes one
-- ISO 42001 audit-pack overlay (subset of AAT plus additional fields)
+- Track newer AAT drafts (`draft-rosenberg-aat-02` etc.) when finalized; bump the pin.
+- Add reverse-direction import (`ivaronix receipt import <aat-doc>`) for cross-vendor verification.
+- Wire AAT export to a published AAT receiver or registry once IETF publishes one.
+- ISO 42001 audit-pack overlay (subset of AAT plus additional fields).
 
 ---
 
-*— Block H · 2026-05-13. Mapping source-of-truth: `packages/receipts/src/aat-mapping.ts`.*
+*Mapping source-of-truth: `packages/receipts/src/aat-mapping.ts`.*

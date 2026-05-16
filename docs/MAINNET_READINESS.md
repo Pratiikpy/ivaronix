@@ -1,13 +1,13 @@
 # Ivaronix · Mainnet Readiness Checklist
 
-> Per `QA_LOOP_BRIEF.md` operating rule #12, this is the gate that was
-> cleared before mainnet promotion. Originally run on 2026-05-09 (all 13
-> items green on Galileo testnet, chainId 16602); **mainnet promotion to
-> Aristotle (chainId 16661) shipped 2026-05-15** with <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts
-> deployed (~0.085 OG total gas spend) and <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on
-> `ReceiptRegistryV3` across all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. The checklist
-> below records the pre-promotion state of the testnet system and the
-> evidence used to clear the gate.
+> This is the gate cleared before mainnet promotion. Originally run on
+> 2026-05-09 (all 13 items green on Galileo testnet, chainId 16602);
+> **mainnet promotion to Aristotle (chainId 16661) shipped 2026-05-15**
+> with <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed (~0.085 OG total gas spend) and
+> <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` across all
+> <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. The checklist below records the
+> pre-promotion state of the testnet system and the evidence used to
+> clear the gate.
 
 ---
 
@@ -19,7 +19,7 @@
 | 2 | Env vars (9/9 required) | ✓ | IVARONIX_NETWORK, IVARONIX_RPC_URL, IVARONIX_SIGNER_KEY, IVARONIX_ROUTER_KEY, IVARONIX_ROUTER_PROVIDER, NVIDIA_API_KEY, … all set (legacy aliases still resolve) |
 | 3 | Deployer wallet funded | ✓ | 69.56 OG on Galileo |
 | 4 | RPC latency | ✓ | 0.77s eth_blockNumber round-trip |
-| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry` (V1) + `ReceiptRegistryV2` + `ReceiptRegistryV3` (B-V2-32 · canonical slots 10/11/12) |
+| 5 | Receipt anchoring | ✓ | <!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ receipts on `ReceiptRegistry` (V1) + `ReceiptRegistryV2` + `ReceiptRegistryV3` (canonical slots 10/11/12) |
 | 6 | Proof Explorer (`/r/<id>`) | ✓ | HTTP 200 on #994, #1004, #1014, #1056, #1069 |
 | 7 | Passport state | ✓ | tokenId 1, trust 1053, receipts 1053, violations 0 |
 | 8 | Memory grant/revoke lifecycle | ✓ | 5 grants on chain; ACTIVE → REVOKED proven via Studio + chain |
@@ -41,20 +41,20 @@ All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deplo
 | Contract              | Address                                                                                                                                            |
 |-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
 | `AgentPassportINFT`    | [`0x08d25653638c3ed40C3b82840fA20CAe9c94563E`](https://chainscan-galileo.0g.ai/address/0x08d25653638c3ed40C3b82840fA20CAe9c94563E) — stays live for 4 minted passports (tokenIds 1-4) |
-| `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) — K-1 + K-4 + K-6 fix |
+| `AgentPassportINFTV2`  | [`0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d`](https://chainscan-galileo.0g.ai/address/0x85e9dD63155836a9BF31F579BFC3a8eb2B46494d) — authorizedRecorders-only with ReceiptRegistryV2 cross-check + ±100 trustScore… |
 | `CapabilityRegistry`   | [`0x3783f3c4834fCCBD553860e15c64C7E052646a8D`](https://chainscan-galileo.0g.ai/address/0x3783f3c4834fCCBD553860e15c64C7E052646a8D) — stays live for any existing grants |
-| `CapabilityRegistryV2` | [`0x1351CD87360f0366D0A0068164e606B3c320F3E1`](https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1) — B-V2-15 |
+| `CapabilityRegistryV2` | [`0x1351CD87360f0366D0A0068164e606B3c320F3E1`](https://chainscan-galileo.0g.ai/address/0x1351CD87360f0366D0A0068164e606B3c320F3E1) — private reverse indexes (social-graph leak fix |
 | `Erc7857Verifier`      | [`0xEAd66Cb90B681720f3aab52d86c289E21106d938`](https://chainscan-galileo.0g.ai/address/0xEAd66Cb90B681720f3aab52d86c289E21106d938) — V1 verifier reused by AgentPassportINFTV2 |
-| `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) — stays live for any existing log entries (chain history im… |
-| `MemoryAccessLogV2`    | [`0xCbfE1f526483283Bba80c2Bed3622a56904bF96d`](https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d) — B-V2-16 |
-| `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the existing anchored receipts (chain hist… |
-| `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) — K-2 fix |
-| `ReceiptRegistryV3`    | [`0x7396D536594e2BE833070c7EB441A10906046257`](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257) — B-V2-32 fix |
-| `SkillPricing`         | [`0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F`](https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F) — FINAL_BUILD_PLAN |
-| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) — stays live for existing skill registrations (chain histor… |
-| `SkillRegistryV2`      | [`0xF05113E83146160024326ff30979c57f5adc2193`](https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193) — B-V2-17 |
-| `SkillRunPayment`      | [`0x9eA5FDba913AC94dA8833Fee21F2832827950A5C`](https://chainscan-galileo.0g.ai/address/0x9eA5FDba913AC94dA8833Fee21F2832827950A5C) — FINAL_BUILD_PLAN |
-| `SubscriptionEscrowV2` | [`0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`](https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5) — B-V2-18 |
+| `MemoryAccessLog`      | [`0xEe1aDFe76785377C4430B1325d86E58A6eC92119`](https://chainscan-galileo.0g.ai/address/0xEe1aDFe76785377C4430B1325d86E58A6eC92119) — stays live for any existing log entries (chain history immutable) |
+| `MemoryAccessLogV2`    | [`0xCbfE1f526483283Bba80c2Bed3622a56904bF96d`](https://chainscan-galileo.0g.ai/address/0xCbfE1f526483283Bba80c2Bed3622a56904bF96d) — HALF_BAKED §K-23 fix |
+| `ReceiptRegistry`      | [`0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c`](https://chainscan-galileo.0g.ai/address/0x97376C6f0BE0Ee08AA34C4cAcdbDeC2183e7743c) — stays live for the existing anchored receipts (chain history immutable; curre… |
+| `ReceiptRegistryV2`    | [`0xf675d4183b34fe8d1981FA9c117065aAcff690ab`](https://chainscan-galileo.0g.ai/address/0xf675d4183b34fe8d1981FA9c117065aAcff690ab) — EIP-712 anchor signature recovery |
+| `ReceiptRegistryV3`    | [`0x7396D536594e2BE833070c7EB441A10906046257`](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257) — admits receipt-type slots 10 (doc_room_create), 11 (doc_room_read), 12 (memor… |
+| `SkillPricing`         | [`0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F`](https://chainscan-galileo.0g.ai/address/0xc3369C9BD74D81E9c7226e5fc9427D19c12B718F) — mutable per-skill pricing (priceWei + creator/treasury bps) gated by SkillReg… |
+| `SkillRegistry`        | [`0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1`](https://chainscan-galileo.0g.ai/address/0xf8894Ce4FFc7C594976d5Eaca38d8FE6DB4820a1) — stays live for existing skill registrations (chain history immutable) |
+| `SkillRegistryV2`      | [`0xF05113E83146160024326ff30979c57f5adc2193`](https://chainscan-galileo.0g.ai/address/0xF05113E83146160024326ff30979c57f5adc2193) — squatter risk fix |
+| `SkillRunPayment`      | [`0x9eA5FDba913AC94dA8833Fee21F2832827950A5C`](https://chainscan-galileo.0g.ai/address/0x9eA5FDba913AC94dA8833Fee21F2832827950A5C) — per-skill creator/treasury bps fee-split with pull-pattern withdrawals + life… |
+| `SubscriptionEscrowV2` | [`0x74235b707194c4cc3DDb717B6D95595e8A82B7F5`](https://chainscan-galileo.0g.ai/address/0x74235b707194c4cc3DDb717B6D95595e8A82B7F5) — cancelGraceSeconds window between agent-initiated cancel and EXPIRED status c… |
 <!-- contracts:auto:end -->
 
 Deployed by `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce` on 2026-05-08 (V1) + 2026-05-10 (V2).
@@ -141,14 +141,13 @@ Mainnet `ReceiptRegistryV3` lives at
 <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts have been anchored on it spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->
 receipt-type slots, with real TEE attestation via `broker.processResponse`
 proven on mainnet receipt #4 and real 0G Storage upload on receipts 3–14.
-Full mainnet contract address table in [README §10 · Phase B](../README.md).
+Full mainnet contract address table lives in [README.md](../README.md).
 
 ---
 
-## Testnet status: `READY`
+## Testnet status: ready
 
-Every item that the agent can verify without external funding is verified.
-The four blocked items in `QA_LOOP_BRIEF.md` (DA preflight, Telegram bot
-live, fresh-wallet passport mint, `skill install <name>` URL ergonomics) are
-all `blocked with real reason + unblock action` per the brief's stop
-condition — none of them are bug fixes the agent can ship alone.
+The testnet checklist was 13/13 green before mainnet promotion. Items that
+remain on the roadmap (DA disperse pipeline, mobile WalletConnect) are
+documented honestly in the surfaces that ship them rather than gated on
+this checklist.

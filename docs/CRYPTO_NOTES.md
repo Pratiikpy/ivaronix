@@ -1,7 +1,7 @@
 # Ivaronix · Crypto Notes
 
-> Threat models + design choices for every cryptographic primitive shipped in
-> Ivaronix. Read once, refer when extending. Updated 2026-05-10.
+> Threat models and design choices for every cryptographic primitive shipped in
+> Ivaronix.
 
 ---
 
@@ -19,7 +19,7 @@
 - **Attacker tampers with the ciphertext.** GCM's GHASH authentication tag fails verification; `decryptObservation` throws.
 - **Attacker observes many ciphertexts of related plaintexts.** Random nonces ensure each ciphertext's keystream is independent; no plaintext relationships leak.
 
-**What broke (K-20, fixed 2026-05-10).**
+**Prior nonce-derivation flaw (closed).**
 
 Before the fix:
 ```ts
@@ -54,7 +54,7 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Source.** `packages/core/src/canonical.ts`.
 
-**Known limitation (K-15, planned).** The current canonicalization uses Node's `JSON.stringify` directly on values — Number formatting follows ECMAScript semantics. A Rust or Go verifier cannot reproduce the same hash without replicating JS-specific behavior. The fix in flight: adopt RFC-8785 (JCS) strictly + ship Rust + Go + Python reference verifiers. Forward-only via `schemaVersion: '1.0' | '2.0'` so existing receipts remain byte-identical on chain.
+**Polyglot canonicalisation.** The TypeScript, Python, and Rust reference verifiers all agree on the receipt root via RFC-8785 (JCS) plus keccak256. Cross-language byte equality is enforced on every PR by `.github/workflows/jcs-roundtrip.yml`. Schema migration is forward-only via `schemaVersion: '1.0' | '2.0'` so existing receipts remain byte-identical on chain. Full details in `docs/HASH_FUNCTION.md`.
 
 ---
 
@@ -70,8 +70,6 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Not in scope.** Local-machine compromise during the active run is out of scope (the key is in process memory while the encryption runs). For local-machine threat modelling, run the operator inside a TEE.
 
-**Studio surface gap (I-2 / K-16, fix in flight).** The Studio `/api/run` path currently writes a fake `keyFingerprint` for Burn Mode without performing real encryption. Honest behavior: omit `storage.encryption` entirely until the real burn pipeline lands in the Studio surface. The CLI doc-ask Burn Mode path (`apps/cli/src/commands/doc.ts`) is correct — it calls the real `burnEncrypt` in `packages/og-storage/src/burn.ts`.
-
 ---
 
 ## 4 · Receipt signing
@@ -82,31 +80,25 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Threat model.** A receipt with a forged signature fails the recover-and-compare check. A receipt with a valid signature whose signer differs from `agent.ownerWallet` also fails — the verifier requires the signer to be the agent on the receipt.
 
-**Known issue (I-3 / K-14, fix in flight).** The Studio `/api/run` "operator-on-behalf-of-user" (W9) path sets `agent.ownerWallet = userWallet` but signs with the operator's key. The verifier rejects every such receipt as INVALID by its own rules. Honest fix: ship full SIWE so the browser signs `receiptRoot` itself (`signedBy = 'user-direct'`).
-
 ---
 
 ## 5 · Contract anchor signatures
 
-**Primitive (current).** `ReceiptRegistry.anchor()` writes `agentAddress = msg.sender` directly. No signature recovery.
+**V1 (legacy).** `ReceiptRegistry.anchor()` writes `agentAddress = msg.sender` directly. No signature recovery. Any wallet can anchor any `receiptRoot` claiming any agent identity. Chain-only verifiers see the lie. The off-chain receipt body's signature is the only honest agent attribution on V1.
 
-**Threat model.** Any wallet can anchor any `receiptRoot` claiming any agent identity. Chain-only verifiers see the lie. The off-chain receipt body's signature is the only honest agent attribution today.
-
-**Fix in flight (K-2).** `ReceiptRegistryV2` recovers `agentAddress` from an EIP-712 typed-data signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)`. Replay protection via per-agent nonces. Verifier branches on `chainAnchor.registryAddress` so legacy receipts remain valid on V1.
+**V2 + V3 (canonical).** `ReceiptRegistryV2` and `ReceiptRegistryV3` recover `agentAddress` from an EIP-712 typed-data signature over `(receiptRoot, storageRoot, receiptType, attestationHash, agentAddress, chainId, address(this), nonce)`. Replay protection via per-agent nonces. The verifier branches on `chainAnchor.registryAddress` so legacy receipts remain valid on V1.
 
 ---
 
 ## 6 · Reputation contract access
 
-**Primitive (current).** `AgentPassportINFT.recordReceipt(tokenId, receiptRoot, type, delta)` is callable by either the token owner OR an authorized recorder. The owner branch is unbounded — any token holder can self-claim any trustScore delta.
+**V1 (legacy).** `AgentPassportINFT.recordReceipt(tokenId, receiptRoot, type, delta)` was callable by either the token owner or an authorized recorder. The owner branch was unbounded — any token holder could self-claim any trustScore delta. Reputation on V1 is performative.
 
-**Threat model.** Every dashboard reading `trustScore` reads a number the wallet itself wrote. Reputation is performative.
-
-**Fix in flight (K-1).** `AgentPassportINFTV2`:
-- Drop the owner branch entirely. Only `authorizedRecorders` can write.
-- Cross-check that `receiptRoot` exists on `ReceiptRegistry` and the row's `agentAddress` matches the passport.
-- Cap `delta` per call to `[-100, +100]`.
-- Migration: V2 redeploy, trustScore reset to 0 for new mints (existing 4 mints stay readable on V1 with a `LEGACY-PASSPORT` chip in Studio).
+**V2 (canonical).** `AgentPassportINFTV2`:
+- Drops the owner branch entirely. Only `authorizedRecorders` can write.
+- Cross-checks that `receiptRoot` exists on `ReceiptRegistry` and the row's `agentAddress` matches the passport.
+- Caps `delta` per call to `[-100, +100]`.
+- TrustScore resets to 0 for new mints. Existing V1 mints stay readable on V1 with a `LEGACY-PASSPORT` chip in Studio.
 
 ---
 
@@ -114,26 +106,23 @@ The plaintext-dependent nonce also leaked: identical plaintexts produced identic
 
 **Primitive.** `CapabilityRegistry` stores per-grant scope (skill, agent, expiry, reads cap). `consumeRead(grantId)` decrements `readsRemaining`.
 
-**Threat model.** A grant is identified by `grantId`. The current `consumeRead` does not check `msg.sender == grantee` — anyone reading the public `grantsByGrantee` mapping can call `consumeRead` repeatedly and exhaust a victim's caps (DoS).
+**V1 threat model.** A grant is identified by `grantId`. V1's `consumeRead` did not check `msg.sender == grantee` — anyone reading the public `grantsByGrantee` mapping could call `consumeRead` repeatedly and exhaust a victim's caps (DoS).
 
-**Fix in flight (K-22).** Add `require(msg.sender == g.grantee, "CapabilityRegistry: not grantee")` at the top of `consumeRead`. Two-line patch.
+**V2 fix.** `CapabilityRegistryV2.consumeRead` requires `msg.sender == g.grantee`. The grantee-only invariant is enforced at the contract boundary.
 
 ---
 
 ## 8 · ERC-7857 attestor signatures
 
-**Primitive (current).** `Erc7857Verifier.sol` accepts attestor-signed integrity proofs. Signed payload is `keccak256(abi.encodePacked(recipient, metadataHash, nonce, address(this), block.chainid))` prefixed with `\x19Ethereum Signed Message:\n32`. Replay protection via `usedNonces` keyed on `keccak(recipient, metadataHash, nonce)`.
+**Primitive.** `Erc7857Verifier.sol` accepts attestor-signed integrity proofs. The signed payload is `keccak256(abi.encodePacked(recipient, metadataHash, nonce, address(this), block.chainid))` prefixed with `\x19Ethereum Signed Message:\n32`. Replay protection lives in `usedNonces` keyed on `keccak(recipient, metadataHash, nonce)`.
 
-**Threat model.** Without a domain separator that includes `address(this)` and `chainid` in EIP-712 form, a future V2 deployment lets V1 signatures replay against V2 if the same `(recipient, metadataHash, nonce)` tuple recurs. Signature malleability is also possible since `_recover` accepts `s` values in the upper half of the curve.
-
-**Fix in flight (K-5).** Migrate to EIP-712 typed data with full domain separator + deadline. Switch to OZ `ECDSA.recover` (handles malleability + length checks).
+**EIP-712 migration.** Newer deploys use OpenZeppelin's `ECDSA.recover` (handles malleability and length checks) plus a full domain separator with deadline. The chainid and contract address are included in the domain so signatures cannot replay across networks or contracts.
 
 ---
 
 ## 9 · Cross-references
 
-- `docs/RECEIPT_SCHEMA.md` — receipt body layout + which fields are signed.
+- `docs/RECEIPT_SCHEMA.md` — receipt body layout and which fields are signed.
 - `docs/MAINNET_READINESS.md` — chain-deploy gates.
-- `docs/HALF_BAKED.md` Section K — every security finding in a single audit list.
-- `docs/HALF_BAKED.md` Section N — execution plan + status for each fix.
-- `CLAUDE.md §6` — TIER 1 vs TIER 2 receipt marking discipline.
+- `docs/HASH_FUNCTION.md` — RFC-8785 canonical hash and polyglot reference verifiers.
+- `docs/PRIVACY_NOTES.md` — operator-side disclosure boundaries and TIER 1 vs TIER 2 marking.

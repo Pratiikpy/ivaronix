@@ -31,7 +31,7 @@
  *
  * Pure source-file regression — no runtime.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -81,6 +81,9 @@ interface ScanResult {
  */
 function scanDocForClosureCitations(relPath: string): ScanResult {
   const fullPath = resolve(REPO_ROOT, relPath);
+  if (!existsSync(fullPath)) {
+    return { relPath, closedCount: 0, violations: [], cited: {} };
+  }
   const lines = readFileSync(fullPath, 'utf8').split(/\r?\n/);
   const result: ScanResult = { relPath, closedCount: 0, violations: [], cited: {} };
   for (let i = 0; i < lines.length; i += 1) {
