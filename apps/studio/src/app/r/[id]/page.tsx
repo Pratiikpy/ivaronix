@@ -385,10 +385,10 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--color-fg)' }}>
-                <strong>The chain anchor below is the proof.</strong> The receipt body lives on 0G Storage at the <code className="mono" style={{ fontSize: 12 }}>storageRoot</code> shown below — a stranger fetches it by hash, computes keccak256, matches it byte-for-byte against the <code className="mono" style={{ fontSize: 12 }}>receiptRoot</code> on chain.
+                <strong>The chain anchor below is the proof.</strong> The receipt body lives on 0G Storage at the <code className="mono" style={{ fontSize: 12 }}>storageRoot</code> shown below — anyone fetches it by hash, computes keccak256, matches it byte-for-byte against the <code className="mono" style={{ fontSize: 12 }}>receiptRoot</code> on chain. No Ivaronix account, no operator gate.
               </p>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--color-muted)' }}>
-                To see the AI&apos;s full reasoning + outputs locally:
+                See the AI&apos;s full reasoning + outputs locally — works on any machine:
               </p>
               <pre style={{ margin: 0, padding: '10px 14px', background: 'var(--color-tonal)', borderRadius: 8, fontSize: 12, fontFamily: 'var(--font-mono)', overflow: 'auto' }}>
 {`IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt show ${onChain.id.toString()}
@@ -1059,7 +1059,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
           <span style={{ fontSize: 12, color: 'var(--color-muted)' }}>
             {hasLocalBody
               ? 'Full body matches on-chain root. Run `ivaronix receipt verify` for a deep TEE-independent check.'
-              : 'Anchored on chain. The body JSON is needed to re-derive the hash + signature locally — request it from the operator or run `ivaronix receipt show` on a machine that has the cache.'}
+              : `Anchored on chain. The body JSON lives on 0G Storage — run \`ivaronix receipt show ${onChain.id.toString()} --network ${getNetwork()}\` to download + re-derive the hash locally. Works on any machine, no Ivaronix account.`}
           </span>
           <ShareButton url={`/r/${onChain.id.toString()}`} text={`Verified Ivaronix receipt: ${headline.slice(0, 80)}`} />
         </div>
