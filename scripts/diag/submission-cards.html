@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Ivaronix submission cards</title>
+<style>
+  :root {
+    --paper:#FAFAF7; --ink:#0A0A0A; --ink-soft:#111111; --ink-mute:#4B4B48;
+    --hair:#E7E6E1; --accent:#0E7C56;
+  }
+  @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;500&display=swap");
+  *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+  html,body { background:var(--paper); color:var(--ink); font-family:"Outfit",sans-serif; }
+  .card {
+    width:1920px; height:1080px; padding:96px 120px;
+    display:flex; flex-direction:column; gap:32px;
+    page-break-after:always;
+  }
+  .brand { font-family:"JetBrains Mono",monospace; font-size:20px; letter-spacing:0.18em;
+           color:var(--ink-mute); text-transform:uppercase; }
+  .chip { display:inline-flex; align-items:center; gap:10px;
+          background:#DCFCE7; color:#14532D; border:1px solid #16A34A;
+          padding:8px 16px; border-radius:999px;
+          font-family:"JetBrains Mono",monospace; font-size:18px; letter-spacing:0.06em; }
+  .dot { width:10px; height:10px; border-radius:50%; background:#16A34A; }
+  h1 { font-family:"Outfit"; font-size:160px; line-height:0.95; font-weight:700;
+       letter-spacing:-0.03em; color:var(--ink-soft); }
+  h1 .ital { font-family:"Instrument Serif"; font-style:italic; font-weight:400; }
+  h2 { font-family:"Outfit"; font-size:96px; line-height:0.98; font-weight:700;
+       letter-spacing:-0.025em; color:var(--ink-soft); }
+  .sub { font-size:40px; color:var(--ink-mute); line-height:1.25; max-width:1300px; }
+  .ladder { display:flex; flex-direction:column; gap:28px; }
+  .ladder div { font-size:36px; }
+  .grid5 { display:grid; grid-template-columns:repeat(5,1fr); gap:32px; }
+  .pill {
+    background:#fff; border:1px solid var(--hair); border-radius:18px;
+    padding:32px 28px; display:flex; flex-direction:column; gap:14px;
+  }
+  .pill .label { font-family:"JetBrains Mono",monospace; font-size:18px;
+                 color:var(--accent); letter-spacing:0.1em; text-transform:uppercase; }
+  .pill .name { font-size:32px; font-weight:600; }
+  .pill .role { font-size:22px; color:var(--ink-mute); line-height:1.25; }
+  .row { display:flex; align-items:center; gap:32px; }
+  .links { display:flex; gap:48px; font-family:"JetBrains Mono",monospace; font-size:28px; }
+  .links span { color:var(--ink-mute); }
+  .links b { font-weight:500; color:var(--ink-soft); }
+  .spacer { flex:1; }
+  .footer { font-family:"JetBrains Mono",monospace; font-size:20px;
+            color:var(--ink-mute); letter-spacing:0.1em; }
+</style>
+</head>
+<body>
+
+<!-- CARD 1 · Intro ============================================== -->
+<section class="card" id="intro">
+  <div class="brand">[ i ]  IVARONIX  ·  V1.0  ·  0G ARISTOTLE MAINNET</div>
+  <div class="row"><span class="chip"><span class="dot"></span>LIVE · 45+ RECEIPTS ON-CHAIN</span></div>
+  <h1>Private AI work.<br/><span class="ital">Public proof.</span></h1>
+  <p class="sub">A deal lawyer reviewing an NDA. A founder reading a vendor contract. They cannot paste it into ChatGPT. Ivaronix runs the review inside a TEE on 0G Compute and ships a chain-anchored receipt anyone can re-verify in 10 seconds.</p>
+  <div class="spacer"></div>
+  <div class="footer">github.com / Pratiikpy / ivaronix    ·    www.ivaronix.xyz</div>
+</section>
+
+<!-- CARD 2 · 0G primitives ===================================== -->
+<section class="card" id="primitives">
+  <div class="brand">§ 02   ·   0G PRIMITIVES IN USE</div>
+  <h2>Every receipt is anchored by five 0G surfaces.</h2>
+  <div class="spacer"></div>
+  <div class="grid5">
+    <div class="pill"><div class="label">0G Compute</div><div class="name">TEE inference</div><div class="role">Specialist legal models run inside an attested enclave. Plaintext never leaves the TEE.</div></div>
+    <div class="pill"><div class="label">0G Storage</div><div class="name">Evidence + Burn</div><div class="role">Encrypted evidence Merkle-rooted to chain. Burn Mode destroys the session key after upload.</div></div>
+    <div class="pill"><div class="label">0G Chain</div><div class="name">Receipt anchor</div><div class="role">ReceiptRegistryV3 stores keccak256 of the canonical receipt body, signed by an on-chain agent.</div></div>
+    <div class="pill"><div class="label">0G Router</div><div class="name">Multi-key billing</div><div class="role">Single-use header rotation across model providers. Failure-mode taxonomy: 402 / auth / 429.</div></div>
+    <div class="pill"><div class="label">0G Agent ID</div><div class="name">ERC-7857 passport</div><div class="role">AgentPassportINFTV2 records trust scores cross-checked against ReceiptRegistry on each write.</div></div>
+  </div>
+  <div class="spacer"></div>
+  <div class="footer">10 contracts deployed on Aristotle  ·  ReceiptRegistryV3  0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297</div>
+</section>
+
+<!-- CARD 2b · CLI verify ======================================== -->
+<section class="card" id="cli">
+  <div class="brand">§ 03   ·   THIRD-PARTY RE-VERIFICATION</div>
+  <h2>Anyone can re-verify, anywhere, in 10 seconds.</h2>
+  <p class="sub">One CLI command runs the five-step verifier from a clean machine against the live 0G Compute provider. No Ivaronix account, no shared secret.</p>
+  <div class="spacer"></div>
+  <div style="background:#0A0A0A;border-radius:18px;padding:48px 52px;color:#FAFAF7;font-family:'JetBrains Mono',monospace;font-size:26px;line-height:1.55;">
+    <div style="color:#9CA3AF;">$ pnpm ivaronix receipt verify 14 --network mainnet --tee-independent</div>
+    <div style="margin-top:18px;">schema                 <span style="color:#34D399;">PASS</span></div>
+    <div>hash                   <span style="color:#34D399;">PASS</span></div>
+    <div>signature              <span style="color:#34D399;">PASS</span></div>
+    <div style="color:#9CA3AF;">                    → CLAIMED</div>
+    <div>chain anchor          <span style="color:#34D399;">PASS</span>  (id=14 · ReceiptRegistryV3)</div>
+    <div style="color:#9CA3AF;">                    → ANCHORED</div>
+    <div>initializing 0G Compute broker...</div>
+    <div>verifying 1 attestation via broker.processResponse...</div>
+    <div>tee:primary           <span style="color:#34D399;">PASS</span>  (provider 0xa48f0128…)</div>
+    <div style="color:#34D399;margin-top:18px;font-weight:700;">                    → FULLY VERIFIED ✓</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="footer">Same five checks reproduce byte-for-byte in TypeScript, Python, and Rust.  29 cross-impl test vectors gate every push.</div>
+</section>
+
+<!-- CARD 3 · Outro ============================================= -->
+<section class="card" id="outro">
+  <div class="brand">[ i ]  IVARONIX</div>
+  <div class="spacer"></div>
+  <h1>Catch the risks.<br/><span class="ital">Keep the receipts.</span></h1>
+  <p class="sub">Every receipt re-verifiable on any machine, in any of three languages, without trusting Ivaronix at all. <br/>Live on 0G Aristotle mainnet today.</p>
+  <div class="spacer"></div>
+  <div class="links">
+    <div><span>Live</span><br/><b>www.ivaronix.xyz</b></div>
+    <div><span>Code</span><br/><b>github.com / Pratiikpy / ivaronix</b></div>
+    <div><span>Chain</span><br/><b>chainscan.0g.ai / 0xCE35…7297</b></div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -25,12 +25,11 @@ const BASE = process.env.SITE_BASE ?? 'https://www.ivaronix.xyz';
 const RECEIPT_ID = process.env.RECEIPT_ID ?? '14';
 
 const DESKTOP = { width: 1440, height: 900 } as const;
-const MOBILE = { width: 375, height: 812 } as const;
 
 interface Shot {
   name: string;
   url: string;
-  viewport: typeof DESKTOP | typeof MOBILE;
+  viewport: typeof DESKTOP;
   postNav?: (page: Page) => Promise<void>;
 }
 
@@ -64,9 +63,9 @@ const SHOTS: Shot[] = [
     },
   },
   {
-    name: '04-home-mobile',
-    url: `${BASE}/`,
-    viewport: MOBILE,
+    name: '04-onboard',
+    url: `${BASE}/onboard`,
+    viewport: DESKTOP,
     postNav: async (page) => {
       await page.waitForLoadState('networkidle').catch(() => {});
       await page.waitForTimeout(2500);

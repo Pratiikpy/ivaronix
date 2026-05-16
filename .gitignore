@@ -186,3 +186,12 @@ docs/PASS77_*.md
 docs/PLAN_pass*.md
 docs/planning-*.md
 .claude/
+
+# Submission video intermediate artefacts (the final MP4 is tracked at
+# docs/video/ivaronix-submission.mp4; the raw Playwright .webm and the
+# per-segment .mp4 parts are local-only and regenerate from
+# scripts/diag/record-submission-video.ts + ffmpeg.
+docs/video/raw/
+docs/video/parts/
+docs/video/parts.txt
+docs/video/verify/
