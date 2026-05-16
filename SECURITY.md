@@ -105,4 +105,4 @@ of these, the receipt system is not the right tool by itself:
 | Sandbox manifest validation | `apps/studio/src/app/api/skill/save/route.ts` |
 | Read-proxy threat model | `docs/PRIVACY_NOTES.md` |
 | Crypto primitive choices | `docs/CRYPTO_NOTES.md` |
-| TIER 1 / TIER 2 disclosure | `CLAUDE.md` §6 |
+| TIER 1 / TIER 2 disclosure | [README.md](README.md#tier-1--tier-2) · `docs/PRIVACY_NOTES.md` |

@@ -147,3 +147,43 @@ cowork-opinion.md
 # P3 ephemeral profile dirs (one per test run; safe to delete)
 scripts/qa/ui-test-plan/.p3-profile-*
 .env.mainnet
+
+# ─── Internal-only documentation (kept locally for engineering) ──────────────
+# These are operational, sprint-tracking, or design docs that don't belong in
+# the public product surface. README/SECURITY/CONTRIBUTING/CHANGELOG/LICENSE
+# + technical specs under docs/ that judges may want are tracked separately.
+CLAUDE.md
+COMPONENTS.md
+HLD.md
+JUDGE_REPORT.md
+PRD.md
+RECEIPTS_SPEC.md
+UI_UX_GUIDE.md
+docs/JUDGE_GUIDE.md
+docs/JUDGE_REPLAY.md
+docs/PITCH.md
+docs/BUILD_COMPLETE_AUDIT.md
+docs/CI_WALLET.md
+docs/EXTRATESTING.md
+docs/FINAL_BUILD_TEST_PLAN.md
+docs/HALF_BAKED.md
+docs/LOOP_DIRECTIVE.md
+docs/MAINNET_PERFECT_PLAN.md
+docs/MAINNET_PROMOTION_PLAN.md
+docs/MULTI_WALLET_RULES.md
+docs/PHASE_B_DISCLOSURES.md
+docs/PRODUCT_FLOW.md
+docs/QA_FULL_PRODUCT_REPORT.md
+docs/QA_LOOP_BRIEF.md
+docs/QA_MISSION.md
+docs/QUALITY.md
+docs/TESTNET_BUILD_PUNCH_LIST.md
+docs/TOOL_LOOP_RUNTIME_EXTENSION.md
+docs/UI_BEST_VERSION_AUDIT.md
+docs/UI_HALF_BAKED_AUDIT.md
+docs/UI_REAL_USER_TEST_PLAN.md
+docs/USER_TODO.md
+docs/PASS77_*.md
+docs/PLAN_pass*.md
+docs/planning-*.md
+.claude/

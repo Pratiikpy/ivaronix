@@ -50,7 +50,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
 
-const TARGET_DOCS = [
+const TARGET_DOCS_CANDIDATES = [
   'README.md',
   'docs/JUDGE_GUIDE.md',
   'docs/PITCH.md',
@@ -59,6 +59,10 @@ const TARGET_DOCS = [
   'docs/USER_TODO.md',
   'CHANGELOG.md',
 ];
+// Skip docs that aren't in the tree — internal MDs may be gitignored
+// on a contributor's checkout. The gate still fires on every public
+// render-target that exists.
+const TARGET_DOCS = TARGET_DOCS_CANDIDATES.filter((p) => existsSync(resolve(REPO_ROOT, p)));
 
 const REPO_TOP_DIRS = ['docs', 'apps', 'packages', 'contracts', 'scripts', 'brand', '.github', 'tests', '_archive'];
 

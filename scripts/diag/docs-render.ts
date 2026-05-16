@@ -28,7 +28,7 @@
  * stale stats before they ship.
  */
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -38,13 +38,19 @@ const NUMBERS_PATH = resolve(REPO_ROOT, 'docs', 'numbers.json');
 const DEPLOYMENTS_PATH = resolve(REPO_ROOT, 'contracts', 'deployments', 'testnet.json');
 const MAINNET_DEPLOYMENTS_PATH = resolve(REPO_ROOT, 'contracts', 'deployments', 'mainnet.json');
 
-/** Markdown docs that consume `<!-- numbers:auto:KEY -->` markers. */
-const TARGET_DOCS = [
+/**
+ * Markdown docs that consume `<!-- numbers:auto:KEY -->` markers.
+ * Filtered to docs that exist in the tree — internal MDs may be
+ * gitignored on a contributor's checkout and skipping them keeps the
+ * render pass idempotent rather than crashing on a missing target.
+ */
+const TARGET_DOCS_CANDIDATES = [
   'README.md',
   'docs/PITCH.md',
   'docs/JUDGE_GUIDE.md',
   'docs/MAINNET_READINESS.md',
 ];
+const TARGET_DOCS = TARGET_DOCS_CANDIDATES.filter((p) => existsSync(resolve(REPO_ROOT, p)));
 
 const STALENESS_HOURS = 24;
 

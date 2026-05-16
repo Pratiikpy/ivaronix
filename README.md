@@ -12,7 +12,7 @@ Every AI review leaves a signed, chain-anchored receipt — independently re-ver
 [![Receipts](https://img.shields.io/badge/Receipts_anchored-1%2C778+-16a34a?style=flat-square)](docs/numbers.json)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-[**Live site**](https://www.ivaronix.xyz) · [Reviewer replay](#reviewer-replay-path) · [Whitepaper (PDF)](Ivaronix_Whitepaper.pdf) · [Pitch deck (PDF)](Ivaronix_Pitch_Deck.pdf) · [Docs](#documentation)
+[**Live site**](https://www.ivaronix.xyz) · [Reviewer replay](#reviewer-replay-path) · [Whitepaper (PDF)](Ivaronix_Whitepaper.pdf) · [Pitch deck (PDF)](Ivaronix_Pitch_Deck.pdf)
 
 </div>
 
@@ -26,13 +26,13 @@ The receipt is the product. The model is interchangeable. The chain is the sourc
 
 ```mermaid
 flowchart LR
-  D[Document<br/>or task] --> C[0G Compute<br/>TEE-attested]
-  C --> S[Signed receipt<br/>RFC-8785 + EIP-712]
-  S --> A[0G Chain anchor<br/>ReceiptRegistryV3]
-  A --> P[Public proof URL<br/>/r/&lt;id&gt;]
-  P --> V[Anyone re-verifies<br/>schema + hash + sig + chain + TEE]
-  classDef green fill:#dcfce7,stroke:#16a34a,color:#14532d;
-  classDef ink fill:#0a0a0a,stroke:#000,color:#fafaf7;
+  D["Document<br/>or task"] --> C["0G Compute<br/>TEE-attested"]
+  C --> S["Signed receipt<br/>RFC-8785 + EIP-712"]
+  S --> A["0G Chain anchor<br/>ReceiptRegistryV3"]
+  A --> P["Public proof URL"]
+  P --> V["Anyone re-verifies<br/>schema + hash + sig + chain + TEE"]
+  classDef green fill:#dcfce7,stroke:#16a34a,color:#14532d
+  classDef ink fill:#0a0a0a,stroke:#000,color:#fafaf7
   class D,P green
   class C,S,A,V ink
 ```
@@ -70,8 +70,6 @@ That is the load-bearing claim of the product — a stranger, on a different mac
 | Five-step verifier in action | `pnpm ivaronix receipt verify 74 --tee-independent` |
 | Same flow against mainnet | `pnpm ivaronix receipt verify 21 --network mainnet --tee-independent` |
 | Live product surface | <https://www.ivaronix.xyz> |
-| Five-minute reviewer path | [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) |
-| Three-page non-technical pitch | [docs/PITCH.md](docs/PITCH.md) |
 | Technical whitepaper (PDF) | [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) |
 | Pitch deck (PDF) | [Ivaronix_Pitch_Deck.pdf](Ivaronix_Pitch_Deck.pdf) |
 | Receipt registry on chainscan | [`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297) |
@@ -96,47 +94,59 @@ Ivaronix makes the audit log a public good. The receipt is signed by an on-chain
 
 ```mermaid
 flowchart TB
-  subgraph Surface
-    UI[Studio · Next.js 15]
-    CLI[CLI · ivaronix&#40;1&#41;]
-    MCP[MCP server]
+  subgraph Surface["Surface"]
+    UI["Studio · Next.js 15"]
+    CLI["CLI · ivaronix"]
+    MCP["MCP server"]
   end
 
   subgraph Runtime["Ivaronix runtime"]
-    O[Skill manifest loader]
-    K[Consensus orchestrator<br/>4 tiers · 6 roles]
-    B[Receipt builder<br/>RFC-8785 + Zod]
+    O["Skill manifest loader"]
+    K["Consensus orchestrator<br/>4 tiers · 6 roles"]
+    B["Receipt builder<br/>RFC-8785 + Zod"]
   end
 
   subgraph OG["0G primitives"]
-    R[0G Router<br/>key rotation · billing]
-    C[0G Compute<br/>TEE-attested inference]
-    St[0G Storage<br/>evidence + ciphertext]
+    R["0G Router<br/>key rotation · billing"]
+    Cp["0G Compute<br/>TEE-attested inference"]
+    St["0G Storage<br/>evidence + ciphertext"]
   end
 
   subgraph Chain["0G Chain · 8 contracts"]
-    RR[ReceiptRegistryV3]
-    AP[AgentPassportINFTV2<br/>ERC-7857]
-    CR[CapabilityRegistryV2]
-    MA[MemoryAccessLogV2]
-    SR[SkillRegistryV2]
-    SP[SkillPricing]
-    SRP[SkillRunPayment]
-    SE[SubscriptionEscrowV2]
+    RR["ReceiptRegistryV3"]
+    AP["AgentPassportINFTV2<br/>ERC-7857"]
+    CR["CapabilityRegistryV2"]
+    MA["MemoryAccessLogV2"]
+    SR["SkillRegistryV2"]
+    SP["SkillPricing"]
+    SRP["SkillRunPayment"]
+    SE["SubscriptionEscrowV2"]
   end
 
-  Proof[/r/&lt;id&gt; · public proof page]
+  Proof["Public proof page"]
 
-  UI & CLI & MCP --> O --> K --> B
-  K --> R --> C
+  UI --> O
+  CLI --> O
+  MCP --> O
+  O --> K
+  K --> B
+  K --> R
+  R --> Cp
   B --> St
   B --> RR
-  RR & AP & CR & MA & SR & SP & SRP & SE --> Proof
+  RR --> Proof
+  AP --> Proof
+  CR --> Proof
+  MA --> Proof
+  SR --> Proof
+  SP --> Proof
+  SRP --> Proof
+  SE --> Proof
 ```
 
 The five-step verification chain — `schema → hash → signature → chain anchor → TEE re-attest` — is the load-bearing claim of the whole product. Step 5 (`broker.processResponse` against the live 0G Compute provider) is what makes the receipt verifiable to a third party weeks after the original inference.
 
-Full architecture in [HLD.md](HLD.md). Receipt schema reference in [RECEIPTS_SPEC.md](RECEIPTS_SPEC.md). Canonical-hash spec in [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md).
+Canonical-hash spec in [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md). Receipt schema reference in [docs/RECEIPT_SCHEMA.md](docs/RECEIPT_SCHEMA.md).
 
 ---
 
@@ -438,22 +448,20 @@ Ten sub-commands total: `remember` · `recall` · `forget` · `grant` · `revoke
 
 | Doc | Purpose |
 |---|---|
-| [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md) | Five-minute reviewer path |
-| [docs/PITCH.md](docs/PITCH.md) | Three-page non-technical pitch |
-| [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) | Technical whitepaper (PDF) |
-| [Ivaronix_Pitch_Deck.pdf](Ivaronix_Pitch_Deck.pdf) | Pitch deck (PDF) |
-| [HLD.md](HLD.md) | High-level architecture |
-| [PRD.md](PRD.md) | Product requirements |
-| [RECEIPTS_SPEC.md](RECEIPTS_SPEC.md) | Canonical receipt JSON schema |
-| [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) | RFC-8785 canonical hash spec |
-| [docs/MAINNET_READINESS.md](docs/MAINNET_READINESS.md) | Mainnet-readiness checklist |
+| [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) | Technical whitepaper |
+| [Ivaronix_Pitch_Deck.pdf](Ivaronix_Pitch_Deck.pdf) | Pitch deck |
+| [docs/HASH_FUNCTION.md](docs/HASH_FUNCTION.md) | RFC-8785 canonical hash specification |
 | [docs/RECEIPT_SCHEMA.md](docs/RECEIPT_SCHEMA.md) | Receipt field-level reference |
+| [docs/MAINNET_READINESS.md](docs/MAINNET_READINESS.md) | Mainnet readiness checklist |
 | [docs/CRYPTO_NOTES.md](docs/CRYPTO_NOTES.md) | Threat models for every primitive |
-| [docs/AAT_MAPPING.md](docs/AAT_MAPPING.md) | IETF Agent Audit Trail draft mapping |
 | [docs/PRIVACY_NOTES.md](docs/PRIVACY_NOTES.md) | Operator-as-proxy threat model |
-| [docs/PHASE_B_DISCLOSURES.md](docs/PHASE_B_DISCLOSURES.md) | Honest disclosure of what's shipped vs queued |
-| [SECURITY.md](SECURITY.md) | What the receipt system defends · what it does not |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Pre-PR command list, commit conventions |
+| [docs/SOLIDITY_CHOICES.md](docs/SOLIDITY_CHOICES.md) | Contract design choices and trade-offs |
+| [docs/AAT_MAPPING.md](docs/AAT_MAPPING.md) | IETF Agent Audit Trail draft mapping |
+| [docs/MARKETPLACE_DESIGN.md](docs/MARKETPLACE_DESIGN.md) | Skill marketplace design |
+| [docs/SKILL_PUBLISHING.md](docs/SKILL_PUBLISHING.md) | How to publish a skill |
+| [docs/0G_DA_INTEGRATION.md](docs/0G_DA_INTEGRATION.md) | 0G Data Availability integration roadmap |
+| [SECURITY.md](SECURITY.md) | Security policy and disclosure |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 | [BRAND.md](BRAND.md) | Brand-asset license (separate from MIT code grant) |
 | [CHANGELOG.md](CHANGELOG.md) | Release notes |
 
