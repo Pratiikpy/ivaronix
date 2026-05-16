@@ -45,7 +45,7 @@ const SECTIONS: DocSection[] = [
       {
         label: 'Verify a receipt anywhere',
         code:
-          '$ pnpm ivaronix receipt verify 1004 --tee-independent\n' +
+          `$ pnpm ivaronix receipt verify ${SAMPLE_ID} --network mainnet --tee-independent\n` +
           '→ FULLY VERIFIED ✓  schema · hash · signature · anchor · TEE',
       },
     ],
@@ -104,7 +104,7 @@ const SECTIONS: DocSection[] = [
       {
         label: 'Inside the chat',
         code:
-          '> @ivaronix verify 1004\n' +
+          `> @ivaronix verify ${SAMPLE_ID}\n` +
           '→ FULLY VERIFIED · schema PASS · hash PASS · signature PASS · anchor 0x… · TEE re-attestation PASS',
       },
     ],

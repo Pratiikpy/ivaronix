@@ -12,7 +12,7 @@ import {
   receiptTypeLabel,
   type UnifiedReceipt,
 } from '@/lib/chain';
-import { getSampleReceiptHref, getSampleEmbedHref, getSampleEmbedIframeSrc } from '@/lib/sample-receipt';
+import { getSampleReceiptHref, getSampleEmbedHref, getSampleEmbedIframeSrc, getSampleReceiptId } from '@/lib/sample-receipt';
 import { loadAllSkills } from '@/lib/skills';
 import { getStudioDeployments } from '@/lib/deployments-bundle';
 
@@ -266,7 +266,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               <div style={{ color: 'var(--color-muted)', fontSize: 11, letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 6 }}>
                 Independent re-verify · runs on any machine
               </div>
-              <code>$ pnpm ivaronix receipt verify 1004 --tee-independent</code>
+              <code>$ pnpm ivaronix receipt verify {getSampleReceiptId()} --network {network} --tee-independent</code>
               <br />
               <code style={{ color: '#166534', fontWeight: 600 }}>→ FULLY VERIFIED ✓</code>{' '}
               <code style={{ color: 'var(--color-muted)' }}>schema · hash · signature · anchor · payment · TEE</code>
