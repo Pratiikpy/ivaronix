@@ -1,0 +1,194 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRR8EP8QHSE5BRFD8GG9X9FR",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:9acd9c7006081406239cd716170251a375dc97e08f307c79b3eb00de40abc18f",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "red-team-critic",
+        "judge"
+      ],
+      "convergenceScore": 0.34,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.34). Treat the final judgment with caution.",
+      "disagreementSummary": "evidence-checker: \"1. Clause locking Customer into full payments: \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Custom\"\nred-team-critic: \"1. Vendor permanently owns and monetizes Customer’s proprietary data without restriction, enabling competitive disadvantage or regulatory exposure — Section 5.1\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xce1017ee46172bf0bb134e7751f0ba6c107620f137947fe6788e5b30f106af0c",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "636126ac-9b0f-4e63-8814-737b7c8585ff",
+          "content": "1. The uptime guarantee appears robust but is only a non-binding effort standard that excludes all unannounced maintenance from the calculation.\nEvidence: \"Vendor will use commercially reasonable efforts to maintain 99.5% monthly uptime.\" and \"Vendor may take the Service offline for scheduled or emergency maintenance without notice and such time does not count against the uptime target.\"\n2. The indemnification clause appears to be standard risk allocation but actually forces the Customer to absorb every legal claim against the Vendor, including those caused by the Vendor's own negligence.\nEvidence: \"Customer shall indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses... arising from Customer's use of the Service, regardless of cause.\"\n3. The data usage provisions sound like standard anonymization practices but actually grant a perpetual, irrevocable license to exploit raw Customer data for any purpose, including model training.\nEvidence: \"Customer grants Vendor a perpetual, irrevocable, worldwide, royalty-free license to use, modify, distribute, and create derivative works of Customer data for any purpose Vendor deems appropriate, including training of Vendor's machine-learning models.\"\n4. The amendment process resembles a standard electronic update notification but unilaterally allows the Vendor to rewrite the entire contract at any time with mere continued use constituting legal acceptance.\nEvidence: \"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n5. The arbitration provision appears to be a standard alternative-to-litigation mechanism but actually locks disputes into a venue and provider chosen exclusively by the Vendor.\nEvidence: \"Any dispute arising under this Agreement shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider, in Delaware...\"\n6. The fee structure seems predictable with annual billing but secretly traps the Customer with mandatory 12% price hikes per renewal and absolute non-refundability that persists through early termination.\nEvidence: \"Vendor may unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\" and \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n7. The intellectual property terms look like standard platform ownership language but actually strip the Customer of rights to any modifications or enhancements they suggest or co-develop.\nEvidence: \"All improvements, modifications, and derivative works of the Service, including those suggested or co-developed by Customer, remain the sole property of Vendor.\"\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xac09562a506abd50ee2001ea041f174a3f3a9b458e6822425c6d483329c2c566",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "b1a03052-f252-480d-b822-c5468853d91d",
+          "content": "1. Non-refundable fees appear standard but trap Customer financially even if service is suspended or business needs change.\n\"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n2. Unilateral price increases appear routine but remove Customer bargaining power at renewal.\n\"Vendor may unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\"\n3. Broad indemnification appears standard for commercial agreements but forces Customer to cover Vendor's own faults.\n\"Customer shall indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses... regardless of cause.\"\n4. Data usage clauses appear focused on analytics but grant Vendor permanent, unrestricted rights to Customer data and derivatives.\n\"Customer grants Vendor a perpetual, irrevocable, worldwide, royalty-free license to use, modify, distribute, and create derivative works of Customer data for any purpose Vendor deems appropriate...\"\n5. Intellectual property terms appear collaborative but strip Customer of ownership over its own feedback and customizations.\n\"All improvements, modifications, and derivative works of the Service, including those suggested or co-developed by Customer, remain the sole property of Vendor.\"\n6. Service level commitments appear protective but are weakened by vague standards, minimal remedies, and exempt maintenance windows.\n\"Vendor will use commercially reasonable efforts... Customer's sole remedy for any uptime failure is a service credit of up to 5%... maintenance without notice and such time does not count against the uptime target.\"\n7. Amendment clause appears convenient but allows Vendor to rewrite terms unilaterally with no opt-out mechanism.\n\"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n8. Arbitration provisions appear standard for dispute resolution but stack the process against Customer through unilateral provider selection and venue.\n\"Any dispute arising under this Agreement shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider, in Delaware...\"\n9. Assignment clause appears neutral but grants Vendor unrestricted transfer rights while restricting Customer.\n\"Customer may not assign this Agreement without Vendor's prior written consent. Vendor may assign at any time without notice.\"\n10. The document omits standard cure periods for payment defaults and lacks termination-for-cause triggers, leaving Customer without formal escalation paths.\nDocument does not specify cure periods or termination for cause triggers.\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0x06612f4a26f6ce98d3a9105dea77c55f903b58ce33a9db853e115547da5cc78c",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "64bf9a73-7b3c-4b44-974e-b0107a8f7574",
+          "content": "1. Standard-looking payment terms that actually lock in full revenue even during total service failure. Category: Financial. Impact: High. Evidence: \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n2. Routine indemnity language that forces Customer to cover Vendor negligence or IP infringement. Category: Legal. Impact: High. Evidence: \"Customer shall indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses (including attorneys' fees) arising from Customer's use of the Service, regardless of cause.\"\n3. Common SaaS data usage clause that actually grants perpetual rights to sell or repurpose proprietary Customer information. Category: Reputational. Impact: High. Evidence: \"Customer grants Vendor a perpetual, irrevocable, worldwide, royalty-free license to use, modify, distribute, and create derivative works of Customer data for any purpose Vendor deems appropriate, including training of Vendor's machine-learning models.\"\n4. Standard IP ownership provision that captures Customer's own feature requests and business logic. Category: Operational. Impact: High. Evidence: \"All improvements, modifications, and derivative works of the Service, including those suggested or co-developed by Customer, remain the sole property of Vendor.\"\n5. Typical electronic amendment clause that permits unilateral changes to any contract term without direct notice. Category: Legal. Impact: High. Evidence: \"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n6. Routine maintenance window clause that allows zero-notice outages while still counting toward uptime targets. Category: Operational. Impact: Medium. Evidence: \"Vendor may take the Service offline for scheduled or emergency maintenance without notice and such time does not count against the uptime target.\"\n7. Standard arbitration selection that gives Vendor control over choosing the dispute resolution body. Category: Legal. Impact: Medium. Evidence: \"Any dispute arising under this Agreement shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider, in Delaware, conducted in English.\"\n8. Common assignment clause that permits silent transfer of the account to unvetted third parties. Category: Reputational. Impact: Medium. Evidence: \"Customer may not assign this Agreement without Vendor's prior written consent. Vendor may assign at any time without notice.\"\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0xfd307ce5bc195a88bb32748f077fd76d720a4d758966948e8395c131e70c6eac",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "396bbf46-a151-4ac0-bbeb-da961066b02b",
+          "content": "**Verified facts**\n1. Clause locking Customer into full payments: \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n2. Data license overriding confidentiality: \"Customer grants Vendor a perpetual, irrevocable, worldwide, royalty-free license to use... Customer data for any purpose... including training of Vendor's machine-learning models.\"\n3. Unilateral contract changes: \"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n4. Inadequate uptime remedy: \"Customer's sole remedy for any uptime failure is a service credit of up to 5% of the prior month's fees, applied to a future invoice.\"\n5. Asymmetric liability: \"Customer shall indemnify... regardless of cause,\" while \"Vendor's total liability... shall not exceed three (3) months of fees\" and excludes consequential damages.\n6. One-sided dispute process: \"Any dispute... shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider, in Delaware... Customer waives any right to a jury trial.\"\n\n**Inferred**\n1. The \"commercially reasonable efforts\" uptime target (Section 8) is commonly assumed to guarantee reliability, but the text legally allows wide discretion and uncounted maintenance windows.\n2. The 30-day notice for price hikes (Section 2) appears fair, but readers may incorrectly assume it applies to the Initial Term rather than only \"Renewal Term.\"\n3. The three-year confidentiality period (Section 6) suggests robust data protection, leading readers to assume standard compliance frameworks (like GDPR/CCPA) are included, though the text never mentions them.\n4. Mandatory arbitration (Section 7) seems neutral on its face, prompting assumptions about standardized procedures or cost-splitting, which the document does not provide.\n\n**Unsupported**\n1. The document contains no termination for cause or material breach provisions, so claiming the Customer can exit early for performance failures is unsupported.\n2. There is no mention of data security standards, breach notification timelines, or audit rights, so asserting these protections exist is not grounded in the text.\n3. The contract does not specify arbitration costs, governing rules, or venue logistics, so claims about fair fee allocation or specific arbitration bodies are invented.\n4. No cure period or right to remedy breaches is stated, so assuming the Vendor must be given time to fix issues before penalties trigger is unsupported.\n5. The document omits force majeure, disaster recovery, or data backup clauses, so inferring standard operational continuity protections is incorrect.\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "red-team-critic",
+          "attestationHash": "0x8e043bfe21c3d16acf67a55d0f0cd152fb1396833f69d719aa6b1725346dba54",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "677a0e80-8383-40e6-a62c-e244ce36446a",
+          "content": "1. Vendor permanently owns and monetizes Customer’s proprietary data without restriction, enabling competitive disadvantage or regulatory exposure — Section 5.1 (\"perpetual, irrevocable, worldwide, royalty-free license to use, modify, distribute, and create derivative works of Customer data for any purpose...\") — Vendor benefits\n2. Customer cannot exit the contract or recover funds even if the platform fails or their business model changes — Sections 2.2, 3.2, & 3.3 (\"All fees are non-refundable under any circumstance, including early termination...\" / \"No termination for convenience.\") — Vendor benefits\n3. Customer absorbs 100% of legal defense costs and damages for third-party claims, even when Vendor’s software directly caused the breach — Section 4.2 (\"Customer shall indemnify, defend, and hold Vendor harmless against all claims... regardless of cause.\") — Vendor benefits\n4. Vendor can disconnect the platform indefinitely without downtime penalties, effectively suspending service while continuing to bill — Section 8.3 (\"Vendor may take the Service offline for scheduled or emergency maintenance without notice and such time does not count against the uptime target.\") — Vendor benefits\n5. Customer is bound to silent contract revisions the moment they access the service after a new version is posted — Section 9.3 (\"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\") — Vendor benefits\n6. Customer cannot organize collective litigation to challenge systemic breaches and must fund individual arbitration in a vendor-selected venue — Sections 7.2 & 7.3 (\"mandatory arbitration administered by Vendor's chosen arbitration provider...\" / \"Customer waives any right to participate in a class action...\") — Vendor benefits\n7. Customer’s internal teams lose ownership of any custom workflows, integrations, or enhancements developed alongside the vendor — Section 5.3 (\"All improvements, modifications, and derivative works of the Service... remain the sole property of Vendor.\") — Vendor benefits\n8. Customer has no contractual cure period or termination trigger for vendor breach, as the only defined remedy is a non-refundable monthly credit — Section 8.2 (\"Customer's sole remedy for any uptime failure is a service credit... Service credits are non-refundable.\") — Vendor benefits\n9. Vendor can unilaterally raise prices by 12% with only 30 days' notice right before renewal, exploiting the 90-day cancellation window to trap customers — Sections 2.3 & 3.2 (\"Vendor may unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\" / \"written notice of non-renewal at least 90 days before...\") — Vendor benefits\n10. The document explicitly omits any data deletion or return obligation upon termination, leaving Customer with no contractual mechanism to wipe vendor-held copies — Document does not contain a data return/deletion clause. — Vendor benefits\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0xa1f2a0b519e728bddb25cd19adc1aee386299277caa3e31feb7788d9612fe85c",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "fee7cbc2-7834-4fc0-9a24-e804d337c220",
+          "content": "1. Non-refundable fees trap payments even if service is suspended or business needs change.\nEvidence: \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n2. Unilateral price increases remove renewal leverage and compound near cancellation deadlines.\nEvidence: \"Vendor may unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\"\n3. One-sided indemnification forces the Customer to absorb legal costs for the Vendor's own faults.\nEvidence: \"Customer shall indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses... regardless of cause.\"\n4. Perpetual data license enables Vendor to monetize raw Customer information and train AI models.\nEvidence: \"Customer grants Vendor a perpetual, irrevocable, worldwide, royalty-free license to use, modify, distribute, and create derivative works of Customer data for any purpose... including training of Vendor's machine-learning models.\"\n5. IP terms strip ownership of any improvements or feedback the Customer contributes.\nEvidence: \"All improvements, modifications, and derivative works of the Service, including those suggested or co-developed by Customer, remain the sole property of Vendor.\"\n6. Uptime targets are illusory due to vague standards and exempt maintenance windows.\nEvidence: \"Vendor will use commercially reasonable efforts to maintain 99.5% monthly uptime... Vendor may take the Service offline for scheduled or emergency maintenance without notice and such time does not count against the uptime target.\"\n7. Downtime remedies are capped, non-refundable, and applied only as future credits.\nEvidence: \"Customer's sole remedy for any uptime failure is a service credit of up to 5% of the prior month's fees, applied to a future invoice. Service credits are non-refundable.\"\n8. Contract changes bind the Customer through passive acceptance without direct notice.\nEvidence: \"Vendor may amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n9. Arbitration provisions stack dispute resolution against the Customer through venue and provider control.\nEvidence: \"Any dispute arising under this Agreement shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider, in Delaware... Customer waives any right to a jury trial.\"\n10. Missing standard protections leave no contractual path to cure breaches, exit for cause, or secure data deletion.\nEvidence: Document does not specify cure periods, termination-for-cause triggers, data return/deletion obligations, or security breach notification timelines.\n\n**Where Reviewers AGREE**\nAll five reviewers converge on identical high-risk provisions. Every reviewer flagged Sections 2 (non-refundable fees/price escalation), 4 (unlimited customer indemnification vs. capped vendor liability), 5 (perpetual data license + IP forfeiture), 7 (vendor-controlled arbitration), 8 (weak service levels + non-refundable credits), and 9 (unilateral website posting for amendments). There is universal consensus that the contract shifts nearly all financial, operational, and legal risk to the Customer while offering zero exit mechanisms or performance remedies.\n\n**Where Reviewers DISAGREE**\nNo substantive disagreements exist between the reviewers. The only conflict appears as an internal inconsistency within a single reviewer's output: the RISK-REVIEWER labeled maintenance outages as \"still counting toward uptime targets\" while simultaneously quoting the exact contract language that states \"such time does not count against the uptime target.\" The contract text itself is unambiguous; the reviewer's label was erroneous. All other reviewers correctly identified that maintenance windows are excluded from uptime calculations.\n\n**Risk Level: high**\n\n**Action:** Negotiate deletion of the unilateral amendment clause and replace it with written notice + explicit consent. Require mutual indemnification with a liability cap equal to 12–24 months of fees. Insert a 30-day cure period and termination-for-cause trigger for material breach or prolonged downtime. Restrict data licensing to direct service delivery only, and add explicit data deletion/return obligations upon termination.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778930637079",
+    "zgResKey": "fee7cbc2-7834-4fc0-9a24-e804d337c220",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 11759,
+    "outputTokens": 28688,
+    "inputCostNeuron": "587950000000000",
+    "outputCostNeuron": "2868800000000000",
+    "totalCostNeuron": "3456750000000000",
+    "totalCostOg": "0.0034567500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "2644413750000000",
+      "treasuryNeuron": "812336250000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xf46f6436cfe22114ea9c33ae68fa09436be46507f22f3b2b9c41b3276434f9b4",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:344f790b300674fc3fc3f518c5ceab4038c82b339a6aecce1360894c0a1cc2e0"
+    },
+    "receiptRoot": "0xd2a704ada9543932a0a3c9592655f87408abd4028406213e0551b57b997c383a"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778930523511,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "anchorTxHash": "0x3830eca7d5b61993a85189cb7f2ab25bd470d481d724f2550ddba9b8c19a497b",
+    "anchorBlockNumber": 33415668,
+    "anchorTimestamp": 1778930652
+  },
+  "outputs": {
+    "outputHash": "sha256:d66977865080ad313e786d9b4a03096f507a7190667f4c946656a01494ac0c72",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Non-refundable fees trap payments even if service is suspended or business needs change. Evidence: \"All fees are non-refundable under any circumstance, including early termination, suspension, or c",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": false,
+      "error": "Unterminated fractional number in JSON at position 2 (line 1 column 3)",
+      "attempted": [],
+      "rawBytes": 4330
+    }
+  },
+  "createdAt": 1778930637080,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xaf74a544ccc422e4084da6a8deb22a8014e4eb4ed75a1409da3646f9e9cd9cdc4945a225cbd2eff36d2463f8c8bbf9bdd10a31150fbd887d02282c8d814dda621c"
+  }
+}

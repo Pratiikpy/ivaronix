@@ -99,6 +99,14 @@ function findAnchoredDirs(): string[] {
       const candidate = resolve(workspaceRoot, sib, '.ivaronix', 'receipts', 'anchored');
       if (existsSync(candidate) && !seen.has(candidate)) { out.push(candidate); seen.add(candidate); }
     }
+    // Tracked fixture bodies for the README's headline command. Without
+    // these, a stranger cloning the repo (no IVARONIX_SIGNER_KEY) would
+    // hit "0G Storage indexer requires a signer for reads" the first
+    // time they run `pnpm ivaronix receipt verify <id>`. Bundling a
+    // handful of canonical receipt bodies makes the README's "anyone
+    // can verify, no account" claim literally work on a fresh clone.
+    const fixtureDir = resolve(workspaceRoot, 'apps', 'cli', 'src', 'data', 'fixtures', 'receipts');
+    if (existsSync(fixtureDir) && !seen.has(fixtureDir)) { out.push(fixtureDir); seen.add(fixtureDir); }
   }
   return out;
 }

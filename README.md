@@ -61,16 +61,25 @@ Three shell commands, two minutes, no wallet, no account.
 git clone https://github.com/Pratiikpy/ivaronix.git && cd ivaronix
 pnpm install
 
-# 2 · Verify a receipt anchored from another machine, against the live chain
-pnpm ivaronix receipt verify 1644
+# 2 · Verify a real mainnet receipt against the live chain — no account required
+pnpm ivaronix receipt verify 66 --network mainnet
 # →  ANCHORED ✓   (schema · hash · signature · chain anchor)
+#    The receipt body for ids 66, 68, 70 is bundled in
+#    apps/cli/src/data/fixtures/receipts/ so this works on a fresh clone
+#    without 0G Storage credentials.
 
-# 3 · Add the full TEE re-attestation against the live 0G Compute provider
-pnpm ivaronix receipt verify 74 --tee-independent
-# →  FULLY VERIFIED ✓   (5 of 5: schema · hash · signature · chain · TEE)
+# 3 · Add full TEE re-attestation against the live 0G Compute provider
+#    (this step needs a free testnet wallet — the 0G Compute broker
+#    authenticates every processResponse call against a signer key)
+export IVARONIX_SIGNER_KEY=0x...   # any wallet works; faucet at https://faucet.0g.ai
+pnpm ivaronix receipt verify 68 --network mainnet --tee-independent
+# →  FULLY VERIFIED ✓   (5 of 5: schema · hash · signature · chain · 5 TEE attestations)
+
+# Or skip the wallet and try the TEE re-attestation on the high-stakes
+# receipt 68 (5 roles) — same result, more roles independently re-verified.
 ```
 
-That is the load-bearing claim of the product — a stranger, on a different machine, with no credentials, re-runs the five checks and gets the same answer the original signer would.
+That is the load-bearing claim of the product — a stranger, on a different machine, can independently re-run the chain-side checks (steps 2 above, no credentials) and (with a free testnet wallet for broker auth) the full TEE attestation (step 3).
 
 ---
 
@@ -80,8 +89,9 @@ That is the load-bearing claim of the product — a stranger, on a different mac
 
 | Want to see | Open this |
 |---|---|
-| Five-step verifier in action | `pnpm ivaronix receipt verify 74 --tee-independent` |
-| Same flow against mainnet | `pnpm ivaronix receipt verify 21 --network mainnet --tee-independent` |
+| Chain-side verifier on a bundled mainnet receipt (no credentials) | `pnpm ivaronix receipt verify 66 --network mainnet` |
+| Full 5-check verifier with TEE re-attestation (free testnet wallet) | `pnpm ivaronix receipt verify 68 --network mainnet --tee-independent` |
+| 6-role audit-tier verifier (6 independent TEE attestations) | `pnpm ivaronix receipt verify 70 --network mainnet --tee-independent` |
 | Live product surface | <https://www.ivaronix.xyz> |
 | Technical whitepaper (PDF) | [Ivaronix_Whitepaper.pdf](Ivaronix_Whitepaper.pdf) |
 | Pitch deck (PDF) | [Ivaronix_Pitch_Deck.pdf](Ivaronix_Pitch_Deck.pdf) |
