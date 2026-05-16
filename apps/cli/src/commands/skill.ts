@@ -128,7 +128,7 @@ skillCommand
 skillCommand
   .command('publish <id>')
   .description('Anchor this skill\'s manifestHash on the SkillRegistry contract')
-  .option('--network <net>', 'testnet | mainnet', 'testnet')
+  .option('--network <net>', 'testnet | mainnet', (process.env.IVARONIX_NETWORK as 'testnet' | 'mainnet') ?? (process.env.OG_NETWORK as 'testnet' | 'mainnet') ?? 'testnet')
   .action(async (id: string, opts: { network: 'testnet' | 'mainnet' }) => {
     const env = loadEnv();
     const skill = findSkill(id, skillSearchDirs());
@@ -205,7 +205,7 @@ skillCommand
 skillCommand
   .command('verify <id>')
   .description('Compare local manifest against the on-chain SkillRegistry record')
-  .option('--network <net>', 'testnet | mainnet', 'testnet')
+  .option('--network <net>', 'testnet | mainnet', (process.env.IVARONIX_NETWORK as 'testnet' | 'mainnet') ?? (process.env.OG_NETWORK as 'testnet' | 'mainnet') ?? 'testnet')
   .action(async (id: string, opts: { network: 'testnet' | 'mainnet' }) => {
     const env = loadEnv();
     const skill = findSkill(id, skillSearchDirs());
