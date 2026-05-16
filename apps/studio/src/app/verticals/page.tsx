@@ -47,7 +47,7 @@ export default async function VerticalsPage() {
         description="Lawyers, in-house counsel, and founders use Ivaronix when AI can't be wrong. Other verticals roll out post-launch — every COMING SOON card on this page is a real roadmap commitment, not a marketing tease."
       >
         <p style={{ fontSize: 14, color: 'var(--color-muted)', maxWidth: 720, lineHeight: 1.6 }}>
-          Each Legal skill below runs on Galileo testnet today, signed by the operator wallet,
+          Each Legal skill below runs on the 0G Network, signed by the operator wallet,
           anchored on <code className="mono">ReceiptRegistryV3</code>, and re-verifiable from any
           machine via <code className="mono">ivaronix receipt verify &lt;id&gt; --tee-independent</code>.
           A judge or counter-party can open any receipt URL and run the same verification.
@@ -57,7 +57,7 @@ export default async function VerticalsPage() {
       <Section
         label="§ 01 · LEGAL · LIVE"
         title="The 5 skills"
-        description={`${legalSkills.length} first-party legal skills · published on SkillRegistryV2 · Qwen 2.5 7B on testnet, larger models on mainnet promotion. Output supports legal review — does not replace licensed counsel.`}
+        description={`${legalSkills.length} first-party legal skills · published on SkillRegistryV2 · Qwen 2.5 7B on testnet · sovereign 0GM-1.0-35B-A3B on mainnet · larger model catalog rolling out incrementally. Output supports legal review — does not replace licensed counsel.`}
       >
         <div
           style={{

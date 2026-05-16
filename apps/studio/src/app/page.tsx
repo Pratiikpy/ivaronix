@@ -691,10 +691,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         >
           {[
             {
-              title: 'Mainnet promotion',
-              status: 'GATED',
-              statusNote: 'operator-funded deploy',
-              body: 'Aristotle (chainId 16661) deploy plan in docs/MAINNET_READINESS.md. Thirteen-of-thirteen readiness checklist green on testnet. Deploy waits on ~0.15 OG funding via CEX bridge.',
+              title: 'Live OG fee settlement',
+              status: 'NEXT',
+              statusNote: 'v1.1 headline',
+              body: 'SkillRunPayment.sol is deployed on both networks; declared 90/10 creator/treasury split is recorded on every receipt body today. Wiring atomic OG transfer into the Studio run flow ships in v1.1.',
             },
             {
               title: '0G DA full pipeline',
@@ -1050,7 +1050,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           FOR BUILDERS
         </div>
         <p style={{ margin: '0 0 24px', fontSize: 15, color: 'var(--color-muted)', maxWidth: 720 }}>
-          Four ways to plug Ivaronix into a workflow. Every snippet runs against the live testnet.
+          Four ways to plug Ivaronix into a workflow. Every snippet runs against the live 0G Network.
         </p>
         <div
           style={{
@@ -1176,9 +1176,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </section>
 
       <Section
-        label="§ 02 · LIVE TESTNET"
+        label="§ 02 · LIVE ON CHAIN"
         title="Real receipts, on chain."
-        description="Every receipt is signed by an agent passport, anchored on 0G Galileo Testnet, and independently verifiable."
+        description="Every receipt is signed by an agent passport, anchored on the 0G Network, and independently verifiable from any machine."
       >
         <div
           style={{

@@ -6,15 +6,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * Privacy page · HALF_BAKED §G Tier A item 7 closure.
- *
- * Voice: terse, technical, blunt per CLAUDE.md §9. No banned words.
+ * Privacy page. Voice: terse, technical, blunt. No banned words.
  * Show concrete env-var names, contract addresses, and storage paths
- * so readers can verify claims against the code.
- *
- * This is a testnet-stage product. The mainnet version will inherit
- * this content and add formal data-subject-request flow for the GDPR
- * jurisdictions; that work is queued in USER_TODO §B-V2.
+ * so readers can verify claims against the code. Applies to both
+ * Galileo testnet and Aristotle mainnet deployments.
  */
 export default function PrivacyPage() {
   return (
@@ -25,7 +20,8 @@ export default function PrivacyPage() {
       </h1>
       <p style={{ fontSize: 17, color: 'var(--color-muted)', marginBottom: 40 }}>
         What Ivaronix stores, where it stores it, and what it cannot see.
-        Effective for the Galileo testnet. Mainnet inherits this contract.
+        Applies to both 0G Galileo testnet (chainId 16602) and Aristotle
+        mainnet (chainId 16661).
       </p>
 
       <h2 style={{ fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 12 }}>What we record</h2>

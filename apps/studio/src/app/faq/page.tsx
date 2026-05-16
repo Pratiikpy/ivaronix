@@ -692,7 +692,7 @@ export default async function FaqPage(): Promise<React.JSX.Element> {
           <NextStepCard
             label="Try it"
             title="Run your own"
-            description="Drop a document, run a skill, anchor a receipt. Galileo testnet, no fixtures."
+            description="Drop a document, run a skill, anchor a receipt. Real network, no fixtures."
             href="/onboard"
           />
         </div>

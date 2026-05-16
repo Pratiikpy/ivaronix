@@ -590,10 +590,10 @@ export default async function LegalPage() {
             maxWidth: 640,
           }}
         >
-          Today this skill runs on Galileo testnet against Qwen 2.5 7B — strong enough to validate
-          the pipeline end-to-end, not strong enough to catch every subtle clause. Mainnet
-          promotion lands the larger model catalog; the receipt structure and verification path
-          stay identical.
+          This skill runs against Qwen 2.5 7B on testnet and the sovereign 0GM-1.0-35B-A3B on
+          mainnet. Both are strong enough to validate the pipeline end-to-end; the larger model
+          catches more subtle clauses. The receipt structure and verification path are identical
+          across both networks.
         </p>
       </Section>
     </>
@@ -837,7 +837,7 @@ const PERSONAS: Array<{
     label: '§ FOR FOUNDERS',
     headline: 'The contract review you can run before the partner-track lawyer bills you.',
     body:
-      "Founders sign more legal documents in their first eighteen months than most people sign in a lifetime — and at exactly the moment when paying $1,200/hour for the right partner-track lawyer is hardest to justify. Ivaronix runs the first pass on the NDA, the vendor MSA, the term sheet, the lease offer, the customer order form. You get a structured findings object with risk levels and concrete asks before you forward the document to your outside counsel. The receipt URL becomes the artifact in your data room — when an investor asks how you reviewed the Series A term sheet, you do not say \"my friend looked at it.\" You hand them a receipt anchored on Galileo testnet, signed by your wallet, with each finding traceable to a specific clause.",
+      "Founders sign more legal documents in their first eighteen months than most people sign in a lifetime, exactly when paying $1,200/hour for the right partner-track lawyer is hardest to justify. Ivaronix runs the first pass on the NDA, the vendor MSA, the term sheet, the lease offer, the customer order form. You get a structured findings object with risk levels and concrete asks before you forward the document to your outside counsel. The receipt URL becomes the artifact in your data room — when an investor asks how you reviewed the Series A term sheet, you do not say \"my friend looked at it.\" You hand them a receipt anchored on chain, signed by your wallet, with each finding traceable to a specific clause.",
   },
 ];
 
@@ -853,9 +853,9 @@ const DONTS: Array<{ head: string; detail: string }> = [
       "PDF receipts are printable and structured for legal review. They are not notarized; we do not yet integrate a notary partner. A receipt is evidence of process, not a notarized affidavit.",
   },
   {
-    head: "legal-citation-verifier is PARTIAL on testnet today.",
+    head: "legal-citation-verifier is PARTIAL.",
     detail:
-      "Design: every cite routes through HTTP to CourtListener + Cornell LII via web_fetch (the external DB is ground truth · the AI never decides existence from training memory · this design survives every model upgrade). Today on Galileo: parsing works (B+) but the Qwen 2.5 7B model does not reliably emit tool_calls, so the runtime cannot enforce the HTTP cross-check yet. The runtime enforcement gate is this skill's mainnet-promotion blocker; we surface it openly per CLAUDE.md §1 rather than ship a hallucination-prone verdict as LIVE. Q9 audit at QA_PROOF_PACK/testnet/ai-quality/legal-citation-verifier.md documents the rating + fix path.",
+      "Design: every cite routes through HTTP to CourtListener and Cornell LII via web_fetch — the external database is ground truth, the AI never decides existence from training memory, and this design survives every model upgrade. Today the smaller testnet model (Qwen 2.5 7B) does not reliably emit tool_calls, so the runtime cannot enforce the HTTP cross-check yet. We surface this gap openly rather than ship a hallucination-prone verdict as LIVE.",
   },
   {
     head: "We do not store your document in plaintext.",
@@ -868,9 +868,9 @@ const DONTS: Array<{ head: string; detail: string }> = [
       "The receipt proves the AI's process — TEE attestation, signer wallet, chain anchor — not that the AI's answer is correct. 'Process verified' is not 'answer verified.' That distinction is on every receipt page.",
   },
   {
-    head: "We do not run on mainnet today.",
+    head: "We run on two networks honestly.",
     detail:
-      "Galileo testnet only. The model is Qwen 2.5 7B — strong enough to validate the pipeline, not strong enough to catch every subtle clause. Mainnet promotion ships with the larger model catalog (0GM-1.0 + deepseek-v4-pro) after smoke tests confirm the route.",
+      "Galileo testnet (chainId 16602) is live for cheap iteration; Aristotle mainnet (chainId 16661) is live for production. The sovereign 0GM-1.0-35B-A3B provider serves mainnet runs; deepseek-v4-pro and the rest of the catalog roll out incrementally as smoke tests confirm each provider route. Testnet runs use Qwen 2.5 7B — strong enough to validate the pipeline, not strong enough to catch every subtle clause without human review.",
   },
 ];
 

@@ -40,6 +40,8 @@ export interface RunPanelSkillOption {
  * planning skills get quick.
  */
 import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
+import { getNetwork } from '@/lib/chain';
+import { NETWORKS } from '@ivaronix/core';
 const STANDARD_TIER_SLUGS = new Set<string>(['private-doc-review', 'github-audit', 'code-edit']);
 const FALLBACK_SKILLS: RunPanelSkillOption[] = FIRST_PARTY_SLUGS.map((slug) => ({
   id: slug,
@@ -94,7 +96,11 @@ interface RunResponse {
   logs?: { level: 'info' | 'pass' | 'fail'; label: string; detail: string | null }[];
 }
 
-const EXPLORER_TX = (h: string) => `https://chainscan-galileo.0g.ai/tx/${h}`;
+// Network-aware explorer URL. Reads the active network at call time so
+// mainnet builds link to chainscan.0g.ai and testnet builds link to
+// chainscan-galileo.0g.ai. Previously hardcoded to the testnet host,
+// which sent every mainnet result-card visitor to an empty explorer page.
+const EXPLORER_TX = (h: string) => `${NETWORKS[getNetwork()].chainExplorer}/tx/${h}`;
 
 /** UI label → policy name on the wire (planning-003 §A.4.4). */
 const POLICY_LABEL_TO_NAME: Record<Exclude<PolicyOverride, 'AUTO'>, 'unanimous' | 'majority' | 'first-objection'> = {
