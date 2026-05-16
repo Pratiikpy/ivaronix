@@ -168,6 +168,14 @@ const config: NextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          // Permissions-Policy · disables browser features Ivaronix never
+          // uses (camera, mic, geolocation, payment, USB, sensors). Adds
+          // defense-in-depth without breaking any flow — the listed
+          // features have no wagmi/MetaMask/Studio code path. CSP is
+          // still deliberately omitted (see §B-V2-42 in USER_TODO) because
+          // it needs end-to-end script-tag/style-attr testing to avoid
+          // breaking dApp inline patterns.
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), serial=(), bluetooth=(), display-capture=()' },
         ],
       },
       {
