@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
+import { getSampleReceiptHref, getSampleReceiptId } from '@/lib/sample-receipt';
 
 export const metadata: Metadata = {
   title: 'FAQ · Ivaronix',
@@ -674,8 +675,8 @@ export default async function FaqPage(): Promise<React.JSX.Element> {
           <NextStepCard
             label="Sample receipt"
             title="Open one end-to-end"
-            description="Receipt #1004 with full body, four-light row, and the signer chain."
-            href="/r/1004"
+            description={`Receipt #${getSampleReceiptId()} with full body, four-light row, and the signer chain.`}
+            href={getSampleReceiptHref()}
           />
           <NextStepCard
             label="Privacy"

@@ -12,6 +12,7 @@ import {
   receiptTypeLabel,
   type UnifiedReceipt,
 } from '@/lib/chain';
+import { getSampleReceiptHref, getSampleEmbedHref, getSampleEmbedIframeSrc } from '@/lib/sample-receipt';
 import { loadAllSkills } from '@/lib/skills';
 import { getStudioDeployments } from '@/lib/deployments-bundle';
 
@@ -458,10 +459,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         >
           {[
             { step: '01', name: 'Run', body: 'Drop a doc. Pick a skill. Inference happens in the 0G TEE.', href: '/onboard' },
-            { step: '02', name: 'Verify', body: 'Schema + canonical hash + signature + chain anchor + TEE re-attestation. Five checks, one chip.', href: '/r/1004' },
+            { step: '02', name: 'Verify', body: 'Schema + canonical hash + signature + chain anchor + TEE re-attestation. Five checks, one chip.', href: getSampleReceiptHref() },
             { step: '03', name: 'Remember', body: 'Grant memory access on chain. Revoke on chain. Every read leaves an access-log entry.', href: '/memory' },
             { step: '04', name: 'Pay', body: 'Per-run nano-payments. 90/10 creator/treasury split. Every run is a real on-chain tx.', href: '/marketplace' },
-            { step: '05', name: 'Share', body: 'Public proof URL. Anyone re-verifies on any machine, no Ivaronix install required.', href: '/r/1004' },
+            { step: '05', name: 'Share', body: 'Public proof URL. Anyone re-verifies on any machine, no Ivaronix install required.', href: getSampleReceiptHref() },
           ].map(({ step, name, body, href }) => (
             <Link
               key={step}
@@ -600,7 +601,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         >
           {[
             { name: 'Workroom', body: 'Drop a doc · run a private review · anchor a receipt.', href: '/onboard' },
-            { name: 'Proof Explorer', body: 'Open any receipt — schema · hash · signature · anchor · TEE.', href: '/r/1004' },
+            { name: 'Proof Explorer', body: 'Open any receipt — schema · hash · signature · anchor · TEE.', href: getSampleReceiptHref() },
             { name: 'Skills Marketplace', body: '10 first-party skills · per-skill price · 90/10 creator/treasury split.', href: '/marketplace' },
             { name: 'Memory Center', body: 'Grant + revoke on chain. Every read leaves an access-log entry.', href: '/memory' },
             { name: 'Agent Passports', body: 'ERC-7857 INFTs · trust score · receipt count · per-passport history.', href: '/agents' },
@@ -1081,8 +1082,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {
               name: 'Embed widget',
               body: 'Drop a verified receipt into any page.',
-              code: '<iframe src="https://www.ivaronix.xyz/embed/r/1004" />',
-              href: '/embed/r/1004',
+              code: `<iframe src="${getSampleEmbedIframeSrc()}" />`,
+              href: getSampleEmbedHref(),
             },
           ].map(({ name, body, code, href }) => (
             <Link

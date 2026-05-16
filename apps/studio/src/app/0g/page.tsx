@@ -4,6 +4,7 @@ import {
   getStudioDeployments as loadDeployments,
 } from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
+import { getSampleReceiptHref, getSampleReceiptId } from '@/lib/sample-receipt';
 import { NETWORKS } from '@ivaronix/core';
 import { CopyLinkButton } from './CopyLinkButton';
 
@@ -56,7 +57,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       what: 'The specialist runs inside a TEE so the plaintext is invisible outside the run. The TEE attestation is what makes verificationMethod: router_flag and compute_sdk_process_response honest claims; --tee-independent re-runs the broker check on a separate machine.',
       endpoint: { label: '@0gfoundation/0g-compute-ts-sdk v0.8.x' },
       addresses: [],
-      seeItLive: { label: 'See receipt #1004 (FULLY VERIFIED)', href: '/r/1004' },
+      seeItLive: { label: `See receipt #${getSampleReceiptId()} (FULLY VERIFIED)`, href: getSampleReceiptHref() },
     },
     {
       name: '0G Storage',
@@ -72,7 +73,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
       what: 'Carries the inference traffic and supplies the per-provider rate-limit and cost telemetry the receipt records. A reviewer can read the receipt and see how the work was billed.',
       endpoint: { label: 'IVARONIX_ROUTER_URL (legacy: ZG_SERVICE_URL) — surfaced as routerTrace.x0gTrace inside every receipt' },
       addresses: [],
-      seeItLive: { label: 'See receipt #1004', href: '/r/1004' },
+      seeItLive: { label: `See receipt #${getSampleReceiptId()}`, href: getSampleReceiptHref() },
     },
     {
       name: 'Agent ID · ERC-7857',

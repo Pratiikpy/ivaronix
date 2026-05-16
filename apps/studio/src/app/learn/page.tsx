@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { FourLightRow } from '@/components/FourLightRow';
 import { unifiedNextId, livePassportCount } from '@/lib/chain';
+import { getSampleReceiptHref } from '@/lib/sample-receipt';
 import { RECEIPT_TYPES, ROLES_BY_TIER } from '@ivaronix/core';
 import numbersJson from '../../../../../docs/numbers.json';
 
@@ -154,7 +155,7 @@ export default async function LearnPage(): Promise<React.JSX.Element> {
           <Link href="/onboard" className="btn-primary" style={{ textDecoration: 'none' }}>
             Try the studio →
           </Link>
-          <Link href="/r/1004" className="btn-secondary" style={{ textDecoration: 'none' }}>
+          <Link href={getSampleReceiptHref()} className="btn-secondary" style={{ textDecoration: 'none' }}>
             Open a sample receipt
           </Link>
         </div>

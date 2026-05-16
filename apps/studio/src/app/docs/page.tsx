@@ -1,7 +1,12 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
+import { getSampleReceiptId, getSampleReceiptHref, getSampleEmbedHref, getSampleEmbedIframeSrc } from '@/lib/sample-receipt';
 
 export const dynamic = 'force-static';
+
+const SAMPLE_ID = getSampleReceiptId();
+const SAMPLE_EMBED_URL = getSampleEmbedIframeSrc();
+const SAMPLE_RECEIPT_URL = `https://www.ivaronix.xyz/r/${SAMPLE_ID}`;
 
 export const metadata = {
   title: 'Docs · CLI · SDK · MCP · Embed widget · Ivaronix',
@@ -107,21 +112,21 @@ const SECTIONS: DocSection[] = [
         label: 'Single receipt embed',
         code:
           '<iframe\n' +
-          '  src="https://www.ivaronix.xyz/embed/r/1004"\n' +
+          `  src="${SAMPLE_EMBED_URL}"\n` +
           '  width="640" height="480"\n' +
           '  frameborder="0"\n' +
-          '  title="Ivaronix Verified Receipt #1004"\n' +
+          `  title="Ivaronix Verified Receipt #${SAMPLE_ID}"\n` +
           '/>',
       },
       {
         label: 'Full proof page link',
         code:
-          '<a href="https://www.ivaronix.xyz/r/1004" target="_blank" rel="noopener">\n' +
-          '  Verified by Ivaronix · /r/1004\n' +
+          `<a href="${SAMPLE_RECEIPT_URL}" target="_blank" rel="noopener">\n` +
+          `  Verified by Ivaronix · /r/${SAMPLE_ID}\n` +
           '</a>',
       },
     ],
-    link: { href: '/embed/r/1004', label: 'Preview the embed →' },
+    link: { href: getSampleEmbedHref(), label: 'Preview the embed →' },
   },
 ];
 

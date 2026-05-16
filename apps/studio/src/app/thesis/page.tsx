@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { unifiedNextId, livePassportCount } from '@/lib/chain';
+import { getSampleReceiptHref } from '@/lib/sample-receipt';
 import numbersJson from '../../../../../docs/numbers.json';
 
 export const dynamic = 'force-dynamic';
@@ -177,7 +178,7 @@ export default async function ThesisPage() {
           <Link href="/onboard" className="btn-primary" style={{ textDecoration: 'none' }}>
             Run a private audit →
           </Link>
-          <Link href="/r/1004" className="btn-secondary" style={{ textDecoration: 'none' }}>
+          <Link href={getSampleReceiptHref()} className="btn-secondary" style={{ textDecoration: 'none' }}>
             See a sample receipt
           </Link>
         </div>
