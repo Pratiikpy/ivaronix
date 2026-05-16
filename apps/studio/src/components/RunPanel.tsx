@@ -40,8 +40,11 @@ export interface RunPanelSkillOption {
  * planning skills get quick.
  */
 import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
-import { getNetwork } from '@/lib/chain';
-import { NETWORKS } from '@ivaronix/core';
+// Client-safe imports only · @/lib/chain pulls og-chain's deployments.ts
+// (node:fs/path) into the browser bundle and the @ivaronix/core barrel
+// pulls hash.ts (node:crypto). Use the split exports.
+import { getNetwork } from '@/lib/network';
+import { NETWORKS } from '@ivaronix/core/types';
 const STANDARD_TIER_SLUGS = new Set<string>(['private-doc-review', 'github-audit', 'code-edit']);
 const FALLBACK_SKILLS: RunPanelSkillOption[] = FIRST_PARTY_SLUGS.map((slug) => ({
   id: slug,
