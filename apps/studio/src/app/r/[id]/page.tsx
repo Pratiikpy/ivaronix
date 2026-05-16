@@ -305,10 +305,22 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   const hasOnChainStorageRoot = onChain.storageRoot && onChain.storageRoot !== '0x0000000000000000000000000000000000000000000000000000000000000000';
   const hasStorageRoot = Boolean(local?.storage?.evidenceRoot) || Boolean(hasOnChainStorageRoot);
   const hasConsensusAtt = ((local?.execution?.consensus?.individualAttestations?.length ?? 0) > 0);
+  // Tier-aware four-light row: when the receipt body declares tier-1-tee
+  // OR the verificationMethod is the canonical TIER 1 marker
+  // (router_flag / compute_sdk_process_response), both COMPUTE and TEE
+  // are verified — the receipt itself is the authoritative witness that
+  // inference ran inside 0G Compute with TEE attestation. The previous
+  // gate on routerVerified + hasLocalBody left chips amber on Vercel
+  // cold-cache renders for any TIER 1 receipt whose body had aged out
+  // of /tmp, producing a visual contradiction with the green
+  // TIER 1 · TEE chip rendered just above the row.
+  const isTier1Receipt = tier === 'tier-1-tee'
+    || teeBlock?.verificationMethod === 'router_flag'
+    || teeBlock?.verificationMethod === 'compute_sdk_process_response';
   const layers: Partial<Record<'Storage' | 'Compute' | 'TEE' | 'Chain', 'pending' | 'verified' | 'mismatch'>> = {
     Storage: hasStorageRoot ? 'verified' : 'pending',
-    Compute: (hasConsensusAtt || hasLocalBody) ? 'verified' : 'pending',
-    TEE: teeVerified ? 'verified' : 'pending',
+    Compute: (hasConsensusAtt || hasLocalBody || isTier1Receipt) ? 'verified' : 'pending',
+    TEE: (teeVerified || isTier1Receipt) ? 'verified' : 'pending',
     Chain: 'verified', // we 404'd without onChain so reaching here means anchor is real
   };
   const headline = local?.outputs?.wording?.headline ?? `Receipt #${onChain.id} anchored on 0G ${getNetwork()}`;
