@@ -10,6 +10,8 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, usePublicClient } from 'wagmi';
 import { parseAbi, formatUnits } from 'viem';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
+import { getNetwork } from '@/lib/chain';
+import { NETWORKS } from '@ivaronix/core';
 
 interface Props {
   paymentAddr: string;
@@ -84,7 +86,8 @@ export function CreatorPayoutsPanel({ paymentAddr }: Props) {
       if (lower.includes('user rejected')) {
         setWithdrawError('Cancelled in MetaMask.');
       } else if (lower.includes('timeout') || lower.includes('timed out')) {
-        setWithdrawError('Tx not confirmed within 60s. Check chainscan — withdrawal may still settle.');
+        const explorer = NETWORKS[getNetwork()].chainExplorer;
+        setWithdrawError(`Tx not confirmed within 60s. Check ${explorer} — withdrawal may still settle.`);
       } else {
         setWithdrawError(msg);
       }
@@ -154,7 +157,15 @@ export function CreatorPayoutsPanel({ paymentAddr }: Props) {
 
         {withdrawTxHash && (
           <p style={{ marginTop: 12, fontSize: 13 }}>
-            tx: <code style={{ fontSize: 11 }}>{withdrawTxHash}</code>
+            tx:{' '}
+            <a
+              href={`${NETWORKS[getNetwork()].chainExplorer}/tx/${withdrawTxHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ fontSize: 11, fontFamily: 'var(--font-mono)' }}
+            >
+              {withdrawTxHash} ↗
+            </a>
           </p>
         )}
 

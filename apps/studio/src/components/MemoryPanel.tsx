@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { keccak256, toBytes, parseAbiItem, getAddress, isAddress, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
+import { getNetwork } from '@/lib/chain';
+import { NETWORKS } from '@ivaronix/core';
 
 /**
  * Memory Permission Center — wallet-aware grants admin.
@@ -226,7 +228,7 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
           </div>
           <button
             onClick={onIssue}
-            disabled={!grantee.startsWith('0x') || grantee.length !== 42 || isWriting || isWaitingTx}
+            disabled={!isAddress(grantee, { strict: false }) || isWriting || isWaitingTx}
             className="btn-primary"
             style={{ marginTop: 16 }}
           >
@@ -411,7 +413,7 @@ function AuditFeed({ memoryLogAddr, grantIds }: { memoryLogAddr: string; grantId
                 </span>
                 <span style={{ fontSize: 11, color: 'var(--color-muted)' }}>{iso}Z</span>
                 <a
-                  href={`https://chainscan-galileo.0g.ai/tx/${ev.txHash}`}
+                  href={`${NETWORKS[getNetwork()].chainExplorer}/tx/${ev.txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn-ghost"

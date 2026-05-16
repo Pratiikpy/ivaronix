@@ -44,6 +44,8 @@ const PASSPORT_ABI = parseAbi([
   'function passportOf(address) external view returns (uint256)',
 ]);
 
+// Faucet is testnet-only. On mainnet (Aristotle) users source OG from a CEX
+// or the 0G bridge — there is no public faucet. Per-network gating below.
 const FAUCET_URL = 'https://faucet.0g.ai';
 const MIN_BALANCE_WEI = BigInt('50000000000000000'); // 0.05 OG
 
@@ -210,7 +212,9 @@ export function OnboardClient({
       title: 'Check balance',
       state: !isConnected ? 'idle' : balanceOk ? 'done' : (step === 2 ? 'spinning' : 'idle'),
       detail: balance !== null ? `${(Number(balance) / 1e18).toFixed(4)} OG` : undefined,
-      hint: !isConnected ? undefined : (balanceOk ? undefined : 'Need ≥ 0.05 OG to mint a passport. Faucet below.'),
+      hint: !isConnected ? undefined : (balanceOk ? undefined : (network === 'mainnet'
+        ? 'Need ≥ 0.05 OG to mint a passport. Source from a CEX or the 0G mainnet bridge.'
+        : 'Need ≥ 0.05 OG to mint a passport. Faucet below.')),
     },
     {
       num: 3,
@@ -347,12 +351,23 @@ export function OnboardClient({
         {isConnected && !balanceOk && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 14 }}>
-              {balance === null ? 'Loading balance…' : 'Get testnet OG from the faucet, then refresh.'}
+              {balance === null
+                ? 'Loading balance…'
+                : network === 'mainnet'
+                  ? 'Source OG from a CEX or the 0G mainnet bridge, then re-check.'
+                  : 'Get testnet OG from the faucet, then refresh.'}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                Open faucet ↗
-              </a>
+              {network === 'testnet' && (
+                <a href={FAUCET_URL} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                  Open faucet ↗
+                </a>
+              )}
+              {network === 'mainnet' && (
+                <a href="https://docs.0g.ai/" target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                  Bridge / CEX docs ↗
+                </a>
+              )}
               <button onClick={() => balanceQuery.refetch()} className="btn-ghost">
                 I funded — re-check
               </button>

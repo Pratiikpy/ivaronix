@@ -20,6 +20,8 @@ import { useDropzone } from 'react-dropzone';
 import { useRouter } from 'next/navigation';
 import { ensureSiweSession } from '@/lib/siwe-client';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
+import { getNetwork } from '@/lib/chain';
+import { NETWORKS } from '@ivaronix/core';
 
 interface Props {
   skillId: string;
@@ -290,9 +292,15 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
       } else if (msg.toLowerCase().includes('user rejected')) {
         setState({ kind: 'error', code: 'USER_REJECTED', message: 'Wallet popup rejected. No charge.' });
       } else if (msg.toLowerCase().includes('insufficient')) {
-        setState({ kind: 'error', code: 'INSUFFICIENT_BALANCE', message: 'Insufficient OG balance. Top up at faucet.0g.ai (testnet).' });
+        const net = getNetwork();
+        const topupHint = net === 'mainnet'
+          ? 'Source OG from a CEX or 0G mainnet bridge.'
+          : 'Top up at faucet.0g.ai (testnet).';
+        setState({ kind: 'error', code: 'INSUFFICIENT_BALANCE', message: `Insufficient OG balance. ${topupHint}` });
       } else if (msg.toLowerCase().includes('timeout') || msg.toLowerCase().includes('timed out')) {
-        setState({ kind: 'error', code: 'CHAIN_TIMEOUT', message: `Tx not confirmed within 60s. Check chainscan; the receipt may finalize shortly.` });
+        const net = getNetwork();
+        const explorer = NETWORKS[net].chainExplorer;
+        setState({ kind: 'error', code: 'CHAIN_TIMEOUT', message: `Tx not confirmed within 60s. Check ${explorer}; the receipt may finalize shortly.` });
       } else {
         setState({ kind: 'error', code: 'UNKNOWN', message: msg });
       }
@@ -425,11 +433,16 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
         </div>
       )}
 
-      {state.kind === 'payment-pending' && (
-        <p style={{ fontSize: 13 }}>
-          Tx <code>{state.txHash}</code> submitted. Waiting for on-chain confirmation (Galileo block-time ~3s)…
-        </p>
-      )}
+      {state.kind === 'payment-pending' && (() => {
+        const net = getNetwork();
+        const explorer = NETWORKS[net].chainExplorer;
+        const chainLabel = net === 'mainnet' ? 'Aristotle' : 'Galileo';
+        return (
+          <p style={{ fontSize: 13 }}>
+            Tx <a href={`${explorer}/tx/${state.txHash}`} target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'var(--font-mono)' }}>{state.txHash.slice(0, 10)}…{state.txHash.slice(-6)}</a> submitted. Waiting for on-chain confirmation ({chainLabel} block-time ~3s)…
+          </p>
+        );
+      })()}
 
       {state.kind === 'success' && (
         <p style={{ fontSize: 14, color: '#166534' }}>
