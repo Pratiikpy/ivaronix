@@ -81,15 +81,22 @@ const SECTIONS: DocSection[] = [
     id: 'mcp',
     name: 'MCP server',
     body:
-      'Wire Ivaronix into Claude Desktop or Cursor through the Model Context Protocol. The MCP server exposes 4 tools: run_skill, verify_receipt, list_passports, recall_memory. The host LLM calls them directly inside a chat session.',
+      'Wire Ivaronix into Claude Desktop or Cursor through the Model Context Protocol. The MCP server exposes 4 tools: run_skill, verify_receipt, list_passports, recall_memory. The host LLM calls them directly inside a chat session. The server is workspace-only today (not yet on npm) — clone the repo, build the package, then point Claude Desktop at the built binary.',
     snippets: [
       {
-        label: 'Claude Desktop config',
+        label: 'Claude Desktop config (workspace path)',
         code:
+          '// 1. Clone + build (one-time setup):\n' +
+          '//    git clone https://github.com/Pratiikpy/ivaronix\\n' +
+          '//    cd ivaronix && pnpm install && pnpm --filter @ivaronix/mcp-server build\n' +
+          '//\n' +
+          '// 2. Paste into ~/Library/Application Support/Claude/claude_desktop_config.json\n' +
+          '//    (macOS) — replace <PATH> with the absolute path to your clone:\n' +
           '{\n' +
           '  "mcpServers": {\n' +
           '    "ivaronix": {\n' +
-          '      "command": "ivaronix-mcp"\n' +
+          '      "command": "node",\n' +
+          '      "args": ["<PATH>/apps/mcp-server/dist/bin/server.js"]\n' +
           '    }\n' +
           '  }\n' +
           '}',
