@@ -1,50 +1,108 @@
-# Security policy
-
-> What Ivaronix's security posture is, what it isn't, and how to report a vulnerability.
+# Security Policy
 
 ## Reporting a vulnerability
 
-**Open a GitHub issue at <https://github.com/Pratiikpy/ivaronix/issues>** with `[security]` in the title, OR (preferred for any issue involving a wallet, key, or chain write) email the operator listed in the GitHub profile. Do not post exploit details on Twitter or in a PR comment until a fix has shipped.
+**Do not file public GitHub issues for security problems.** A public issue
+tells attackers about a vulnerability before users can patch.
 
-We aim to respond within 72 hours. Hackathon-stage caveats apply: there is no formal SLA, no bounty program, and the project relies on the operator's personal time for triage.
+Use one of these instead:
+
+1. **GitHub Private Vulnerability Reporting.** Go to the [Security tab](https://github.com/Pratiikpy/ivaronix/security)
+   on this repo and click **Report a vulnerability**. This opens a private
+   advisory only the maintainers can see.
+2. **Email** `pratiik@ivaronix.xyz` for issues touching wallet keys, signer
+   compromise, or anything you'd want fixed before public disclosure.
+
+We acknowledge within 72 hours and aim to ship a fix within 30 days for
+high-severity issues. We do not run a paid bounty program, but researchers
+acting in good faith are credited in the release notes.
 
 ## What the receipt system defends against
 
-Threats Ivaronix's design actively addresses (with the file paths to read):
+Every claim below is enforced in code. Source paths are in the `## Source map`
+section at the bottom.
 
-- **Operator-side disclosure of plaintext after a Burn-Mode run.** The session key is destroyed before the response returns; the ciphertext is unreadable to the operator after that. See `packages/og-storage/src/burn.ts:13-14` (canonical threat-model JSDoc).
-- **Forged signer claims on receipt anchors.** `ReceiptRegistryV2` recovers `agentAddress` from an EIP-712 typed-data signature; the relayer is `msg.sender` but cannot attribute receipts to a wallet that didn't sign. Per-agent monotonic nonces prevent replay. See `contracts/src/ReceiptRegistryV2.sol`.
-- **Tampered receipt content.** Every receipt's `receiptRoot` is `keccak256(canonical-json-without-signature)`; the canonical hash is byte-equal across TS / Python / Rust reference implementations (29/29 cross-vector CI gate). See `docs/HASH_FUNCTION.md` + `.github/workflows/jcs-roundtrip.yml`.
-- **Memory-grant log spoofing.** `MemoryAccessLogV2` enforces `msg.sender == agent` for self-logs and cross-checks `IGrantViewV2.isValid()` for grant-backed logs. V1 was vulnerable; V2 ships the fix. See `contracts/src/MemoryAccessLogV2.sol`.
-- **Skill-name squatter risk.** `SkillRegistryV2` reserves first-party skill names at construction time + ships an `arbitrateOwnership` safety valve. See `contracts/src/SkillRegistryV2.sol`.
-- **Subscription billing without delivery.** `SubscriptionEscrowV2` requires a real `attestationReceiptId` whose timestamp is fresh (within `MAX_RECEIPT_AGE = 86400`) and whose `agentAddress` matches the expected agent. No receipt → no charge. See `contracts/src/SubscriptionEscrowV2.sol`.
-- **Accidental private-key paste in doc-review input.** The pre-flight gate exact-matches against `IVARONIX_SIGNER_KEY` (zero false positives) and falls back to a context-aware heuristic for read-only flows. See `packages/consensus/src/gates.ts` (planning-003 §A.5.15 fix).
-- **Cross-wallet sandbox escapes.** `/api/skill/save` is per-wallet, SIWE-gated, and validates manifest hook references for shell-injection patterns before write. See `apps/studio/src/app/api/skill/save/route.ts`.
+- **Operator-side disclosure after a Burn-Mode run.** The session key is
+  generated, used to encrypt, then zeroed in memory before the receipt is
+  written. The ciphertext on 0G Storage is unrecoverable after that — even
+  by the operator.
+- **Forged signer claims on receipt anchors.** `ReceiptRegistryV3` recovers
+  the agent address from an EIP-712 signature. The relayer is `msg.sender`
+  and cannot attribute receipts to a wallet that did not sign. Per-agent
+  monotonic nonces block replay.
+- **Tampered receipt content.** `receiptRoot` is `keccak256` of the canonical
+  JSON (RFC-8785) with the signature, id, and chain anchor stripped. Three
+  reference implementations (TypeScript, Python, Rust) produce byte-equal
+  hashes against 29 cross-language vectors on every PR.
+- **Memory-grant log spoofing.** `MemoryAccessLogV2` requires `msg.sender`
+  to be the agent for self-logs and cross-checks `IGrantViewV2.isValid()`
+  for grant-backed logs.
+- **Skill-name squatting.** `SkillRegistryV2` reserves first-party skill
+  names at construction time and exposes an `arbitrateOwnership` safety
+  valve.
+- **Subscription billing without delivery.** `SubscriptionEscrowV2`
+  requires a fresh `attestationReceiptId` (within `MAX_RECEIPT_AGE = 86400`
+  seconds) whose `agentAddress` matches the expected agent. No receipt,
+  no charge.
+- **Private-key paste in document input.** The pre-flight gate exact-matches
+  against `IVARONIX_SIGNER_KEY` and falls back to a context-aware heuristic
+  for read-only flows.
+- **Cross-wallet sandbox escape.** `/api/skill/save` is per-wallet,
+  SIWE-gated, and validates manifest hook references for shell-injection
+  patterns before write.
 
-## What the system does NOT defend against
+## What the system does not defend against
 
-These boundaries are documented honestly. If you need protection against any of them, the receipt model is not the right tool:
+These boundaries are documented honestly. If your threat model needs any
+of these, the receipt system is not the right tool by itself:
 
-- **Local-machine compromise.** Burn Mode protects against operator-side disclosure after the run. It does NOT protect plaintext extraction during the run window — the session key is in process memory until destroyed. Same for any signer key on disk.
-- **Operator log harvesting.** The Studio process can log every read it serves; receipts attest to inference output, not to read patterns at the storage layer. The read-proxy key (`IVARONIX_READ_PROXY_KEY`) reduces the leak vector at the indexer layer but does not eliminate operator-side observability. See `docs/PRIVACY_NOTES.md` §1.
-- **Side-channels.** Request size, response timing, and traffic volume can re-identify a read pattern even when the signer is anonymized.
-- **TIER 2 provider trust.** Receipts run on NVIDIA NIM / OpenAI / Ollama are signed and chain-anchored but the inference itself runs outside a TEE. The provider sees the plaintext. Receipts are tagged `verificationMethod: 'external-signed'` and rendered in amber so a reviewer can tell at a glance. See CLAUDE.md §6.
-- **Receipt body content disclosure.** A receipt's `body.outputs` is part of the canonical hash and lives publicly in 0G Storage. If a model summarises a private contract into the headline field, the headline is public. Redact at the `pre_consensus` / `post_consensus` hook layer if this matters. See `packages/skills/src/hooks/`.
-- **Trust in the third-party Router proxy.** `compute-network-X.integratenetwork.work` is NOT operated by 0G Foundation — it relays requests to 0G Compute providers. The Router operator sees every request body before it reaches a TEE. The TEE attestation re-verify (`broker.processResponse` against the actual provider) is the only path that closes this gap; the `--tee-independent` CLI flag runs that check. See `.claude/rules/og-router.md`.
+- **Local-machine compromise.** Burn Mode protects against operator-side
+  disclosure after the run. It does not protect plaintext during the run
+  window — the session key sits in process memory until destruction. Same
+  applies to any signer key on disk.
+- **Operator log harvesting.** The Studio process can log every read it
+  serves. Receipts attest to inference output, not to read patterns at the
+  storage layer. The read-proxy key reduces but does not eliminate
+  operator-side observability.
+- **Side-channels.** Request size, response timing, and traffic volume can
+  re-identify a read pattern even when the signer is anonymous.
+- **TIER 2 provider trust.** Receipts produced on NVIDIA NIM, OpenAI, or
+  Ollama are signed and chain-anchored, but the inference itself runs
+  outside a TEE. The provider sees the plaintext. The receipt body tags
+  these `verificationMethod: 'external-signed'` and the proof page
+  renders them in amber, not green.
+- **Receipt body content disclosure.** The receipt body lives publicly on
+  0G Storage. If a model summarises a private contract into the `outputs`
+  field, that summary is public. Redact at the `pre_consensus` or
+  `post_consensus` hook layer if this matters.
+- **Trust in the third-party Router proxy.** The Router endpoint
+  (`compute-network-X.integratenetwork.work`) is not operated by 0G
+  Foundation. It relays requests to 0G Compute providers and sees every
+  request body before the TEE does. The `--tee-independent` CLI flag
+  closes this gap by re-running `broker.processResponse` against the
+  actual provider; the Router cannot forge that result.
 
-## Non-security operator boundaries
+## Operator notes (not security threats, but worth naming)
 
-These aren't security threats but are worth naming so users have correct expectations:
+- **Anchoring costs gas.** A receipt that did not anchor is unfindable on
+  chain. The operator pays the gas; the user authorises it.
+- **0G DA integration is on the roadmap.** The gRPC client and a local
+  disperser via Docker Compose are shipped. There is no public testnet
+  endpoint yet.
+- **Mobile WalletConnect is queued.** Studio supports MetaMask today.
 
-- **Receipt anchoring requires gas.** A receipt that didn't anchor is unfindable on chain. The operator pays the gas; the user authorises it. Mainnet redeploy + funded ops wallet are gating items in `docs/USER_TODO.md §B-V2`.
-- **0G DA integration is roadmap.** `packages/og-da/` ships the gRPC client + the `docker-compose.yml` for a local disperser, but no public testnet endpoint exists. See `docs/PHASE_B_DISCLOSURES.md`.
-- **Mobile WalletConnect path is queued.** Studio currently supports MetaMask only (per CLAUDE.md §10 wallet-flow rule). `apps/studio/src/lib/wagmi.ts` documents the upgrade path.
+## Source map
 
-## See also
-
-- `docs/PRIVACY_NOTES.md` — operator-as-proxy threat model + read-proxy key wire-up
-- `docs/CRYPTO_NOTES.md` — broader cryptographic primitive choices
-- `BRAND.md` — separate trademark license; the LICENSE file's MIT grant covers code, not brand
-- `docs/USER_TODO.md §B-V2` — operator-action mainnet readiness items
-- `CLAUDE.md §6` — TIER 1 vs TIER 2 honesty rule (no green chip for non-TEE receipts)
-- `CLAUDE.md §11` — end-to-end testing rule (real MetaMask, real chain, real proof)
+| Claim | Source |
+|---|---|
+| Burn Mode key destruction | `packages/og-storage/src/burn.ts` |
+| EIP-712 anchor + nonces | `contracts/src/ReceiptRegistryV3.sol` |
+| Polyglot canonical hash | `docs/HASH_FUNCTION.md` · `.github/workflows/jcs-roundtrip.yml` |
+| Memory-grant cross-check | `contracts/src/MemoryAccessLogV2.sol` |
+| Skill-name reservation | `contracts/src/SkillRegistryV2.sol` |
+| Subscription billing gate | `contracts/src/SubscriptionEscrowV2.sol` |
+| Private-key paste gate | `packages/consensus/src/gates.ts` |
+| Sandbox manifest validation | `apps/studio/src/app/api/skill/save/route.ts` |
+| Read-proxy threat model | `docs/PRIVACY_NOTES.md` |
+| Crypto primitive choices | `docs/CRYPTO_NOTES.md` |
+| TIER 1 / TIER 2 disclosure | `CLAUDE.md` §6 |

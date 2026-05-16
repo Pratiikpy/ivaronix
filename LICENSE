@@ -22,33 +22,33 @@ SOFTWARE.
 
 ---
 
-Vendored portions:
-  packages/opencode-{plugin, sdk, core}/  — copied from sst/opencode v1.14.40
-  (MIT-licensed, see packages/opencode-{plugin,sdk,core}/LICENSE.upstream.md
-  for the original copyright notice as required by the MIT terms).
+## Vendored code
+
+`packages/opencode-{plugin,sdk,core}/` is copied from sst/opencode v1.14.40,
+MIT-licensed. See `packages/opencode-{plugin,sdk,core}/LICENSE.upstream.md`
+for the upstream copyright notice (required by the MIT terms).
 
 ---
 
-## Brand assets (separate license · planning-003 §A.5.8)
+## Brand assets
 
-The brand assets at `brand/` — including but not limited to the bracketed
-"i" mark, `Ivaronix.html`, `tokens.css`, `tokens.json`, the wordmark in
-all weights, the favicon set, the OG image templates, and any future
-logo variant — are NOT covered by the MIT grant above.
+The contents of `brand/` are not covered by the MIT grant above. This
+includes the bracketed "i" mark, `Ivaronix.html`, `tokens.css`,
+`tokens.json`, the wordmark in all weights, the favicon set, the OG
+image templates, and any future logo variant.
 
-These assets are reserved trademarks of the Ivaronix project. They may
-be used only under nominative-fair-use rules:
+These are reserved trademarks of the Ivaronix project. Permitted uses:
 
-  - Citing or reviewing Ivaronix (e.g. blog posts, talks, comparative
-    benchmarks) — permitted, with attribution and without implying
-    endorsement.
-  - Building software ON TOP OF Ivaronix's open-source code — permitted;
-    use a different mark for your distribution.
-  - Forking the codebase to ship a competing product at a confusable
-    domain (`ivaronix-x.app`, `ivaronix.studio`, `myivaronix.app` etc.)
-    with the brand assets attached — NOT permitted.
-  - Embedding the receipt-verifier widget on your site — permitted,
-    with the existing widget chrome.
+  - Citing or reviewing Ivaronix (blog posts, talks, comparative
+    benchmarks) with attribution and without implying endorsement.
+  - Building software on top of the open-source code, using your own
+    mark for your distribution.
+  - Embedding the receipt-verifier widget on your site with the
+    existing widget chrome.
 
-In short: the code is yours under MIT. The brand is the project's.
-See `BRAND.md` at repo root for the operative rule.
+Not permitted: forking the codebase to a confusable domain
+(`ivaronix-x.app`, `myivaronix.app`, etc.) with the brand assets
+attached.
+
+The code is yours under MIT. The brand is the project's. See `BRAND.md`
+for the operative rule.

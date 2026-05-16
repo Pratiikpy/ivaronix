@@ -1,77 +1,120 @@
-# Contributing to Ivaronix
+# Contributing
 
-> What you need to read, the conventions you must follow, and how to ship a change.
+Thanks for taking the time. This repo has a few non-obvious rules; reading
+this in full before opening a PR will save us both a round trip.
 
-## Read first
+## Before you write code
 
-1. **`CLAUDE.md`** — operational ground rules. §1 (no compromise / production-ready option), §6 (TIER 1 vs TIER 2 honesty), §9 (writing voice / no AI slop), §10 (visual contract), §11 (end-to-end testing rule), §12 (completion discipline), §15 (ship X → discover X bookkeeping rule). Every PR is reviewed against these.
-2. **`docs/QUALITY.md`** — the evergreen quality philosophy. Receipts > rhetoric · brutal honesty over flattering claims · CLI as gold standard.
-3. **The path-scoped rule for the package you're editing** — `.claude/rules/<package>.md`. Auto-loads when editing files under that path; lists hard rules + threat model + test command.
-4. **`<package>/AGENTS.md`** for package-specific stack + hot files + env. Six packages have these: `apps/studio`, `apps/cli`, `packages/og-router`, `packages/og-chain`, `contracts`, `seed-skills`.
+Read these first.
 
-## Commit conventions
+1. **`CLAUDE.md`** — the operational contract. It covers writing voice,
+   TIER 1 vs TIER 2 honesty, the end-to-end testing rule, and the
+   completion discipline ("do not stop" rule). Every PR is reviewed
+   against it.
+2. **`docs/QUALITY.md`** — the quality philosophy in one page. Receipts
+   over rhetoric. Brutal honesty over flattering claims. CLI as the
+   gold standard.
+3. **The path-scoped rule for the package you're editing** —
+   `.claude/rules/<package>.md`. Lists hard rules, threat model, and
+   the test command for that package.
+4. **The package's `AGENTS.md`** — stack, hot files, env vars. Lives
+   in `apps/studio/`, `apps/cli/`, `packages/og-router/`,
+   `packages/og-chain/`, `contracts/`, and `seed-skills/`.
 
-- **Conventional commits.** `feat(scope): subject`, `fix(scope): subject`, `chore(scope): subject`, `docs(scope): subject`. Subject ≤70 chars.
-- **No `Co-Authored-By` / `Author:` trailers.** Subject + body only. Per CLAUDE.md §1.
-- **`Closes audit <ID>` trailer** when the commit closes a ledger item from `docs/HALF_BAKED.md`, `docs/planning-003.md`, or `docs/USER_TODO.md`. Multiple closures: one trailer per line. Queryable via `pnpm audit:list`.
-- **No skip-hooks.** Don't pass `--no-verify`, `--no-gpg-sign`, or otherwise bypass commit signing / pre-commit hooks unless explicitly requested.
-- **No sprint-language in production code.** No `Day-N`, `Phase A/B/C`, `K-N fix`, `MVP`, `killer demo`, `Track N headline`. Use capability statements + roadmap framing. Per CLAUDE.md §9. The `planning-003 §X` / `WT N` traceability links ARE allowed — those are audit-closure pointers.
+## Commits
+
+- **Conventional commits.** `feat(scope): subject`, `fix(scope): subject`,
+  `chore(scope): subject`, `docs(scope): subject`. Subject ≤ 70 chars.
+- **No `Co-Authored-By` or `Author:` trailers.** Subject and body only.
+- **`Closes audit <ID>` trailer** when a commit closes a ledger item
+  from `docs/HALF_BAKED.md` or `docs/USER_TODO.md`. One trailer per
+  closure. Search with `pnpm audit:list`.
+- **No skip-hooks.** Do not pass `--no-verify`, `--no-gpg-sign`, or
+  otherwise bypass commit signing or pre-commit checks.
+- **No sprint language in production code.** Write what the code does,
+  not when it was written. `Day-N`, `Phase A/B/C`, `MVP`, and similar
+  references fossilise into permanent metadata and date the codebase.
+  Traceability links like `WT 31` or `planning-003 §A.5.X` that point
+  at a specific audit closure are fine.
 
 ## Before opening a PR
 
-Run all of these and ensure they pass:
+Run these locally. If they pass on your machine, CI should pass too.
 
 ```bash
-pnpm -r --filter "@ivaronix/*" run typecheck    # 24 packages must typecheck-clean
-pnpm --filter @ivaronix/core test                # 17 JCS canonical-hash tests
-pnpm --filter @ivaronix/consensus test           # 34 gates + policy + tier-shape tests
-pnpm --filter @ivaronix/receipts test            # 16 builder + fee-split tests
-pnpm --filter @ivaronix/skills test              # 9 manifest schema tests
-pnpm --filter @ivaronix/memory test              # 14 encryption tests
-pnpm --filter qa-metamask-e2e run regressions:studio    # 7 source-file regressions
-pnpm --filter qa-metamask-e2e run regressions:cli       # 4 CLI regressions
-pnpm --filter qa-metamask-e2e run regressions:contracts # 2 V2 contract regressions
-pnpm docs:check                                  # numbers.json staleness gate
-pnpm receipt-types:check                         # RECEIPTS_SPEC §1 vs source enum
+pnpm -r typecheck                                  # every workspace must be clean
+pnpm --filter @ivaronix/core test                   # canonical-hash regressions
+pnpm --filter @ivaronix/consensus test              # consensus gates + tiers
+pnpm --filter @ivaronix/receipts test               # receipt builder + fee split
+pnpm --filter @ivaronix/skills test                 # skill manifest schema
+pnpm --filter @ivaronix/memory test                 # memory encryption
+pnpm --filter qa-metamask-e2e run regressions:studio    # Studio source-file checks
+pnpm --filter qa-metamask-e2e run regressions:cli       # CLI checks
+pnpm --filter qa-metamask-e2e run regressions:contracts # contract V2 checks
+pnpm docs:check                                    # numbers.json staleness gate
+pnpm receipt-types:check                            # receipt-type enum vs spec
 ```
 
-CI gates on all of these via `.github/workflows/ci.yml`. If your local run passes, CI should pass too.
+CI gates all of these via `.github/workflows/ci.yml`.
 
 ## Adding tests
 
-- **Package unit tests** go in `packages/<name>/src/*.test.ts` and run via `tsx --test`. Same shape as `packages/consensus/src/policy.test.ts`.
-- **Source-file regressions** go in `scripts/qa/metamask-e2e/verify-<id>-<slug>.ts` and get added to a filter in `run-source-regressions.ts`. They're plain TS scripts that exit 1 on failure, no test framework. Same shape as `verify-a48-memory-routes.ts`.
-- **Contract tests** go in `contracts/test/<Contract>.t.sol` and run via `forge test`. Test private keys MUST be the deterministic hex-pattern fills (`0xA1A1_AAAA_…`), never real keys. Per `.claude/rules/contracts.md`.
+- **Package unit tests** live in `packages/<name>/src/*.test.ts` and run
+  via `tsx --test`. Look at `packages/consensus/src/policy.test.ts` for
+  the shape.
+- **Source-file regressions** live in `scripts/qa/metamask-e2e/verify-*.ts`
+  and get added to a filter in `run-source-regressions.ts`. Plain TS
+  scripts that exit 1 on failure — no test framework.
+- **Contract tests** live in `contracts/test/<Contract>.t.sol` and run
+  via `forge test`. Test private keys must be the deterministic
+  hex-pattern fills (`0xA1A1_AAAA_...`), never real keys.
 
-## Solidity NatSpec discipline
+## Solidity NatSpec
 
-- **`@notice` and `@dev` describe WHAT the contract does, not WHEN it was written.** NatSpec compiles into permanent contract metadata; sprint-language references fossilize. Per `.claude/rules/contracts.md`.
-- **`Threat model:` block** required on every security-sensitive contract. Lists what the contract defends + what it does NOT defend + assumed attacker capabilities. Pattern: `CapabilityRegistry.sol`, `MemoryAccessLog.sol`, `Erc7857Verifier.sol`.
-- **No upgradeability.** V2 = new contract at new address. V1 stays for legacy state; off-chain readers branch on `chainAnchor.registryAddress`. Per `docs/SOLIDITY_CHOICES.md`.
+NatSpec compiles into permanent contract metadata, so the rules are
+strict:
+
+- `@notice` and `@dev` describe what the contract does, not when it
+  was written.
+- Every security-sensitive contract opens with a `Threat model:` block
+  listing what it defends, what it does not defend, and the assumed
+  attacker capabilities. See `CapabilityRegistry.sol`,
+  `MemoryAccessLog.sol`, and `Erc7857Verifier.sol` for the pattern.
+- No upgradeability. V2 is a new contract at a new address; V1 stays
+  live for legacy state. Off-chain readers branch on
+  `chainAnchor.registryAddress`.
 
 ## Brand assets
 
-The `brand/` directory ships under a separate license (see `BRAND.md`). The LICENSE's MIT grant covers code, not brand. Don't ship a fork at a confusable domain with the brand assets attached.
+`brand/` ships under a separate licence. The MIT grant in `LICENSE`
+covers code; the brand assets do not. Do not ship a fork at a
+confusable domain with the brand attached. Full rules in `BRAND.md`.
 
 ## Visual changes
 
-- Open `brand/Ivaronix.html` in a headless browser, screenshot at 1440×900 + 375×812.
-- Open the changed Studio route at the same viewports.
-- Lay them side-by-side. If the Studio screenshot reads as "less designed" — colours weaker, type blander, radii sharper — fix the Studio render first; do not commit. Per CLAUDE.md §10.
+For any change to a Studio route:
 
-## Refresh artefacts after changes
+1. Open `brand/Ivaronix.html` in a headless browser and screenshot at
+   1440×900 and 375×812.
+2. Open the changed Studio route at the same viewports.
+3. If the Studio screenshot reads as "less designed" — weaker colours,
+   blander type, sharper radii — fix Studio first. Don't commit.
 
-Some doc artefacts auto-render from source-of-truth files; refresh + commit the diff in the same PR:
+## Auto-rendered docs
+
+Some files render from a source of truth. Refresh and commit the diff in
+the same PR:
 
 ```bash
-pnpm receipt-types:render    # if you edited packages/core/src/types.ts RECEIPT_TYPES
-pnpm docs:render             # if you bumped a value in docs/numbers.json
-pnpm screenshots:refresh     # if you changed a Studio surface that's in the README grid
-pnpm tour:refresh            # if you changed how the home → /r/<id> flow looks
+pnpm receipt-types:render    # after editing packages/core/src/types.ts RECEIPT_TYPES
+pnpm docs:render             # after bumping a value in docs/numbers.json
+pnpm screenshots:refresh     # after changing a Studio surface in the README grid
+pnpm tour:refresh            # after changing the home → /r/<id> flow
 ```
 
-The CI `docs:check` + `receipt-types:check` jobs gate on these being in sync.
+CI gates `docs:check` and `receipt-types:check` on these being in sync.
 
 ## Questions
 
-Start an issue. Tag with the relevant package label (`studio`, `cli`, `contracts`, etc.).
+Open an issue. Tag with the relevant package label (`studio`, `cli`,
+`contracts`, etc.).
