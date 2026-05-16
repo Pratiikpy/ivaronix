@@ -5,6 +5,7 @@
  * button drops the user into a client island that walks the wagmi flow:
  * /api/run/estimate → paySkillRun tx → /api/run/confirm.
  */
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { skillsList, skillReceipts, subgraphAvailable } from '@/lib/subgraph';
@@ -17,6 +18,37 @@ export const revalidate = 60;
 
 interface PageProps {
   params: Promise<{ skillId: string }>;
+}
+
+// Bug-27 (2026-05-16): missing-skill pages returned HTTP 200 with the
+// homepage <title>, so a judge sharing /marketplace/<bad-slug> in
+// Discord/Twitter got the generic Ivaronix preview card. The inline
+// body is the right UX (informative, brand-consistent), so we keep it
+// and only fix the metadata. Found / fixed via real-production probe.
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { skillId: encodedSkillId } = await params;
+  const skillIdRaw = decodeURIComponent(encodedSkillId);
+  try {
+    const skillId = await skillSlugToHex(skillIdRaw);
+    const all = await skillsList({ limit: 100 });
+    const skill = all.find((s) => s.skillId.toLowerCase() === skillId.toLowerCase());
+    if (!skill) {
+      return {
+        title: `Skill not found · Ivaronix marketplace`,
+        description: `No skill matches "${skillIdRaw}" on this network.`,
+      };
+    }
+    const slug = await resolveSkillSlug(skill.skillId);
+    const knownSlug = slug !== skill.skillId;
+    const local = knownSlug ? findSkillByIdServer(slug) : null;
+    const titleSlug = knownSlug ? slug : 'Skill detail';
+    return {
+      title: `${titleSlug} · Ivaronix marketplace`,
+      description: local?.manifest.description ?? `First-party skill on the Ivaronix marketplace. Run via paySkillRun → receipt anchored on chain.`,
+    };
+  } catch {
+    return { title: `Skill detail · Ivaronix marketplace` };
+  }
 }
 
 export default async function SkillDetailPage({ params }: PageProps) {

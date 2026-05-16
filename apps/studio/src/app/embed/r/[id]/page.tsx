@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { JsonRpcProvider } from 'ethers';
 import {
   unifiedGetReceipt,
@@ -11,6 +12,24 @@ import { findLocalReceiptByRoot } from '@/lib/local-receipt';
 import { verifyClaimed } from '@ivaronix/receipts';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-27 long-tail (2026-05-16): the embed layout sets a static
+// `title: 'Ivaronix Receipt'` that applies even when the receipt
+// doesn't exist. A judge pasting /embed/r/<bad> in an iframe-using
+// site sees "Ivaronix Receipt" tab title even though the body says
+// "RECEIPT · NOT FOUND". Per-page generateMetadata overrides the
+// layout metadata so the title matches the actual state.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  return {
+    title: `Receipt #${id} · Ivaronix embed`,
+    description: 'Embeddable receipt verifier — anchored on 0G Chain.',
+  };
+}
 
 /**
  * Iframe-friendly receipt summary (planning-01 §3D).

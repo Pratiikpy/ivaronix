@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -6,6 +7,24 @@ import { explorerAddrUrl, explorerTxUrl, getNetwork } from '@/lib/chain';
 import { createStorageClient } from '@ivaronix/og-storage';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-27 (2026-05-16): missing-room pages returned HTTP 200 with the
+// homepage <title>. Judges sharing /data-room/<bad-id> got the
+// generic Ivaronix preview. Fix the share preview without touching
+// the (informative) inline body. The room id itself is public on
+// chain so it's safe to surface in the title.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const truncated = id.length > 16 ? `${id.slice(0, 8)}…${id.slice(-4)}` : id;
+  return {
+    title: `Data room · ${truncated} · Ivaronix`,
+    description: `Burn-mode data room. The session key was destroyed; the receipt + key fingerprint remain on chain.`,
+  };
+}
 
 interface RoomManifest {
   roomId: string;

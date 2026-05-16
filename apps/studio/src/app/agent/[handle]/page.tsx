@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -10,6 +11,31 @@ import {
 } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-27 long-tail (2026-05-16): /agent/<bad-address> returned HTTP
+// 200 with the homepage title and a "Pass a wallet address" body.
+// A judge sharing /agent/0xinvalid in chat saw the generic Ivaronix
+// homepage preview. Surface the agent handle (truncated) in the
+// title so the share preview reflects the route.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ handle: string }>;
+}): Promise<Metadata> {
+  const { handle } = await params;
+  const isAddr = /^0x[0-9a-fA-F]{40}$/.test(handle);
+  if (!isAddr) {
+    return {
+      title: `Agent · invalid address · Ivaronix`,
+      description: `Pass a 0x-prefixed 40-char wallet address to view an agent's receipts and trust score.`,
+    };
+  }
+  const truncated = `${handle.slice(0, 6)}…${handle.slice(-4)}`;
+  return {
+    title: `Agent ${truncated} · Ivaronix`,
+    description: `Public agent dashboard — passport state + recent receipts anchored on 0G Chain.`,
+  };
+}
 
 function isAddress(input: string): input is `0x${string}` {
   return /^0x[0-9a-fA-F]{40}$/.test(input);
