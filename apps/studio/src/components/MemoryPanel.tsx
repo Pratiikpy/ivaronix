@@ -5,6 +5,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { keccak256, toBytes, parseAbiItem, getAddress, isAddress, type Hex, type Address } from 'viem';
 import { CAPABILITY_REGISTRY_ABI, GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 import { getNetwork, getChainId } from '@/lib/network';
+import { friendlyTxError } from '@/lib/friendly-tx-error';
 import { NETWORKS } from '@ivaronix/core/types';
 
 /**
@@ -238,7 +239,10 @@ export function MemoryPanel({ capabilityAddr, memoryLogAddr }: Props) {
           </button>
           {writeError && (
             <div role="alert" style={{ marginTop: 12, padding: 12, background: 'var(--color-mismatch-bg)', border: '1px solid var(--color-mismatch)', color: '#991b1b', borderRadius: 6, fontSize: 12 }}>
-              {writeError.message}
+              {/* Bug-26 closure (session 41): friendly one-liner instead of
+                  full viem trace. Raw error is still in the browser console
+                  via wagmi's default error logging. */}
+              {friendlyTxError(writeError, { network: getNetwork() })}
             </div>
           )}
           {isTxConfirmed && (

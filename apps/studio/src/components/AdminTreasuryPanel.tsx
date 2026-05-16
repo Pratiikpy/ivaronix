@@ -11,6 +11,7 @@ import { useAccount, useReadContract, useWriteContract, usePublicClient } from '
 import { parseAbi, formatUnits } from 'viem';
 import { GALILEO_GAS_PARAMS } from '@/lib/client-abis';
 import { getNetwork, getChainId } from '@/lib/network';
+import { friendlyTxError } from '@/lib/friendly-tx-error';
 import { NETWORKS } from '@ivaronix/core/types';
 
 interface Props {
@@ -138,13 +139,13 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
     } catch (err) {
       const msg = (err as Error).message;
       const lower = msg.toLowerCase();
-      if (lower.includes('user rejected')) {
-        setWithdrawError('Cancelled in MetaMask.');
-      } else if (lower.includes('timeout') || lower.includes('timed out')) {
+      if (lower.includes('timeout') || lower.includes('timed out')) {
         const explorer = NETWORKS[getNetwork()].chainExplorer;
         setWithdrawError(`Tx not confirmed within 60s. Check ${explorer} — withdrawal may still settle.`);
       } else {
-        setWithdrawError(msg);
+        // Bug-26 closure (session 41): replace raw viem trace with a
+        // friendly one-liner. Raw error is still in the browser console.
+        setWithdrawError(friendlyTxError(err, { network: getNetwork() }));
       }
       setWithdrawState('error');
     }
