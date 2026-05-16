@@ -48,7 +48,11 @@ docCommand
   .option('--quick', 'force 1-model Quick tier (overrides --consensus / --high-stakes / --audit)')
   .option('--receipt', 'create an Action Receipt for this run', true)
   .option('--skill <id>', 'use this skill (defaults to private-doc-review)', 'private-doc-review')
-  .option('--model <id>', 'override default model', 'qwen/qwen-2.5-7b-instruct')
+  .option(
+    '--model <id>',
+    'override default model — defaults to IVARONIX_DEFAULT_MODEL env (0GM-1.0-35B-A3B on mainnet, qwen on testnet)',
+    process.env.IVARONIX_DEFAULT_MODEL ?? process.env.OG_DEFAULT_MODEL ?? '0GM-1.0-35B-A3B',
+  )
   .option('--out-dir <dir>', 'where to write the signed receipt JSON', '.ivaronix/receipts/anchored')
   .option('--memory-depth <n>', 'load N most recent receipts for this agent + skill into context (planning-01 §3A)', '0')
   .action(async (file: string, question: string, opts: { burn?: boolean; consensus?: boolean; highStakes?: boolean; audit?: boolean; quick?: boolean; receipt?: boolean; skill: string; model: string; outDir: string; memoryDepth?: string }) => {
@@ -75,7 +79,12 @@ docCommand
     const burnMode = Boolean((opts as { burn?: boolean }).burn ?? skill.manifest.og.burn.auto_enable);
 
     // ─── 1. Read the file ─────────────────────────────────────────────────
-    const filePath = resolve(process.cwd(), file);
+    // Use INIT_CWD when set so relative paths resolve from the user's
+    // invocation directory, not the pnpm-filter target (apps/cli/). pnpm
+    // sets INIT_CWD on every script run; npm sets it too. When neither is
+    // set (Node invoked directly), fall back to process.cwd().
+    const userCwd = process.env.INIT_CWD ?? process.cwd();
+    const filePath = resolve(userCwd, file);
     let docBytes: Buffer;
     try {
       docBytes = readFileSync(filePath);
