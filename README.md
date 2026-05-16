@@ -233,7 +233,7 @@ pnpm ivaronix receipt verify 74 --tee-independent
 #  →  FULLY VERIFIED ✓
 ```
 
-When the live Compute provider's TEE channel is temporarily unreachable, the CLI returns ANCHORED with an amber banner, exit code 1. The first four checks pass deterministically; the fifth degrades honestly when the network can't be reached. No fake green.
+When the live Compute provider's TEE channel is unreachable or the broker session has rotated, the CLI prints `ANCHORED ✓ · TEE-independent unavailable` with an amber banner and exits 0 (the receipt is genuinely anchored on chain — only the live re-attestation channel is down). If the broker returns a real signature mismatch — a tamper signal — the CLI prints `ANCHORED · TEE-independent FAILED` and exits 1. No fake green.
 
 ### Anchor a fresh receipt of your own
 
@@ -306,13 +306,13 @@ For mainnet TEE re-verification, the deployer's first call on a fresh shell need
 | `74` | Galileo | `doc_ask` · TIER 1 TEE | `pnpm ivaronix receipt verify 74 --tee-independent` |
 | `21` | Aristotle | `doc_ask` · TIER 1 TEE — signed by the sovereign 0GM-1.0-35B-A3B provider | `pnpm ivaronix receipt verify 21 --network mainnet --tee-independent` |
 
-If the TEE channel is unreachable at the moment a reviewer runs `--tee-independent`, the first four checks still pass and the CLI returns ANCHORED with an amber banner. By design — honesty beats fake green.
+If the TEE channel is unreachable at the moment a reviewer runs `--tee-independent`, the first four checks still pass and the CLI prints `ANCHORED ✓ · TEE-independent unavailable` with an amber banner and exits 0. A real broker-side mismatch (tamper signal) prints `ANCHORED · TEE-independent FAILED` and exits 1 — the two outcomes are kept distinct so a CI gate doesn't trip on a transient broker.
 
 ### Rate-limit caveats
 
 - **0G Router** caps requests at roughly 30 per minute per credential. The `Keyring` rotates across multiple credentials when configured.
 - **Public Studio proof pages** (`/r/<id>`) are read-only and have no rate limit.
-- **`broker.processResponse`** for TEE re-verify works against receipts anchored within roughly 30 days. Older receipts return ANCHORED (the provider rotates attestation history).
+- **`broker.processResponse`** for TEE re-verify works against fresh receipts whose broker sessions are still active (the 0G Compute provider rotates session keys over time). Archival receipts return `ANCHORED ✓ · TEE-independent unavailable` with exit 0 — the four authenticity checks (schema · hash · signature · chain anchor) still verify deterministically, only the live TEE re-attestation channel needs an in-window session.
 
 ---
 
