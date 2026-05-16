@@ -203,7 +203,7 @@ Section 9: Tenant waives all rights to a jury trial and consents to mandatory ar
       }
     } catch { /* optional */ }
 
-    ui.banner(true, `→ ${total > 0n ? `${total} receipts on testnet · ` : ''}DEMO ANCHORED ✓`);
+    ui.banner(true, `→ ${total > 0n ? `${total} receipts on ${env.network} · ` : ''}DEMO ANCHORED ✓`);
     const explorer = NETWORKS[env.network].chainExplorer;
     ui.hint(`Public proof URL   ${studioUrl(`/r/${result.receiptOnchainId}`)}`);
     ui.hint(`Chain explorer     ${explorer}/tx/${result.receiptTxHash}`);

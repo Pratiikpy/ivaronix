@@ -76,8 +76,13 @@ function buildEngine(): MemoryEngine | null {
   const dbPath = memoryDbPath();
   mkdirSync(dirname(dbPath), { recursive: true });
 
-  const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
-  const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+  // V2-first per og-chain.md rules · same pattern used in grant/revoke/list/log-emit.
+  const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+  const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+  const capAddr = capAddrV2 ?? capAddrV1;
+  const logAddrV2 = getDeployedAddress(env.network, 'MemoryAccessLogV2');
+  const logAddrV1 = getDeployedAddress(env.network, 'MemoryAccessLog');
+  const logAddr = logAddrV2 ?? logAddrV1;
 
   return MemoryEngine.create({
     ownerWallet: env.walletAddress as Address,
@@ -686,7 +691,10 @@ memoryCommand
       process.exitCode = 1;
       return;
     }
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first per og-chain.md rules · matches grant's address resolution above.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -717,7 +725,10 @@ memoryCommand
   .option('--to <address>', 'list grants issued TO this address (instead of by-owner)')
   .action(async (opts: { by?: string; to?: string }) => {
     const env = loadEnv();
-    const capAddr = getDeployedAddress(env.network, 'CapabilityRegistry');
+    // V2-first per og-chain.md rules · matches grant's address resolution.
+    const capAddrV2 = getDeployedAddress(env.network, 'CapabilityRegistryV2');
+    const capAddrV1 = getDeployedAddress(env.network, 'CapabilityRegistry');
+    const capAddr = capAddrV2 ?? capAddrV1;
     if (!capAddr) {
       ui.fail(`CapabilityRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -848,7 +859,10 @@ memoryCommand
       process.exitCode = 1;
       return;
     }
-    const logAddr = getDeployedAddress(env.network, 'MemoryAccessLog');
+    // V2-first per og-chain.md rules · matches `memory log` read pattern at lines 782-783.
+    const logAddrV2 = getDeployedAddress(env.network, 'MemoryAccessLogV2');
+    const logAddrV1 = getDeployedAddress(env.network, 'MemoryAccessLog');
+    const logAddr = logAddrV2 ?? logAddrV1;
     if (!logAddr) {
       ui.fail(`MemoryAccessLog not deployed`);
       process.exitCode = 1;

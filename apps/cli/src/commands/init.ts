@@ -26,8 +26,11 @@ export const initCommand = new Command('init')
       return;
     }
 
+    // Honor IVARONIX_NETWORK / OG_NETWORK env in non-interactive mode · used to
+    // hardcode 'testnet' regardless of the shell-set network.
+    const envNetwork = (process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? '').toLowerCase();
     let answers = {
-      network: 'testnet' as 'testnet' | 'mainnet',
+      network: (envNetwork === 'mainnet' ? 'mainnet' : 'testnet') as 'testnet' | 'mainnet',
       passportPlanned: true,
       defaultSkill: 'private-doc-review',
       writeDotEnv: false,

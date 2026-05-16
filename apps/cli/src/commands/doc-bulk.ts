@@ -325,14 +325,17 @@ export function addBulkCommand(parent: Command): void {
       };
       writeFileSync(localPath, JSON.stringify(updated, null, 2));
 
-      // Bump passport — V2-first write so the K-6 memoryRoot-poisoning
-      // fix is engaged on the aggregate receipt's recordReceipt() call.
+      // Bump passport · V2 contract requires the 5-arg signature with the
+      // anchored on-chain id (K-1 closure cross-check). 4-arg V1 signature
+      // hits a non-matching selector on V2 → silent require(false) revert.
       if (passportHandle) {
         try {
           const tokenId = await passportHandle.client.passportOf(env.walletAddress as Address);
           if (tokenId !== 0n) {
             ui.pending(`recording aggregate against ${passportHandle.version.toUpperCase()} passport tokenId=${tokenId}...`);
-            const ptx = await passportHandle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
+            const ptx = passportHandle.version === 'v2' && onChainId
+              ? await passportHandle.client.recordReceiptV2(tokenId, BigInt(onChainId), signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1)
+              : await passportHandle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
             await ptx.wait();
             const refreshed = await passportHandle.client.getPassport(tokenId);
             if (refreshed) {

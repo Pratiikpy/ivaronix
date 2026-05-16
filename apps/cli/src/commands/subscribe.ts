@@ -129,11 +129,28 @@ subscribeCommand
         Number(opts.interval),
         Number(opts.grace),
         { value: parseEther(opts.budget) },
-      )) as { hash: string; wait: () => Promise<{ blockNumber?: number; logs?: { topics: string[] }[] }> };
+      )) as { hash: string; wait: () => Promise<{ blockNumber?: number; logs?: { topics: string[]; data: string; address: string }[] }> };
       ui.info(`tx hash              ${tx.hash}`);
       const receipt = await tx.wait();
       ui.pass(`subscription created · block ${receipt?.blockNumber}`);
-      ui.hint(`Look up the new subscription id via the Created event in the tx receipt.`);
+      // Parse the Created event to surface the subscription id directly · used to punt to "look up via Created event".
+      let subscriptionId: string | null = null;
+      for (const log of receipt?.logs ?? []) {
+        try {
+          const parsed = escrow.interface.parseLog({ topics: log.topics, data: log.data });
+          if (parsed && parsed.name === 'Created') {
+            subscriptionId = parsed.args.id.toString();
+            break;
+          }
+        } catch { /* not our event */ }
+      }
+      if (subscriptionId) {
+        ui.pass(`subscription id      ${subscriptionId}`);
+        ui.hint(`Fund:     ivaronix subscribe fund ${subscriptionId} --amount <og>`);
+        ui.hint(`Check-in: ivaronix subscribe check-in ${subscriptionId} <attestation-receipt-id>`);
+      } else {
+        ui.hint(`Look up the new subscription id via the Created event in the tx receipt.`);
+      }
       ui.hint(`Explorer: ${NETWORKS[env.network].chainExplorer}/tx/${tx.hash}`);
     },
   );
@@ -174,12 +191,31 @@ subscribeCommand
 subscribeCommand
   .command('check-in <id> <attestationReceiptId>')
   .description(
-    'Agent fires the periodic check-in tx + anchors a subscription_skill_exec receipt (canonical slot 9). Only the subscription\'s agent address can call.',
+    'Agent fires the periodic check-in tx + anchors a subscription_skill_exec receipt (canonical slot 9). Only the subscription\'s agent address can call. <attestationReceiptId> is the NUMERIC on-chain receipt id (V2 ReceiptRegistry); not a ULID.',
   )
   .action(async (id: string, attestationReceiptId: string) => {
     const env = loadEnv();
     if (!env.privateKey) {
       ui.fail('No private key in .env');
+      process.exitCode = 1;
+      return;
+    }
+    // Reject non-numeric receipt ids with a clean error · used to crash with raw `Cannot convert <ulid> to a BigInt`.
+    let attestationIdBigInt: bigint;
+    let subscriptionIdBigInt: bigint;
+    try {
+      subscriptionIdBigInt = BigInt(id);
+    } catch {
+      ui.fail(`subscription id must be numeric (got "${id}").`);
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      attestationIdBigInt = BigInt(attestationReceiptId);
+    } catch {
+      ui.fail(`attestationReceiptId must be the numeric on-chain receipt id (got "${attestationReceiptId}").`);
+      ui.hint(`Use "ivaronix receipt list" or "ivaronix receipt show <ulid>" to find the numeric id.`);
+      ui.hint(`The receipt must exist on V2 ReceiptRegistry (SubscriptionEscrowV2 reads V2-only) and be signed by the agent calling this check-in.`);
       process.exitCode = 1;
       return;
     }
@@ -207,7 +243,7 @@ subscribeCommand
       process.exitCode = 1;
       return;
     }
-    const tx = (await fn(BigInt(id), BigInt(attestationReceiptId))) as {
+    const tx = (await fn(subscriptionIdBigInt, attestationIdBigInt)) as {
       hash: string;
       wait: () => Promise<{ blockNumber?: number; gasUsed?: bigint }>;
     };

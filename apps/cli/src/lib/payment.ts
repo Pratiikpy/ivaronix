@@ -87,7 +87,11 @@ export async function quoteSkill(skillId: string): Promise<QuoteResult> {
   const registry = new Contract(registryAddr, SKILL_REGISTRY_ABI, provider);
   const skillIdHash = keccak256(toUtf8Bytes(`skill:${skillId}`));
 
-  const [price, cBps, tBps, priced] = (await pricing.getFunction('getPricing')(skillIdHash)) as [bigint, number, number, boolean];
+  // ethers v6 returns Solidity uint16 as bigint, not number · the previous
+  // `as [bigint, number, number, boolean]` cast was a runtime lie that crashed
+  // demo --pay with "Cannot mix BigInt and other types" downstream (line 132
+  // in demo.ts does `cBps / 100`). Take it as bigint, convert at the boundary.
+  const [price, cBpsBig, tBpsBig, priced] = (await pricing.getFunction('getPricing')(skillIdHash)) as [bigint, bigint, bigint, boolean];
   const creator = (await registry.getFunction('ownerOf')(skillIdHash)) as string;
 
   if (creator === '0x0000000000000000000000000000000000000000') {
@@ -100,8 +104,8 @@ export async function quoteSkill(skillId: string): Promise<QuoteResult> {
     needsPayment: priced && price > 0n,
     priceWei: price,
     creator: getAddress(creator),
-    creatorBps: cBps,
-    treasuryBps: tBps,
+    creatorBps: Number(cBpsBig),
+    treasuryBps: Number(tBpsBig),
     paymentContract: paymentContract ?? null,
   };
 }

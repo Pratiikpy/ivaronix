@@ -11,9 +11,13 @@ export const AGENT_PASSPORT_ABI = [
   // Agent data tuple: (metadataRoot, memoryRoot, skillManifestRoot, receiptCount, violationCount, trustScore, mintedAt, lastEvolutionAt)
   'function agents(uint256 tokenId) external view returns (bytes32 metadataRoot, bytes32 memoryRoot, bytes32 skillManifestRoot, uint64 receiptCount, uint64 violationCount, int128 trustScore, uint64 mintedAt, uint64 lastEvolutionAt)',
 
-  // Reputation
+  // Reputation · V1 (4-arg) AND V2 (5-arg with receiptId) overloads.
+  // V2 cross-checks the receiptId against ReceiptRegistry per K-1 closure;
+  // V1 trusts the caller. Ethers v6 resolves the overload by argument arity.
   'function recordReceipt(uint256 tokenId, bytes32 receiptRoot, uint8 receiptType, int128 trustScoreDelta) external',
+  'function recordReceipt(uint256 tokenId, uint256 receiptId, bytes32 expectedReceiptRoot, uint8 expectedReceiptType, int128 trustScoreDelta) external',
   'function recordViolation(uint256 tokenId, int128 trustScoreDelta, string reason) external',
+  'function recordViolation(uint256 tokenId, uint256 receiptId, bytes32 expectedReceiptRoot, int128 trustScoreDelta, string reason) external',
   'function authorizedRecorders(address) external view returns (bool)',
   'function addAuthorizedRecorder(address recorder) external',
   'function removeAuthorizedRecorder(address recorder) external',
@@ -129,9 +133,32 @@ export class AgentPassportClient {
     receiptType: number,
     trustScoreDelta: bigint | number,
   ): Promise<ContractTransactionResponse> {
+    // V1 (4-arg) path · used when caller doesn't have the receipt's on-chain id
+    // OR when targeting the V1 deployment. Resolve the overload by passing the
+    // exact ethers method signature.
     const id = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
     const delta = typeof trustScoreDelta === 'number' ? BigInt(trustScoreDelta) : trustScoreDelta;
-    return this.contract.recordReceipt!(id, receiptRoot, receiptType, delta);
+    const fn = this.contract.getFunction('recordReceipt(uint256,bytes32,uint8,int128)');
+    return fn(id, receiptRoot, receiptType, delta) as Promise<ContractTransactionResponse>;
+  }
+
+  /**
+   * V2 5-arg recordReceipt · cross-checks the receiptId against ReceiptRegistry
+   * per K-1 threat model closure. Required for AgentPassportINFTV2 deployments
+   * (V2 contract rejects the 4-arg V1 selector with fallback revert).
+   */
+  async recordReceiptV2(
+    tokenId: bigint | number,
+    receiptId: bigint | number,
+    expectedReceiptRoot: Hash,
+    expectedReceiptType: number,
+    trustScoreDelta: bigint | number,
+  ): Promise<ContractTransactionResponse> {
+    const tid = typeof tokenId === 'number' ? BigInt(tokenId) : tokenId;
+    const rid = typeof receiptId === 'number' ? BigInt(receiptId) : receiptId;
+    const delta = typeof trustScoreDelta === 'number' ? BigInt(trustScoreDelta) : trustScoreDelta;
+    const fn = this.contract.getFunction('recordReceipt(uint256,uint256,bytes32,uint8,int128)');
+    return fn(tid, rid, expectedReceiptRoot, expectedReceiptType, delta) as Promise<ContractTransactionResponse>;
   }
 
   async updateMemoryRoot(tokenId: bigint | number, newRoot: Hash): Promise<ContractTransactionResponse> {

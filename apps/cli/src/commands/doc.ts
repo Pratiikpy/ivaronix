@@ -7,7 +7,7 @@ import { Wallet, JsonRpcProvider, keccak256, toUtf8Bytes } from 'ethers';
 import { existsSync } from 'node:fs';
 import { sha256HexAsync, NETWORKS, RECEIPT_TYPES, ROLES_BY_TIER, type ConsensusTier, type Hash } from '@ivaronix/core';
 import { buildReceipt, signReceipt, defaultChainAnchor, allocateFeeSplit } from '@ivaronix/receipts';
-import { ReceiptRegistryClient, ReceiptRegistryV2Client, getDeployedAddress } from '@ivaronix/og-chain';
+import { ReceiptRegistryClient, ReceiptRegistryV2Client, ReceiptRegistryV3Client, getDeployedAddress } from '@ivaronix/og-chain';
 import { getActivePassportClient } from '../lib/passport.js';
 import { keyringFromEnv } from '@ivaronix/og-router/keyring';
 import { burnEncrypt, createStorageClient } from '@ivaronix/og-storage';
@@ -609,13 +609,16 @@ docCommand
       return;
     }
 
-    // V2-first per .claude/rules/og-chain.md. New anchors land on V2;
-    // legacy V1 stays live for existing receipts. registryVersion drives
-    // the anchor branch below.
+    // V3-first per .claude/rules/og-chain.md · used to skip V3 entirely. The
+    // mainnet V2 passport's receiptRegistry pointer is V3, so anchoring to V2
+    // breaks the passport.recordReceipt cross-check (receiptRoot mismatch on a
+    // different row at the same id). V3 → V2 → V1 fallback brings doc.ts in
+    // line with demo.ts / room.ts / memory.ts / subscribe.ts.
+    const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
     const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
     const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-    const registryAddr = registryAddrV2 ?? registryAddrV1;
-    const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+    const registryAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
+    const registryVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
     if (!registryAddr) {
       ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -828,7 +831,23 @@ docCommand
     let tx: { hash: string };
     let txReceipt: { blockNumber: number; gasUsed: bigint } | null;
     let onChain: { id: bigint } | null = null;
-    if (registryVersion === 'v2') {
+    if (registryVersion === 'v3') {
+      const registryV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+      const { tx: v3Tx } = await registryV3.signAndAnchor(wallet, {
+        receiptRoot: signed.storage.receiptRoot as Hash,
+        storageRoot: evidenceBytes32,
+        receiptType: typeCode,
+        attestationHash: anchorAttestationHash,
+      });
+      tx = { hash: v3Tx.hash };
+      const r = await v3Tx.wait();
+      txReceipt = r ? { blockNumber: r.blockNumber, gasUsed: r.gasUsed } : null;
+      try {
+        // nextId minus one is the just-anchored row for V3 (atomic per-block).
+        const next = await registryV3.nextId();
+        onChain = { id: next - 1n };
+      } catch { /* not fatal */ }
+    } else if (registryVersion === 'v2') {
       const registryV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
       const { tx: v2Tx } = await registryV2.signAndAnchor(wallet, {
         receiptRoot: signed.storage.receiptRoot as Hash,
@@ -879,7 +898,8 @@ docCommand
     }, null, 2));
 
     // ─── 6. Record receipt against passport (if owner has one) ────────────
-    // V2-first write — K-6 memoryRoot-poisoning fix lives on V2 only.
+    // V2-first write — K-1 closure cross-checks receiptId against ReceiptRegistry,
+    // so the V2 path needs the on-chain id (`onChainReceiptId` captured after anchor).
     const passportHandle = getActivePassportClient(env.network, wallet);
     if (passportHandle) {
       const passport = passportHandle.client;
@@ -889,7 +909,12 @@ docCommand
           ui.pending(`recording receipt against ${passportHandle.version.toUpperCase()} passport tokenId=${tokenId}...`);
           // Trust delta: +1 per anchored receipt; tunable per skill via the
           // skill manifest's `og.reputation.on_pass.trustScore` field.
-          const ptx = await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
+          // V2 passport contract: 5-arg signature with receiptId; cross-checks
+          // the registry pointed at by passport.receiptRegistry (currently V3
+          // on mainnet). V1 passport: 4-arg legacy.
+          const ptx = passportHandle.version === 'v2' && onChain
+            ? await passport.recordReceiptV2(tokenId, onChain.id, signed.storage.receiptRoot as Hash, typeCode, 1)
+            : await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, typeCode, 1);
           await ptx.wait();
           // Re-read updated state
           const updated = await passport.getPassport(tokenId);
@@ -899,7 +924,7 @@ docCommand
         }
       } catch (err) {
         // Don't fail the whole flow if passport update fails — receipt is still anchored
-        ui.pending(`passport update skipped: ${(err as Error).message}`);
+        ui.pending(`passport update skipped: ${(err as Error).message.split('\n')[0]}`);
       }
     }
 

@@ -458,7 +458,7 @@ roomCommand
 // ─── room read ───────────────────────────────────────────────────────────
 roomCommand
   .command('read <roomId>')
-  .description('Anchor a doc_room_read receipt for the connected wallet (caller must hold a valid CapabilityRegistry grant for this room)')
+  .description('Anchor a doc_room_read access-log receipt for the connected wallet (caller must hold a valid CapabilityRegistry grant). NOTE: this is an audit-trail anchor, NOT a plaintext viewer. The room\'s ciphertext on 0G Storage is encrypted under a Burn Mode session key that was destroyed at create time; plaintext recovery is not possible from the CLI today (wallet-mode encryption is queued in USER_TODO §B-V2).')
   .action(async (roomId: string) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
@@ -700,5 +700,13 @@ roomCommand
     ui.pass(`block                ${blockNumber ?? '?'}`);
     ui.pass(`on-chain id          ${onChainId ?? '?'}`);
     ui.divider();
+    // Honest UX · used to print only "Public proof: <url>" which made it look
+    // like the CLI showed the doc contents. Burn Mode destroys the session key
+    // at create time (og-storage/src/burn.ts:54) so the encrypted blob on 0G
+    // Storage is by-design unrecoverable from the CLI. This command is an
+    // access-log anchor, not a content viewer. Wallet-mode (per-recipient
+    // ECIES) is the queued path for plaintext recovery (USER_TODO §B-V2).
+    ui.info('mode                 access-log only · Burn Mode · plaintext recovery not possible from CLI');
+    ui.info('proof of access      anchored to ReceiptRegistry on chain · this receipt is the auditable record that you opened the room');
     ui.hint(`Public proof: ${studioUrl(`/r/${onChainId ?? '<onchain-id>'}`)}`);
   });

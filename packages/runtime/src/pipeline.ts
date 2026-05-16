@@ -619,9 +619,12 @@ async function anchorReceipt(a: AnchorArgs): Promise<{ path: string; id: string;
   // Slot 10/11/12 REQUIRE V3.
   const SLOTS_REQUIRING_V3 = new Set(['doc_room_create', 'doc_room_read', 'memory_consolidation']);
   const requiresV3 = SLOTS_REQUIRING_V3.has(receiptType);
-  const registryAddr = requiresV3
-    ? (registryAddrV3 ?? registryAddrV2 ?? registryAddrV1)
-    : (registryAddrV2 ?? registryAddrV3 ?? registryAddrV1);
+  // V3-first across the board · the V2 passport's receiptRegistry pointer is
+  // V3 on mainnet, so anchoring to V2 breaks passport.recordReceipt's K-1
+  // cross-check (`receiptRegistry.receipts(id).receiptRoot != expectedRoot`
+  // because they're on different registries). Routing all slots through V3
+  // (which is a superset of V2/V1) keeps the cross-check valid.
+  const registryAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
   const registryVersion: 'v1' | 'v2' | 'v3' =
     registryAddr === registryAddrV3 ? 'v3'
     : registryAddr === registryAddrV2 ? 'v2'

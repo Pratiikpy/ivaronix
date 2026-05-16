@@ -197,7 +197,8 @@ skillCommand
     ui.pass(`gas used             ${receipt?.gasUsed}`);
     ui.divider();
     ui.pass(`Status: → ANCHORED ✓`);
-    ui.hint(`Explorer: https://chainscan-galileo.0g.ai/tx/${tx.hash}`);
+    // Use network-aware explorer URL · CLAUDE.md §15 ship-X-discover-X.
+    ui.hint(`Explorer: ${NETWORKS[opts.network].chainExplorer}/tx/${tx.hash}`);
   });
 
 // ─── verify ──────────────────────────────────────────────────────────────────
@@ -401,6 +402,26 @@ skillCommand
     }
     mkdirSync(targetRoot, { recursive: true });
     copyFileSync(join(tmp, 'SKILL.md'), targetMd);
+
+    // Copy tests/ fixtures if the source is a local file:// path · used to skip
+    // tests/, breaking `skill eval <id>` against the installed copy.
+    if (fetchUrl.startsWith('file://')) {
+      const { fileURLToPath } = await import('node:url');
+      const { readdirSync, statSync } = await import('node:fs');
+      const { dirname } = await import('node:path');
+      const srcSkillPath = fileURLToPath(fetchUrl);
+      const srcRoot = dirname(srcSkillPath);
+      const srcTests = join(srcRoot, 'tests');
+      if (existsSync(srcTests) && statSync(srcTests).isDirectory()) {
+        const destTests = join(targetRoot, 'tests');
+        mkdirSync(destTests, { recursive: true });
+        for (const f of readdirSync(srcTests)) {
+          const src = join(srcTests, f);
+          if (statSync(src).isFile()) copyFileSync(src, join(destTests, f));
+        }
+        ui.info(`tests copied         ${readdirSync(destTests).length} fixture(s) → ${destTests}`);
+      }
+    }
 
     ui.divider();
     ui.banner(true, '→ INSTALLED ✓');

@@ -248,6 +248,7 @@ modelCommand
         const ZERO_HASH = ('0x' + '0'.repeat(64)) as Hash;
         let txHash: string;
         let blockNumber: number | null;
+        let onChainId: bigint | null = null;
         if (registryVersion === 'v2') {
           const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
           const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
@@ -259,6 +260,10 @@ modelCommand
           txHash = v2Tx.hash;
           const r = await v2Tx.wait();
           blockNumber = r?.blockNumber ?? null;
+          try {
+            const found = await regV2.findByReceiptRoot(signed.storage.receiptRoot as Hash, 50);
+            if (found) onChainId = found.id;
+          } catch { /* not fatal */ }
         } else {
           const regV1 = new ReceiptRegistryClient(registryAddr, wallet);
           const v1Tx = await regV1.anchor(
@@ -273,13 +278,16 @@ modelCommand
         }
         ui.pass(`receipt              ${signed.id}  tx=${txHash}  block=${blockNumber} (${registryVersion.toUpperCase()})`);
 
-        // Best-effort passport update — V2-first (K-6 memoryRoot-poisoning fix on V2).
+        // Best-effort passport update · V2 needs the 5-arg signature with the
+        // anchored on-chain id (K-1 closure cross-check).
         try {
           const handle = getActivePassportClient(env.network, wallet);
           if (handle) {
             const tokenId = await handle.client.passportOf(wallet.address as `0x${string}`);
             if (tokenId !== 0n) {
-              const ptx = await handle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPES[receiptType], 1);
+              const ptx = handle.version === 'v2' && onChainId !== null
+                ? await handle.client.recordReceiptV2(tokenId, onChainId, signed.storage.receiptRoot as Hash, RECEIPT_TYPES[receiptType], 1)
+                : await handle.client.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPES[receiptType], 1);
               await ptx.wait();
             }
           }

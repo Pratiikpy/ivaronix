@@ -18,7 +18,9 @@ export const RegistryEntrySchema = z.object({
   /** Lowercase, dash-separated id; matches the seed-skills/<id> directory. */
   id: z.string().regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/),
   version: z.string().regex(/^\d+\.\d+\.\d+$/),
-  description: z.string().min(20).max(400),
+  // Raised 400 → 800 · legal cluster skills carry honest TIER 2 disclosures
+  // (heuristic-vs-tool-call gap, runtime caveats) that exceed 400 chars.
+  description: z.string().min(20).max(800),
   /** Source category — first-party (audited, fee-split-tested) vs imports
    * (community-contributed, see imports/<id>/SKILL.md). */
   source: z.enum(['first-party', 'imports']),

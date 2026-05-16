@@ -455,12 +455,11 @@ export function addConsolidateCommand(parent: Command): void {
           const tokenId = await passport.passportOf(env.walletAddress as Address);
           if (tokenId !== 0n) {
             ui.pending(`recording consolidation against ${passportVersion.toUpperCase()} passport tokenId=${tokenId}...`);
-            const ptx = await passport.recordReceipt(
-              tokenId,
-              signed.storage.receiptRoot as Hash,
-              RECEIPT_TYPE_CODE,
-              1,
-            );
+            // V2 needs the 5-arg signature with the anchored on-chain id
+            // (K-1 closure cross-check). onChainId is the consolidation receipt id.
+            const ptx = passportVersion === 'v2' && onChainId
+              ? await passport.recordReceiptV2(tokenId, BigInt(onChainId), signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1)
+              : await passport.recordReceipt(tokenId, signed.storage.receiptRoot as Hash, RECEIPT_TYPE_CODE, 1);
             await ptx.wait();
             const refreshed = await passport.getPassport(tokenId);
             if (refreshed) {

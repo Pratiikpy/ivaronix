@@ -1,7 +1,8 @@
 # Phase B disclosures
 
 > Per CLAUDE.md §1: "surface the half-baked, always." This doc enumerates every
-> known half-baked surface in the Studio and CLI as of 2026-05-09 and how it is
+> known half-baked surface in the Studio and CLI (snapshot baseline 2026-05-09,
+> with closures landing through 2026-05-15 mainnet promotion) and how each is
 > disclosed to a judge or user — so nothing is hidden behind a polished
 > screenshot. Each item names the file, the current honest behaviour, and the
 > Phase B fix.
