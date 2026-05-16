@@ -1,6 +1,6 @@
 # Brand assets — separate license
 
-> Closes planning-003 §A.5.8 (and the §1 "no public lies" rule). The repo's MIT grant covers code, not the brand. This doc names the rule so a hostile fork can't lean on the LICENSE-default-MIT defense.
+> The repo's MIT grant covers code, not the brand. This doc names the rule so a hostile fork can't lean on the LICENSE-default-MIT defense.
 
 ## What's reserved
 
@@ -8,7 +8,7 @@ Everything under `brand/` is reserved:
 
 - The bracketed-"i" mark (SVG, PNG, all sizes).
 - `brand/Ivaronix.html` — the canonical visual reference.
-- `brand/tokens.css` + `brand/tokens.json` — the design-token source of truth (planning-003 §A.3.3).
+- `brand/tokens.css` + `brand/tokens.json` — the design-token source of truth.
 - The wordmark "IVARONIX" in all weights and tracking variants.
 - The favicon set + apple-touch-icon set generated from the mark.
 - The OG image templates at `apps/studio/src/app/opengraph-image.tsx` + `apps/studio/src/app/0g/opengraph-image.tsx` + `apps/studio/src/app/r/[id]/opengraph-image.tsx`.
@@ -40,6 +40,6 @@ This doc puts the brand rule in writing so a fork's choice to use it anyway is a
 
 ## See also
 
-- `LICENSE` — the MIT grant for code, with the §A.5.8 "brand assets (separate license)" appendix.
-- `brand/Ivaronix.html` — the canonical visual reference; treat as source of truth for color/typography/spacing per CLAUDE.md §10.
+- `LICENSE` — the MIT grant for code.
+- `brand/Ivaronix.html` — the canonical visual reference; the source of truth for color, typography, and spacing.
 - `brand/tokens.css` + `brand/tokens.json` — the design-token contract.

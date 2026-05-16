@@ -48,7 +48,7 @@ This single field is the entire tier story. Three values:
 
 - `'router_flag'` — TIER 1, routed through 0G Compute, provider's TEE attestation flagged at submission time.
 - `'compute_sdk_process_response'` — TIER 1, broker.processResponse confirmed the attestation post-hoc.
-- `'external-signed'` — TIER 2, ran on NVIDIA NIM / OpenAI / Ollama. Signed and chain-anchored, **not TEE-verified**. Renders amber on `/r/<id>`. Honest > flattering (CLAUDE.md §6).
+- `'external-signed'` — TIER 2, ran on NVIDIA NIM / OpenAI / Ollama. Signed and chain-anchored, **not TEE-verified**. Renders amber on `/r/<id>`.
 
 A page that displays a green TIER 1 chip MUST have one of the first two values.
 A page displaying TIER 2 amber MUST have `'external-signed'`. Anything else is
@@ -171,8 +171,8 @@ row also flips: STORAGE/CHAIN remain green (those steps did happen on 0G
 infrastructure), TEE goes amber (no 0G TEE attestation).
 
 The branding rationale — green for "we attested", amber for "external party
-attested" — is one paragraph in CLAUDE.md §6: *"Honest > flattering."* The
-implementation is one switch on `verificationMethod`.
+attested" — keeps the receipt page honest. The implementation is one
+switch on `verificationMethod`.
 
 ---
 

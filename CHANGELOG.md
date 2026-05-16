@@ -1,156 +1,86 @@
 # Changelog
 
-> Audit-and-close ledger. Every audit finding has a status row, every fix carries a `Closes audit #N` commit trailer, every phase has a section. Closes planning-003 §A.4.3 (wandering thoughts #57, #62, #63). Companion: `docs/HALF_BAKED.md` (open audit ledger), `docs/PHASE_B_DISCLOSURES.md` (legacy Phase-B closure log, being merged here).
+All notable changes to Ivaronix are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Convention
+## 1.0.0 — 2026-05-15 · Mainnet launch
 
-Every audit-fix commit MUST carry the trailer:
+Ivaronix ships on 0G Aristotle mainnet (chainId 16661).
 
-```
-Closes audit <ID>
-```
+### Added
 
-Where `<ID>` is the audit code from `docs/HALF_BAKED.md` or `docs/planning-003.md` (e.g. `S-1`, `K-2`, `A.1.3`, `WT 43`). Multiple closures: comma-separated.
+- 10 contracts deployed on Aristotle: `ReceiptRegistryV3`, `ReceiptRegistryV2`, `AgentPassportINFTV2`, `Erc7857Verifier`, `CapabilityRegistryV2`, `MemoryAccessLogV2`, `SkillRegistryV2`, `SkillPricing`, `SkillRunPayment`, `SubscriptionEscrowV2`. Total gas spend ~0.085 OG.
+- 22 receipts anchored on mainnet `ReceiptRegistryV3` across all 13 receipt-type slots.
+- 5 first-party legal skills published on mainnet `SkillRegistryV2`: `private-doc-review`, `nda-triage-reviewer`, `contract-renewal-clause-detector`, `legal-citation-verifier`, `term-sheet-risk-scanner`.
+- TEE attestation re-verification on mainnet via `broker.processResponse` proven against the live 0G Compute provider.
+- 0G Storage upload proven on mainnet receipts.
+- 3-wallet marketplace flow proven on mainnet: creator publish, buyer paid run, treasury withdraw across 6 transactions with 90/10 fee split.
+- 2-wallet flows proven on mainnet: memory grant/revoke and passport mint.
 
-`pnpm audit:list` walks `git log --grep "Closes audit"` and prints a table grouped by audit ID. Shipped in commit 2e49612. Filters: `--since 2w` · `--grep A.5` · `--json`.
+### Changed
 
-CLAUDE.md §1: NO `Co-Authored-By` trailers. Conventional-commit subject + body only.
+- Studio reads `IVARONIX_NETWORK=mainnet` and switches RPC + contract addresses accordingly. Legacy `OG_NETWORK` alias still resolves.
+- The `live` site at `https://www.ivaronix.xyz` points at mainnet by default.
 
-## Phase D — cron-paced sweep loop (sweeps 200-228 · 2026-05-11)
+## 0.5.0 — 2026-05-13 · Marketplace economics
 
-Recap of the audit closures landed between sweeps 200-228. Each commit's subject carries the `· close §<ID> · sweep N` shape; the canonical `Closes audit <ID>` git-trailer convention was missed across the run (sweep 231 finding) so `pnpm audit:list` undercounts these. From sweep 232+ the trailer is restored. This table is the human-readable backfill.
+Receipt-gated payments and per-skill fee splits.
 
-| Audit ID | Commit | Sweep | Closure shape |
-|---|---|---|---|
-| §K-15 (TS+Python+Rust) | `39d7f29` · `a97058b` | < 200 | 3 of 4 verifiers shipped; Go queued (B-V2-K15-Go) |
-| numbers regex bug | `42f8b87` | 200 | `\btsc\b` over-match in `echo` placeholder fixed |
-| §I-12 storage half | `d9122aa` | 201 | `memory snapshot --upload` writes manifest to 0G Storage |
-| §A frozen-snapshot batch | `83cd073` | 209 | 13 §A-* mirrors closed with sub-section citations |
-| §H/§I/§K batch | `be89aef` | 210 | 15 entries closed (H-2, H-4, I-1, I-2, I-4, K-1, K-2, K-3, K-4, K-6, K-7, K-8, K-9, K-12, K-16) |
-| §I-6 TEE-Bound overclaim | `6ac56cb` | 211 | `verify-no-tee-bound-overclaim` regression |
-| §K-11 error-sanitize | `7aaa839` | 212 | `sanitizeErrorMessage()` applied to 5 API routes |
-| §I-3 / §K-14 verifier branch | `7aaa839` | 212 | tier-aware signer-check in `verify.ts` |
-| §K-19 signature regex | `99e1fb5` | 213 | exact 130-hex enforcement + 2 tests |
-| §K-18 chainId bind | `68e4f54` | 214 | NETWORKS-bound + (network, chainId) superRefine + 3 tests |
-| §K-24 not-applicable enum | `2a4b72d` | 215 | `localCleanupStatus: 'not-applicable'` + 3 sites + 3 tests |
-| §J-4 non-null assertions | `aaeeda3` | 216 | type-predicate filter + `burnMeta &&` gate (doc.ts → 0 `!` postfixes) |
-| §K-13 sameSite primary | `0d4765b` | 217 | `verify-siwe-cookie-samesite-strict` regression |
-| §H-3 pipeline storage upload | `f4e9245` | 218 | `createStorageClient(...).upload(evidenceBytes)` + 8-assertion lock |
-| §K-17 registryAddress bind | `37edd42` | 219 | `KNOWN_RECEIPT_REGISTRIES` in `@ivaronix/core` + dual lock |
-| §H-7 verified-no-bug | `66656a8` | 220 | analytical close: testnet `routerVerified=false` is honest |
-| §K-10 dashboard arbitrary-read | `a2d6006` | 221 | cumulative defenses (K-9 closure + sweeps 177, 196) |
-| 7 items queued B-V2-15..30 | `be3aa40` | 222 | H-5, H-6, I-18, K-5, K-21, K-22, K-23, K-25 → B-V2 entries |
-| PHASE_B Item #1 SIWE | `423ccc2` | 223 | closure-citation gate + present-state narrative |
-| closure-citation gate extended | `0339f6a` | 224 | PHASE_B_DISCLOSURES.md now scanned |
-| JUDGE_GUIDE Phase B SIWE | `9eb6f33` | 226 | stale caption corrected |
-| env.ts §B-V2-10 stale | `f24fa79` | 227 | cross-ref updated to ✅ SHIPPED |
-| §B-V2-N cross-ref lock | `966d59b` | 228 | `verify-b-v2-crossref-status` regression + 1 follow-on fix |
-| CHANGELOG-DRIFT-1 backfill | `806eb73` | 231 | self-audit caught missing trailers; this Phase D table is the human-readable recovery |
-| CHANGELOG-DRIFT-1 lock | `0c6c5a8` | 236 | `.githooks/commit-msg` enforces `Closes audit <ID>` on commits adding ✅ to HALF_BAKED / PHASE_B_DISCLOSURES |
+### Added
 
-Net state at end of run:
-- HALF_BAKED: 79 closed entries, 8 queued (all with B-V2 runbook), 0 stale
-- PHASE_B_DISCLOSURES: 1 explicitly closed; remaining 5 items in "Open · documented honestly" are accurately open
-- Source regressions: 74 (57 Studio + 13 CLI + 4 contract)
-- Unit tests: 259 across 12 library packages
-- Foundry tests: 167 (per `docs/numbers.json`)
-- USER_TODO B-V2 entries: 30 (11 shipped, 19 queued for mainnet/operator-action)
+- `SkillRunPayment` contract: per-skill creator/treasury fee split with pull-pattern withdrawals, lifetime accumulators, and admin refund gated by a 24h timelock. 41 Foundry tests, 2 invariants, 3 fuzz suites.
+- `SkillPricing` contract: mutable per-skill pricing (`priceWei` plus creator/treasury bps) gated by `SkillRegistryV2.ownerOf(skillId)`. 14 Foundry tests.
+- Studio `/api/run` payment-aware flow: 402 response with payment requirement, MetaMask confirm, then receipt anchoring.
+- CLI payment integration: `ivaronix demo`, `ivaronix run`, and `ivaronix receipt show` all surface payment metadata.
+- Studio marketplace routes: `/marketplace`, `/marketplace/[skillId]`, `/marketplace/new`, `/marketplace/payouts`, `/admin/treasury`.
+- Goldsky subgraph indexing for `SkillRunPayment` events.
+- IETF Agent Audit Trail export: `ivaronix receipt verify <id> --format aat` produces JSON pinned to `draft-rosenberg-aat-01`.
 
-## Phase C — testnet polish bundle (in progress · 2026-05-10)
+## 0.4.0 — 2026-05-12 · V3 receipt registry + remaining V2 lockdowns
 
-Plan `docs/planning-003.md` Section A drives this phase. Operator-action gates for mainnet captured in `docs/USER_TODO.md` §B-V2-1 through §B-V2-13.
+Closes the receipt-type capacity gap and ships the last V2 contracts.
 
-### Phase 1 · Critical correctness (6/6 ✅)
+### Added
 
-| ID | Item | File / Was / Now | Commit |
-|---|---|---|---|
-| A.1.1 | Form/schema enum drift bug | `apps/studio/src/app/skill/new/page.tsx`: hardcoded `['none','read','read-write']` mismatched Zod `['none','sandbox-only','full']`. **Now:** form derives `MEMORY_OPTIONS`/`SHELL_OPTIONS` from `MemoryAccessEnum.options` + `ShellAccessEnum.options` (manifest schema is source of truth). | `571bb8c` |
-| A.1.2 | CLI receipt verify V2-only | `apps/cli/src/commands/receipt.ts`: V1-only loader broke gold-standard verify on V2 receipts post-mainnet. **Now:** `buildReadRegistries(network)` returns V2-first-V1-fallback for verify/show/list paths; anchor write path stays V1 (V2 needs EIP-712 sig flow). | `60aabe9` |
-| A.1.3 | Studio V1-blindness across 8 surfaces + onboard mint | 8 Studio routes called `getReceiptRegistry()` directly; `/onboard` minted to V1, trapping new mints in legacy contract. **Now:** `apps/studio/src/lib/chain.ts` adds `unifiedNextId/GetReceipt/FindByReceiptRoot/FindByAgent` helpers. All 8 surfaces refactored. `/onboard` mints V2-first. | `57e7f26` |
-| A.1.4 | Studio test target was no-op | `apps/studio/package.json`: `"test": "echo skip"`. **Now:** `pnpm --filter qa-metamask-e2e run regressions:studio` runs source-file regressions. CI workflow `regression-smokes` job gates studio + cli + contracts groups. | `0ce639a` |
-| A.1.5 | V2 anchor smoke not CI-gated | `verify-v2-anchor-live.ts` ran only manually. **Now:** `.github/workflows/chain-smoke.yml` runs label-gated PR + nightly cron with `IVARONIX_CI_WALLET_KEY` secret. Operator runbook `docs/CI_WALLET.md` ships. | `eb91d1b` |
-| A.1.6 | TIER_OPTIONS hardcoded | Form had third hardcoded enum. **Now:** `ConsensusTierEnum` extracted from manifest schema; form imports it. | `21a849d` |
+- `ReceiptRegistryV3` admits three new receipt-type slots: `doc_room_create` (10), `doc_room_read` (11), `memory_consolidation` (12). V2 capped at slot 9. EIP-712 version bumped to `"3"` so V2 signatures cannot replay.
+- `CapabilityRegistryV2`: private reverse indexes close a social-graph leak; an `authorizedRelayers` gate on `consumeRead` closes a DoS surface.
+- `MemoryAccessLogV2`: `logAccess` requires either `msg.sender == agent` (self-log) or a `CapabilityRegistryV2.isValid` cross-check (grant-backed). Random wallets revert.
+- `SkillRegistryV2`: constructor pre-reserves 6 first-party skill IDs to the deployer wallet, closing skill-name squatting. Owner arbitration lets the contract owner reassign squatter-grabbed unreserved skillIds.
+- `SubscriptionEscrowV2`: `cancelGraceSeconds` window between agent-initiated cancel and `EXPIRED` status closes an `AGENT_AUTO` griefing surface.
 
-### Phase 2 · Submission polish (7/7 · A.2.2 capture pipeline shipped + PNGs operator-action)
+### Changed
 
-| ID | Item | Commit |
-|---|---|---|
-| A.2.1 | README persona-first rewrite + 4-line ladder hero | First 40 lines rewritten into MUSASHI-shape ladder: project name only on line 1, bare `Catch the risks. Keep the receipts.` tagline on line 3, ASCII flow diagram (Drop document → 0G Compute TEE → 0G Chain anchor → Public Proof URL) on lines 5-12, 5-step "How it works" numbered list on lines 14-22, 4-line ladder + `Verifiability over volume` lockup on lines 24-28, copy-paste 60-second quick start (`git clone → pnpm install → pnpm cli verify 1644 --tee-independent`) on lines 30-36. Persona named explicitly in §"What is Ivaronix?" — deal lawyer / founder / analyst — replacing the prior "0G Agent Operating System" framing per planning-003 §A.2.1 (#16). OS framing dropped from 4 user-facing surfaces: README §What-is + §TL;DR Strategy, `apps/cli/src/bin/ivaronix.ts:58` CLI description, `apps/studio/src/app/opengraph-image.tsx:50` OG image label. `apps/npx-cli/bundle.mjs` no longer overwrites the curated `apps/npx-cli/README.md` on every build (it was clobbering the planning-003 §A.5.22 30-line rewrite). |
-| A.2.2 | README screenshot grid + Playwright capture pipeline | New `scripts/qa/metamask-e2e/capture-readme-shots.ts` (Playwright chromium, 1200×800, captures 6 surfaces: home / runpanel-mid / receipt-tier1 / burn-mode / agents / onboard). New `pnpm screenshots:refresh` script. README "Visual tour" section with 2×3 markdown table pointing at `screenshots/readme/{01-06}-*.png` paths. Operator-action capture step queued in USER_TODO §B-V2-23 (5min: start Studio dev → run script → commit PNGs). New `verify-a22-readme-grid.ts` regression with 18 assertions enforces wiring (capture script imports playwright, names the 6 surfaces, package.json declares the script, README has Visual tour section + 6 PNG references, USER_TODO documents the operator step). Studio offline filter now 5/5. |
-| A.2.3 | Documentation section linking 11 deep docs from README | `0f2578f` |
-| A.2.4 | Track 1 + Track 3 by-the-numbers headline blocks | `0f2578f` |
-| A.2.5 | Counter-position table (vs OpenClaw, 0GClaw, Trapezohe, AlphaTrace) + honest TIER 1/2 disclosure callout | `0f2578f` |
-| A.2.6 | Polyglot canonical hash Criterion-1 moat surfaced | `0f2578f` |
-| A.2.7 | `docs/numbers.json` + `pnpm numbers:refresh` + RunPanel + RECEIPTS_SPEC types render | First-pass `docs/numbers.json` + `pnpm numbers:refresh` shipped earlier (live 1,644 receipts confirmed). This commit closes the remaining drift surfaces: (a) RunPanel.tsx hardcoded 6 skills; now accepts a `skills` prop and the home page passes `loadAllSkills().filter(curatedIds).map({id, manifest.og.consensus.default_tier})` so the dropdown tracks `seed-skills/` reality + manifest-declared tier. (b) RECEIPTS_SPEC.md §1 type table claimed 9 types while `RECEIPT_TYPES` enum has 13; now wrapped in `<!-- AUTO:types:start --> ... <!-- AUTO:types:end -->` markers + new `pnpm receipt-types:render` script regenerates the table from `packages/core/src/types.ts` (preserves per-row "When created" descriptions across renders so copy-edits don't get clobbered). New `pnpm receipt-types:check` is the CI gate that fails on drift. | partial · numbers infra + RunPanel + receipt-types render shipped; full markdown auto-render pipeline queued in §B-V2-8 |
+- Studio chain reads now use the V3-first → V2 → V1 fallback walk for receipts and the V2-first → V1 fallback for passports, capabilities, memory log, and skill registry.
 
-### Phase 3 · Schema + voice (8/8 done or queued)
+## 0.3.0 — 2026-05-10 · V2 contracts — threat-model lockdowns
 
-| ID | Item | Commit |
-|---|---|---|
-| A.3.1 | Sprint-language scrub completion (32 hits across apps + packages) | First pass landed in `a111765` (Solidity NatSpec + 2 user-visible TS comments). Second pass closes the remaining ~30 hits across `apps/{studio,cli,mcp-server,openclaw-skill}/` + `packages/{core,consensus,og-storage,memory,skills,trust-layer,og-toolkit,receipts,runtime}/` + `seed-skills/`. Replaced `Day-N` references with capability statements (`{ name: 'ReceiptRegistry', group: 'core' }` instead of `phase: 'Day 3'`), `Phase A/B` references with end-state framing pointing at USER_TODO §B-V2, `MVP` / `killer demo` / `Track 5 headline` with feature-statement language. Added CLAUDE.md §9 sub-rule: "JSDoc and NatSpec describe WHAT the code does, not WHEN it was written" with the explicit exception that `planning-003 §X` / `WT N` traceability links stay because they're audit-closure pointers, not sprint markers. Source-side scrub complete; remaining hits are in `apps/studio/.next/` build cache (regenerates on next build) and a binary asset in `packages/opencode-bin/`. |
-| A.3.2 | Threat-model JSDoc on 5 security primitives | `af54b30` |
-| A.3.3 | Brand-token consolidation (`brand/tokens.css` + `brand/tokens.json`) | (brand commit) |
-| A.3.4 | Env-var canonical `IVARONIX_*` with deprecation warnings | `ee243bc` |
-| A.3.5 | `tsconfig.base.json` (per-package extends migration queued §B-V2-12) | `58cd323` |
-| A.3.6 | `receipt_required: true` on plan-step (every skill anchors) | `41ba3bd` |
-| A.3.7 | Test-key namespace warning on 8 Foundry test files | `c3a8730` + `bdf31d0` |
-| A.3.8 | `creator.fee_split` 90/10 added to 4 skills missing it | `41ba3bd` |
+Six security findings closed by deploying new V2 contracts. V1 stays live for legacy state.
 
-### Phase 4 · Architecture compounding (in progress)
+### Added
 
-| ID | Item | Status |
-|---|---|---|
-| A.4.1 | Autonomous wander-cycle agent on TESTNET | shipped (`scripts/wander-cycle/`) — operator daemonising via §A-V2 next |
-| A.4.2 | Path-scoped `.claude/rules/*.md` (7 files) | shipped |
-| A.4.3 | CHANGELOG.md + commit-trailer convention | shipped |
-| A.4.4 | zer0Gig Efficiency Game · full implementation (schema + policy + fee-split + UI) | Schema layer: receipt body's `outcome` block (`{attempts, firstAttemptScore?, finalScore?, retryReason?, status}`), skill manifest's `og.consensus.policy` (unanimous/majority/first-objection/weighted) + `og.creator.fee_split_policy` (flat/efficiency-game). Aggregation policy in new `packages/consensus/src/policy.ts` with sentiment classifier (approve/reject/risk/neutral) + 4 policy shapes; wired through `runConsensus` so every receipt records `policyDecision: { decision, dissents, agreementBucket }`. Fee-split allocator extended with `EFFICIENCY_GAME_MULTIPLIER_BPS` table: TIER 1 first-attempt 95% / TIER 1 retry 85% / TIER 2 (any) 70% / failed → 0% (100% to treasury). UI layer (this commit): RunPanel exposes `audit` tier + new "How strict?" dropdown (AUTO/STRICT/BALANCED/LENIENT, disabled for `quick`) wired through to `/api/run` body's new `policy` field. `runPipeline` resolves precedence (explicit override > skill default > 'majority') and forwards to `runConsensus`. The receipt body's `execution.consensus.policyApplied` + `dissents` fields are populated via the new `policyShortName(bucket)` helper. `/r/[id]` renders an `EFFICIENCY <pct>%` chip + `STRICT/BALANCED/LENIENT/WEIGHTED` label + dissent count. New `verify-a44-efficiency-game-ui.ts` regression with 20 assertions (now in studio offline filter, 4/4 pass). `private-doc-review` opts into `policy: first-objection` + `fee_split_policy: efficiency-game` as the canonical legal-review surface. 27 unit tests (11 policy + 16 fee-split) + 20 source-file regression assertions pass. Consensus suite 34/34, receipts 16/16, studio 4/4. | shipped |
-| A.4.5 | `docs/MARKETPLACE_DESIGN.md` | shipped |
-| A.4.6 | `docs/SOLIDITY_CHOICES.md` | shipped |
-| A.4.7 | `docs/SKILL_PUBLISHING.md` | shipped |
-| A.4.9 | Convergence Jaccard → embeddings | shipped (`packages/consensus/src/convergence.ts` async path) |
-| A.4.8 | MemoryEngine fourth product surface (Studio /memory quick-capture) | The encrypted `MemoryEngine` shipped in `packages/memory/` and was used by `ivaronix memory remember/recall/forget` (CLI). Studio's `/memory` page only had the on-chain Permission Center — no quick-capture surface. SealedMind's "memory-first" pitch was unanswered. **Now:** `apps/studio/src/lib/studio-memory.ts` (per-wallet plaintext JSONL store; 5 helpers: `rememberNote` / `recallNotes` / `listNotes` / `forgetNote` / `forgetBeforeNotes`). 4 SIWE-gated API routes: `/api/memory/remember` (POST · 60 writes/hr/wallet) · `/api/memory/recall` (POST) · `/api/memory/list` (GET) · `/api/memory/forget` (POST). New `MemoryNotesPanel.tsx` client island: ⌘+Enter to save, scope dropdown, recall search box, per-note forget buttons, plaintext-disclosure header pointing users at the CLI for E2E-encrypted memory. `/memory` page now stacks §01 Quick Capture on top of §02 Permission Center. New `memory-write` rate-limit kind (60/hr/wallet). `private-doc-review` skill manifest opts into `memory_access: all` per spec. New `verify-a48-memory-routes.ts` regression with 33 assertions enforces: routes import shared lib, write paths gate on SIWE + IP rate-limit + memory-write wallet bucket, panel renders the plaintext-disclosure inline, `/memory` page wires both panels. Studio regression suite re-baselined: `verify-a11` updated for 4-tier enum (audit landed), `verify-a13` updated for SSR-loader extraction. All 3 offline studio regressions pass. | shipped |
+- `ReceiptRegistryV2`: EIP-712 anchor signature recovery. `agentAddress` is the recovered signer, not `msg.sender`. Per-agent monotonic nonces block replay.
+- `AgentPassportINFTV2`: `authorizedRecorders`-only with a cross-check against `ReceiptRegistryV2`. `trustScoreDelta` capped at `[-100, +100]` per call. Per-token `executorVersion` bumps on transfer.
 
-### Phase 5 · Polish + ghost-surface deletion (in progress · 2026-05-10)
+### Fixed
 
-| ID | Item | File / Was / Now | Status |
-|---|---|---|---|
-| A.5.7 | og-toolkit honest-stub disclosure | `packages/og-kv/src/index.ts`: `StubKvClient` advertised the same interface as the production client; third parties calling `og.kv.set(...)` got a Map silently. **Now:** renamed `InMemoryKvClient` (alias kept), prints one-time `console.warn` on first use, `createKvClient({ requireDurable: true })` returns `null` so callers can short-circuit instead of writing to a Map. | shipped |
-| A.5.13 | ShareButton silent clipboard-failure feedback | `apps/studio/src/components/ShareButton.tsx`: on clipboard failure the catch silently opened a tab while the button kept saying "Copy URL". **Now:** four-state machine (`idle | copied | fallback | error`) with explicit per-state labels; the `error` branch slices the URL into the button so the user can copy from the button itself when popups are blocked too. | shipped |
-| A.5.18 | forge-daemon ghost-surface deletion + HLD architectural-drift fix | `apps/forge-daemon/` was an empty directory; HLD.md §1 surface table referenced 7 surfaces, three of which (`forge-daemon`, `skill-store`, `worker`) didn't exist; the architecture diagram drew arrows into a non-existent local Hono daemon. **Now:** empty `apps/forge-daemon/` deleted; HLD §1 table rewritten to list the 7 real apps (studio, cli, api, mcp-server, npx-cli, openclaw-skill, telegram-bot); explicit "this does not exist; here's what we use instead" callouts added; arch diagram updated to show `packages/sdk + packages/runtime` as the in-process orchestrator. | shipped |
-| A.5.15 | `eth-private-key` regex narrowing + exact-match path | `packages/consensus/src/gates.ts:34`: broad `\b(?:0x)?[a-fA-F0-9]{64}\b` regex false-positived on every receipt id, tx hash, content root, and signature half referenced in a doc-review run. **Now:** broad heuristic dropped from `SECRETS_REGEX_LIST`. Two paths added: (a) when `signerPrivateKey` is supplied via `GateInput`, exact-match scan against the operator's loaded key — zero false positives, perfect detection of an accidental paste; (b) when no signer key is loaded (read-only flows), heuristic 64-hex scan with receipt-context suppression via `RECEIPT_CONTEXT_LABELS` lookback (`tx`, `hash`, `root`, `receipt`, `anchor`, `id`, `block`, `commit`, `storage`, `attestation`, `signature`, `r:`, `s:`, `evidence`). Wired through `ConsensusInput` → `runGates` → all three callers (`pipeline.ts`, `apps/cli/src/commands/doc.ts`, `apps/cli/src/commands/passport-consolidate.ts`, `packages/skills/src/run.ts`). 9 new regression tests in `gates.test.ts` (15/15 passing). | shipped |
-| A.5.4 | Repo-root doc hygiene + sprint-doc archival headers | 24 docs in `docs/` mixed evergreen-canonical with sprint-internal at one level; root had `SESSION_FINAL.md` (2026-05-08 snapshot) + `QA_TEST_PROGRESS.md` (sprint contractor tracker) + `wandering{thoughts,flow}.md` (planning-003 source docs) with no live-state pointer at the top. **Now:** new `docs/QUALITY.md` extracts evergreen quality philosophy from QA_MISSION (CLI as gold standard, TIER 1 vs TIER 2 honesty, test topology, stop condition). Archival headers added at the top of: `SESSION_FINAL.md`, `QA_TEST_PROGRESS.md`, `docs/QA_MISSION.md`, `docs/planning-01.md`, `docs/planning-002.md`, `docs/PLAN_pass76.md`, `docs/PLAN_pass77_cli.md`, `docs/PASS77_F1h_*.md` (3 files), `wanderingthoughts.md`, `wanderingflow.md`. Each archived doc points readers to live state. Full subdir restructure (`docs/{spec,judge,audit,_internal}/`) + auto-gen `STATUS.md` + pre-commit absolute-number hook deferred to USER_TODO §B-V2-19/20/21 — all three are mainnet-window polish that need the full cross-reference sweep done in one commit. | partial (headers shipped; subdir move queued) |
-| A.5.20 | `red-team-critic` orphan role · audit tier shipped | `packages/consensus/src/prompts.ts` declared 6 RoleId values; only 5 wired into tiers — `red-team-critic` was orphan dead-code. Worse, `high-stakes` in `packages/core/src/types.ts` had `red-team-critic` but was missing `critic`, so the documented "5 reviewers + judge" tier shape had silently drifted. **Now:** new `audit` tier (6 roles: analyst + critic + risk-reviewer + evidence-checker + red-team-critic + judge) added to `ConsensusTier`. `high-stakes` corrected to (analyst + critic + risk-reviewer + evidence-checker + judge — 5 roles). Composition is monotone: `standard ⊂ high-stakes ⊂ audit`. Wired through: `ConsensusTier` in core/types, `ROLES_BY_TIER`, `TIER_COST_OG` (audit priced at 0.072 OG, premium above high-stakes), `ConsensusTierEnum` + `RegistryEntry.default_tier` Zod, `--audit` CLI flag with precedence quick > audit > high-stakes > consensus, `HookEvent_PreConsensus.tier`, `apps/studio/src/app/skills/page.tsx` `SkillCard.defaultTier`. New `tier-shape.test.ts` (8 tests) enforces tier composition + cost-table coverage + monotone-extension property + no-orphan-role guarantee. 23/23 consensus tests pass. | shipped |
-| A.5.6 | `scripts/` reorganization | 13 one-off TS scripts at `scripts/*.ts` mixed purposes; two duplicate files (`smoke-storage.ts` + `storage-smoke.ts`); flat layout had crossed the ~12-file readability threshold. **Now:** `scripts/{ops,migrations,smoke,diag}/` subdirs created. 12 scripts moved via `git mv`: `ops/` (anchor-all-receipt-types, automate-receipts-testnet, build-hello-receipt) · `migrations/` (migrate-openclaw-metadata, port-awesome-claude-skills) · `smoke/` (chat-tools-smoke, cron-smoke, og-toolkit-smoke, smoke-storage) · `diag/` (debug-router, fresh-wallet-onboard, numbers-refresh). Duplicate `storage-smoke.ts` deleted (its B-1 SDK-bump verification value is moot now that the migration is integrated; the comprehensive `smoke/smoke-storage.ts` covers both plaintext + burn-mode upload). `scripts/README.md` indexes the four subdirs by purpose. Three `REPO_ROOT` relative-path drift fixes (numbers-refresh, port-awesome-claude-skills, migrate-openclaw-metadata) so the moved scripts still resolve to the actual repo root. `package.json` `numbers:*` aliases updated to the new path. `pnpm numbers:print` confirms 1,644 receipts live from new path. | shipped |
-| A.5.5 | OG-image generation per Studio surface | Pre-fix: only `/r/[id]` had `opengraph-image.tsx`. Every shared `/`, `/skills`, `/onboard`, `/agents` link rendered the default Vercel image — bad first impression on Twitter/X, Slack, Telegram. **Now:** new `apps/studio/src/app/opengraph-image.tsx` (default for the home page + every route without its own) renders the brackets-with-i mark, "Catch the risks. Keep the receipts." headline, and a four-light proof row mirroring the Studio inline chip. New `apps/studio/src/app/0g/opengraph-image.tsx` renders a 6-cell module grid (Chain · Compute · Storage · Router · Agent ID · DA) with live INTEGRATED/ROADMAP chips. Both reuse the editorial cream-on-black palette + Outfit font load from the per-receipt template. | shipped |
-| A.5.17 | `/docs` → `/0g` rename + per-route OG image + copy-link button + cross-link sweep | The 6-module 0G primitives showcase lived at `/docs`, a route name that read as internal documentation rather than the canonical "0G primitive depth proof" we want external linkers to use. **Now:** `git mv apps/studio/src/app/docs apps/studio/src/app/0g` (history preserved). `Header.tsx` link points at `/0g`. New `apps/studio/src/app/docs/page.tsx` redirect stub keeps legacy bookmarks alive forever. New `apps/studio/src/app/0g/CopyLinkButton.tsx` client island lets reviewers paste the URL straight into a chat without selecting the address bar — uses the same four-state machine as `ShareButton`. Per-route `0g/opengraph-image.tsx` ships with this audit. Cross-links added in README ("Built on 0G" leads with `ivaronix.app/0g`) and `docs/JUDGE_GUIDE.md`. | shipped |
-| A.5.22 | npx-cli README + widget DEFAULT_ORIGIN + iframe error-state fallback | `apps/npx-cli/README.md` was 12 lines with two taglines and a broken `ivaronix.app` link; `packages/widget/src/index.tsx:44` hardcoded `https://ivaronix.studio` (DNS NXDOMAIN today). **Now:** README rewritten to ~30 lines (1 tagline + install + verify-output transcript with a real receipt id 1644 + 7 command bullets + setup section + license). Widget `DEFAULT_ORIGIN` updated to `https://ivaronix-studio.vercel.app` (Vercel preview · flips to `ivaronix.app` in the DNS-cutover commit per USER_TODO §C-3). Three new widget capabilities: (a) `IVARONIX_STUDIO_BASE` env override picked up via build-time `process.env`, (b) explicit `origin` prop wins over both, (c) iframe-load failure falls back to a styled `<a>` link to the canonical `/r/<id>` URL so a broken embed still gets the user to the proof page. Custom `fallback` prop accepts `(canonicalUrl) => ReactNode` for self-host theming. | shipped |
-| A.5.16 | Dashboard SSR/SEO conversion | `apps/studio/src/app/dashboard/page.tsx:1` was `'use client'` with a `useEffect` that fetched `/api/dashboard/<addr>` after first paint — search engines and slow networks saw a blank page for ~800ms. **Now:** new `lib/dashboard.ts` exports the single `loadDashboard(address)` function; both the API route and the SSR page use it. Page is a server component that renders by `?address=` query param. New `DashboardClient.tsx` is a small client island that reads the connected wallet via wagmi and pushes `?address=<addr>` into the URL when no query param is set, causing the server component to re-render with full data. One code path, two entry modes; first paint shows real content for shareable dashboard URLs. | shipped |
-| A.5.14 | Keyring rotation transparency on receipts | `Keyring.invalidate()` distinguished 402 / 429 / auth failure modes well, but `routerTrace` didn't capture which credential rotation happened mid-run — so a receipt that quietly used a fallback key was indistinguishable from the happy path. **Now:** receipt schema's `routerTrace.rotations[]` field added (Zod default `[]`). `Keyring` keeps an append-only rotation log; `invalidate()` records `{ fromCredential, toCredential, reason: '402'\|'429'\|'auth', atMs }` on every failover. New `drainRotations()` and `peekRotations()` accessors. Pipeline calls `drainRotations()` once before the run (clean slate) and once after (snapshot for the receipt), threading the array into `anchorReceipt` via the `routerRotations` arg. Studio `/r/<id>` renders rotation pills (red for 402/auth, amber for 429) when non-empty, with the `from → to` labels. Six callsites updated (CLI doc/doc-bulk/room/model/passport-consolidate, scripts/ops/build-hello-receipt) to include the field. The credential secrets never leave the keyring; only the human label appears on chain. | shipped |
-| A.5.19 | Studio components UI_UX_GUIDE → CLAUDE.md migration | 8 doc-comments in `apps/studio/src/components/*.tsx` + `lib/wagmi.ts` + `app/r/[id]/opengraph-image.tsx` + `app/globals.css` cited the historic `UI_UX_GUIDE.md §X` numbering. The visual contract has lived in CLAUDE.md §10 + `brand/tokens.css` + `brand/tokens.json` since planning-003 §A.3.3 (2026-05-09); UI_UX_GUIDE.md is no longer the source of truth. **Now:** all 9 references rewritten to point at CLAUDE.md §10 with the brand tokens called out as the source of truth for color/font/radius and the HTML mockup at `brand/Ivaronix.html` as the visual reference. No layout changes, no behavior changes — just doc-truth alignment. | shipped |
-| A.5.8 | LICENSE + brand asset trademark separation | Repo MIT covered `brand/` SVGs + tokens by default, leaving zero recourse against a hostile fork shipping at `ivaronix-x.app` with the same logo. **Now:** `LICENSE` appended with `## Brand assets (separate license)` section reserving everything under `brand/` (mark, wordmark, tokens, OG image templates, favicon set) under nominative-fair-use rules. New `BRAND.md` at repo root spells out: what's reserved, what you can do without asking (cite, build on the open-source code, embed widget), what you can't (confusable-domain forks, endorsement-implication, widget without chrome), why this exists. | shipped |
-| A.5.3 | Operator-as-proxy privacy doc + read-proxy env var | The 0G Storage indexer requires a signer for every fetch; using the operator's signer key for both writes AND reads leaked operator-wallet correlation across every public-manifest fetch (data-room reads it's not a party to, dashboard reads, etc.). **Now:** `Env.readProxyPrivateKey` field added with `IVARONIX_READ_PROXY_KEY` (canonical) + `READ_PROXY_PRIVATE_KEY` (legacy) alias chain in `packages/runtime/src/env.ts`. New `docs/PRIVACY_NOTES.md` documents: (1) operator-as-proxy threat model + read-proxy mitigation + Vercel edge-cache mitigation, (2) Burn Mode does NOT defend against local-machine compromise, (3) TIER 1 vs TIER 2 privacy line, (4) receipt body content is public unless redacted at hook stage, (5) what to tell users when they connect a wallet. Operator action queued in USER_TODO §B-V2 for the cache-control header rollout. | shipped |
-| A.5.21 | 0G DA Docker compose + preflight pointer | The `ivaronix da preflight` command shipped a raw `docker run` hint with an undocumented `envfile.env` shape; field-unique flex on Ivaronix is "0G DA wired in code while AIsphere/Provus/Aishi only diagram it" but operators couldn't easily stand the stack up. **Now:** new `docker-compose.yml` at repo root with `da-client` service (port 51001 bound to loopback only, healthcheck on the gRPC port, `unless-stopped` restart policy). New `da.env.example` with `DA_PRIVATE_KEY` + `DA_RPC_URL` + `DA_ENTRANCE_CONTRACT` + `DA_LOG_LEVEL` keys. Preflight error path rewritten to point at the compose stack: `cp da.env.example da.env && docker compose up -d da-client`. The captured-`request_id` artefact for the README "judges can replay" headline is queued at USER_TODO §B-V2-22 (needs DA wallet funding + 0G entrance-contract address, which is per-release in `oglabs resources/0g-da-rust-sdk/`). | shipped (scaffolding) |
-| A.5.2 | Per-package `AGENTS.md` for high-traffic packages | Top-level CLAUDE.md held the operational rules for the whole monorepo, but new contributors landing in a specific package had no per-package index. zer0Gig + derek2403-0g (per planning-003 §A.5.2) ship per-package AGENTS.md as the entry point. **Now:** 6 AGENTS.md files shipped at `apps/studio/`, `apps/cli/`, `packages/og-router/`, `packages/og-chain/`, `contracts/`, `seed-skills/`. Each is 50-100 lines: stack-at-a-glance, hard rules (linked back to `.claude/rules/<package>.md`), hot files, required env, test command, see-also. CLAUDE.md §14 indexes them all. The `.claude/rules/<package>.md` files (auto-loaded when editing under that path) remain the operational contract; AGENTS.md is the human-readable tour. | shipped |
+- **Memory-at-rest nonce derivation flaw.** Prior implementation used `sha256(plaintext || Date.now())` truncated to 12 bytes, which produced nonce reuse for same-plaintext-same-millisecond pairs. Now `randomBytes(12)` per RFC 5116. Regression suite asserts same-plaintext-same-key yields different ciphertexts.
+- **TIER 2 receipts now mark `verificationMethod: 'external-signed'` and render amber on `/r/<id>`.** Prior versions rendered green chips for non-TEE inference.
 
-## Phase B — pre-K-1/K-2 cleanup (closed 2026-05-09)
+### Added (polyglot canonical hash)
 
-See `docs/PHASE_B_DISCLOSURES.md` for the full File / Was / Now log of items A through H. Summary:
+- TypeScript (`packages/core/src/jcs.ts`), Python (`scripts/verifier-py/jcs.py`), and Rust (`ivaronix-verifier-rs/`) reference verifiers. All three produce byte-identical receipt roots against 29 cross-implementation test vectors. CI gate `.github/workflows/jcs-roundtrip.yml` runs all three on every push.
 
-- **A.** Vanity agent handle copy: dropped sprint-internal "Handles arrive Day 17" placeholder.
-- **B.** Receipt type human label: `receiptTypeLabel(5) → "skill_exec"` reverse-mapped from `RECEIPT_TYPES`.
-- **C.** CLAIMED banner shown as success: now amber, not green.
-- **D.** Hardcoded first-party skill count on /global: live count from `loadAllSkills()`.
-- **E.** Agent profile receipts cap: 5 → 25 visible window.
-- **F.** MemoryAccessLog audit feed for THIS owner: real on-chain events.
-- **G.** Skill registry hash mismatch panel: closed.
-- **H.** Wallet-connect copy alignment: standardised across surfaces.
+## 0.2.0 — 2026-05-08 · Studio + CLI on Galileo testnet
 
-## How to grep the rolling audit log
+First public testnet deploy with a full user-facing surface.
 
-Until `pnpm audit:list` ships:
+### Added
 
-```bash
-git log --grep "Closes audit" --pretty=format:"%h %s%n%b" | grep -E "Closes audit|^[a-f0-9]{7,}"
-```
+- 8 contracts on Galileo (chainId 16602): `ReceiptRegistry`, `AgentPassportINFT`, `Erc7857Verifier`, `CapabilityRegistry`, `MemoryAccessLog`, `SkillRegistry`, plus supports.
+- Studio Next.js app at `apps/studio/`: home, `/onboard`, `/skills`, `/global`, `/dashboard`, `/memory`, `/r/<id>`, `/agent/<addr>`.
+- CLI `ivaronix` binary: `demo`, `doc ask`, `receipt verify`, `receipt show`, `memory`, `skill`, `passport`, `room`, `doctor`.
+- 10 first-party skills under `seed-skills/`: legal-domain specialists (private-doc-review, nda-triage-reviewer, term-sheet-risk-scanner, contract-renewal-clause-detector, legal-citation-verifier) plus general-purpose (0g-integration-auditor, github-audit, code-edit, plan-step, content-pitch-review).
+- Real MetaMask end-to-end test harness at `scripts/qa/metamask-e2e/` driving the live extension via Playwright.
 
-This prints every commit subject with a `Closes audit` trailer + the IDs it closed. Pair with `docs/HALF_BAKED.md` (open ledger) to see the full audit lifecycle.
+## Earlier
+
+The pre-0.2 history is preserved in the git log.
