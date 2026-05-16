@@ -167,21 +167,35 @@ async function readChainId(studio: Page): Promise<string | null> {
   log(`STAGE B PASS: connected, header="${headerText?.slice(0, 80)}"`);
 
   // === STAGE C: Ensure mainnet ===
+  // MM v13.30 may show a 2-popup chain when chain isn't pre-added:
+  //   popup #1: "Add network?" (wallet_addEthereumChain)
+  //   popup #2: "Switch network?" (wallet_switchEthereumChain)
+  // Drive up to 3 sequential popups per attempt to handle both.
   let chainOK = false;
   for (let attempt = 0; attempt < 4; attempt++) {
     const cid = await readChainId(studio);
     log(`STAGE C: attempt ${attempt + 1} chainId=${cid}`);
     if (cid === MAINNET_HEX) { chainOK = true; break; }
-    // Find switch button
     const switchBtn = studio.locator('button:has-text("Switch to 0G Mainnet"), a:has-text("Switch to 0G Mainnet")').first();
     if (await switchBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       known = new Set<Page>(ctx.pages());
       await switchBtn.click({ timeout: 5_000 });
       log(`STAGE C: Switch button clicked`);
-      const popup = await waitForPopup(ctx, extId, known, 20_000);
-      if (popup) await drivePopupOnce(popup, 'mm-switch', `popup-mm-switch-a${attempt + 1}`);
+      // Loop: drive up to 3 sequential MM popups (add → switch)
+      for (let pIdx = 0; pIdx < 3; pIdx++) {
+        const popup = await waitForPopup(ctx, extId, known, 15_000);
+        if (!popup) { log(`STAGE C: no popup #${pIdx + 1} (sequence done)`); break; }
+        log(`STAGE C: popup #${pIdx + 1} detected · driving`);
+        await drivePopupOnce(popup, `mm-switch-${pIdx + 1}`, `popup-mm-switch-a${attempt + 1}-p${pIdx + 1}`);
+        known.add(popup);
+        await studio.waitForTimeout(2_000);
+      }
       await studio.bringToFront();
-      await studio.waitForTimeout(4_000);
+      await studio.waitForTimeout(5_000);
+      // Re-check chainId immediately after popup sequence
+      const cid2 = await readChainId(studio);
+      log(`STAGE C: post-switch chainId=${cid2}`);
+      if (cid2 === MAINNET_HEX) { chainOK = true; break; }
     } else {
       log(`STAGE C: no Switch button (banner missing)`);
       await studio.waitForTimeout(3_000);
