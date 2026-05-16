@@ -1,0 +1,185 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRR7X3BW8VJJ65KMQSQHT04H",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:e5d242a9ed312945cd3c36502cb0f312830f559f5a32b507ea2ea9be2f08501d",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.273,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.273). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"1. Customer assumes broad financial exposure through a catch-all indemnity that covers claims even when the Vendor is at fault.\"\nrisk-reviewer: \"1. Hidden financial liability from unilateral, uncapped price increases forces budget exposure and removes negotiation leverage. | Evidence: \"Vendor may unilate\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xc82799af352a33021c470a28504823cc2751693a1bbd4975a8e9c01085115157",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "32539533-4f0a-4262-bce1-59073a3be828",
+          "content": "1. Customer assumes broad financial exposure through a catch-all indemnity that covers claims even when the Vendor is at fault.\nEvidence: Section 4 requires Customer to \"indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses... regardless of cause.\"\n2. Service fees are permanently locked with zero recourse for unused or suspended periods.\nEvidence: Section 2 states \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n3. Late payments trigger compounding interest and shift all legal defense costs to Customer.\nEvidence: Section 2 imposes \"interest at 1.75% per month (approximately 23% APR) plus reasonable collection costs and legal fees.\"\n4. Disputes must be resolved in a forum chosen by the Vendor, removing Customer's ability to select a neutral venue.\nEvidence: Section 7 mandates binding arbitration \"administered by Vendor's chosen arbitration provider, in Delaware.\"\n5. Collective legal action is barred, preventing Customer from coordinating with other affected clients.\nEvidence: Section 7 explicitly states \"Customer waives any right to participate in a class action against Vendor.\"\n6. Uptime failures yield only restricted, forward-looking service credits that cannot offset future contract years.\nEvidence: Section 8 limits remedies to \"service credits of up to 5% of the prior month's fees, applied to a future invoice,\" which are \"non-refundable.\"\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xa6ce7356753a45945d36277043536210e12e7ab85ca2ed546fce69a7b3267d17",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "a73ac777-3c6e-4716-90a7-3cfb389a9585",
+          "content": "1. Exorbitant late fees and shifted collection costs.\nSection 2 states past-due amounts accrue interest at 1.75% per month (approximately 23% APR) plus \"reasonable collection costs and legal fees.\"\n\n2. Complete loss of all paid fees upon early cancellation or business changes.\nSection 2 states all fees are \"non-refundable under any circumstance, including early termination, suspension, or change in Customer's business.\"\n\n3. Unlimited indemnification exposure that applies even when the Vendor caused the issue.\nSection 4 requires Customer to indemnify the Vendor for claims \"arising from Customer's use of the Service, regardless of cause.\"\n\n4. Unilateral annual price hikes without negotiation or termination rights.\nSection 2 permits Vendor to \"unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\"\n\n5. Mandatory arbitration where the Vendor selects the provider, venue, and language, stripping you of jury trial and class action rights.\nSection 7 mandates binding arbitration \"administered by Vendor's chosen arbitration provider, in Delaware,\" while waiving \"any right to a jury trial\" and class participation.\n\n6. Contract terms, including dispute procedures, can be changed unilaterally and accepted passively.\nSection 9 states Vendor may \"amend this Agreement at any time by posting an updated version to Vendor's website\" and continued use constitutes acceptance.\n\n7. Asymmetric liability where Vendor caps financial exposure at three months of fees while excluding all consequential damages.\nSection 4 limits Vendor's total liability to \"three (3) months of fees paid by Customer\" and excludes \"indirect, incidental, consequential, special, or punitive damages.\"\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0x12db77b800796ea9bce36b1f0ddb92b03b35c7dbb4e61dc084fb0dcba2566277",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "ebd1d3b5-b2be-447c-b148-908d26f53235",
+          "content": "1. Hidden financial liability from unilateral, uncapped price increases forces budget exposure and removes negotiation leverage. | Evidence: \"Vendor may unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\" | Category: Financial | Impact: High\n2. Non-refundable fee structure combined with a strict no-convenience-termination clause traps the customer into paying the full contract value even if service becomes unsuitable. | Evidence: \"All fees are non-refundable under any circumstance, including early termination...\" and \"No termination for convenience.\" | Category: Financial | Impact: High\n3. Broad indemnification clause shifts all claim costs to the customer, including vendor-caused issues, creating unpredictable third-party liability exposure. | Evidence: \"Customer shall indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses (including attorneys' fees) arising from Customer's use of the Service, regardless of cause.\" | Category: Legal | Impact: High\n4. Asymmetrical liability cap leaves the customer exposed to unlimited damages while restricting vendor recovery to a fixed, low amount. | Evidence: \"Vendor's total liability under this Agreement shall not exceed three (3) months of fees paid by Customer.\" | Category: Financial | Impact: High\n5. Mandatory arbitration in a vendor-selected forum eliminates jury trials, class actions, and standard discovery, severely limiting dispute resolution options. | Evidence: \"Any dispute arising under this Agreement shall be resolved by binding arbitration administered by Vendor's chosen arbitration provider... Customer waives any right to a jury trial. No class action.\" | Category: Legal | Impact: High\n6. Absence of defined arbitration cost-sharing, procedural rules, or discovery limits creates unpredictable legal expenses and procedural uncertainty. | Evidence: Document does not specify applicable arbitration rules, cost allocation, or discovery scope. | Category: Legal | Impact: Medium\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0x0a78a2503f981505d0dc598f87756ee1e5a26acb1ac7cfd0b88a0c5a7a80a09a",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "f3b8d4af-208f-4873-bb9d-23045d07cbe9",
+          "content": "**Verified facts**\n- Annual fees of USD 180,000 are explicitly non-refundable under any circumstance, including early termination or service suspension.\n- Past-due amounts accrue 1.75% monthly interest (approx. 23% APR) plus reasonable collection costs and legal fees.\n- Vendor may raise fees by up to 12% at each renewal term with only 30 days' written notice.\n- The only remedy for uptime failures is a non-refundable service credit capped at 5% of the prior month's fees.\n- Vendor's total liability is strictly limited to three months of fees previously paid by Customer.\n- Customer must indemnify, defend, and hold Vendor harmless against all claims and expenses arising from service use, \"regardless of cause.\"\n- All disputes must be resolved through binding arbitration in Delaware, with the arbitration provider selected solely by Vendor.\n- Customer waives the right to a jury trial and any right to participate in a class action.\n- Vendor may amend the agreement at any time by posting an updated version online, and continued use counts as acceptance.\n\n**Inferred**\n- The arbitration provider chosen unilaterally by Vendor may lack procedural neutrality or favor Vendor's interests.\n- The combination of a short 30-day price increase notice and unilateral amendment rights may restrict Customer's ability to forecast costs or negotiate mid-term.\n- The arbitration venue and English-language requirement could increase logistical or translation expenses if Customer operates outside Delaware or uses other languages internally.\n- The broad \"regardless of cause\" indemnification language may expose Customer to third-party liability even when Vendor's negligence or platform defects trigger the claim.\n- Service credits applied only to \"future invoices\" may deliver limited practical value if Customer chooses not to renew or relies on prepaid billing cycles.\n\n**Unsupported**\n- The arbitration process will be expensive for Customer. (The document specifies the venue, provider selection, and language, but never mentions arbitration fees or cost structures.)\n- Vendor guarantees uninterrupted service and will pay substantial penalties for downtime. (The document ties uptime to \"commercially reasonable efforts\" and caps remedies at 5% service credits, not a strict guarantee or financial penalty.)\n- Customer transfers ownership of its data to Vendor. (The document grants Vendor a perpetual license to use, modify, and create derivatives from the data, but does not state ownership transfers.)\n- Either party may terminate the agreement with 30 days' written notice. (The document explicitly states \"No termination for convenience\" for Customer and does not grant Vendor a corresponding convenience termination right.)\n- Arbitration awards can be appealed to a court if a party disagrees with the outcome. (The document only calls the arbitration \"binding\" and does not address or limit appellate rights.)\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x1aa1b6b7c94fd4d8304a7fb120826f24db79e38b04aa1cf2d355be504f6be44a",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "ae791195-8fd0-4ed8-ac88-078c4536a64f",
+          "content": "1. Customer assumes unlimited liability for third-party claims even when Vendor is at fault. | Evidence: Section 4 requires Customer to \"indemnify, defend, and hold Vendor harmless against all claims, damages, and expenses (including attorneys' fees) arising from Customer's use of the Service, regardless of cause.\"\n2. Past-due payments trigger severe interest and shift all collection/legal costs to Customer. | Evidence: Section 2 imposes interest at \"1.75% per month (approximately 23% APR) plus reasonable collection costs and legal fees.\"\n3. Customer must pay the full contract value even if service is suspended, the platform fails, or the contract is terminated early. | Evidence: Section 2 states \"All fees are non-refundable under any circumstance, including early termination, suspension, or change in Customer's business,\" and Section 3 confirms \"No termination for convenience.\"\n4. Vendor can unilaterally raise prices by 12% annually with only 30 days' notice. | Evidence: Section 2 permits Vendor to \"unilaterally increase fees by up to 12% per Renewal Term, with 30 days' written notice.\"\n5. Customer's financial exposure is heavily asymmetrical because Vendor caps its own liability at just three months of fees. | Evidence: Section 4 limits \"Vendor's total liability under this Agreement shall not exceed three (3) months of fees paid by Customer.\"\n6. Dispute resolution is forced into a non-neutral, binding arbitration process that strips key legal protections. | Evidence: Section 7 mandates binding arbitration \"administered by Vendor's chosen arbitration provider, in Delaware,\" while explicitly waiving \"any right to a jury trial\" and class action participation.\n7. Contract terms and pricing can be modified unilaterally through passive acceptance. | Evidence: Section 9 allows Vendor to \"amend this Agreement at any time by posting an updated version to Vendor's website. Continued use of the Service constitutes acceptance.\"\n\n**Where Reviewers AGREE (High Confidence)**\nAll four reviewers unanimously flagged Sections 2, 4, and 7 as creating severe financial and legal exposure. They specifically agree on the non-refundable fee structure, the 1.75% monthly late interest rate, the unilateral 12% price increase provision, the \"regardless of cause\" indemnification clause, the 3-month vendor liability cap, and the mandatory vendor-chosen arbitration with jury/class-action waivers. These points are directly supported by explicit text in the document.\n\n**Where Reviewers DISAGREE**\n- *Arbitration cost certainty:* Risk-Reviewer claims the lack of defined rules \"creates unpredictable legal expenses and procedural uncertainty.\" Evidence-Checker explicitly marks the corresponding claim that \"the arbitration process will be expensive for Customer\" as **Unsupported**, stating \"The document specifies the venue, provider selection, and language, but never mentions arbitration fees or cost structures.\"\n- *SLA financial impact:* Analyst characterizes the 5% uptime remedy as a direct financial trap due to its non-refundable nature, while Critic and Risk-Reviewer treat SLA limits as a secondary operational risk rather than a primary financial liability, focusing instead on indemnity and arbitration clauses.\n\nRisk Level: high\nAction: Request negotiation of a mutual liability cap, removal of the \"regardless of cause\" indemnity language, a defined arbitration rule set (e.g., AAA/JAMS), and a 60-day notice window for price escalations before executing the agreement.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1778930060667",
+    "zgResKey": "ae791195-8fd0-4ed8-ac88-078c4536a64f",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 9171,
+    "outputTokens": 18142,
+    "inputCostNeuron": "458550000000000",
+    "outputCostNeuron": "1814200000000000",
+    "totalCostNeuron": "2272750000000000",
+    "totalCostOg": "0.0022727500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "1738653750000000",
+      "treasuryNeuron": "534096250000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x48e5d73f7ef7383fc4e5797c4747ea5cf955205392e8102a94a8af15f22028ab",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:d47472583d778886225c04e40f1fdfb153cc33f634bd3e97e2f094ea8ca66938"
+    },
+    "receiptRoot": "0xea0961fef6b60d7f29872d366da26954330563fb84363484f5733adac818c77a"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778929972288,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "anchorTxHash": "0x28553d0a55cb5b38f593bf594d791b69f2bf6cb67d3e4d053c863ab0caf0b62a",
+    "anchorBlockNumber": 33415019,
+    "anchorTimestamp": 1778930076
+  },
+  "outputs": {
+    "outputHash": "sha256:bca59b225d01a94219720eb88872294ef9fe7c0cc2310a72b09c8a966e999bf5",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Customer assumes unlimited liability for third-party claims even when Vendor is at fault. | Evidence: Section 4 requires Customer to \"indemnify, defend, and hold Vendor harmless against all claims,",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": false,
+      "error": "Unterminated fractional number in JSON at position 2 (line 1 column 3)",
+      "attempted": [],
+      "rawBytes": 3497
+    }
+  },
+  "createdAt": 1778930060669,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x5238b589fd8b39e76122c07e206d88156036016019f20e2452a405ee1906cd013028d5f42964167fa31d402f21b5048f77a72319456008563222580d11418b6b1b"
+  }
+}

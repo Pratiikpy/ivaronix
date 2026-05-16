@@ -1,0 +1,135 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRR69YKYSACE5Y25PQWF2XEW",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": false,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1778928384637",
+    "zgResKey": "bdff041c-4d3c-44b7-9831-f76d27da4d9a",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 504,
+    "outputTokens": 2278,
+    "inputCostNeuron": "25200000000000",
+    "outputCostNeuron": "227800000000000",
+    "totalCostNeuron": "253000000000000",
+    "totalCostOg": "0.0002530000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "227700000000000",
+      "treasuryNeuron": "25300000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x947cfd4454332c05301924679b181f6524545c8e0ecb26bff31605e3fad84053",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:2148a9c7a925e82c704821d2ebb7301544d8c61c16664b28d8176aad3d62f47f"
+    },
+    "receiptRoot": "0xc7f3272afa0fea4af0762bd8958cff40dd748c2471f18a1d46b0be8ff5a76cdc"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1778928372203,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "66",
+    "anchorTxHash": "0x2ff464bfce8307d7050d16f27a6011e6995366612f4e29447f28c0d69a4be1ea",
+    "anchorBlockNumber": 33413127,
+    "anchorTimestamp": 1778928396
+  },
+  "outputs": {
+    "outputHash": "sha256:7d80940f00816ca38f4af71fb5d05e05f025697693eb96059a92d3a21f047fab",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Most concerning clause due to extreme financial exposure and zero lease stability. Evidence: Section 4 allows the landlord to unilaterally raise rent by up to 50% per quarter without notice or just",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1778928384639,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x3d673cde5faf20675a2c70438aab32ab153765fa05877837ed279fd6d6321e48730f40ad0f9974bad9e0ef70daeb01c80f6ead8e1a6e42e21f63a6e2db6342fa1c"
+  }
+}
