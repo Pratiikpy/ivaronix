@@ -51,8 +51,9 @@ const STUDIO_TEMPLATE = resolve(REPO_ROOT, 'apps', 'studio', '.env.production.te
 // operator-set config).
 const ALLOW_CODE_ONLY = new Set<string>([
   'IVARONIX_TG_TEST', // smoke-test internal flag
-  'IVARONIX_DEBUG', // sweep 205 · verbose-logging opt-in flag (apps/studio/src/lib/local-receipt.ts logs disk-receipt parse failures when set). Pure debug; not part of operator config.
+  'IVARONIX_DEBUG', // verbose-logging opt-in flag (apps/studio/src/lib/local-receipt.ts logs disk-receipt parse failures when set). Pure debug; not part of operator config.
   'IVARONIX_MEMORY_EMBEDDER', // packages/memory/src/vector.ts · `=fallback` forces the hashing-trick embedder over the MiniLM model. Set by the memory unit suite (deterministic/offline); not operator config.
+  'IVARONIX_TIER2_OPTIN', // CLI-only opt-in to honor legacy OG_PROVIDER=nvidia. Default-off so demo paths cannot silently downgrade to TIER 2. Inline --provider nvidia remains the canonical opt-in; this flag exists only so operators with long-standing OG_PROVIDER=nvidia in their personal .env can keep using it explicitly.
 ]);
 
 // ─── Step 1: collect every IVARONIX_* token referenced in code ─────────

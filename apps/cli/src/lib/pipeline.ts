@@ -23,8 +23,18 @@ export type PipelineInput = Omit<CorePipelineInput, 'logger'>;
 export type PipelineOutput = CorePipelineOutput;
 
 export async function runPipeline(input: PipelineInput): Promise<PipelineOutput> {
-  // If the caller didn't pin a provider, take it from the env (so users can
-  // `OG_PROVIDER=nvidia ivaronix doc ask ...` without re-flagging every cmd).
-  const provider = input.provider ?? (process.env.OG_PROVIDER as '0g' | 'nvidia' | undefined);
+  // Default to '0g' (TIER 1 · TEE-attested) for every CLI run. A skill
+  // with `compute_tee_required: true` should never silently fall through
+  // to NVIDIA NIM just because a stale OG_PROVIDER=nvidia is sitting in
+  // the operator's env from an older test session.
+  //
+  // To opt INTO TIER 2 (NVIDIA NIM), the operator must either:
+  //   - pass `--provider nvidia` inline on the command, or
+  //   - set IVARONIX_TIER2_OPTIN=1 explicitly so the legacy OG_PROVIDER
+  //     env var resolves; without the opt-in flag, OG_PROVIDER is
+  //     ignored on the CLI so demo paths cannot land TIER 2 by mistake.
+  const tier2OptIn = process.env.IVARONIX_TIER2_OPTIN === '1';
+  const legacyProvider = tier2OptIn ? (process.env.OG_PROVIDER as '0g' | 'nvidia' | undefined) : undefined;
+  const provider: '0g' | 'nvidia' = input.provider ?? legacyProvider ?? '0g';
   return runPipelineCore({ ...input, provider, logger: cliLogger });
 }
