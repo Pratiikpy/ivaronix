@@ -353,7 +353,7 @@ All <!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deplo
 
 ### Phase B · Aristotle mainnet (chainId 16661)
 
-<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->41<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on mainnet `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Total deploy spend ~0.085 OG across 10 transactions; deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
+<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->22<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on mainnet `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Total deploy spend ~0.085 OG across 10 transactions; deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |

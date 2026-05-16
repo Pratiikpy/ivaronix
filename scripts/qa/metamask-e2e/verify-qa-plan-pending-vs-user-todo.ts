@@ -16,7 +16,7 @@
  * if the QA plan legitimately keeps PENDING despite the USER_TODO
  * closure (e.g. code shipped but live verify gated on operator action).
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -24,6 +24,15 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
 const USER_TODO = resolve(REPO_ROOT, 'docs/USER_TODO.md');
 const QA_PLAN = resolve(REPO_ROOT, 'Ivaronix_User_QA_Test_Plan.md');
+
+// QA plan is intentionally local-only after the privacy-scrub commit
+// (bc2c636). CI runners don't have it, so this regression is dev-only
+// when the operator has the file on disk. Skip cleanly otherwise so CI
+// doesn't fail on internal-doc absence.
+if (!existsSync(QA_PLAN)) {
+  console.log(`SKIP: ${QA_PLAN.split(/[\\/]/).pop()} not in working tree (private doc · scrubbed from public repo). Regression is dev-only.`);
+  process.exit(0);
+}
 
 let asserts = 0;
 const ok = (label: string): void => {

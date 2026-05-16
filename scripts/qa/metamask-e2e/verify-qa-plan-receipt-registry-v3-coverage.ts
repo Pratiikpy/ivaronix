@@ -16,13 +16,19 @@
  *
  * Allow-marker: qa-plan-v3-receipt-allow:<reason> on the same line.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(HERE, '..', '..', '..');
 const QA_PLAN = resolve(REPO_ROOT, 'Ivaronix_User_QA_Test_Plan.md');
+
+// QA plan is local-only after privacy scrub (bc2c636). Skip on CI.
+if (!existsSync(QA_PLAN)) {
+  console.log(`SKIP: ${QA_PLAN.split(/[\\/]/).pop()} not in working tree (private doc).`);
+  process.exit(0);
+}
 
 let asserts = 0;
 const ok = (label: string): void => {

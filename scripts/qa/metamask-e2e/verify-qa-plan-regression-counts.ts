@@ -23,7 +23,7 @@
  * markers (mirroring the numbers:auto pattern in README + MAINNET_READINESS).
  * Keys: total, automated, live, studio, cli, contracts.
  */
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,6 +32,12 @@ const REPO_ROOT = resolve(HERE, '..', '..', '..');
 const QA_PLAN = resolve(REPO_ROOT, 'Ivaronix_User_QA_Test_Plan.md');
 const RUNNER = resolve(HERE, 'run-source-regressions.ts');
 const REGRESSIONS_DIR = HERE;
+
+// QA plan is local-only after privacy scrub (bc2c636). Skip on CI.
+if (!existsSync(QA_PLAN)) {
+  console.log(`SKIP: ${QA_PLAN.split(/[\\/]/).pop()} not in working tree (private doc).`);
+  process.exit(0);
+}
 
 let asserts = 0;
 const ok = (label: string): void => {
