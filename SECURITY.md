@@ -90,6 +90,24 @@ of these, the receipt system is not the right tool by itself:
   disperser via Docker Compose are shipped. There is no public testnet
   endpoint yet.
 - **Mobile WalletConnect is queued.** Studio supports MetaMask today.
+- **Studio /api/run rate limit is in-memory per Vercel-lambda.** The code
+  in `apps/studio/src/lib/rate-limit.ts` honestly comments that a
+  single in-memory `Map` per process protects only against same-instance
+  floods. Vercel's edge can route concurrent requests to different
+  lambda instances, so a determined attacker can evade the per-IP
+  10/min anonymous bucket by spreading load. The production answer is
+  to set `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` env vars
+  so the bucket is shared across lambdas. The platform-level safety
+  net is Vercel's own edge protection (firing well below the
+  application limit). Audit findings:
+    - 12 parallel POSTs to /api/run in this session: 0 returned 429,
+      all failed at the deeper sandbox.receipt.required gate (HTTP 500).
+      The rate-limit middleware ran but in-memory bucket spread across
+      instances absorbed the spike.
+    - Cost impact: anonymous /api/run rejects at the sandbox gate
+      before any OG is spent, so flooding does NOT drain operator's
+      wallet. The risk is operator router-credential rate-limit cost,
+      not OG drain.
 
 ## Source map
 
