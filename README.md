@@ -44,8 +44,8 @@ flowchart LR
 | Home · live mainnet | Receipt #14 proof page |
 |---|---|
 | ![Ivaronix home page](docs/img/01-home-desktop.png) | ![Receipt #14 fully verified](docs/img/02-receipt-proof.png) |
-| **Skill marketplace** | **Mobile** |
-| ![Verified skill economy](docs/img/03-marketplace.png) | ![Home on mobile](docs/img/04-home-mobile.png) |
+| **Skill marketplace** | **Onboarding flow** |
+| ![Verified skill economy](docs/img/03-marketplace.png) | ![60-second onboarding](docs/img/04-onboard.png) |
 
 Captured live from <https://www.ivaronix.xyz>. Refresh with `pnpm exec tsx scripts/diag/capture-readme-prod.ts`.
 
