@@ -15,7 +15,7 @@ export function MyPage() {
 Props:
 
 - `id` — receipt id (numeric) or `receiptRoot` (`0x…64`-hex).
-- `origin` — Studio origin. Default `https://ivaronix.studio`. Override for self-hosted deployments or local dev (`http://localhost:3300`).
+- `origin` — Studio origin. Default `https://www.ivaronix.xyz`. Override for self-hosted deployments or local dev (`http://localhost:3300`).
 - `width` / `height` — number → px, string passed through. Defaults to 100% × 420 with `maxWidth: 600`.
 - `title` — accessibility label.
 - `style` — inline style escape hatch.
@@ -24,7 +24,7 @@ Props:
 
 ```html
 <script
-  src="https://ivaronix.studio/embed.js"
+  src="https://www.ivaronix.xyz/embed.js"
   data-receipt-id="1004"
 ></script>
 ```
