@@ -400,7 +400,17 @@ receiptCommand
   .description('Verify a receipt — shows CLAIMED → ANCHORED → FULLY VERIFIED')
   .option('--tee-independent', 'also run independent TEE verification via broker.processResponse')
   .option('--format <fmt>', 'output format: ivaronix (default), aat (IETF Agent Audit Trail draft-rosenberg-aat-01)', 'ivaronix')
-  .action(async (pathOrId: string, opts: { teeIndependent?: boolean; format?: string }) => {
+  .option(
+    '--network <net>',
+    'testnet | mainnet (defaults to IVARONIX_NETWORK env)',
+    (process.env.IVARONIX_NETWORK as 'testnet' | 'mainnet') ?? (process.env.OG_NETWORK as 'testnet' | 'mainnet') ?? 'mainnet',
+  )
+  .action(async (pathOrId: string, opts: { teeIndependent?: boolean; format?: string; network?: 'testnet' | 'mainnet' }) => {
+    // Allow callers to override the network for this run without exporting
+    // env vars — the env loader reads IVARONIX_NETWORK so we mirror the
+    // CLI flag onto it before loadEnv() runs. Matches the pattern used by
+    // skill publish/verify.
+    if (opts.network) process.env.IVARONIX_NETWORK = opts.network;
     const env = loadEnv();
 
     // FINAL_BUILD_PLAN.md Block H · --format aat path: skip the verifier UI
