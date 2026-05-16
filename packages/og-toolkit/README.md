@@ -6,9 +6,27 @@
 
 ## Install
 
+> **Status: pre-publish.** `@ivaronix/og-toolkit` is not yet on the public npm
+> registry (`HTTP 404` from registry.npmjs.org as of 2026-05-16). To use it
+> today, clone the monorepo and reference it as a workspace dependency, or
+> vendor the `src/` files into your app.
+
 ```bash
-pnpm add @ivaronix/og-toolkit
-# or: npm i @ivaronix/og-toolkit / yarn add @ivaronix/og-toolkit
+# Option A · use inside the Ivaronix monorepo (workspace import)
+git clone https://github.com/Pratiikpy/ivaronix && cd ivaronix && pnpm install
+# then in any workspace package's package.json:
+#   "@ivaronix/og-toolkit": "workspace:*"
+
+# Option B · vendor the source standalone
+# Copy packages/og-toolkit/src/* into your project's vendor dir, then
+# install the runtime dependencies listed in packages/og-toolkit/package.json
+```
+
+Once the npm publish lands (queued for v0.1.0 · see CHANGELOG.md), the
+canonical install becomes:
+
+```bash
+pnpm add @ivaronix/og-toolkit  # queued — not yet live on npm
 ```
 
 ## Quickstart (testnet, ~30 seconds)
