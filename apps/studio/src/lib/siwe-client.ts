@@ -60,8 +60,8 @@ export async function ensureSiweSession(
   // Step 2: build EIP-4361 SIWE message. Match the shape the server's
   // SiweMessage constructor expects. Domain = window.location.host;
   // URI = window.location.origin. Chain = Galileo (16602) for testnet.
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ivaronix.vercel.app';
-  const host = typeof window !== 'undefined' ? window.location.host : 'ivaronix.vercel.app';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.ivaronix.xyz';
+  const host = typeof window !== 'undefined' ? window.location.host : 'www.ivaronix.xyz';
   const issuedAt = new Date().toISOString();
   const chainId = 16602; // Galileo
 

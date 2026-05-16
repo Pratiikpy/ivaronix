@@ -131,7 +131,7 @@ export default async function Image() {
             {liveCount}/6 modules integrated · contract addresses + chainscan links on /0g
           </span>
           <span style={{ fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace', fontSize: 16, color: '#6b6b66' }}>
-            ivaronix.vercel.app/0g
+            www.ivaronix.xyz/0g
           </span>
         </div>
       </div>

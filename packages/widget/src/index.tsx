@@ -13,7 +13,7 @@ import * as React from 'react';
  *
  * Vanilla HTML alternative:
  *   <script
- *     src="https://ivaronix.vercel.app/embed.js"
+ *     src="https://www.ivaronix.xyz/embed.js"
  *     data-receipt-id="1004"
  *   ></script>
  *
@@ -71,7 +71,7 @@ function envOrigin(): string | undefined {
   }
 }
 
-const DEFAULT_ORIGIN = 'https://ivaronix.vercel.app';
+const DEFAULT_ORIGIN = 'https://www.ivaronix.xyz';
 
 function resolveOrigin(explicit?: string): string {
   return explicit ?? envOrigin() ?? DEFAULT_ORIGIN;

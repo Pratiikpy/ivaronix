@@ -59,7 +59,7 @@ export const CANONICAL_SAMPLE_ID = 1004 as const;
  * during a chain halt — the banner shows the URL the visitor can open
  * in their own browser to verify the pre-anchored receipt themselves.
  */
-export function publicProofUrl(id: number, base = 'https://ivaronix.vercel.app'): string {
+export function publicProofUrl(id: number, base = 'https://www.ivaronix.xyz'): string {
   return `${base.replace(/\/$/, '')}/r/${id}`;
 }
 

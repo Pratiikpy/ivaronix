@@ -107,7 +107,7 @@ const SECTIONS: DocSection[] = [
         label: 'Single receipt embed',
         code:
           '<iframe\n' +
-          '  src="https://ivaronix.vercel.app/embed/r/1004"\n' +
+          '  src="https://www.ivaronix.xyz/embed/r/1004"\n' +
           '  width="640" height="480"\n' +
           '  frameborder="0"\n' +
           '  title="Ivaronix Verified Receipt #1004"\n' +
@@ -116,7 +116,7 @@ const SECTIONS: DocSection[] = [
       {
         label: 'Full proof page link',
         code:
-          '<a href="https://ivaronix.vercel.app/r/1004" target="_blank" rel="noopener">\n' +
+          '<a href="https://www.ivaronix.xyz/r/1004" target="_blank" rel="noopener">\n' +
           '  Verified by Ivaronix · /r/1004\n' +
           '</a>',
       },

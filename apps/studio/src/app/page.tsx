@@ -1081,7 +1081,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {
               name: 'Embed widget',
               body: 'Drop a verified receipt into any page.',
-              code: '<iframe src="https://ivaronix.vercel.app/embed/r/1004" />',
+              code: '<iframe src="https://www.ivaronix.xyz/embed/r/1004" />',
               href: '/embed/r/1004',
             },
           ].map(({ name, body, code, href }) => (
