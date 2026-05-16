@@ -97,7 +97,7 @@ That is the load-bearing claim of the product — a stranger, on a different mac
 | Pitch deck (PDF) | [Ivaronix_Pitch_Deck.pdf](Ivaronix_Pitch_Deck.pdf) |
 | Receipt registry on chainscan | [`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297) |
 
-Faucet (testnet): <https://faucet.0g.ai> · roughly 0.5 OG covers an afternoon of demo runs; a single anchored receipt costs about 0.0001 OG.
+Faucet (testnet): <https://faucet.0g.ai> · roughly 0.5 OG covers an afternoon of demo runs. Cost per receipt on Aristotle mainnet: ~**0.0006 OG** anchor (140k gas @ 4 Gwei) plus ~**0.006 OG** if 0G Storage upload runs (1.6M gas, storage-backed receipts only). Pure CLI verify of an existing receipt costs nothing for the verifier.<!-- numbers-bare:allow: gas data from receipt 72 tx 0x13844324 on mainnet 2026-05-16 -->
 
 ---
 
@@ -194,7 +194,7 @@ Refreshed against the live chain via `pnpm numbers:refresh` · source of truth: 
 
 | Metric | Value | Where to look |
 |---|---|---|
-| Receipts anchored | **<!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->66<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 |
+| Receipts anchored | **<!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->72<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 |
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` |
 | Contracts deployed | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> testnet** · **<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> mainnet** | [deployed contracts](#deployed-contracts) |
 | Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> passing** | `cd contracts && forge test` |
@@ -370,7 +370,7 @@ CI runs [`.github/workflows/jcs-roundtrip.yml`](.github/workflows/jcs-roundtrip.
 
 ### Aristotle mainnet · chainId 16661
 
-<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->66<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
+<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->72<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |
