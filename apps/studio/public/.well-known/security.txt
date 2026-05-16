@@ -1,0 +1,25 @@
+# Ivaronix · Security Contact
+# RFC 9116 · https://datatracker.ietf.org/doc/html/rfc9116
+# Generated 2026-05-16 · Expires 2027-05-16
+
+Contact: mailto:pratiik@ivaronix.xyz
+Contact: https://github.com/Pratiikpy/ivaronix/security/advisories/new
+Expires: 2027-05-16T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://www.ivaronix.xyz/.well-known/security.txt
+Policy: https://github.com/Pratiikpy/ivaronix/blob/main/SECURITY.md
+
+# Scope: every shipped surface — Studio (apps/studio), CLI (apps/cli),
+# MCP server (apps/mcp-server), contracts under contracts/, packages
+# under packages/. The receipt system (RFC-8785 canonical hash, EIP-712
+# anchoring, ERC-7857 passport, V2-first read pattern) is the load-
+# bearing trust layer; vulnerabilities affecting receipt integrity,
+# signer recovery, or chain-anchor verification are highest priority.
+
+# Out of scope:
+#   - Third-party 0G infrastructure (0G Compute / Router / Storage
+#     indexer) — report to the 0G Foundation
+#   - LLM hallucinations or prompt-injection on user content — by
+#     design, multi-role consensus is the defense; receipts make the
+#     outputs verifiable but do not vouch for correctness
+#   - Pricing / business decisions
