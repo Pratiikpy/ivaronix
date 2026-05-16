@@ -301,21 +301,35 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
 
   // 6. Router — branch by provider
   //
-  // Defense in depth: a skill manifest with `compute_tee_required: true`
-  // is declaring that its inference MUST happen inside a TEE. We never
-  // downgrade such a run to NVIDIA NIM (TIER 2 / external-signed) just
-  // because the caller passed `provider: 'nvidia'` or left a stale env
-  // var lying around. The receipt schema's verificationMethod tag and
-  // the four-light row chip on /r/<id> both depend on this invariant —
-  // if it breaks, a TIER 1 receipt can leak a TIER 2 inference into a
-  // TEE-attested envelope. Force '0g' here and log the override so the
-  // operator sees what happened.
+  // TIER 1 by default for every action, not just TEE-required skills.
+  // The product surface is built on "every receipt is a 0G receipt";
+  // letting a non-TEE skill silently route to NVIDIA NIM produces an
+  // amber TIER 2 chip on the receipt page that confuses both users
+  // and judges. Default behaviour pins inference to 0G Compute.
+  //
+  // Two narrow opt-ins remain so the TIER 2 path stays available for
+  // operators who genuinely want to test against NVIDIA NIM:
+  //   - Server env: IVARONIX_TIER2_OPTIN=1 must be set in the process
+  //     environment (the Vercel deployment does NOT set this, so
+  //     Studio production is hard-pinned TIER 1).
+  //   - Caller intent: input.provider must be explicitly 'nvidia'.
+  //
+  // Both must hold. Either alone reads as accidental drift and is
+  // ignored — the run continues on 0G Compute and we log the override
+  // so the operator can audit what happened.
+  const tier2OptIn = process.env.IVARONIX_TIER2_OPTIN === '1';
   const wantTee = skill.manifest.og.permissions.compute_tee_required === true;
   const requestedProvider = input.provider ?? '0g';
-  if (requestedProvider === 'nvidia' && wantTee) {
-    log.info(tag(`tier guard           skill requires TEE; ignoring requested provider=nvidia, using 0G Compute`));
+  let providerKind: '0g' | 'nvidia' = '0g';
+  if (requestedProvider === 'nvidia') {
+    if (wantTee) {
+      log.info(tag(`tier guard           skill requires TEE; ignoring requested provider=nvidia, using 0G Compute`));
+    } else if (!tier2OptIn) {
+      log.info(tag(`tier guard           TIER 2 opt-in not set; ignoring requested provider=nvidia, using 0G Compute`));
+    } else {
+      providerKind = 'nvidia';
+    }
   }
-  const providerKind: '0g' | 'nvidia' = wantTee ? '0g' : requestedProvider;
   const enrichedContext = `${skill.systemPromptBody}\n\n--- INPUT START ---\n${activeContext}\n--- INPUT END ---`;
   const startTime = Date.now();
   let consensus: ConsensusResult;
