@@ -82,8 +82,8 @@
     ],
     "vendored": 150,
     "catalogTotal": 160,
-    "creatorEarningsOG": "0.0036",
-    "creatorEarningsLabel": "0.0036 OG · 57 paid runs of private-doc-review · 90/10 split"
+    "creatorEarningsOG": "0.0058",
+    "creatorEarningsLabel": "0.0058 OG · 65 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
     "workspaceTotal": 25,
@@ -145,7 +145,7 @@
       "SubscriptionEscrowV2": "0x937cfE76dEdB25CCf6c7C56fF16F53270794311e"
     },
     "deployedAt": "2026-05-15T02:50:00Z",
-    "receiptsAnchored": 22,
+    "receiptsAnchored": 66,
     "blockedOn": null
   }
 }

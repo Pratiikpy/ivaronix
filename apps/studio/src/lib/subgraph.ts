@@ -154,34 +154,44 @@ async function skillsListFromChain(limit: number): Promise<SkillListing[]> {
   const registry = new Contract(registryAddr, SKILL_REGISTRY_ABI, provider);
 
   const { keccak256, toUtf8Bytes } = await import('ethers');
-  const out: SkillListing[] = [];
 
-  for (const slug of FIRST_PARTY_SKILLS.slice(0, limit)) {
-    const skillId = keccak256(toUtf8Bytes(`skill:${slug}`));
-    try {
-      const [price, cBps, tBps, priced] = await pricing.getFunction('getPricing')(skillId) as [bigint, number, number, boolean];
-      const owner = await registry.getFunction('ownerOf')(skillId) as string;
-      if (owner === '0x0000000000000000000000000000000000000000') continue;
-      out.push({
-        skillId,
-        owner,
-        priceWei: price.toString(),
-        priceOg: formatUnits(price, 18),
-        // ethers v6 returns uint16 as BigInt at runtime (despite TS `number`
-        // signature). Explicit Number() cast is mandatory or downstream
-        // `creatorBps / 100` throws "Cannot mix BigInt" SSR exception that
-        // crashes the whole /marketplace page. Caught by P5 UI test.
-        creatorBps: Number(cBps),
-        treasuryBps: Number(tBps),
-        isPriced: priced,
-        totalReceipts: 0, // not available without subgraph
-        totalPaidWei: '0',
-      });
-    } catch {
-      /* skill not in registry / not priced — skip */
-    }
-  }
-  return out;
+  // Parallelize per-skill enrichment. Each skill needs getPricing() +
+  // ownerOf() — pairing them in Promise.all and then running all skills
+  // in parallel drops the page's chain-read fan-out from 2N sequential
+  // round-trips (N skills × 2 calls × ~250ms RTT ≈ 5s) to one batch round
+  // (~250ms). The previous sequential loop was the dominant /marketplace
+  // TTFB contributor in production (4.3-4.9s baseline).
+  const enriched = await Promise.all(
+    FIRST_PARTY_SKILLS.slice(0, limit).map(async (slug): Promise<SkillListing | null> => {
+      const skillId = keccak256(toUtf8Bytes(`skill:${slug}`));
+      try {
+        const [pricingTuple, owner] = await Promise.all([
+          pricing.getFunction('getPricing')(skillId) as Promise<[bigint, number, number, boolean]>,
+          registry.getFunction('ownerOf')(skillId) as Promise<string>,
+        ]);
+        const [price, cBps, tBps, priced] = pricingTuple;
+        if (owner === '0x0000000000000000000000000000000000000000') return null;
+        return {
+          skillId,
+          owner,
+          priceWei: price.toString(),
+          priceOg: formatUnits(price, 18),
+          // ethers v6 returns uint16 as BigInt at runtime (despite TS `number`
+          // signature). Explicit Number() cast is mandatory or downstream
+          // `creatorBps / 100` throws "Cannot mix BigInt" SSR exception that
+          // crashes the whole /marketplace page. Caught by P5 UI test.
+          creatorBps: Number(cBps),
+          treasuryBps: Number(tBps),
+          isPriced: priced,
+          totalReceipts: 0, // not available without subgraph
+          totalPaidWei: '0',
+        };
+      } catch {
+        return null;
+      }
+    }),
+  );
+  return enriched.filter((s): s is SkillListing => s !== null);
 }
 
 /**

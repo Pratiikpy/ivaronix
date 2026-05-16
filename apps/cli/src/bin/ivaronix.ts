@@ -20,19 +20,49 @@ function findUp(startDir: string, name: string): string | null {
 const envPath = findUp(process.cwd(), '.env');
 if (envPath) dotenvConfig({ path: envPath });
 
-// If the operator wants mainnet (either IVARONIX_NETWORK=mainnet or
-// OG_NETWORK=mainnet, set inline or in the base .env), overlay
-// .env.mainnet on top so the mainnet-specific RPC, chainId, signer,
-// router, and model keyring win over any testnet values lingering in
-// the base .env. dotenv's `override: true` replaces vars that were
-// already set.
-const network = process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'mainnet';
+// Peek at argv for `--network <X>` BEFORE Commander parses it. Commander
+// parses inside individual subcommands, so by the time `--network testnet`
+// is recognized the .env.mainnet overlay below has already mutated
+// IVARONIX_RPC_URL + chain id to mainnet values, and the testnet flag is
+// effectively ignored. Reading argv directly here lets the network choice
+// reach the overlay before the env mutation.
+//
+// We also STRIP the flag from argv after consuming it, so subcommands
+// that don't declare `--network` themselves (e.g. `receipt show`,
+// `receipt list`) don't get an "unknown option" rejection from Commander.
+// The chosen network propagates through process.env instead.
+function consumeNetworkFromArgv(): 'testnet' | 'mainnet' | null {
+  for (let i = 0; i < process.argv.length - 1; i++) {
+    if (process.argv[i] === '--network') {
+      const v = process.argv[i + 1];
+      if (v === 'testnet' || v === 'mainnet') {
+        // Splice out both the flag and its value.
+        process.argv.splice(i, 2);
+        return v;
+      }
+    }
+  }
+  return null;
+}
+
+const argvNet = consumeNetworkFromArgv();
+const network = argvNet ?? process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'mainnet';
+
 if (network === 'mainnet') {
   const mainnetEnvPath = findUp(process.cwd(), '.env.mainnet');
   if (mainnetEnvPath) dotenvConfig({ path: mainnetEnvPath, override: true });
-  // Ensure the network var is set even when the user didn't pass it
-  // inline — downstream readers in @ivaronix/runtime check this.
   if (!process.env.IVARONIX_NETWORK) process.env.IVARONIX_NETWORK = 'mainnet';
+} else if (network === 'testnet') {
+  // Make the testnet choice sticky for downstream env readers, and prevent
+  // any leftover .env.mainnet from the previous shell session winning.
+  process.env.IVARONIX_NETWORK = 'testnet';
+  if (process.env.OG_NETWORK !== 'mainnet') process.env.OG_NETWORK = 'testnet';
+  // Reset RPC URL to testnet so the JsonRpcProvider built in the receipt
+  // command talks to the Galileo registries. Mirrors the .env.mainnet
+  // overlay semantics: explicit network choice wins over base-.env drift.
+  if (!process.env.IVARONIX_RPC_URL?.includes('testnet')) {
+    process.env.IVARONIX_RPC_URL = 'https://evmrpc-testnet.0g.ai';
+  }
 }
 
 import { Command } from 'commander';
