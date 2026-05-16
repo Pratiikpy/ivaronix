@@ -3,11 +3,11 @@ import { config as dotenvConfig } from 'dotenv';
 import { existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 
-// Walk up the directory tree to find the nearest .env file (supports monorepo run-from-anywhere).
-function findEnvFile(startDir: string): string | null {
+// Walk up the directory tree to find the nearest file in the monorepo root.
+function findUp(startDir: string, name: string): string | null {
   let dir = startDir;
   for (let i = 0; i < 8; i++) {
-    const candidate = resolve(dir, '.env');
+    const candidate = resolve(dir, name);
     if (existsSync(candidate)) return candidate;
     const parent = dirname(dir);
     if (parent === dir) break;
@@ -16,8 +16,24 @@ function findEnvFile(startDir: string): string | null {
   return null;
 }
 
-const envPath = findEnvFile(process.cwd());
+// Load the base .env first.
+const envPath = findUp(process.cwd(), '.env');
 if (envPath) dotenvConfig({ path: envPath });
+
+// If the operator wants mainnet (either IVARONIX_NETWORK=mainnet or
+// OG_NETWORK=mainnet, set inline or in the base .env), overlay
+// .env.mainnet on top so the mainnet-specific RPC, chainId, signer,
+// router, and model keyring win over any testnet values lingering in
+// the base .env. dotenv's `override: true` replaces vars that were
+// already set.
+const network = process.env.IVARONIX_NETWORK ?? process.env.OG_NETWORK ?? 'mainnet';
+if (network === 'mainnet') {
+  const mainnetEnvPath = findUp(process.cwd(), '.env.mainnet');
+  if (mainnetEnvPath) dotenvConfig({ path: mainnetEnvPath, override: true });
+  // Ensure the network var is set even when the user didn't pass it
+  // inline — downstream readers in @ivaronix/runtime check this.
+  if (!process.env.IVARONIX_NETWORK) process.env.IVARONIX_NETWORK = 'mainnet';
+}
 
 import { Command } from 'commander';
 import { doctorCommand } from '../commands/doctor.js';

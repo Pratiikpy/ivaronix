@@ -91,13 +91,40 @@ function flushDeprecationBanner(): void {
 }
 
 export function loadEnv(): Env {
-  const network = ((readWithDeprecation(NETWORK_ALIASES) as Network) ?? 'testnet') as Network;
+  // Default to mainnet so first-run experience anchors against live 0G
+  // Aristotle (chainId 16661) without needing an inline env override.
+  const network = ((readWithDeprecation(NETWORK_ALIASES) as Network) ?? 'mainnet') as Network;
+
+  // When network=mainnet, pin chainId + rpcUrl to the mainnet defaults
+  // and reject testnet-shaped values left over in a legacy .env. This
+  // closes a class of bug where a stale `OG_CHAIN_ID=16602` and
+  // `OG_RPC_URL=https://evmrpc-testnet.0g.ai` from an older operator
+  // setup silently downgraded a mainnet run to testnet RPC, producing
+  // TIER 2 / LOCAL ONLY receipts.
+  const explicitChainId = readWithDeprecation(CHAIN_ID_ALIASES);
+  const explicitRpcUrl = readWithDeprecation(RPC_URL_ALIASES);
+  let chainId: number;
+  let rpcUrl: string;
+  if (network === 'mainnet') {
+    chainId = 16661;
+    rpcUrl = 'https://evmrpc.0g.ai';
+    if (explicitChainId && Number(explicitChainId) !== 16661) {
+      // eslint-disable-next-line no-console
+      console.warn(`[ivaronix env] IVARONIX_NETWORK=mainnet but CHAIN_ID=${explicitChainId} (testnet) found in env; pinning to mainnet 16661.`);
+    }
+    if (explicitRpcUrl && !explicitRpcUrl.includes('evmrpc.0g.ai')) {
+      // eslint-disable-next-line no-console
+      console.warn(`[ivaronix env] IVARONIX_NETWORK=mainnet but RPC_URL=${explicitRpcUrl} found in env; pinning to https://evmrpc.0g.ai.`);
+    }
+  } else {
+    chainId = Number(explicitChainId ?? 16602);
+    rpcUrl = explicitRpcUrl ?? 'https://evmrpc-testnet.0g.ai';
+  }
+
   const env: Env = {
     network,
-    chainId: Number(readWithDeprecation(CHAIN_ID_ALIASES) ?? (network === 'mainnet' ? 16661 : 16602)),
-    rpcUrl:
-      readWithDeprecation(RPC_URL_ALIASES) ??
-      (network === 'mainnet' ? 'https://evmrpc.0g.ai' : 'https://evmrpc-testnet.0g.ai'),
+    chainId,
+    rpcUrl,
     privateKey: readWithDeprecation(SIGNER_KEY_ALIASES),
     readProxyPrivateKey: readWithDeprecation(READ_PROXY_KEY_ALIASES),
     walletAddress: readWithDeprecation(WALLET_ADDR_ALIASES),
