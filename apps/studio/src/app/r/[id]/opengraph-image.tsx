@@ -33,9 +33,23 @@ export default async function Image({ params }: { params: { id: string } }) {
     if (onChain) {
       id = onChain.id.toString();
       const local = findLocalReceiptByRoot(onChain.receiptRoot);
-      if (local?.body.outputs?.wording?.headline) headline = local.body.outputs.wording.headline;
+      if (local?.body.outputs?.wording?.headline) {
+        headline = local.body.outputs.wording.headline;
+      } else if (process.env.IVARONIX_DEBUG) {
+        // Bug-21 trace · the OG image render finds the on-chain receipt
+        // but the bundled-body lookup misses, so the social-share preview
+        // falls back to the generic "Verified action receipt" headline
+        // instead of the actual AI finding. The same lookup works in
+        // /r/[id]/page.tsx — debug here when investigating why.
+        console.warn(`[og-image] no bundled body for receiptRoot ${onChain.receiptRoot} (id ${id}); falling back to generic headline`);
+      }
     }
-  } catch { /* fall through to default */ }
+  } catch (err) {
+    if (process.env.IVARONIX_DEBUG) {
+      console.warn(`[og-image] receipt lookup threw, using generic headline: ${(err as Error).message ?? String(err)}`);
+    }
+    /* fall through to default */
+  }
 
   return new ImageResponse(
     (
