@@ -1,1 +1,0 @@
-- [ ] Write one sentence describing what a receipt is in the Ivaronix system.

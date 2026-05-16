@@ -29,6 +29,28 @@ og-projects-showcase/
 entries/
 new-entries/
 
+# Internal planning + scratch docs — kept locally only; not pushed.
+# These are working notes / scratch / internal QA tracking. Public-facing
+# replacements live in README.md / CONTRIBUTING.md / CHANGELOG.md.
+wanderingthoughts.md
+wanderingflow.md
+Ivaronix.md
+Ivaronix_User_QA_Test_Plan.md
+FINAL_BUILD_PLAN.md
+Going_Extra.md
+QA_TEST_PROGRESS.md
+QA_FIX_LOG.md
+SESSION_FINAL.md
+IVARONIX_PAYMENT_STRATEGY.md
+cowork-opinion.md
+_archive/
+
+# Internal QA evidence pack — screenshots, videos, raw logs. The
+# external-facing proof story lives at: chainscan tx hashes in README,
+# the `/r/<id>` proof pages, the CLI `receipt verify --tee-independent`
+# command. Keep QA_PROOF_PACK/ locally for personal reference; not pushed.
+QA_PROOF_PACK/
+
 # Bundled visual mockup at brand/Ivaronix.html — pushed as design source of truth.
 
 
