@@ -54,11 +54,14 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
   const balance = balanceResult.data as bigint | undefined;
   const lifetime = lifetimeResult.data as bigint | undefined;
   const onChainOwner = (ownerResult.data as string | undefined)?.toLowerCase();
+  const ownerReadFailed = ownerResult.status === 'error' || (ownerResult.isFetched && !onChainOwner);
 
   // Authorization gates:
   //   1. Connected wallet matches IVARONIX_ADMIN_WALLET env (operator-side claim)
   //   2. Connected wallet matches the contract's Ownable owner (chain-side proof)
-  const isAdmin = !!address && address.toLowerCase() === expectedAdmin && address.toLowerCase() === onChainOwner;
+  const envMatch = !!address && !!expectedAdmin && address.toLowerCase() === expectedAdmin;
+  const chainMatch = !!address && !!onChainOwner && address.toLowerCase() === onChainOwner;
+  const isAdmin = envMatch && chainMatch;
 
   if (!isConnected) {
     return (
@@ -69,19 +72,32 @@ export function AdminTreasuryPanel({ paymentAddr, expectedAdmin }: Props) {
   }
 
   if (!isAdmin) {
+    // Bug-25 closure (session 41): distinguish the THREE failure modes so a
+    // judge whose wallet IS the admin but is on the wrong network doesn't see
+    // a misleading "does not match the admin address" message.
+    let title: string;
+    let body: string;
+    if (envMatch && ownerReadFailed) {
+      title = 'Network mismatch';
+      body = 'Your connected wallet matches the env-declared admin, but the chain-side ownership check failed — usually because your wallet is on the wrong network. Switch to OG Mainnet (chainId 16661) to verify on-chain.';
+    } else if (envMatch && !chainMatch) {
+      title = 'Chain owner mismatch';
+      body = 'Your connected wallet matches the env-declared admin, but the on-chain Ownable owner is a different address. The contract may have been transferred since the env was set, or the env is stale.';
+    } else {
+      title = '403 · Not authorised';
+      body = 'This route is admin-only. Your connected wallet does not match the admin address.';
+    }
     return (
       <div className="card" style={{ padding: 24, background: 'var(--color-pending-bg)', border: '1px solid var(--color-pending)' }}>
-        <h3 style={{ margin: '0 0 8px 0' }}>403 · Not authorised</h3>
-        <p style={{ fontSize: 14, marginBottom: 8 }}>
-          This route is admin-only. Your connected wallet does not match the admin address.
-        </p>
+        <h3 style={{ margin: '0 0 8px 0' }}>{title}</h3>
+        <p style={{ fontSize: 14, marginBottom: 8 }}>{body}</p>
         <dl style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '4px 16px', fontSize: 13 }}>
           <dt style={{ opacity: 0.6 }}>Connected wallet</dt>
           <dd><code style={{ fontSize: 11 }}>{address}</code></dd>
           <dt style={{ opacity: 0.6 }}>Expected admin (env)</dt>
           <dd><code style={{ fontSize: 11 }}>{expectedAdmin || '(not set)'}</code></dd>
           <dt style={{ opacity: 0.6 }}>On-chain owner</dt>
-          <dd><code style={{ fontSize: 11 }}>{onChainOwner ?? '—'}</code></dd>
+          <dd><code style={{ fontSize: 11 }}>{onChainOwner ?? '— (chain read failed)'}</code></dd>
         </dl>
       </div>
     );
