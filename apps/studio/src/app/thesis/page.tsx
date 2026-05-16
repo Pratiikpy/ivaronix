@@ -225,7 +225,7 @@ function NumbersGrid({ receipts, passports }: { receipts: string; passports: str
   const items: Array<{ value: string; label: string; href: string; external?: boolean }> = [
     { value: receipts, label: 'reviews completed', href: '/dashboard' },
     { value: passports, label: 'specialists in service', href: '/agent' },
-    { value: '5', label: 'verified expert skills', href: '/skills' },
+    { value: '10', label: 'verified expert skills', href: '/skills' },
     { value: '< 30s', label: 'first review to receipt', href: '/onboard' },
     { value: '0', label: 'reads of your file after the run', href: '/onboard' },
     { value: 'Public', label: 'every receipt is verifiable', href: '/r/1004' },

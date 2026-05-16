@@ -1,7 +1,7 @@
 ---
 name: contract-renewal-clause-detector
 version: 0.1.1
-description: Scan a contract for every auto-renewal, auto-extension, evergreen, and negative-option-billing clause. Flags hidden renewal in boilerplate, asymmetric notice periods, and price escalation at renewal. Part of the Ivaronix legal cluster on Galileo testnet. Output supports legal review — does not replace licensed counsel.
+description: Scan a contract for every auto-renewal, auto-extension, evergreen, and negative-option-billing clause. Flags hidden renewal in boilerplate, asymmetric notice periods, and price escalation at renewal. Part of the Ivaronix legal cluster. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:

@@ -6,7 +6,7 @@ export const dynamic = 'force-static';
 export const metadata = {
   title: 'Docs · CLI · SDK · MCP · Embed widget · Ivaronix',
   description:
-    'Four integration paths into Ivaronix: CLI, TypeScript SDK, Model Context Protocol server, and embeddable receipt widget. Every snippet runs against the live Galileo testnet.',
+    'Four integration paths into Ivaronix: CLI, TypeScript SDK, Model Context Protocol server, and embeddable receipt widget. Every snippet runs against the live 0G Network — testnet for cheap iteration, mainnet for production.',
 };
 
 interface DocSection {
@@ -22,7 +22,7 @@ const SECTIONS: DocSection[] = [
     id: 'cli',
     name: 'CLI',
     body:
-      'The Ivaronix CLI ships 34 commands. Install once, run a private review against any local file, anchor a receipt on chain. Every command works against the live Galileo testnet.',
+      'The Ivaronix CLI ships 34 commands. Install once, run a private review against any local file, anchor a receipt on chain. Every command works against the live 0G Network on both testnet and mainnet.',
     snippets: [
       {
         label: 'Install + first run',
@@ -130,7 +130,7 @@ export default function DocsPage() {
     <Section
       label="§ DOCS · CLI · SDK · MCP · EMBED"
       title="Four ways to plug Ivaronix into a workflow."
-      description="Every snippet runs against the live Galileo testnet. Receipt id 1004 is the canonical sample; replace with any anchored id you have."
+      description="Every snippet runs against the live 0G Network — testnet for cheap iteration, mainnet for production. Receipt id 1004 is the canonical sample; replace with any anchored id you have."
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
         <nav

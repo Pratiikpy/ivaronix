@@ -97,6 +97,8 @@ export function Footer() {
         <section>
           <div className="section-label" style={{ marginBottom: 16 }}>Docs</div>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <li><a href="/whitepaper.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Whitepaper (PDF) ↗</a></li>
+            <li><a href="/pitch-deck.pdf" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Pitch deck (PDF) ↗</a></li>
             <li>{ext('0G platform docs ↗', OG_DOCS)}</li>
             <li>{ext('0G ecosystem ↗', OG_HOME)}</li>
             <li><Link href="/r/1004" style={{ color: 'inherit', textDecoration: 'none' }}>Sample receipt</Link></li>

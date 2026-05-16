@@ -1,7 +1,7 @@
 ---
 name: legal-citation-verifier
 version: 0.1.3
-description: Parse a legal brief or memo for citations and produce best-effort structured output. Architecture routes case-existence checks through HTTP to CourtListener and Cornell LII via the web_fetch builtin; however, on Galileo testnet (Qwen 2.5 7B) the model does not yet consistently emit web_fetch tool_calls, so verdicts are heuristic until the runtime enforcement gate ships (queued · QA_PROOF_PACK/legal-cluster/citation-verifier-audit.md). Treat output as parsing assistance, not verified citation-existence proof. Output supports legal review — does not replace licensed counsel.
+description: Parse a legal brief or memo for citations and produce best-effort structured output. Architecture routes case-existence checks through HTTP to CourtListener and Cornell LII via the web_fetch builtin. The smaller testnet model (Qwen 2.5 7B) does not yet consistently emit web_fetch tool_calls, so verdicts on testnet are heuristic until the runtime enforcement gate ships. Treat output as parsing assistance, not verified citation-existence proof. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:

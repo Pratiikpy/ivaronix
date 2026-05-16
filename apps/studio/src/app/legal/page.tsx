@@ -58,7 +58,7 @@ export default async function LegalPage() {
       <Section
         label={
           <>
-            § FOR LAWYERS, IN-HOUSE COUNSEL, FOUNDERS · LIVE ON 0G GALILEO TESTNET
+            § FOR LAWYERS, IN-HOUSE COUNSEL, FOUNDERS · LIVE ON 0G
             {receiptCount !== null && (
               <>
                 {' · '}
@@ -774,7 +774,7 @@ const BEFORE_AFTER_EXAMPLES: Array<{
     skill: 'private-doc-review',
     before: 'Residential lease with auto-renewal language and ambiguous notice clauses.',
     after:
-      'Multiple findings surfaced · risks ranked · evidence quoted from the document · receipt signer-verified on Galileo.',
+      'Multiple findings surfaced · risks ranked · evidence quoted from the document · receipt signer-verified on chain.',
     receiptId: 53,
     receiptDescription: 'Anchored 2026-05-14 · block 33270447 · v0.4.0 refresh proof',
   },
@@ -812,7 +812,7 @@ const BEFORE_AFTER_EXAMPLES: Array<{
     after:
       'Citation PARSING works (B+); CASE-EXISTENCE verification is queued as this skill\'s mainnet-promotion gate. Testnet receipt 64 captures the parsed citation set but the Qwen 2.5 7B model did not emit web_fetch tool_calls — verdicts are heuristic. Re-run on mainnet once the runtime web_fetch enforcement gate ships (per Q9 audit · MAINNET_PERFECT_PLAN §3 keeps external-DB-as-ground-truth design intact).',
     receiptId: 64,
-    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · TESTNET PARTIAL · runtime web_fetch enforcement queued',
+    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · runtime web_fetch enforcement queued (testnet smaller model limitation)',
   },
 ];
 

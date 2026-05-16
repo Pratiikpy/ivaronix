@@ -1,7 +1,7 @@
 ---
 name: private-doc-review
 version: 0.4.0
-description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Anchor of the Ivaronix legal cluster on Galileo testnet. Output supports legal review — does not replace licensed counsel.
+description: Review a private document (contract, lease, NDA, vendor agreement, terms of service) and surface concrete risks, missing protections, and clauses that disadvantage the asking party. Anchor of the Ivaronix legal cluster. Output supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:
