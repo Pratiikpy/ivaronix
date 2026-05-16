@@ -181,6 +181,14 @@ export async function POST(req: Request) {
       // gates its TEE light on this, NOT on scan.matches (which is a
       // skill-registry hash check, unrelated to TEE).
       teeRouterVerified: result.teeRouterVerified,
+      // Tier surface on the inline run response so RunPanel can render
+      // the chip from the same source-of-truth the receipt body uses.
+      // teeRouterVerified alone is misleading — a 0G run with provider
+      // tier-1-tee is still TIER 1 even when the router didn't include
+      // a pre-attestation in the response (routerVerified=false).
+      tier: result.tier ?? 'tier-1-tee',
+      verificationMethod: result.verificationMethod ?? 'router_flag',
+      providerKind: result.providerKind ?? '0g-router',
       // Storage evidence root. The run pipeline (`anchorReceipt`) uploads the
       // evidence blob to 0G Storage on every anchor — Burn-Mode ciphertext if
       // burn is on, the plaintext context bytes otherwise — and writes the

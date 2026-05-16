@@ -126,6 +126,18 @@ export interface PipelineOutput {
    */
   teeRouterVerified: boolean | null;
   /**
+   * Trust-tier surface on the run output so the inline chip in
+   * RunPanel can render from the same source-of-truth the receipt
+   * body uses. teeRouterVerified alone is misleading — a 0G run with
+   * provider='0g' is still TIER 1 even when the router did not
+   * include a pre-attestation in the response. tier / providerKind /
+   * verificationMethod mirror the receipt body's teeVerification
+   * fields exactly.
+   */
+  tier: 'tier-1-tee' | 'tier-2-external-signed';
+  providerKind: '0g-router' | 'nvidia-nim';
+  verificationMethod: 'router_flag' | 'compute_sdk_process_response' | 'external-signed';
+  /**
    * 0G Storage Merkle root for the run's evidence blob, when the pipeline
    * uploaded one. `null` when no upload happened (the runtime path today
    * does not upload — see HALF_BAKED.md H-3). Surfaced so /api/run can
@@ -547,6 +559,18 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
       ? consensus.attestations.every((a) => a.routerVerified === true)
       : null;
 
+  // Tier surface on the run output so the inline chip in RunPanel can
+  // render from the same source-of-truth the receipt body uses.
+  // providerKind here is the value we forced through the tier guard at
+  // line 303-321: '0g' by default, 'nvidia' only when both
+  // IVARONIX_TIER2_OPTIN=1 and input.provider='nvidia' hold.
+  const trustTier: 'tier-1-tee' | 'tier-2-external-signed' =
+    providerKind === 'nvidia' ? 'tier-2-external-signed' : 'tier-1-tee';
+  const trustVerificationMethod: 'router_flag' | 'compute_sdk_process_response' | 'external-signed' =
+    providerKind === 'nvidia' ? 'external-signed' : 'router_flag';
+  const trustProviderKind: '0g-router' | 'nvidia-nim' =
+    providerKind === 'nvidia' ? 'nvidia-nim' : '0g-router';
+
   return {
     skill,
     finalText,
@@ -558,6 +582,9 @@ export async function runPipeline(input: PipelineInput): Promise<PipelineOutput>
     receiptOnchainId,
     scan,
     teeRouterVerified,
+    tier: trustTier,
+    verificationMethod: trustVerificationMethod,
+    providerKind: trustProviderKind,
     // H-3 closure (sweep 218): when the anchor path uploaded the evidence
     // to 0G Storage, this carries the Merkle root. Honest `null` when
     // no upload happened (no signer, or indexer failure) — RunPanel's
