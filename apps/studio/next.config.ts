@@ -75,6 +75,13 @@ const config: NextConfig = {
       // readiness sequence needs prod /r/<id> to render structured
       // findings for the cluster proof set (commit 9605c56).
       'src/data/receipts/anchored/**',
+      // Bundled data-room manifests · read at request time via
+      // `apps/studio/src/app/data-room/[id]/page.tsx:findRoomManifest()`.
+      // Same nft-tracer story as receipts above — without explicit
+      // inclusion, /data-room/<bundled-id> shows "Room not found." in
+      // production even though the manifest file exists in src/data/rooms/.
+      // Bug-19 follow-on (session-36).
+      'src/data/rooms/**',
     ],
   },
   outputFileTracingExcludes: {
