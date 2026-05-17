@@ -115,16 +115,31 @@ modelCommand
       process.exitCode = 1;
       return;
     }
+    // 0g-compute-cli status emits a heading then data lines. Bug-48: prior
+    // code printed split('\n')[0] which is the "👤 Login Status" heading,
+    // not the actual status. Pick the line that carries the value.
     const loggedIn = /logged in/i.test(status.stdout);
-    if (loggedIn) ui.pass(`login                ${status.stdout.trim().split('\n')[0]}`);
-    else {
+    if (loggedIn) {
+      const lines = status.stdout.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+      const wallet = lines.find((l) => /Wallet address:/i.test(l));
+      const loggedLine = lines.find((l) => /logged in/i.test(l));
+      ui.pass(`login                ${wallet ?? loggedLine ?? 'logged in'}`);
+    } else {
       ui.fail('not logged in', 'run `0g-compute-cli login` to set your private key');
       process.exitCode = 1;
       return;
     }
 
     const network = await runCli(['show-network']);
-    if (network.ok) ui.pass(`network              ${network.stdout.trim().split('\n')[0]}`);
+    if (network.ok) {
+      // Same heading/value split as login. Surface the RPC + network lines
+      // rather than the section heading "🌐 Current Network Configuration".
+      const lines = network.stdout.trim().split('\n').map((l) => l.trim()).filter(Boolean);
+      const rpc = lines.find((l) => /RPC Endpoint/i.test(l));
+      const net = lines.find((l) => /^✓ Network:/i.test(l) || /^Network:/i.test(l));
+      const summary = [rpc, net].filter(Boolean).join('  ');
+      ui.pass(`network              ${summary || lines[1] || lines[0] || '(unknown)'}`);
+    }
     ui.divider();
     ui.pass('preflight ok — `ivaronix model list-providers` should work.');
   });
