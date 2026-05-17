@@ -195,3 +195,9 @@ docs/video/raw/
 docs/video/parts/
 docs/video/parts.txt
 docs/video/verify/
+
+# Rabby Wallet extension binaries (v0.93.89) — do not commit
+scripts/qa/wallet-e2e/rabby/
+.rabby-profile/
+.popup-dump-profile/
+.click-strategy-profile/
