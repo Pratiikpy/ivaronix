@@ -2,7 +2,7 @@
  * Ivaronix receipt-verifier embed loader (planning-01 §3D).
  *
  * Drop on any HTML page:
- *   <script src="https://ivaronix.studio/embed.js" data-receipt-id="1004"></script>
+ *   <script src="https://www.ivaronix.xyz/embed.js" data-receipt-id="66"></script>
  *
  * Auto-creates an iframe pointing at /embed/r/<id>. Sized to the card
  * (320×420 default) but obeys data-width / data-height overrides.
@@ -25,7 +25,11 @@
     try {
       return new URL(script.src).origin;
     } catch (_e) {
-      return 'https://ivaronix.studio';
+      // Bug-64: fallback domain was the dead ivaronix.studio. Production
+      // is www.ivaronix.xyz. The fallback path only fires when script.src
+      // is unreadable (rare CSP edge case); the common path reads the
+      // actual origin from script.src and works regardless of host.
+      return 'https://www.ivaronix.xyz';
     }
   })();
   var width = script.getAttribute('data-width') || '100%';
