@@ -184,6 +184,58 @@ test("invalidate('429') with a depleted next-cred skips the depleted one", () =>
   assert.ok(['a', 'c'].includes(r[0]!.toCredential));
 });
 
+// ─── pickActiveExcluding · per-call skipset (Bug-72 fix) ────────────
+//
+// Pre-fix bug: chat() / chatRich() retry loops called pickActive() each
+// attempt. 429 does NOT mark a credential as permanently depleted, so
+// pickActive() kept returning the SAME 429'd credential N times in a
+// row. With N=5 credentials and a 429 storm, the loop burned all 5
+// attempts against ONE key. This caused PIPELINE_FAILED_POST_PAYMENT on
+// any 5-role consensus run while throttled (legal-citation-verifier +
+// term-sheet-risk-scanner repro path · task 460/462). The fix exposes
+// pickActiveExcluding(skip) so the retry loop tracks which credentials
+// it has already tried this call and forces real round-robin within a
+// single user request.
+
+test('pickActiveExcluding rotates past 429-throttled credentials in the same call', () => {
+  // Bug-72 regression: with 3 credentials and the first two getting
+  // 429'd in-call, the third call to pickActiveExcluding must return
+  // the third credential. Pre-fix, pickActive would return 'a' every
+  // time because 429 doesn't mark depleted.
+  const kr = new Keyring([makeCred('a'), makeCred('b'), makeCred('c')]);
+  const tried = new Set<string>();
+  const first = kr.pickActiveExcluding(tried)!;
+  assert.equal(first.label, 'a');
+  tried.add('a');
+  kr.invalidate('a', '429');
+  const second = kr.pickActiveExcluding(tried)!;
+  assert.equal(second.label, 'b');
+  tried.add('b');
+  kr.invalidate('b', '429');
+  const third = kr.pickActiveExcluding(tried)!;
+  assert.equal(third.label, 'c');
+  // After all three tried, returns null so the caller can stop.
+  tried.add('c');
+  assert.equal(kr.pickActiveExcluding(tried), null);
+});
+
+test('pickActiveExcluding skips depleted credentials even when not in skipset', () => {
+  // The skipset is for THIS-CALL transient throttles; depleted (402/auth)
+  // permanently kills a credential regardless of skipset contents.
+  const kr = new Keyring([makeCred('a'), makeCred('b'), makeCred('c')]);
+  kr.invalidate('a', '402');
+  const empty = new Set<string>();
+  const pick = kr.pickActiveExcluding(empty)!;
+  assert.equal(pick.label, 'b', 'should skip depleted "a" and return "b"');
+});
+
+test('pickActiveExcluding returns null when every credential is either depleted or in skipset', () => {
+  const kr = new Keyring([makeCred('a'), makeCred('b')]);
+  kr.invalidate('a', '402');
+  const tried = new Set<string>(['b']);
+  assert.equal(kr.pickActiveExcluding(tried), null);
+});
+
 // ─── keyringFromEnv · alias-chain resolution ─────────────────────────
 // Sweep 109 fix: keyringFromEnv was reading ONLY legacy names. An
 // operator using canonical IVARONIX_ROUTER_KEY etc. got a null

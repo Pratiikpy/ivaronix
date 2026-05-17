@@ -74,6 +74,24 @@ export class Keyring {
     throw new Error('All Router keys depleted — top up at least one wallet via 0g-compute-cli.');
   }
 
+  /**
+   * Pick the next non-depleted credential whose label is NOT in `skip`.
+   * The pipeline retry loop passes the set of credentials it has already
+   * tried this turn — without this, a 429 storm on `credentials[0]` would
+   * cause the retry loop to keep re-picking the same throttled credential
+   * (since 429 does not mark the credential as permanently depleted) and
+   * burn through `credentials.length` attempts against ONE key. The
+   * skip-set forces real round-robin within a single user request.
+   */
+  pickActiveExcluding(skip: ReadonlySet<string>): RouterCredential | null {
+    for (const c of this.credentials) {
+      if (this.depleted.has(c.label)) continue;
+      if (skip.has(c.label)) continue;
+      return c;
+    }
+    return null;
+  }
+
   invalidate(label: string, reason: '402' | '429' | 'auth'): void {
     // Record the rotation BEFORE we mutate state so the next-pick
     // logic above sees the post-invalidate set.
@@ -115,8 +133,16 @@ export class Keyring {
 
   async chat(opts: RouterCallOptions): Promise<RouterCallResult> {
     let lastErr: unknown;
+    // Per-call skipset: credentials already attempted on THIS request. 429 is
+    // transient (not added to `this.depleted`), so without this set the retry
+    // loop kept re-picking the same throttled credential and consuming all
+    // N attempts against ONE key. Now each attempt picks a credential we
+    // have not yet tried this turn.
+    const triedThisCall = new Set<string>();
     for (let attempt = 0; attempt < this.credentials.length; attempt++) {
-      const cred = this.pickActive();
+      const cred = this.pickActiveExcluding(triedThisCall);
+      if (!cred) break;
+      triedThisCall.add(cred.label);
       const client = this.clients.get(cred.label);
       if (!client) throw new Error(`Internal: no client for ${cred.label}`);
       try {
@@ -144,8 +170,11 @@ export class Keyring {
 
   async chatRich(input: ChatRichInput): Promise<ChatRichResult> {
     let lastErr: unknown;
+    const triedThisCall = new Set<string>();
     for (let attempt = 0; attempt < this.credentials.length; attempt++) {
-      const cred = this.pickActive();
+      const cred = this.pickActiveExcluding(triedThisCall);
+      if (!cred) break;
+      triedThisCall.add(cred.label);
       const client = this.clients.get(cred.label);
       if (!client) throw new Error(`Internal: no client for ${cred.label}`);
       try {
