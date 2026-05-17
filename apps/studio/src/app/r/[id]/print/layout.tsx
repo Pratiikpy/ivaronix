@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Metadata } from 'next';
 
 /**
  * Print-only layout: hide the studio header + footer + main padding so
@@ -7,6 +8,20 @@ import type { ReactNode } from 'react';
  * root layouts always wrap every route, so the smallest portable way to
  * drop chrome on a per-route basis is a scoped style override.
  */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  // Bug-53: include the receipt id in the page title so save-as-PDF
+  // produces a filename like "Receipt #107 · printable · Ivaronix.pdf"
+  // not the generic "Receipt · printable.pdf" that hid which receipt
+  // it was. (Same params shape as ./page.tsx — Next.js 15 awaits these.)
+  const { id } = await params;
+  const safeId = /^\d+$/.test(id) ? `#${id}` : id.length > 0 ? id : '';
+  const headline = safeId ? `Receipt ${safeId} · printable` : 'Receipt · printable';
+  return {
+    title: `${headline} · Ivaronix`,
+    description: 'Printable Ivaronix receipt — anchored on 0G Chain.',
+  };
+}
+
 export default function PrintLayout({ children }: { children: ReactNode }) {
   return (
     <>
@@ -29,7 +44,3 @@ export default function PrintLayout({ children }: { children: ReactNode }) {
   );
 }
 
-export const metadata = {
-  title: 'Receipt · printable',
-  description: 'Printable Ivaronix receipt — anchored on 0G Chain.',
-};
