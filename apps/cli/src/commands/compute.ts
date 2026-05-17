@@ -56,10 +56,23 @@ computeCommand
       const { stdout } = await execFileAsync(IS_WIN ? 'npx.cmd' : 'npx', argv, {
         timeout: 90_000, maxBuffer: 4 * 1024 * 1024, windowsHide: true, shell: IS_WIN,
       });
-      // Parse the SDK's text output for the balance line.
-      const balanceLine = stdout.split('\n').find((l) => /balance/i.test(l));
-      if (balanceLine) ui.pass(balanceLine.trim());
-      else process.stdout.write(stdout);
+      // Parse the SDK's text output. `0g-compute-cli get-account` prints
+      // an ASCII table whose header row contains the word "Balance" — a
+      // naive /balance/i match picks that header instead of the actual
+      // amount. The real total balance row is labelled "Total" followed
+      // by the numeric value. We surface that summary, plus the "Locked"
+      // and "Available" lines so the user sees full account state.
+      const lines = stdout.split('\n');
+      const summaryLines = lines.filter((l) =>
+        (/(Total|Locked|Available for transfer)/.test(l)) && /\d+\.\d/.test(l),
+      );
+      if (summaryLines.length > 0) {
+        for (const l of summaryLines) {
+          ui.pass(l.replace(/[│┌┐└┘├┤─]/g, '').trim());
+        }
+      } else {
+        process.stdout.write(stdout); // no parseable summary — dump raw table
+      }
     } catch (err) {
       ui.fail('balance lookup failed', (err as Error).message.split('\n')[0]);
       ui.hint('Did you run `0g-compute-cli setup-network && 0g-compute-cli login` first?');
