@@ -1,9 +1,9 @@
 import { Command } from 'commander';
 import { existsSync, readFileSync, writeFileSync, statSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { createDaClient, DEFAULT_DA_ENDPOINT, MAX_BLOB_SIZE } from '@ivaronix/og-da';
 import { ui } from '../lib/ui.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix da …` — wraps 0G Data Availability via the local DA client.
@@ -55,7 +55,7 @@ daCommand
   .option('--poll-interval <ms>', 'status poll interval', '2000')
   .option('--poll-timeout <ms>', 'finalization timeout', '300000')
   .action(async (file: string, opts: { endpoint: string; pollInterval: string; pollTimeout: string }) => {
-    const abs = resolve(process.cwd(), file);
+    const abs = resolveUserPath(file);
     if (!existsSync(abs)) {
       ui.fail(`file not found at ${file}`);
       process.exitCode = 1;
@@ -117,7 +117,7 @@ daCommand
     try {
       const data = await client.retrieveBlob(storageRoot as `0x${string}`, BigInt(epoch), BigInt(quorumId));
       if (opts.out) {
-        const outPath = resolve(process.cwd(), opts.out);
+        const outPath = resolveUserPath(opts.out);
         writeFileSync(outPath, data);
         const st = statSync(outPath);
         ui.pass(`wrote ${st.size.toLocaleString()} bytes to ${opts.out}`);

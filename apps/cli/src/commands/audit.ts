@@ -3,6 +3,7 @@ import { readFileSync, statSync, readdirSync } from 'node:fs';
 import { resolve, relative, extname } from 'node:path';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix audit <path>` — review-only mode.
@@ -45,7 +46,7 @@ export const auditCommand = new Command('audit')
     else if (opts.consensus) tier = 'standard';
     else if (opts.quick) tier = 'quick';
 
-    const root = resolve(process.cwd(), target);
+    const root = resolveUserPath(target);
     const exts = opts.ext
       ? new Set(opts.ext.split(',').map((e) => (e.startsWith('.') ? e : '.' + e)))
       : new Set(DEFAULT_INCLUDE);

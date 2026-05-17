@@ -6,6 +6,7 @@ import { execFileSync } from 'node:child_process';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
 import { runInteractiveApply } from '../lib/diff-interactive.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix code <task> --files <paths...>` — build mode.
@@ -68,7 +69,7 @@ export const codeCommand = new Command('code')
 
     const parts: string[] = [];
     for (const f of opts.files) {
-      const path = resolve(process.cwd(), f);
+      const path = resolveUserPath(f);
       try {
         const content = readFileSync(path, 'utf8');
         parts.push(`=== ${f} ===\n${content.slice(0, 24_000)}`);

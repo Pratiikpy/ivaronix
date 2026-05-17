@@ -4,6 +4,7 @@ import { resolve, basename, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix swarm run <todo.md>` — parent/worker mode with optional worktree
@@ -86,7 +87,7 @@ swarmCommand
     else if (opts.consensus) tier = 'standard';
     else if (opts.quick) tier = 'quick';
 
-    const todoAbs = resolve(process.cwd(), todoPath);
+    const todoAbs = resolveUserPath(todoPath);
     let raw: string;
     try {
       raw = readFileSync(todoAbs, 'utf8');

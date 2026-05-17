@@ -1,8 +1,9 @@
 import { Command } from 'commander';
 import { readFileSync } from 'node:fs';
-import { resolve, basename } from 'node:path';
+import { basename } from 'node:path';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix plan <prompt>` — read-only planning mode.
@@ -30,7 +31,7 @@ export const planCommand = new Command('plan')
     const contextParts: string[] = [];
     if (opts.files?.length) {
       for (const f of opts.files) {
-        const path = resolve(process.cwd(), f);
+        const path = resolveUserPath(f);
         try {
           const content = readFileSync(path, 'utf8');
           contextParts.push(`=== ${basename(path)} ===\n${content.slice(0, 16_000)}`);

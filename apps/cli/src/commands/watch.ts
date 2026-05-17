@@ -3,6 +3,7 @@ import { readFileSync, statSync, readdirSync, watch as fsWatch } from 'node:fs';
 import { resolve, relative, extname } from 'node:path';
 import { runPipeline } from '../lib/pipeline.js';
 import { ui } from '../lib/ui.js';
+import { resolveUserPath } from '../lib/user-cwd.js';
 
 /**
  * `ivaronix watch <path>` — daemon mode.
@@ -63,7 +64,7 @@ export const watchCommand = new Command('watch')
     const intervalMs = parseDurationMs(opts.interval);
     const durationMs = opts.duration ? parseDurationMs(opts.duration) : Infinity;
     const maxRuns = Math.max(1, parseInt(opts.maxRuns, 10) || 3);
-    const root = resolve(process.cwd(), target);
+    const root = resolveUserPath(target);
     const exts = opts.ext
       ? new Set(opts.ext.split(',').map((e) => (e.startsWith('.') ? e : '.' + e)))
       : DEFAULT_EXTS;
