@@ -163,33 +163,39 @@ export function addConsolidateCommand(parent: Command): void {
       const passportAddrV1 = getDeployedAddress(env.network, 'AgentPassportINFT');
       const passportAddr = passportAddrV2 ?? passportAddrV1;
       const passportVersion: 'v1' | 'v2' = passportAddrV2 ? 'v2' : 'v1';
-      if (!registryAddrV1 || !writeAddr) {
+      // Bug-35 fix: previously required BOTH V1 AND writeAddr to exist,
+      // which broke mainnet (V1 isn't deployed there — only V2 + V3).
+      // V1 is an optional read source for back-compat; the write target
+      // (writeAddr) is the only hard requirement.
+      if (!writeAddr) {
         ui.fail(`ReceiptRegistry not deployed on ${env.network}`);
         process.exitCode = 1;
         return;
       }
-      // Per-version read clients. Used below to walk findByAgent on
-      // both V1 + V2 and merge. The unified write target is `writeAddr`
-      // (V2 if deployed, V1 fallback).
-      const regV1 = registryAddrV1 ? new ReceiptRegistryClient(registryAddrV1, wallet) : null;
-      const regV2 = registryAddrV2 ? new ReceiptRegistryV2Client(registryAddrV2, wallet) : null;
+      // Per-version read clients. Walks findByAgent on V1 + V2 + V3 and
+      // merges (Bug-36 fix). The unified write target is `writeAddr`
+      // (V3 if deployed, V2 fallback, V1 fallback).
+      const regV1Read = registryAddrV1 ? new ReceiptRegistryClient(registryAddrV1, wallet) : null;
+      const regV2Read = registryAddrV2 ? new ReceiptRegistryV2Client(registryAddrV2, wallet) : null;
+      const regV3Read = registryAddrV3 ? new ReceiptRegistryV3Client(registryAddrV3, wallet) : null;
 
       ui.title(`Consolidating recent receipts · window=${window.label}`);
       ui.info(`agent wallet         ${env.walletAddress}`);
       ui.info(`network              ${env.network}`);
       ui.info(`lookback             ~${window.lookbackBlocks.toLocaleString()} blocks`);
 
-      // 1. Fetch recent on-chain receipts for this agent · V1 + V2 union.
-      ui.pending('reading on-chain receipts (V1 + V2)...');
-      const [v1Rows, v2Rows] = await Promise.all([
-        regV1 ? regV1.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
-        regV2 ? regV2.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
+      // 1. Fetch recent on-chain receipts for this agent · V1+V2+V3 union.
+      ui.pending('reading on-chain receipts (V1 + V2 + V3)...');
+      const [v1Rows, v2Rows, v3Rows] = await Promise.all([
+        regV1Read ? regV1Read.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
+        regV2Read ? regV2Read.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
+        regV3Read ? regV3Read.findByAgent(env.walletAddress as Address, 100, window.lookbackBlocks).catch(() => []) : [],
       ]);
-      // Merge + de-dupe by receiptRoot (a single hash anchored on both
-      // registries would be a manual-migration artifact; rare but
-      // possible). Sort newest-first.
+      // Merge + de-dupe by receiptRoot (a single hash anchored on
+      // multiple registries would be a manual-migration artifact; rare
+      // but possible). Sort newest-first by preferring V3 → V2 → V1.
       const seenRoots = new Set<string>();
-      const onChain = [...v2Rows, ...v1Rows]
+      const onChain = [...v3Rows, ...v2Rows, ...v1Rows]
         .filter((r) => {
           const k = r.receiptRoot.toLowerCase();
           if (seenRoots.has(k)) return false;
@@ -412,10 +418,10 @@ export function addConsolidateCommand(parent: Command): void {
         onChainId = (nextId - 1n).toString();
       } else {
         // writeVersion === 'v1' here means registryAddrV3 + V2 were both unset,
-        // so V1 is the only deployment AND regV1 is non-null per the
+        // so V1 is the only deployment AND regV1Read is non-null per the
         // construction above.
-        if (!regV1) throw new Error('invariant: regV1 must exist when writeVersion is v1');
-        const tx = await regV1.anchor(
+        if (!regV1Read) throw new Error('invariant: regV1Read must exist when writeVersion is v1');
+        const tx = await regV1Read.anchor(
           signed.storage.receiptRoot as Hash,
           sourceIdsHashBytes32,
           RECEIPT_TYPE_CODE,
@@ -424,7 +430,7 @@ export function addConsolidateCommand(parent: Command): void {
         txHash = tx.hash;
         const r = await tx.wait();
         txBlock = r?.blockNumber ?? null;
-        const nextId = await regV1.nextId();
+        const nextId = await regV1Read.nextId();
         onChainId = (nextId - 1n).toString();
       }
 
