@@ -179,6 +179,22 @@ export const statsCommand = new Command('stats')
       } catch {/* ignore */}
     }
 
+    // 5b. Measure seconds-per-block empirically from chain timestamps.
+    // Honest (and network-agnostic) replacement for the Galileo hardcode
+    // that mislabeled "≈1.5s/block on Galileo" even on mainnet (Bug-46).
+    let secondsPerBlock: number | null = null;
+    if (head > 1000) {
+      try {
+        const [bHead, bOld] = await Promise.all([
+          provider.getBlock(head),
+          provider.getBlock(head - 1000),
+        ]);
+        if (bHead?.timestamp && bOld?.timestamp && bHead.timestamp > bOld.timestamp) {
+          secondsPerBlock = (Number(bHead.timestamp) - Number(bOld.timestamp)) / 1000;
+        }
+      } catch {/* ignore */}
+    }
+
     // ── output ──────────────────────────────────────────────────────────
 
     if (opts.json) {
@@ -215,6 +231,7 @@ export const statsCommand = new Command('stats')
         } : null,
         derived: {
           avgAnchorIntervalBlocks: avgAnchorBlocks,
+          secondsPerBlock,
         },
       }, null, 2) + '\n');
       return;
@@ -273,7 +290,11 @@ export const statsCommand = new Command('stats')
     if (avgAnchorBlocks !== null) {
       ui.section('05 · Derived');
       ui.info(`avg anchor interval  ${avgAnchorBlocks.toFixed(1)} blocks (last 100 receipts)`);
-      ui.info(`                     ≈ ${(avgAnchorBlocks * 1.5).toFixed(1)}s @ 1.5s/block on Galileo`);
+      if (secondsPerBlock !== null) {
+        ui.info(`                     ≈ ${(avgAnchorBlocks * secondsPerBlock).toFixed(1)}s @ ${secondsPerBlock.toFixed(2)}s/block (${env.network}, measured over last 1000 blocks)`);
+      } else {
+        ui.info(`                     (block-time measurement unavailable; seconds estimate skipped)`);
+      }
     }
 
     ui.divider();
