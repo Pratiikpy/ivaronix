@@ -4,12 +4,18 @@
  * SIWE-gated. Connected wallet must match IVARONIX_ADMIN_WALLET env var.
  * Non-admins get a 403 message. Admins see treasury balance + withdraw button.
  */
+import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
 import { AdminTreasuryPanel } from '@/components/AdminTreasuryPanel';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import type { Network } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Admin · Treasury · Ivaronix',
+  description: 'Admin-only treasury view — pending balance, lifetime earnings, withdraw flow.',
+};
 
 export default function AdminTreasuryPage() {
   const network: Network = (process.env.IVARONIX_NETWORK ?? 'testnet') as Network;

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { unifiedNextId, livePassportCount, getProvider, getNetwork } from '@/lib/chain';
@@ -9,6 +10,11 @@ import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployment
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Global · Ivaronix',
+  description: 'Network-wide stats — receipts anchored, passports minted, top skills by usage, OG spent.',
+};
 
 const MEM_ACCESS_LABELS = ['read', 'write', 'delete', 'grant_used'];
 

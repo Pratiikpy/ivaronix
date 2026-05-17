@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { getPassportClient, livePassportCount, getNetwork } from '@/lib/chain';
@@ -5,6 +6,11 @@ import { getStudioDeployments } from '@/lib/deployments-bundle';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Agents · Ivaronix',
+  description: 'Every ERC-7857 passport minted on 0G — owner, trust score, receipt count.',
+};
 
 interface AgentRow {
   tokenId: bigint;

@@ -9,12 +9,23 @@
  * next token id, RPC reachability, contract addresses. Each row carries
  * the data and a chainscan link the judge can verify independently.
  */
+import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
 import { getNetwork, getProvider, getReceiptRegistryV3, livePassportCount } from '@/lib/chain';
 import { getStudioDeployedAddress as getDeployedAddress, getStudioDeployments } from '@/lib/deployments-bundle';
 import { NETWORKS, type Network } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-56: this page renders a real status dashboard, but had no metadata
+// so the browser tab + share previews inherited the generic homepage
+// title ("Ivaronix — AI review for the documents you can't paste into
+// ChatGPT."). A judge who bookmarks /admin/health would get "AI review"
+// in the tab list, not "System health".
+export const metadata: Metadata = {
+  title: 'System health · Ivaronix',
+  description: 'Live on-chain status — block height, registry counters, contract addresses. No auth, no wallet, no setup.',
+};
 
 interface ContractRow {
   name: string;

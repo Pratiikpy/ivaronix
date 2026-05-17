@@ -1,9 +1,17 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { receiptTypeLabel } from '@/lib/receipt-labels';
 import { loadDashboard, type DashboardData } from '@/lib/dashboard';
 import { DashboardClient } from './DashboardClient';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-56 (extension): user-facing pages declare their own metadata so
+// browser tabs + share previews don't all inherit the homepage title.
+export const metadata: Metadata = {
+  title: 'Dashboard · Ivaronix',
+  description: 'Your wallet, your passport, your receipts — read live from chain.',
+};
 
 /**
  * /dashboard — passport state + last 5 receipts + balance + schedules.

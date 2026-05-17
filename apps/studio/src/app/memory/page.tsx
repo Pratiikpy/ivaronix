@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
 import { MemoryPanel } from '@/components/MemoryPanel';
 import { MemoryNotesPanel } from '@/components/MemoryNotesPanel';
@@ -5,6 +6,11 @@ import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployment
 import { getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Memory · Ivaronix',
+  description: 'Two-tier memory engine — quick capture sandbox + chain-anchored permission grants.',
+};
 
 /**
  * /memory — two surfaces stacked:
