@@ -27,6 +27,7 @@ endpoint accepts unauthenticated `processResponse` queries.
 | `rcpt_01KRV5CY3YP1197J1Y6SH9GSM1` | 130 | contract-renewal-clause-detector | standard (3-role) · PAID | anchored |
 | `rcpt_01KRV5EWQZSVAQGH4W9ARYQ395` | 131 | private-doc-review | quick · PAID | anchored |
 | `rcpt_01KRV7E0D1PXCVT7TA8AACE7BF` | 134 | private-doc-review | quick · 🔒 Burn Mode (AES-256-GCM) | FULLY VERIFIED ✓ |
+| `rcpt_01KRV95CRE2MZ6NXHB619ETW8W` | 135 | private-doc-review | high-stakes (5-role) | FULLY VERIFIED ✓ · **TEE-warm**: anchored 2026-05-17, broker session live |
 
 Try the README's quick start:
 
