@@ -174,36 +174,44 @@ export default async function AdminHealthPage() {
         </div>
 
         {/* Contracts list */}
-        <div className="card" style={{ padding: 24 }}>
+        <div className="card" style={{ padding: 24, minWidth: 0 }}>
           <h3 style={{ fontSize: 18, fontWeight: 600, margin: '0 0 16px' }}>Deployed contracts · {h.network}</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--color-hairline)', textAlign: 'left' }}>
-                <th style={{ padding: '8px 0', fontWeight: 600 }}>Contract</th>
-                <th style={{ padding: '8px 0', fontWeight: 600 }}>Address</th>
-                <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'right' }}>Verify</th>
-              </tr>
-            </thead>
-            <tbody>
-              {h.contracts.map((c) => (
-                <tr key={c.name} style={{ borderBottom: '1px solid var(--color-hairline)' }}>
-                  <td style={{ padding: '10px 0' }}>{c.name}</td>
-                  <td style={{ padding: '10px 0', color: c.address ? 'var(--color-ink)' : 'var(--color-muted)' }}>
-                    {c.address ?? '— not deployed'}
-                  </td>
-                  <td style={{ padding: '10px 0', textAlign: 'right' }}>
-                    {c.chainscanUrl ? (
-                      <a href={c.chainscanUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-ink)' }}>
-                        chainscan ↗
-                      </a>
-                    ) : (
-                      <span style={{ color: 'var(--color-muted)' }}>—</span>
-                    )}
-                  </td>
+          {/* Bug-76 mobile fix: a 42-char hex address inside a monospace <td> cannot wrap,
+              so the table claims its content's intrinsic width (~500px). On 375px mobile
+              that pushes the entire card past the viewport and stretches siblings too
+              (Live-counts h3 + grid then inherit the wider Section width). Wrapping
+              the table in an overflow-x:auto container contains the scroll to the
+              table itself; the page no longer scrolls horizontally as a whole. */}
+          <div style={{ overflowX: 'auto', maxWidth: '100%' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-mono, monospace)', fontSize: 12 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--color-hairline)', textAlign: 'left' }}>
+                  <th style={{ padding: '8px 12px 8px 0', fontWeight: 600 }}>Contract</th>
+                  <th style={{ padding: '8px 12px 8px 0', fontWeight: 600 }}>Address</th>
+                  <th style={{ padding: '8px 0', fontWeight: 600, textAlign: 'right' }}>Verify</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {h.contracts.map((c) => (
+                  <tr key={c.name} style={{ borderBottom: '1px solid var(--color-hairline)' }}>
+                    <td style={{ padding: '10px 12px 10px 0', whiteSpace: 'nowrap' }}>{c.name}</td>
+                    <td style={{ padding: '10px 12px 10px 0', color: c.address ? 'var(--color-ink)' : 'var(--color-muted)', whiteSpace: 'nowrap' }}>
+                      {c.address ?? '— not deployed'}
+                    </td>
+                    <td style={{ padding: '10px 0', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      {c.chainscanUrl ? (
+                        <a href={c.chainscanUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-ink)' }}>
+                          chainscan ↗
+                        </a>
+                      ) : (
+                        <span style={{ color: 'var(--color-muted)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <p style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: 11, color: 'var(--color-muted)', margin: 0 }}>
