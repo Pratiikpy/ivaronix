@@ -98,7 +98,20 @@ sessionCommand
     for (const m of conv.messages) {
       if (!includeSystem && m.role === 'system') continue;
       const tag = `[${m.role}]`.padEnd(10);
-      const body = typeof m.content === 'string' ? m.content : JSON.stringify(m.content);
+      // assistant turns that call a tool have content=null + tool_calls[]; render the tool call,
+      // not the literal "null" (Bug-47 — prior code did JSON.stringify(null) → "null")
+      let body: string;
+      if (typeof m.content === 'string' && m.content.length > 0) {
+        body = m.content;
+      } else if (m.tool_calls && m.tool_calls.length > 0) {
+        body = m.tool_calls
+          .map((tc) => `(tool call: ${tc.function.name}(${tc.function.arguments}))`)
+          .join('\n');
+      } else if (m.content === null || m.content === undefined) {
+        body = '(no content)';
+      } else {
+        body = JSON.stringify(m.content);
+      }
       const lines = body.split('\n');
       for (let i = 0; i < lines.length; i++) {
         if (i === 0) process.stdout.write(`${tag}${lines[i]}\n`);
