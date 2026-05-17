@@ -146,6 +146,9 @@ cowork-opinion.md
 
 # P3 ephemeral profile dirs (one per test run; safe to delete)
 scripts/qa/ui-test-plan/.p3-profile-*
+scripts/qa/ui-test-plan/.p3-mm-profile-*
+scripts/qa/**/.*-profile/
+scripts/qa/**/.*-profile-*/
 .env.mainnet
 
 # ─── Internal-only documentation (kept locally for engineering) ──────────────
@@ -213,6 +216,12 @@ scripts/qa/wallet-e2e/rabby/
 # Operator-local route snapshots produced by ad-hoc curl scrapes during
 # QA — not source of truth.
 *-snapshot.txt
+
+# Operator scratch notes at repo root — checklists, todos, brainstorms.
+# Anything project-level lives in docs/ or HALF_BAKED.md.
+/the goal *.txt
+/notes-*.txt
+/scratch-*.txt
 
 # LaTeX build artefacts from the whitepaper source. Only the rendered PDF
 # under public/ is shipped; the .aux/.toc/.out/.tex files are intermediate.
