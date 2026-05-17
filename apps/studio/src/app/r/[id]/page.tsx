@@ -418,9 +418,16 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
               </div>
             </div>
             <div>
-              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>skill</div>
+              <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                {skill ? 'skill' : 'receipt type'}
+              </div>
               <div className="mono" style={{ fontSize: 12, color: 'var(--color-fg)' }}>
                 {skill ? `${skill.skillId}@${skill.skillVersion}` : (local?.type ?? receiptTypeLabel(onChain.receiptType))}
+                {!skill && (
+                  <span style={{ display: 'block', fontSize: 10, color: 'var(--color-muted)', marginTop: 4 }}>
+                    skill name in storage body — fetch pending
+                  </span>
+                )}
               </div>
             </div>
             {modelFinal && (
