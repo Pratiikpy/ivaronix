@@ -116,6 +116,7 @@ export default async function EmbedReceiptPage({ params }: { params: Promise<{ i
       : 'ANCHORED';
   const isExternal = tierLabel === 'TIER 2 · EXTERNAL';
   const txHash = local?.chainAnchor?.anchorTxHash;
+  const hasSkillName = !!local?.request?.skillId;
   const skillLabel = local?.request?.skillId ?? receiptTypeLabel(onChain.receiptType);
 
   return (
@@ -143,7 +144,7 @@ export default async function EmbedReceiptPage({ params }: { params: Promise<{ i
         </div>
 
         <h1 style={titleStyle}>
-          #{onChain.id} · {skillLabel}
+          #{onChain.id} · {hasSkillName ? skillLabel : `type: ${skillLabel}`}
         </h1>
         <p style={headlineStyle}>{headline.slice(0, 200)}{headline.length > 200 ? '…' : ''}</p>
 
