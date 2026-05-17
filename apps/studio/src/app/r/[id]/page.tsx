@@ -13,6 +13,7 @@ import {
   receiptTypeLabel,
 } from '@/lib/chain';
 import { findLocalReceiptByRoot, type ReceiptBody } from '@/lib/local-receipt';
+import { publicProofUrl } from '@/lib/demo-fallback';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import type { OnChainReceipt } from '@ivaronix/og-chain';
 import { verifyClaimed, type CheckResult } from '@ivaronix/receipts';
@@ -1071,7 +1072,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
               ? 'Full body matches on-chain root. Run `ivaronix receipt verify` for a deep TEE-independent check.'
               : `Anchored on chain. Run \`ivaronix receipt show ${onChain.id.toString()} --network ${getNetwork()}\` to read the on-chain anchor metadata (no credentials needed). Full body re-verify requires a 0G Storage download — any wallet works for read.`}
           </span>
-          <ShareButton url={`/r/${onChain.id.toString()}`} text={`Verified Ivaronix receipt: ${headline.slice(0, 80)}`} />
+          <ShareButton url={publicProofUrl(Number(onChain.id))} text={`Verified Ivaronix receipt: ${headline.slice(0, 80)}`} />
         </div>
       </div>
     </Section>
