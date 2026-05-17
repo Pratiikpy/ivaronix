@@ -707,13 +707,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               title: 'Telegram bot',
               status: 'GATED',
               statusNote: 'BotFather token',
-              body: 'Backend handlers done. Live needs an operator-issued bot token.',
+              body: 'Backend handlers ship today. Going live needs a Telegram bot token from BotFather, which we will register at launch.',
             },
             {
               title: 'MCP server in Claude Desktop / Cursor',
               status: 'GATED',
-              statusNote: 'UI required',
-              body: 'Server code shipped. Live demo capture needs an end-user UI session.',
+              statusNote: 'recorded demo queued',
+              body: 'Server code ships today and connects to Claude Desktop and Cursor over stdio. A recorded walk-through of a live session inside Claude Desktop is queued for the v1.1 launch.',
             },
           ].map(({ title, status, statusNote, body }) => {
             const isGated = status === 'GATED';
