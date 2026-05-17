@@ -400,8 +400,19 @@ passportCommand
     ui.pending(`tx ${tx.hash}`);
     const receipt = await tx.wait();
     ui.pass(`block                ${receipt?.blockNumber}`);
-    const expiry = await client.executorExpiry(tokenId, executor as Address);
-    ui.pass(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+    // V1 AgentPassportClient.executorExpiry uses the V1 ABI; when this
+    // client is targeting a V2 contract (Bug-32 fix), the read reverts
+    // because V2 renamed/internalised the function. The tx already
+    // mined successfully, so a read-back failure is informational not
+    // fatal — report computed expiry from ttlSeconds + Date.now and
+    // suggest direct V2 verification.
+    try {
+      const expiry = await client.executorExpiry(tokenId, executor as Address);
+      ui.pass(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+    } catch {
+      const computed = Math.floor(Date.now() / 1000) + ttlSeconds;
+      ui.info(`expires (computed)   ${new Date(computed * 1000).toISOString()}  (V2 read-back via V1 ABI failed; on-chain state is authoritative)`);
+    }
     ui.divider();
     ui.banner(true, '→ AUTHORIZED ✓');
     ui.hint(`Verify:    ivaronix passport executor ${executor}`);
@@ -489,13 +500,35 @@ passportCommand
       ui.fail(`No passport for ${env.walletAddress}`);
       return;
     }
-    const allowed = await client.isAuthorizedExecutor(tokenId, executor as Address);
-    const expiry = await client.executorExpiry(tokenId, executor as Address);
+    // V1 AgentPassportClient.executorExpiry reverts against V2 contracts
+    // (V2 renamed/internalised the function). isAuthorizedExecutor still
+    // exists on V2 with the same signature — gate the expiry read so the
+    // command surfaces the AUTHORIZED/NEVER status even when expiry is
+    // unavailable. Use a separate try/catch so each call's failure is
+    // reported honestly without one masking the other.
+    let allowed = false;
+    try {
+      allowed = await client.isAuthorizedExecutor(tokenId, executor as Address);
+    } catch {
+      ui.fail(`isAuthorizedExecutor reverted (V1 ABI on V2 contract — known limitation)`);
+      ui.hint(`Query directly: query V2 contract ${passportAddr}.isAuthorizedExecutor(${tokenId}, ${executor})`);
+      return;
+    }
+    let expiry: bigint = 0n;
+    try {
+      expiry = await client.executorExpiry(tokenId, executor as Address);
+    } catch {
+      // V2 read drift — fall through, we still know `allowed`.
+    }
     ui.title(`executor ${executor} for tokenId ${tokenId}`);
     ui.divider();
     if (allowed) {
       ui.pass(`status               AUTHORIZED`);
-      ui.info(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+      if (expiry > 0n) {
+        ui.info(`expires              ${new Date(Number(expiry) * 1000).toISOString()}`);
+      } else {
+        ui.info(`expires              (V2 expiry read unavailable via V1 ABI — on-chain authoritative)`);
+      }
     } else if (expiry > 0n) {
       ui.fail(`status               EXPIRED`);
       ui.info(`expired at           ${new Date(Number(expiry) * 1000).toISOString()}`);
