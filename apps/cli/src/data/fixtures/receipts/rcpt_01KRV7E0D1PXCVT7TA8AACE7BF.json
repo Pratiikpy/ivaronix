@@ -1,0 +1,125 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRV7E0D1PXCVT7TA8AACE7BF",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": false,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1779030229408",
+    "zgResKey": "2c96b7f1-f958-42a7-8904-b3a2cb43d940",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 509,
+    "outputTokens": 2585,
+    "inputCostNeuron": "25450000000000",
+    "outputCostNeuron": "258500000000000",
+    "totalCostNeuron": "283950000000000",
+    "totalCostOg": "0.0002839500",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "217221750000000",
+      "treasuryNeuron": "66728250000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xb648d35e2aa8d48cf9982c4a4a98847977acc4603ec512037d5aeb611147ea23",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:f9641691338ba8d66e677ffac621470374b03ea3af8657301e22163f8ed2074f"
+    },
+    "receiptRoot": "0xfe1418cf4cf4262e8938c73124e1139127d1784452734dfcc19ac888788b74e1"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779030209285,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "anchorTxHash": "0x20d7e0668e1432c40c7adecabd5956933ce11db4b61d649b447e723d0af4f3b7",
+    "anchorBlockNumber": 33528209,
+    "anchorTimestamp": 1779030240
+  },
+  "outputs": {
+    "outputHash": "sha256:c3f7bd27967adfbb54685f214f1dbd48b04a05f163348122dfc54c858bb6c5d8",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Most concerning clause: The landlord can impose severe, unpredictable financial penalties that destabilize the lease. Evidence: Section 4 allows unilateral rent increases of up to 50% per quarter w",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779030229409,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xddd96fe07342f11d3242d287f02db03fd1d5dcde795d2a8441b42db524fd2234125d4dd8386fdfbe8a3f086665c321143e29cc0e40d4e25a0e20ba0e94c9a9161b"
+  }
+}

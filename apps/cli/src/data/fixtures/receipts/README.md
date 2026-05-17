@@ -26,6 +26,7 @@ endpoint accepts unauthenticated `processResponse` queries.
 | `rcpt_01KRV5AHFAPFRX0MKQZAD6HSK2` | 129 | nda-triage-reviewer | standard (3-role) · PAID | anchored |
 | `rcpt_01KRV5CY3YP1197J1Y6SH9GSM1` | 130 | contract-renewal-clause-detector | standard (3-role) · PAID | anchored |
 | `rcpt_01KRV5EWQZSVAQGH4W9ARYQ395` | 131 | private-doc-review | quick · PAID | anchored |
+| `rcpt_01KRV7E0D1PXCVT7TA8AACE7BF` | 134 | private-doc-review | quick · 🔒 Burn Mode (AES-256-GCM) | FULLY VERIFIED ✓ |
 
 Try the README's quick start:
 
@@ -39,9 +40,10 @@ pnpm ivaronix receipt verify 126 --network mainnet --tee-independent  # term-she
 pnpm ivaronix receipt verify 129 --network mainnet                    # nda-triage paid 3-role
 pnpm ivaronix receipt verify 130 --network mainnet                    # contract-renewal paid 3-role
 pnpm ivaronix receipt verify 131 --network mainnet                    # private-doc paid quick
+pnpm ivaronix receipt verify 134 --network mainnet --tee-independent  # Burn Mode · key destroyed
 ```
 
-All 8 should produce `FULLY VERIFIED ✓` or `ANCHORED ✓` on a fresh clone.
+All 9 should produce `FULLY VERIFIED ✓` or `ANCHORED ✓` on a fresh clone.
 
 ## Why bundle these?
 
