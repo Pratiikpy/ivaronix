@@ -386,7 +386,13 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: 'var(--color-fg)' }}>
-                <strong>The chain anchor below is the proof.</strong> The receipt body lives on 0G Storage at the <code className="mono" style={{ fontSize: 12 }}>storageRoot</code> shown below — anyone fetches it by hash, computes keccak256, matches it byte-for-byte against the <code className="mono" style={{ fontSize: 12 }}>receiptRoot</code> on chain. No Ivaronix account, no operator gate.
+                {/* Bug-70: prior copy said "anyone fetches by storageRoot" — wrong. */}
+                {/* On-chain storageRoot is sha256(input plaintext), not the 0G Storage */}
+                {/* upload Merkle root. The actual upload root is in the receipt body */}
+                {/* as storage.evidenceRoot, which is only knowable once the body is */}
+                {/* in hand. Honest proof framing: the body's canonical hash matches */}
+                {/* the on-chain receiptRoot — that's the cryptographic binding. */}
+                <strong>The chain anchor below is the proof.</strong> Anyone with the receipt body can canonical-hash it and match the result against the <code className="mono" style={{ fontSize: 12 }}>receiptRoot</code> on chain. The body itself comes from local cache, the operator, or anyone who saved it — Ivaronix has no gate.
               </p>
               <p style={{ margin: 0, fontSize: 13, lineHeight: 1.5, color: 'var(--color-muted)' }}>
                 See the AI&apos;s full reasoning + outputs locally — works on any machine:
