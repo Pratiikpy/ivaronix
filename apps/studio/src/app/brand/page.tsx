@@ -447,7 +447,7 @@ function MetaCell({ k, v }: { k: string; v: React.ReactNode }) {
 }
 
 function LogoCell({ label, sub, num, bg, dark, children }: { label: string; sub: string; num: string; bg: string; dark?: boolean; children: React.ReactNode }) {
-  const labelColor = dark ? '#8a8a8a' : T.muted;
+  const labelColor = dark ? '#8a8a8a' : T.muted; // brand-check:allow:dark-mode-cell-label · lighter muted for #0a0a0a dark-card cells; one-off /brand surface, not canonical
   return (
     <div style={{ background: bg, border: `1px solid ${dark ? 'rgba(255,255,255,.08)' : T.line}`, borderRadius: T.rMd, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', fontFamily: T.mono, fontSize: 11, letterSpacing: 2, color: labelColor, textTransform: 'uppercase' }}>
