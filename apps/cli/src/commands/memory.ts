@@ -748,9 +748,25 @@ memoryCommand
     // listMyGranteeGrants when the target matches the operator's wallet.
     // V2 added a privacy gate on the by-address reverse-indexes; the self-read
     // method skips that gate when caller == target, which is the common case.
-    const ids = opts.to
-      ? await cap.listGrantsByGrantee(target, env.walletAddress as Address | undefined)
-      : await cap.listGrantsByOwner(target, env.walletAddress as Address | undefined);
+    // Wrap in try/catch so cross-address queries (caller != target) report an
+    // honest privacy-gated message instead of the raw ethers revert dump
+    // (Bug-39 fix).
+    let ids: readonly `0x${string}`[];
+    try {
+      ids = opts.to
+        ? await cap.listGrantsByGrantee(target, env.walletAddress as Address | undefined)
+        : await cap.listGrantsByOwner(target, env.walletAddress as Address | undefined);
+    } catch (err) {
+      const msg = (err as Error).message ?? '';
+      if (/require\(false\)|reverted|CALL_EXCEPTION/.test(msg)) {
+        ui.fail(`Cannot list grants for ${target}`);
+        ui.hint(`CapabilityRegistryV2 gates cross-address grant queries for privacy. You can only list grants where the caller == target wallet. To query a different wallet, sign with that wallet's key.`);
+      } else {
+        ui.fail(`Grant query failed: ${(msg.split('\n')[0] ?? msg).slice(0, 100)}`);
+      }
+      process.exitCode = 1;
+      return;
+    }
 
     ui.title(opts.to ? `Grants issued TO ${target}` : `Grants issued BY ${target}`);
     if (ids.length === 0) {
