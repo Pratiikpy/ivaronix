@@ -26,11 +26,15 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+// Bug-54: schema was lenient — `{"skill":"x"}` was silently dropped and the
+// default skill ran. A caller had no way to tell their input was ignored.
+// .strict() now rejects unknown keys with "Unrecognized key(s) in object"
+// so client typos surface as 400, not silent demo runs.
 const DemoBodySchema = z.object({
   skillId: z.string().min(1).max(80).optional(),
   contentText: z.string().max(2 * 1024 * 1024).optional(),
   question: z.string().min(1).max(4_000).optional(),
-});
+}).strict();
 
 const SKILL_PRICING_ABI = [
   'function getPricing(bytes32 skillId) view returns (uint256 price, uint16 cBps, uint16 tBps, bool priced)',
@@ -72,7 +76,13 @@ export async function POST(req: Request) {
   }
   const parsed = DemoBodySchema.safeParse(rawBody ?? {});
   if (!parsed.success) {
-    return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+    // Bug-54: surface the offending field(s) so a client typo
+    // ("skill" vs "skillId") is debuggable from the response.
+    const issues = parsed.error.issues.slice(0, 4).map((i) => ({
+      path: i.path.join('.') || '(root)',
+      msg: i.message,
+    }));
+    return NextResponse.json({ error: 'invalid body', issues }, { status: 400 });
   }
   const body = parsed.data;
 
