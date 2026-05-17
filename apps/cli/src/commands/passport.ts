@@ -3,7 +3,7 @@ import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Wallet, JsonRpcProvider } from 'ethers';
 import { sha256HexAsync, NETWORKS, type Hash, type Address } from '@ivaronix/core';
-import { AgentPassportClient, getDeployedAddress } from '@ivaronix/og-chain';
+import { AgentPassportClient, getDeployedAddress, getActiveAddress } from '@ivaronix/og-chain';
 import { createStorageClient } from '@ivaronix/og-storage';
 import { loadEnv } from '../lib/env.js';
 import { ui } from '../lib/ui.js';
@@ -281,7 +281,11 @@ passportCommand
   .option('--out <path>', 'output path', DEFAULT_PASSPORT_PATH)
   .action(async (opts: { wallet?: string; out: string }) => {
     const env = loadEnv();
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first lookup with V1 fallback (Bug-32 fix). Earlier this read
+    // only the V1 deployment record, which doesn't exist on mainnet —
+    // `AgentPassportINFTV2` is the canonical entry. Use getActiveAddress
+    // so restore/authorize/revoke/executor all resolve correctly.
+    const passportAddr = getActiveAddress(env.network, 'AgentPassportINFT');
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       return;
@@ -360,7 +364,11 @@ passportCommand
       process.exitCode = 1;
       return;
     }
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first lookup with V1 fallback (Bug-32 fix). Earlier this read
+    // only the V1 deployment record, which doesn't exist on mainnet —
+    // `AgentPassportINFTV2` is the canonical entry. Use getActiveAddress
+    // so restore/authorize/revoke/executor all resolve correctly.
+    const passportAddr = getActiveAddress(env.network, 'AgentPassportINFT');
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -412,7 +420,11 @@ passportCommand
       process.exitCode = 1;
       return;
     }
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first lookup with V1 fallback (Bug-32 fix). Earlier this read
+    // only the V1 deployment record, which doesn't exist on mainnet —
+    // `AgentPassportINFTV2` is the canonical entry. Use getActiveAddress
+    // so restore/authorize/revoke/executor all resolve correctly.
+    const passportAddr = getActiveAddress(env.network, 'AgentPassportINFT');
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       process.exitCode = 1;
@@ -455,7 +467,11 @@ passportCommand
   .description('Show whether an executor is currently authorized for your passport')
   .action(async (executor: string) => {
     const env = loadEnv();
-    const passportAddr = getDeployedAddress(env.network, 'AgentPassportINFT');
+    // V2-first lookup with V1 fallback (Bug-32 fix). Earlier this read
+    // only the V1 deployment record, which doesn't exist on mainnet —
+    // `AgentPassportINFTV2` is the canonical entry. Use getActiveAddress
+    // so restore/authorize/revoke/executor all resolve correctly.
+    const passportAddr = getActiveAddress(env.network, 'AgentPassportINFT');
     if (!passportAddr) {
       ui.fail(`AgentPassportINFT not deployed on ${env.network}`);
       process.exitCode = 1;
