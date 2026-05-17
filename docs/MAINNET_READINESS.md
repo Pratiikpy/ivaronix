@@ -4,7 +4,7 @@
 > 2026-05-09 (all 13 items green on Galileo testnet, chainId 16602);
 > **mainnet promotion to Aristotle (chainId 16661) shipped 2026-05-15**
 > with <!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed (~0.085 OG total gas spend) and
-> <!-- numbers:auto:mainnet.receiptsAnchored -->125<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` across all
+> <!-- numbers:auto:mainnet.receiptsAnchored -->132<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` across all
 > <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. The checklist below records the
 > pre-promotion state of the testnet system and the evidence used to
 > clear the gate.
@@ -138,7 +138,7 @@ as `contracts/deployments/testnet.json`). Studio reads `IVARONIX_NETWORK=mainnet
 
 Mainnet `ReceiptRegistryV3` lives at
 [`0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297`](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297);
-<!-- numbers:auto:mainnet.receiptsAnchored -->125<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts have been anchored on it spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->
+<!-- numbers:auto:mainnet.receiptsAnchored -->132<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts have been anchored on it spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->
 receipt-type slots, with real TEE attestation via `broker.processResponse`
 proven on mainnet receipt #4 and real 0G Storage upload on receipts 3–14.
 Full mainnet contract address table lives in [README.md](../README.md).

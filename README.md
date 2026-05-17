@@ -10,7 +10,7 @@ Every AI review leaves a signed, chain-anchored receipt — independently re-ver
 [![Galileo Testnet](https://img.shields.io/badge/0G_Galileo_Testnet-Live-16a34a?style=flat-square)](https://chainscan-galileo.0g.ai/address/0x7396D536594e2BE833070c7EB441A10906046257)
 [![Foundry](https://img.shields.io/badge/Foundry-227%2F227_green-16a34a?style=flat-square)](contracts/test/)<!-- numbers-bare:allow: shields.io badge URL requires literal value; numbers.json contracts.foundryTests is the SoT -->
 [![Receipts](https://img.shields.io/badge/Receipts_anchored-1%2C737+-16a34a?style=flat-square)](docs/numbers.json)<!-- numbers-bare:allow: shields.io badge URL requires literal value; numbers.json receipts.total is the SoT -->
-[![Mainnet receipts](https://img.shields.io/badge/Mainnet_receipts-125+-16a34a?style=flat-square)](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297)<!-- numbers-bare:allow: numbers.json mainnet.receiptsAnchored = 125 from live nextId() on V1+V2+V3, refreshed 2026-05-17 -->
+[![Mainnet receipts](https://img.shields.io/badge/Mainnet_receipts-132+-16a34a?style=flat-square)](https://chainscan.0g.ai/address/0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297)<!-- numbers-bare:allow: numbers.json mainnet.receiptsAnchored = 132 from live nextId() on V1+V2+V3, refreshed 2026-05-17 (after Bug-72 + 5 paid skill anchors) -->
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 [**Live site**](https://www.ivaronix.xyz) · [Reviewer replay](#reviewer-replay-path) · [Whitepaper (PDF)](Ivaronix_Whitepaper.pdf) · [Pitch deck (PDF)](Ivaronix_Pitch_Deck.pdf)
@@ -194,7 +194,7 @@ Refreshed against the live chain via `pnpm numbers:refresh` · source of truth: 
 
 | Metric | Value | Where to look |
 |---|---|---|
-| Receipts anchored | **<!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->125<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 |
+| Receipts anchored | **<!-- numbers:auto:receipts.total -->1737<!-- /numbers:auto:receipts.total -->+ testnet** · **<!-- numbers:auto:mainnet.receiptsAnchored -->132<!-- /numbers:auto:mainnet.receiptsAnchored --> mainnet** | live `nextId()` on V1+V2+V3 |
 | Receipt types | **<!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count -->** | `packages/core/src/types.ts` |
 | Contracts deployed | **<!-- numbers:auto:contracts.deployed -->15<!-- /numbers:auto:contracts.deployed --> testnet** · **<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> mainnet** | [deployed contracts](#deployed-contracts) |
 | Foundry tests | **<!-- numbers:auto:contracts.foundryTests -->227<!-- /numbers:auto:contracts.foundryTests --> passing** | `cd contracts && forge test` |
@@ -370,7 +370,7 @@ CI runs [`.github/workflows/jcs-roundtrip.yml`](.github/workflows/jcs-roundtrip.
 
 ### Aristotle mainnet · chainId 16661
 
-<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->125<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
+<!-- numbers:auto:mainnet.deployedContractsToday -->10<!-- /numbers:auto:mainnet.deployedContractsToday --> contracts deployed on **2026-05-15**. <!-- numbers:auto:mainnet.receiptsAnchored -->132<!-- /numbers:auto:mainnet.receiptsAnchored --> receipts anchored on `ReceiptRegistryV3` + `ReceiptRegistryV2`, spanning all <!-- numbers:auto:receiptTypes.count -->13<!-- /numbers:auto:receiptTypes.count --> receipt-type slots. Deployer wallet `0xaa954c33810029a3eFb0bf755FEF17863E8677Ce`.
 
 <!-- contracts:auto:mainnet:start -->
 | Contract              | Address                                                                                                                                            |

@@ -50,7 +50,7 @@ const RUNS: Run[] = [
   {
     type: 'passport_update',
     prompt: 'Confirm the passport delta and its causal receipt.',
-    context: 'tokenId: 1 · before: trust=132 receipts=132 · after: trust=133 receipts=133 · cause: receipt #145',
+    context: 'tokenId: 1 · before: trust=132 receipts=132 · after: trust=133 receipts=133 · cause: receipt #145', // numbers-snapshot-allow:passport-delta-example · 132 is a contrived passport trust score / receipt count in this ops example, not the live numbers.json mainnet receipt count it happens to collide with
   },
   {
     type: 'swarm',
