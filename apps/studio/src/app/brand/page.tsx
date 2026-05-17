@@ -412,8 +412,14 @@ function SectionShell({ num, eyebrow, title, lead, children }: { num: string; ey
             <div style={{ fontFamily: T.mono, fontSize: 56, fontWeight: 300, color: T.muted, lineHeight: 1, letterSpacing: '-0.02em' }}>{num}</div>
             <Eyebrow>{eyebrow}</Eyebrow>
           </div>
-          <div>
-            <h2 style={{ fontSize: 'clamp(36px, 4vw, 56px)', lineHeight: 1.05, margin: 0, letterSpacing: '-0.02em', fontWeight: 600 }}>
+          {/* minWidth:0 lets this grid cell shrink below content width on mobile.
+              Without it, the h2 clamp(36px) headline with an italic-accent <em>
+              forces the cell to its content's intrinsic width and overflows the
+              375px viewport by ~46px (Bug-74). overflowWrap+wordBreak handle
+              the case where a single italic word ("opinionated") is itself
+              wider than the column. */}
+          <div style={{ minWidth: 0 }}>
+            <h2 style={{ fontSize: 'clamp(36px, 4vw, 56px)', lineHeight: 1.05, margin: 0, letterSpacing: '-0.02em', fontWeight: 600, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
               {title}
             </h2>
             <p style={{ fontSize: 17, color: T.muted, lineHeight: 1.55, marginTop: 18, maxWidth: 720 }}>{lead}</p>
