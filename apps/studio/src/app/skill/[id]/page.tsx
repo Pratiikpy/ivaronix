@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Section } from '@/components/Section';
@@ -9,6 +10,24 @@ import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
 export const dynamic = 'force-dynamic';
 
 import { resolveSkillSlug } from '@/lib/first-party-skills';
+
+// Bug-58: per-skill /skill/<slug> pages shared the generic homepage
+// title in the browser tab. A user bookmarking 10 skills would see
+// 10 identical entries. Generate per-skill metadata from the manifest.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id: rawId } = await params;
+  const id = await resolveSkillSlug(rawId);
+  const skill = findSkillByIdServer(id);
+  if (!skill) {
+    return { title: 'Skill not found · Ivaronix' };
+  }
+  const name = skill.manifest.name ?? id;
+  const desc = skill.manifest.description?.slice(0, 160) ?? 'Skill profile on Ivaronix · manifest, permissions, on-chain hash.';
+  return {
+    title: `${name} · Skill · Ivaronix`,
+    description: desc,
+  };
+}
 
 export default async function SkillDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: rawId } = await params;
