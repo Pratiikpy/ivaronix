@@ -1,6 +1,6 @@
 ---
 name: legal-citation-verifier
-version: 0.1.3
+version: 0.1.4
 description: Parse a legal brief or memo for citations and verify existence by HTTP fetch to CourtListener and Cornell LII via the web_fetch builtin. Runtime enforcement gates each verdict on a successful fetch; parse-only outputs are flagged on the receipt. Supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
