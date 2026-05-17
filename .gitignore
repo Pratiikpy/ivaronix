@@ -199,5 +199,32 @@ docs/video/verify/
 # Rabby Wallet extension binaries (v0.93.89) — do not commit
 scripts/qa/wallet-e2e/rabby/
 .rabby-profile/
+.rabby-profile-*/
 .popup-dump-profile/
 .click-strategy-profile/
+
+# Versioned Playwright user-data profiles (per-iteration browser contexts).
+# These hold MM/Rabby keystores, cookies, and other personal session state —
+# never commit to the public repo.
+.autonomous-*/
+.v[0-9]*-profile/
+.0g-da-runtime/
+
+# Operator-local route snapshots produced by ad-hoc curl scrapes during
+# QA — not source of truth.
+*-snapshot.txt
+
+# LaTeX build artefacts from the whitepaper source. Only the rendered PDF
+# under public/ is shipped; the .aux/.toc/.out/.tex files are intermediate.
+Ivaronix_Whitepaper.aux
+Ivaronix_Whitepaper.out
+Ivaronix_Whitepaper.toc
+Ivaronix_Whitepaper.tex
+Ivaronix_Deck.html
+
+# Top-level emulated mobile screenshots produced by ad-hoc QA — proof
+# captures live under QA_PROOF_PACK/ now.
+mobile-home*.png
+
+# Generic stray outputs/ folder from ad-hoc cron iterations.
+/outputs/
