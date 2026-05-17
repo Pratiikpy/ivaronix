@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -5,6 +6,22 @@ import { Section } from '@/components/Section';
 import { explorerAddrUrl, explorerTxUrl } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
+
+// Bug-65: /delegate/<id> page had no metadata so missing IDs surfaced
+// the homepage title. Resolve the manifest in generateMetadata and
+// produce "<delegate-name> · Delegate · Ivaronix" — matches the
+// /data-room/<id> pattern which correctly carries a per-route title.
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const manifest = findDelegateManifest(id);
+  if (!manifest) {
+    return { title: `Delegate · ${id.slice(0, 12)}… · Ivaronix` };
+  }
+  return {
+    title: `${manifest.name} · Delegate · Ivaronix`,
+    description: manifest.description?.slice(0, 160) ?? 'Delegated AI agent — own wallet, own receipts, revocable scope.',
+  };
+}
 
 interface DelegateGrant {
   skillId: string;
