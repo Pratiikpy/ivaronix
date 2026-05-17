@@ -44,9 +44,15 @@ const SECTIONS: DocSection[] = [
       },
       {
         label: 'Verify a receipt anywhere',
+        // Bug-62: prior copy promised "FULLY VERIFIED ✓ schema · hash ·
+        // signature · anchor · TEE" but TEE re-attestation only works on
+        // receipts younger than ~24h (broker session window). For older
+        // receipts the same command honestly returns ANCHORED ✓ with the
+        // TEE row unavailable — same cryptographic strength, real-time
+        // proof just expired.
         code:
           `$ pnpm ivaronix receipt verify ${SAMPLE_ID} --network mainnet --tee-independent\n` +
-          '→ FULLY VERIFIED ✓  schema · hash · signature · anchor · TEE',
+          '→ schema · hash · signature · anchor all PASS · TEE re-attestation if <24h old',
       },
     ],
     link: { href: '/marketplace', label: 'Browse paid skills →' },
@@ -103,9 +109,12 @@ const SECTIONS: DocSection[] = [
       },
       {
         label: 'Inside the chat',
+        // Bug-62: same honesty fix as the CLI snippet above — TEE row only
+        // surfaces when the broker session is still open (within ~24h of the
+        // anchor). Older receipts pass schema/hash/signature/anchor.
         code:
           `> @ivaronix verify ${SAMPLE_ID}\n` +
-          '→ FULLY VERIFIED · schema PASS · hash PASS · signature PASS · anchor 0x… · TEE re-attestation PASS',
+          '→ schema PASS · hash PASS · signature PASS · anchor 0x… · TEE PASS if <24h',
       },
     ],
   },
