@@ -61,7 +61,11 @@ export const AAT_MAPPING_DRAFT_01: readonly AatFieldMapping[] = [
     aatSection: '§3.1',
     required: true,
     description: 'When the audit trail was emitted (ISO-8601 UTC).',
-    transform: (v) => (typeof v === 'number' ? new Date(v * 1000).toISOString() : v),
+    // Receipt bodies historically carried createdAt as either Unix seconds (10
+    // digits) or Unix milliseconds (13 digits). Detect by magnitude rather
+    // than guessing — values < 1e12 (year ~33658 in ms) are treated as
+    // seconds, larger values are already milliseconds.
+    transform: (v) => (typeof v === 'number' ? new Date(v < 1e12 ? v * 1000 : v).toISOString() : v),
   },
   {
     ivaronixPath: 'createdBy',
@@ -228,7 +232,10 @@ export const AAT_MAPPING_DRAFT_01: readonly AatFieldMapping[] = [
     aatSection: '§3.7',
     required: true,
     description: 'Wall-clock timestamp of the anchor transaction.',
-    transform: (v) => (typeof v === 'number' ? new Date(v * 1000).toISOString() : v),
+    // Same seconds-vs-milliseconds detection as createdAt above. Receipts
+    // anchored on V3 carry block.timestamp (seconds); older paths sometimes
+    // wrote Date.now() (ms). Detect by magnitude to avoid year-58344 drift.
+    transform: (v) => (typeof v === 'number' ? new Date(v < 1e12 ? v * 1000 : v).toISOString() : v),
   },
   {
     ivaronixPath: 'chainAnchor.onChainId',
