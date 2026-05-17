@@ -138,6 +138,21 @@ const config: NextConfig = {
   env: {
     NEXT_PUBLIC_OG_NETWORK: process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet',
   },
+  // Bug-61: /favicon.ico returned 404 with the homepage HTML body (~36KB)
+  // because Next.js only generates /icon.svg from app/icon.svg. Every
+  // browser hitting the site requests /favicon.ico before any other
+  // asset; serving a 36KB HTML 404 wastes bandwidth and clutters the
+  // network panel. Redirect to /icon.svg (modern browsers accept SVG
+  // as favicon).
+  async redirects() {
+    return [
+      {
+        source: '/favicon.ico',
+        destination: '/icon.svg',
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     // Defence-in-depth HTTP security headers per HALF_BAKED Tier A item 6.
     // CSP deliberately omitted — it needs end-to-end app testing to draft
