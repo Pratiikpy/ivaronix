@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Section } from '@/components/Section';
+import { CopyableSnippet } from '@/components/CopyableSnippet';
 import { getSampleReceiptId, getSampleReceiptHref, getSampleEmbedHref, getSampleEmbedIframeSrc } from '@/lib/sample-receipt';
 
 export const dynamic = 'force-static';
@@ -207,33 +208,13 @@ export default function DocsPage() {
                 <div
                   key={label}
                   style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 6,
                     padding: 14,
                     background: 'var(--color-bg)',
                     border: '1px solid var(--color-hairline)',
                     borderRadius: 'var(--radius-md)',
                   }}
                 >
-                  <span style={{ fontSize: 12, color: 'var(--color-muted)', letterSpacing: '0.5px' }}>{label}</span>
-                  <pre
-                    style={{
-                      margin: 0,
-                      padding: '10px 12px',
-                      background: 'var(--color-tonal)',
-                      border: '1px solid var(--color-hairline)',
-                      borderRadius: 8,
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 12,
-                      lineHeight: 1.55,
-                      overflowX: 'auto',
-                      whiteSpace: 'pre',
-                      color: 'var(--color-fg)',
-                    }}
-                  >
-                    {code}
-                  </pre>
+                  <CopyableSnippet label={label} code={code} />
                 </div>
               ))}
             </div>
