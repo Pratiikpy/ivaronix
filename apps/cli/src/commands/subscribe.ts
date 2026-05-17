@@ -92,7 +92,7 @@ subscribeCommand
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const client = new Wallet(env.privateKey, provider);
       if (agent.toLowerCase() === client.address.toLowerCase()) {
-        ui.fail(`agent must differ from client (msg.sender). Use a second wallet — see USER_TODO §B-V2-35 slot 9.`);
+        ui.fail(`agent must differ from client (msg.sender). The SubscriptionEscrowV2 contract requires distinct client and agent wallets — use a second wallet for the agent.`);
         process.exitCode = 1;
         return;
       }

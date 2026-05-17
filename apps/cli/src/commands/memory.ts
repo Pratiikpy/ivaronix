@@ -259,7 +259,7 @@ memoryCommand
 
       if (!opts.upload) {
         ui.divider();
-        ui.hint('Manifest stays local until --upload is passed. With --upload it writes a JSON blob to 0G Storage; pass --anchor-on-chain to also call AgentPassportINFTV2.updateMemoryRoot (USER_TODO §B-V2-24 · ✅ SHIPPED).');
+        ui.hint('Manifest stays local until --upload is passed. With --upload it writes a JSON blob to 0G Storage; pass --anchor-on-chain to also call AgentPassportINFTV2.updateMemoryRoot.');
         return;
       }
 

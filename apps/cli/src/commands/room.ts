@@ -458,7 +458,7 @@ roomCommand
 // ─── room read ───────────────────────────────────────────────────────────
 roomCommand
   .command('read <roomId>')
-  .description('Anchor a doc_room_read access-log receipt for the connected wallet (caller must hold a valid CapabilityRegistry grant). NOTE: this is an audit-trail anchor, NOT a plaintext viewer. The room\'s ciphertext on 0G Storage is encrypted under a Burn Mode session key that was destroyed at create time; plaintext recovery is not possible from the CLI today (wallet-mode encryption is queued in USER_TODO §B-V2).')
+  .description('Anchor a doc_room_read access-log receipt for the connected wallet (caller must hold a valid CapabilityRegistry grant). NOTE: this is an audit-trail anchor, NOT a plaintext viewer. The room\'s ciphertext on 0G Storage is encrypted under a Burn Mode session key that was destroyed at create time; plaintext recovery is not possible from the CLI today (wallet-mode encryption is on the roadmap).')
   .action(async (roomId: string) => {
     const env = loadEnv();
     if (!env.privateKey || !env.walletAddress) {
