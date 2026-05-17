@@ -170,13 +170,13 @@ export function RunPanel(props: RunPanelProps = {}) {
       roles: 5,
       roleNames: ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'judge'],
       cost: '~0.0003 OG',
-      warn: '5 roles fire sequentially — public testnet quota is 10 RPM, may rate-limit.',
+      warn: '5 roles fire sequentially. 0G Router quota is 10 RPM, so bursts may rate-limit.',
     },
     'audit': {
       roles: 6,
       roleNames: ['analyst', 'critic', 'risk-reviewer', 'evidence-checker', 'red-team-critic', 'judge'],
       cost: '~0.0007 OG',
-      warn: '6 roles fire sequentially — premium adversarial-audit tier.',
+      warn: '6 roles including a red-team critic. Slowest and most expensive tier.',
     },
   };
   const tierMeta = TIER_META[tier];
@@ -510,7 +510,7 @@ export function RunPanel(props: RunPanelProps = {}) {
             ? 'Querying 0G Router…'
             : connectedAddress
               ? `Receipt agent: ${connectedAddress.slice(0, 6)}…${connectedAddress.slice(-4)} · we anchor on chain on your behalf.`
-              : 'Connect a wallet to receive the receipt under your address. Without one, the receipt is anchored under the Ivaronix house wallet.'}
+              : 'Connect a wallet to receive the receipt under your address. Without one, the receipt is anchored under the Ivaronix house wallet (rate-limited).'}
         </span>
       </div>
 

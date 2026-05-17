@@ -33,13 +33,13 @@ export default function OnboardPage() {
       }}
     >
       <header style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <span className="section-label">§ ONBOARD · 5 STEPS · &lt; 90 s</span>
+        <span className="section-label">§ ONBOARD · WALLET → PASSPORT → RECEIPT</span>
         <h1 style={{ fontSize: 56, lineHeight: 1.05, margin: 0, letterSpacing: '-0.5px' }}>
           From wallet to <span className="italic-display">your first receipt.</span>
         </h1>
         <p style={{ fontSize: 17, color: 'var(--color-muted)', margin: 0 }}>
-          You leave this page holding a public Proof URL of a real AI run signed by your wallet
-          and anchored on 0G {net === 'testnet' ? 'Galileo Testnet' : 'Aristotle Mainnet'}.
+          By the end: one signed AI receipt anchored on 0G {net === 'testnet' ? 'Galileo Testnet' : 'Aristotle Mainnet'},
+          with a public Proof URL you can share.
         </p>
       </header>
 

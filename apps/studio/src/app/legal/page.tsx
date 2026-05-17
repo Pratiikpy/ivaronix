@@ -428,8 +428,8 @@ export default async function LegalPage() {
                   lineHeight: 1.5,
                 }}
               >
-                Testimonial space · queued for the first opted-in user of this persona. We will
-                never fabricate a quote here.
+                Customer quotes are on hold until opted-in users approve attribution. We do not
+                fabricate testimonials.
               </div>
             </article>
           ))}
@@ -508,9 +508,9 @@ export default async function LegalPage() {
           </tbody>
         </table>
         <p style={{ marginTop: 16, fontSize: 12, color: 'var(--color-muted)', lineHeight: 1.6 }}>
-          Indicative numbers — the first 50 users price-discover the actual figures. The contract
-          ({network === 'testnet' ? 'SkillPricing on Galileo testnet' : 'SkillPricing on mainnet'})
-          supports per-skill override; some commoditized skills will land closer to 70/30.
+          Per-skill prices are set by the creator and enforced on-chain via the{' '}
+          {network === 'testnet' ? 'SkillPricing contract on Galileo testnet' : 'SkillPricing contract on Aristotle mainnet'}.
+          Commoditized skills can land closer to a 70/30 split via the same override.
         </p>
       </Section>
 
@@ -836,7 +836,7 @@ const PERSONAS: Array<{
     label: '§ FOR IN-HOUSE COUNSEL',
     headline: 'The vendor-contract throughput problem, finally measured.',
     body:
-      "In-house teams of two to ten people review hundreds of vendor agreements per quarter. The work is largely the same five categories — auto-renewal traps, indemnification scope, IP carve-outs, term mismatches, governing-law misalignments — and the cost of missing one is asymmetric. Ivaronix gives your team a structured first pass on every incoming contract: a JSON findings object per skill, anchored to a public receipt, that flows naturally into a CLM or ticketing system. The 90/10 fee-split makes the math straightforward: a $99 contract review skill earns the skill author $89.10, the protocol takes $9.90, you pay only when a receipt actually anchors. No per-seat licenses to negotiate, no sales motion, no procurement approval cycle to add.",
+      "In-house teams of two to ten people review hundreds of vendor agreements per quarter. The work is largely the same five categories (auto-renewal traps, indemnification scope, IP carve-outs, term mismatches, governing-law misalignments) and the cost of missing one is asymmetric. Ivaronix gives your team a structured first pass on every incoming contract: a JSON findings object per skill, anchored to a public receipt, that flows naturally into a CLM or ticketing system. The 90/10 fee-split keeps the math simple: a 0.015 OG high-stakes review earns the creator 0.0135 OG and routes 0.0015 OG to the protocol treasury. You pay per anchored receipt, not per seat.",
   },
   {
     label: '§ FOR FOUNDERS',
@@ -860,7 +860,7 @@ const DONTS: Array<{ head: string; detail: string }> = [
   {
     head: "legal-citation-verifier verifies existence, not legal holding.",
     detail:
-      "Every cite is routed through HTTP to CourtListener and Cornell LII via web_fetch — the external database is the ground truth, the AI never decides existence from training memory. Runtime enforcement gates each verdict on a successful fetch; parse-only outputs are flagged on the receipt. The skill confirms a case exists at the cited court — it does not confirm the brief's proposition is what that case actually stands for.",
+      "Each citation is verified by HTTP fetch to CourtListener and Cornell LII via web_fetch. The model never decides existence from training memory; the external database is the source of truth. Runtime enforcement gates each verdict on a successful fetch, and parse-only outputs are flagged on the receipt. The skill confirms a case exists at the cited court; it does not confirm the brief's proposition is what the case actually stands for.",
   },
   {
     head: "We do not store your document in plaintext.",
@@ -919,11 +919,11 @@ const LEGAL_FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: 'What happens if 0G goes away?',
-    a: 'The receipt protocol is open-source under Apache 2.0. The polyglot canonical-hash implementation (TypeScript, Python, Rust) is byte-equal across all three runtimes; the Rust verifier ships to crates.io as `ivaronix-verifier`. The chain anchor is on 0G Chain today, but the receipt schema supports any EVM-compatible chain — a mainnet fallback is in our roadmap as part of the `IReceiptRegistry` abstraction.',
+    a: 'The receipt protocol is open-source under Apache 2.0. The polyglot canonical-hash implementation (TypeScript, Python, Rust) is byte-equal across all three runtimes. The chain anchor is on 0G Chain today, but the receipt schema is EVM-agnostic and the `IReceiptRegistry` abstraction supports a multi-chain fallback path for any future EVM chain.',
   },
   {
     q: 'Do I need crypto to use this?',
-    a: "Today, yes — you need a wallet to sign the receipt that anchors on chain. We are working on a custodial-wallet path via Privy so email/Google/Apple auth lets a lawyer with no crypto background still produce signed receipts (managed-on-behalf signer role on the receipt). That ships post-grant.",
+    a: "Today, yes: you need a wallet to sign the receipt that anchors on chain. A custodial-wallet path via Privy is on the post-launch roadmap so email/Google/Apple auth lets a lawyer with no crypto background still produce signed receipts (managed-on-behalf signer role on the receipt).",
   },
   {
     q: 'How much does a single receipt actually cost?',

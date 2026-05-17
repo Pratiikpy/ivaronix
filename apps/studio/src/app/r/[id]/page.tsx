@@ -402,7 +402,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
 IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toString()} --tee-independent`}
               </pre>
               <p style={{ margin: 0, fontSize: 12, lineHeight: 1.5, color: 'var(--color-muted)' }}>
-                Studio-side body fetch from 0G Storage is on the v1.1 roadmap (replaces this section with the rendered AI output). The CLI commands above produce the same content today.
+                The CLI prints the rendered AI output and re-verifies the receipt against 0G Storage + chain. Studio-side inline rendering is queued for a future polish pass; the CLI is the canonical full-body path today.
               </p>
             </div>
           )}
@@ -697,7 +697,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
                   );
                 })}
                 <span style={{ color: 'var(--color-muted)', fontSize: 11, marginTop: 2 }}>
-                  Per planning-003 §A.5.14 — credential failover transparency on the receipt.
+                  Router credential rotation is recorded transparently on every receipt.
                 </span>
               </dd>
             </>
@@ -807,7 +807,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
                     </span>
                   )}
                   <span style={{ color: 'var(--color-muted)', fontSize: 11 }}>
-                    aggregation policy applied to reviewer outputs · planning-003 §A.4.4
+                    aggregation policy applied to reviewer outputs
                   </span>
                 </dd>
               </>

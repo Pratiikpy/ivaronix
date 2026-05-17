@@ -50,7 +50,7 @@ export default async function VerticalsPage() {
       <Section
         label="§ VERTICALS"
         title="We start with Legal."
-        description="Lawyers, in-house counsel, and founders use Ivaronix when AI can't be wrong. Other verticals roll out post-launch — every COMING SOON card on this page is a real roadmap commitment, not a marketing tease."
+        description="Lawyers, in-house counsel, and founders use Ivaronix when AI can't be wrong. Other verticals roll out post-launch; each COMING SOON card maps to a real roadmap entry, and the notify-me link goes to the team inbox."
       >
         <p style={{ fontSize: 14, color: 'var(--color-muted)', maxWidth: 720, lineHeight: 1.6 }}>
           Each Legal skill below runs on the 0G Network, signed by the operator wallet,
@@ -145,8 +145,8 @@ export default async function VerticalsPage() {
 
       <Section
         label="§ 02 · ROADMAP · COMING SOON"
-        title="14 more verticals on the runway"
-        description="Every card below is a real roadmap commitment. We ship one vertical deeply before the next; no fake breadth. Notify-me links open your email client with a pre-filled message — we read every one."
+        title="14 more verticals on the roadmap"
+        description="Every card below is a real roadmap commitment, sequenced one vertical at a time. Notify-me links open your email client with a pre-filled message; the team reads every one."
       >
         <div
           style={{

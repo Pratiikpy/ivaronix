@@ -152,7 +152,7 @@ export default function DocsPage() {
     <Section
       label="§ DOCS · CLI · SDK · MCP · EMBED"
       title="Four ways to plug Ivaronix into a workflow."
-      description="Every snippet runs against the live 0G Network — testnet for cheap iteration, mainnet for production. Receipt id 1004 is the canonical sample; replace with any anchored id you have."
+      description="Every snippet runs against the live 0G Network — testnet for cheap iteration, mainnet for production. Snippets use a live sample receipt id; replace with any anchored id you have."
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: 48 }}>
         <nav

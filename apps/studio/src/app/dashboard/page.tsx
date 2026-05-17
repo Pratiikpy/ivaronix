@@ -215,7 +215,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 </p>
                 {data.recentReceipts.length === 0 ? (
                   <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 12 }}>
-                    <span className="italic-display">No receipts in the recent window.</span> Older receipts stay on chain at <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>/r/&lt;id&gt;</code> — paginated history is on the v1.1 roadmap.
+                    <span className="italic-display">No receipts in the recent window.</span> Older receipts stay on chain at <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>/r/&lt;id&gt;</code>; this card shows only the recent block window.
                   </p>
                 ) : (
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>

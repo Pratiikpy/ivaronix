@@ -101,7 +101,7 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
     {
       name: '0G DA',
       status: 'roadmap',
-      what: 'On the integration roadmap. We do not claim integration we have not shipped. The path — receipt batching and evidence sharding via 0G DA — is documented in docs/PHASE_B_DISCLOSURES.md, and we will wire it when a public testnet endpoint is available.',
+      what: 'On the integration roadmap. We do not claim integration we have not shipped. `ivaronix da preflight` confirms validator reachability today; the full disperse / retrieve path and receipt-batch encoder land in v1.1 once the public endpoint stabilizes.',
       endpoint: null,
       addresses: [],
       seeItLive: { label: 'Roadmap disclosures (docs)', href: 'https://github.com/Pratiikpy/ivaronix/blob/main/docs/PHASE_B_DISCLOSURES.md' },

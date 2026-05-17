@@ -23,10 +23,12 @@ export default function TermsPage() {
 
       <h2 style={{ fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 12 }}>Cost and gas</h2>
       <p>
-        Testnet use is free; the operator pays gas. On mainnet, the
-        wallet that signs the receipt pays its own gas through the
-        normal transaction flow. Per-IP and per-wallet rate-limits
-        prevent operator-wallet drain; check response headers for{' '}
+        Testnet use is free; the operator pays gas. On mainnet,
+        connected-wallet runs anchor under your wallet and the
+        operator pays the gas on your behalf as part of the run flow.
+        No-wallet runs anchor under the Ivaronix house wallet within
+        per-IP rate-limits. Either way, the receipt is verifiable from
+        any machine. Check response headers for{' '}
         <code>x-ratelimit-*</code> when in doubt.
       </p>
 

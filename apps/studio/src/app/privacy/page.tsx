@@ -20,8 +20,8 @@ export default function PrivacyPage() {
       </h1>
       <p style={{ fontSize: 17, color: 'var(--color-muted)', marginBottom: 40 }}>
         What Ivaronix stores, where it stores it, and what it cannot see.
-        Applies to both 0G Galileo testnet (chainId 16602) and Aristotle
-        mainnet (chainId 16661).
+        Production runs on 0G Aristotle mainnet (chainId 16661); Galileo
+        testnet (chainId 16602) is kept live for developer iteration.
       </p>
 
       <h2 style={{ fontSize: 22, fontWeight: 600, marginTop: 40, marginBottom: 12 }}>What we record</h2>

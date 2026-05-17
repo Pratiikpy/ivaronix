@@ -59,15 +59,15 @@ export default async function MarketplacePage() {
   return (
     <Section
       label="§ MARKETPLACE"
-      title="Verified skill economy"
-      description="Every paid run anchors a receipt anyone can replay. Creator gets paid on chain. No subscriptions, no middleman."
+      title="Paid skills"
+      description="Each run pays the creator on chain; the receipt anchors the inference. No subscriptions."
     >
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', fontSize: 13 }}>
         <span className="card" style={{ padding: '8px 12px' }}>
           <strong>{skills.length}</strong> skills available
         </span>
         <span className="card" style={{ padding: '8px 12px' }}>
-          Settlement: <strong>native 0G</strong>
+          Settlement: <strong>native OG</strong>
         </span>
         <span className="card" style={{ padding: '8px 12px' }}>
           Data source: <strong>{subgraph ? 'Goldsky subgraph (live-indexed)' : 'direct chain reads (set SUBGRAPH_URL for faster queries)'}</strong>

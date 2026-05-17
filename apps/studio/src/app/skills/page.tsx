@@ -117,7 +117,7 @@ export default async function SkillsPage() {
     <Section
       label="§ 01 · SKILL CATALOG"
       title="Skill catalog"
-      description={`${cards.length} skills total · ~${firstPartyCount} anchored on the SkillRegistry contract · ~${importsCount} imported from upstream sources (no on-chain anchor). Sorted by registry verification — MATCH first.`}
+      description={`${cards.length} skills total · ${firstPartyCount} anchored on the SkillRegistry contract · ${importsCount} imported from upstream sources (no on-chain anchor). Sorted by registry verification — MATCH first.`}
       cta={
         <Link href="/skill/new" className="btn-primary" style={{ textDecoration: 'none' }}>
           + Compose a new skill
@@ -152,7 +152,7 @@ export default async function SkillsPage() {
         ))}
       </div>
       <p style={{ marginTop: 32, fontSize: 12, color: 'var(--color-muted)' }}>
-        {cards.length} skill{cards.length === 1 ? '' : 's'} loaded · network {process.env.NEXT_PUBLIC_OG_NETWORK ?? 'testnet'}
+        {cards.length} skill{cards.length === 1 ? '' : 's'} loaded · network {process.env.NEXT_PUBLIC_OG_NETWORK ?? 'mainnet'}
       </p>
     </Section>
   );

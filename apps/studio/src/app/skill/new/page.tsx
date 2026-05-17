@@ -321,10 +321,10 @@ export default function SkillNewPage() {
           )}
 
           <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 16, lineHeight: 1.5 }}>
-            On-chain publishing to <code className="mono">SkillRegistry</code> uses your connected wallet — never
-            ours. After saving, run <code className="mono">ivaronix skill publish {form.name}</code> from your
-            terminal; the CLI signs the publish tx with your local key and prints the chainscan link. In-form
-            wallet signing is on the v1.1 roadmap.
+            On-chain publishing to <code className="mono">SkillRegistry</code> uses your connected wallet, never ours.
+            After saving, run <code className="mono">ivaronix skill publish {form.name}</code> from your terminal;
+            the CLI signs the publish tx with your local key and prints the chainscan link. This keeps your signing
+            key out of the browser.
           </p>
         </div>
 

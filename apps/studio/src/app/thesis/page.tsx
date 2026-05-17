@@ -153,9 +153,9 @@ export default async function ThesisPage() {
         screenshot.
       </p>
       <p style={pStyle}>
-        We are also not finished. The agent's signing key currently lives on the operator side; the next version
-        moves it inside the secure enclave so even we cannot extract it. We say so on the agent's profile page.
-        We do not bury the parts we have not finished.
+        We are also not finished. The agent's signing key currently lives on the operator side; closing this is
+        queued for v1.1 (key generated inside a 0G Compute TEE on first mint, never extracted). We say so on the
+        agent's profile page. We do not bury the parts we have not finished.
       </p>
 
       <div

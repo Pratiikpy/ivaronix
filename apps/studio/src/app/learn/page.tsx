@@ -345,7 +345,7 @@ function SovereigntySection(): React.JSX.Element {
         }}
       >
         <div style={{ fontSize: 12, color: 'var(--color-muted)', marginBottom: 16 }}>
-          Interactive sovereignty diagram — coming with the next visual pass.
+          Five layers, top to bottom — each one is a separate failure mode the receipt closes.
         </div>
         <ol style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
           {layers.map((layer, idx) => (
@@ -589,8 +589,8 @@ function ReceiptAnatomySection(props: {
 
       <h3 style={h3Style}>The thirteen slots</h3>
       <p style={pStyle}>
-        Slot codes are part of the on-chain row. The slot was promoted from 10 to 13 by{' '}
-        <code style={codeStyle}>ReceiptRegistryV3</code> on testnet; V2 admits 0-9, V1 admits 0-9.
+        Slot codes are part of the on-chain row. The slot count was raised from 10 to 13 by{' '}
+        <code style={codeStyle}>ReceiptRegistryV3</code>; V2 and V1 each admit 0-9 and stay live for legacy reads.
       </p>
       <div
         style={{

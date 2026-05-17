@@ -57,7 +57,7 @@ export default function NewSkillPage() {
           <li><code>SkillPricing.setPrice</code> — sets the OG price + creator/treasury bps split</li>
         </ol>
         <p style={{ marginTop: 8 }}>
-          You're charged ~0.0001 OG total in gas. After both confirm, the skill appears in <a href="/marketplace">/marketplace</a> within ~1 block.
+          You're charged ~0.0006 OG total in gas across the two transactions. After both confirm, the skill appears in <a href="/marketplace">/marketplace</a> within ~1 block.
         </p>
       </div>
     </Section>

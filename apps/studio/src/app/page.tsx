@@ -707,13 +707,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               title: 'Telegram bot',
               status: 'GATED',
               statusNote: 'BotFather token',
-              body: 'Backend handlers ship today. Going live needs a Telegram bot token from BotFather, which we will register at launch.',
+              body: 'Backend handlers ship today. Live requires a Telegram bot token from BotFather (operator-action).',
             },
             {
               title: 'MCP server in Claude Desktop / Cursor',
               status: 'GATED',
               statusNote: 'recorded demo queued',
-              body: 'Server code ships today and connects to Claude Desktop and Cursor over stdio. A recorded walk-through of a live session inside Claude Desktop is queued for the v1.1 launch.',
+              body: 'Server code ships today and connects to Claude Desktop and Cursor over stdio. A recorded walk-through inside Claude Desktop ships with v1.1.',
             },
           ].map(({ title, status, statusNote, body }) => {
             const isGated = status === 'GATED';
@@ -1069,7 +1069,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             },
             {
               name: 'SDK',
-              body: '21 packages. Embed receipt anchoring in your own service.',
+              body: '25 typed packages. Embed receipt anchoring in your own service.',
               code: 'import { runSkill } from \'@ivaronix/runtime\';\nawait runSkill({ skillId: \'private-doc-review\' });',
               href: '/docs#sdk',
             },
