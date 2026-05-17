@@ -169,20 +169,30 @@ const config: NextConfig = {
     // so stale-while-revalidate has no correctness risk.
     return [
       {
-        source: '/(.*)',
+        // Global headers apply EXCEPT to /embed/r/:id which is an
+        // intentional cross-origin iframe target. The negative
+        // lookahead :path((?!embed/).*) skips embed paths so they
+        // do not pick up X-Frame-Options DENY (which would block
+        // third-party embedding — the whole point of /embed).
+        source: '/:path((?!embed/).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
-          // Permissions-Policy · disables browser features Ivaronix never
-          // uses (camera, mic, geolocation, payment, USB, sensors). Adds
-          // defense-in-depth without breaking any flow — the listed
-          // features have no wagmi/MetaMask/Studio code path. CSP is
-          // still deliberately omitted (see §B-V2-42 in USER_TODO) because
-          // it needs end-to-end script-tag/style-attr testing to avoid
-          // breaking dApp inline patterns.
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), accelerometer=(), gyroscope=(), magnetometer=(), midi=(), serial=(), bluetooth=(), display-capture=()' },
+        ],
+      },
+      {
+        // Embed-target route — explicit non-DENY frame policy so any
+        // site can iframe a receipt card. CSP frame-ancestors * is the
+        // modern equivalent; combined they cover both old and new browsers.
+        source: '/embed/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
         ],
       },
       {
