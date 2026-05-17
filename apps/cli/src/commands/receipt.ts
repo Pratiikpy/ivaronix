@@ -497,10 +497,22 @@ receiptCommand
         ui.pass(`receipt body fetched  ${fetchedPath}`);
         r = { kind: 'found', path: fetchedPath };
       } catch (err) {
-        ui.fail(`Receipt ${missingBody.onChainId} is anchored on ${missingBody.registryVersion.toUpperCase()}, but the body JSON is not cached and 0G Storage fetch failed.`);
+        // Bug-51: 0G Storage indexer may say "file not found" for a few reasons:
+        //  (a) the upload succeeded but the indexer hasn't propagated yet (try again in 5-15 min),
+        //  (b) the storage node garbage-collected an unpaid blob,
+        //  (c) the receipt was anchored from a different storage namespace.
+        // The chain anchor itself is durable — only the body retrieval is the issue here.
+        const msg = (err as Error).message;
+        ui.fail(`Receipt ${missingBody.onChainId} is anchored on ${missingBody.registryVersion.toUpperCase()}, but the body could not be retrieved from 0G Storage right now.`);
         ui.hint(`receiptRoot: ${missingBody.receiptRoot}`);
         ui.hint(`storageRoot: ${missingBody.storageRoot}`);
-        ui.hint((err as Error).message);
+        ui.hint(`indexer: ${msg}`);
+        if (/file not found|404/i.test(msg)) {
+          ui.hint(`Possible causes:`);
+          ui.hint(`  · propagation lag — fresh anchors can take 5-15 min before the indexer serves them`);
+          ui.hint(`  · the storage blob was GC'd if no replication fee was paid`);
+          ui.hint(`The chain anchor itself is still valid — the receipt root above is durable on-chain.`);
+        }
         ui.hint('Run `ivaronix receipt show ' + pathOrId + '` for on-chain metadata only (no body needed).');
         process.exitCode = 1;
         return;
