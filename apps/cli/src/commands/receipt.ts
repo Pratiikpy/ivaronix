@@ -523,11 +523,17 @@ receiptCommand
       }
     }
     if (r.kind === 'body-not-local') {
+      // Bug-70 (companion to Bug-69): the prior hint said "fetch from 0G
+      // Storage to re-verify locally" using on-chain storageRoot. That's
+      // wrong — on-chain storageRoot is sha256(input plaintext), not the
+      // 0G Storage upload root. The body has to come from local cache or
+      // the operator/stranger who saved it.
       ui.fail(`Receipt ${r.onChainId} is anchored on ${r.registryVersion.toUpperCase()}, but the body JSON is not cached on this machine.`);
       ui.hint(`receiptRoot: ${r.receiptRoot}`);
       if (r.storageRoot) {
-        ui.hint(`storageRoot: ${r.storageRoot} — fetch from 0G Storage to re-verify locally`);
+        ui.hint(`storageRoot: ${r.storageRoot}  (sha256(input plaintext) — not a fetch URL)`);
       }
+      ui.hint('To re-verify, the body must come from local cache, the operator, or someone who saved it.');
       ui.hint('Run `ivaronix receipt show ' + pathOrId + '` for on-chain metadata only (no body needed).');
       process.exitCode = 1;
       return;
