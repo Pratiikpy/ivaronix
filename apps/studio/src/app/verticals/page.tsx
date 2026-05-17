@@ -63,7 +63,7 @@ export default async function VerticalsPage() {
       <Section
         label="§ 01 · LEGAL · LIVE"
         title="The 5 skills"
-        description={`${legalSkills.length} first-party legal skills · published on SkillRegistryV2 · Qwen 2.5 7B on testnet · sovereign 0GM-1.0-35B-A3B on mainnet · larger model catalog rolling out incrementally. Output supports legal review — does not replace licensed counsel.`}
+        description={`${legalSkills.length} first-party legal skills · published on SkillRegistryV2 · runs on the sovereign 0GM-1.0-35B-A3B model via 0G Compute on the Aristotle mainnet · output supports legal review, does not replace licensed counsel.`}
       >
         <div
           style={{

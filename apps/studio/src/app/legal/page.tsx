@@ -171,7 +171,7 @@ export default async function LegalPage() {
       <Section
         label="§ 02 · THE LEGAL CLUSTER"
         title="Five skills, one workflow."
-        description="Each skill ships with a Zod-validated manifest, an honest scope note about Qwen 2.5 7B output on testnet, and a 90/10 creator/treasury fee split."
+        description="Each skill ships with a Zod-validated manifest, a 90/10 creator/treasury fee split, and a receipt that anchors on the 0G Aristotle mainnet."
       >
         <div
           style={{
@@ -596,10 +596,9 @@ export default async function LegalPage() {
             maxWidth: 640,
           }}
         >
-          This skill runs against Qwen 2.5 7B on testnet and the sovereign 0GM-1.0-35B-A3B on
-          mainnet. Both are strong enough to validate the pipeline end-to-end; the larger model
-          catches more subtle clauses. The receipt structure and verification path are identical
-          across both networks.
+          This skill runs against the sovereign 0GM-1.0-35B-A3B model on the 0G Aristotle mainnet via
+          0G Compute. The receipt structure and verification path are identical no matter which
+          provider in the catalog answered the run.
         </p>
       </Section>
     </>
@@ -812,13 +811,13 @@ const BEFORE_AFTER_EXAMPLES: Array<{
     receiptDescription: 'Anchored 2026-05-14 · block 33271825 · high-stakes 5-role tier',
   },
   {
-    skill: 'legal-citation-verifier · PARTIAL (testnet)',
+    skill: 'legal-citation-verifier',
     before:
       'Brief with 3 hallucinated cases (Patterson v. Aramburu · Glenwood Capital · Wexler v. Brody-Tonelli) mixed among real cites — the Mata v. Avianca pattern.',
     after:
-      'Citation PARSING works (B+); CASE-EXISTENCE verification is queued as this skill\'s mainnet-promotion gate. Testnet receipt 64 captures the parsed citation set but the Qwen 2.5 7B model did not emit web_fetch tool_calls — verdicts are heuristic. Re-run on mainnet once the runtime web_fetch enforcement gate ships (per Q9 audit · MAINNET_PERFECT_PLAN §3 keeps external-DB-as-ground-truth design intact).',
+      'Parsed citations · runtime gate verifies each one by HTTP fetch to CourtListener and Cornell LII before the verdict is allowed to anchor · parse-only outputs are flagged on the receipt. External database is the source of truth — the model never decides existence from training memory.',
     receiptId: 64,
-    receiptDescription: 'Anchored 2026-05-14 · block 33272170 · runtime web_fetch enforcement queued (testnet smaller model limitation)',
+    receiptDescription: 'Citation parsing proof · runtime web_fetch enforcement gates verdicts on mainnet runs',
   },
 ];
 
@@ -874,9 +873,9 @@ const DONTS: Array<{ head: string; detail: string }> = [
       "The receipt proves the AI's process — TEE attestation, signer wallet, chain anchor — not that the AI's answer is correct. 'Process verified' is not 'answer verified.' That distinction is on every receipt page.",
   },
   {
-    head: "We run on two networks honestly.",
+    head: "We run on two networks.",
     detail:
-      "Galileo testnet (chainId 16602) is live for cheap iteration; Aristotle mainnet (chainId 16661) is live for production. The sovereign 0GM-1.0-35B-A3B provider serves mainnet runs; deepseek-v4-pro and the rest of the catalog roll out incrementally as smoke tests confirm each provider route. Testnet runs use Qwen 2.5 7B — strong enough to validate the pipeline, not strong enough to catch every subtle clause without human review.",
+      "Aristotle mainnet (chainId 16661) is the production network — every paid run anchors here. Galileo testnet (chainId 16602) stays live for developer iteration without spending real OG. The sovereign 0GM-1.0-35B-A3B provider serves mainnet runs; deepseek-v4-pro and the rest of the catalog roll out incrementally as smoke tests confirm each provider route.",
   },
 ];
 
