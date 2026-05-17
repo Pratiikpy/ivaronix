@@ -171,7 +171,7 @@ export function MemoryNotesPanel() {
       <div className="card" style={{ padding: 24 }}>
         <div className="section-label" style={{ marginBottom: 8 }}>§ Quick capture</div>
         <p style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 0, marginBottom: 12 }}>
-          Plaintext, per-wallet sandbox. The operator process can read these. For end-to-end
+          Plaintext, per-wallet sandbox. The Ivaronix server can read these. For end-to-end
           encrypted memory use <code className="mono">ivaronix memory remember</code> (CLI).
           See <a href="/docs/PRIVACY_NOTES.md" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>privacy notes</a>.
         </p>

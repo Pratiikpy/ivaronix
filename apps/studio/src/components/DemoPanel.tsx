@@ -63,7 +63,7 @@ export function DemoPanel() {
       {/* Eyebrow + title */}
       <div>
         <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6, marginBottom: 8 }}>
-          § DEMO · OPERATOR-SUBSIDISED
+          § DEMO · GAS ON US
         </div>
         <h2 style={{ margin: '0 0 12px 0', fontSize: 24 }}>Try it · 30 seconds · no wallet</h2>
         <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, opacity: 0.8 }}>
@@ -115,7 +115,7 @@ export function DemoPanel() {
         <div style={{ padding: 16, background: 'var(--color-verified-bg)', border: '1px solid var(--color-verified)', borderRadius: 6 }}>
           <strong style={{ color: '#166534' }}>✓ Receipt anchored · #{state.receiptId}</strong>
           <p style={{ fontSize: 13, marginTop: 8, lineHeight: 1.5 }}>
-            Opening proof page… {state.subsidised && <span style={{ opacity: 0.7 }}>(operator-subsidised — see banner)</span>}
+            Opening proof page… {state.subsidised && <span style={{ opacity: 0.7 }}>(Ivaronix covered the gas — see banner)</span>}
           </p>
         </div>
       )}
@@ -143,7 +143,7 @@ export function DemoPanel() {
 
       {/* Honest disclosure */}
       <p style={{ fontSize: 12, opacity: 0.6, lineHeight: 1.5, marginTop: 8 }}>
-        <strong>What you're seeing:</strong> a real 0G testnet receipt anchored end-to-end. The payment is operator-subsidised so you don't need to fund a wallet. The receipt's <code>billing.payment.subsidised</code> field is marked <code>true</code> so the proof page surfaces this honestly.
+        <strong>What you're seeing:</strong> a real 0G testnet receipt anchored end-to-end. Ivaronix covers the demo gas so you don't need to fund a wallet. The receipt's <code>billing.payment.subsidised</code> field is set to <code>true</code> so the proof page is up-front about it.
       </p>
     </div>
   );

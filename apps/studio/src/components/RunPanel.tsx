@@ -509,8 +509,8 @@ export function RunPanel(props: RunPanelProps = {}) {
           {running
             ? 'Querying 0G Router…'
             : connectedAddress
-              ? `Receipt agent: ${connectedAddress.slice(0, 6)}…${connectedAddress.slice(-4)} · operator anchors on your behalf.`
-              : 'Server anchors the receipt; receipt owner = operator wallet (connect a wallet to attribute receipts to you).'}
+              ? `Receipt agent: ${connectedAddress.slice(0, 6)}…${connectedAddress.slice(-4)} · we anchor on chain on your behalf.`
+              : 'Connect a wallet to receive the receipt under your address. Without one, the receipt is anchored under the Ivaronix house wallet.'}
         </span>
       </div>
 

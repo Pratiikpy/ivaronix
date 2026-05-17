@@ -681,7 +681,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           What ships next, named honestly.
         </h3>
         <p style={{ margin: '0 0 24px', fontSize: 14, color: 'var(--color-muted)', maxWidth: 720 }}>
-          Each item carries its real blocker. No "coming soon" — every gate names what unlocks it.
+          Each item carries its real blocker. No "coming soon" — every gate names what is missing.
         </p>
         <div
           style={{

@@ -120,7 +120,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 ) : (
                   <>
                     <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 12 }}>
-                      <span className="italic-display">No passport yet.</span> Mint one to unlock the full dashboard.
+                      <span className="italic-display">No passport yet.</span> Mint one to see the full dashboard.
                     </p>
                     <Link href="/onboard" className="btn-secondary" style={{ marginTop: 16, display: 'inline-block', textDecoration: 'none' }}>
                       Onboard →
@@ -147,7 +147,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                 <div className="section-label">scheduled runs ({data.schedules.length})</div>
                 {data.schedules.length === 0 ? (
                   <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 12 }}>
-                    <span className="italic-display">No schedules yet.</span> From the operator&apos;s terminal:
+                    <span className="italic-display">No schedules yet.</span> From your terminal:
                     <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>
                       ivaronix skill schedule create --skill private-doc-review --cron &quot;0 9 * * MON&quot; --input &lt;doc&gt;
                     </code>
@@ -189,7 +189,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       })}
                     </ul>
                     <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 12 }}>
-                      Schedules fire only while <code className="mono">ivaronix skill schedule run</code> is up. There is no remote daemon — the operator&apos;s machine is the executor.
+                      Schedules fire only while <code className="mono">ivaronix skill schedule run</code> is up on your machine. There is no remote daemon — your terminal is the executor.
                     </p>
                   </>
                 )}

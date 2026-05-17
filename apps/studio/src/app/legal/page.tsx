@@ -165,7 +165,7 @@ export default async function LegalPage() {
       <Section
         label="§ 02 · THE LEGAL CLUSTER"
         title="Five skills, one workflow."
-        description="Each skill ships with a Zod-validated manifest, an honest scope note about Qwen 2.5 7B testnet output, and a 90/10 creator/treasury fee-split anchored to the operator passport."
+        description="Each skill ships with a Zod-validated manifest, an honest scope note about Qwen 2.5 7B output on testnet, and a 90/10 creator/treasury fee split."
       >
         <div
           style={{

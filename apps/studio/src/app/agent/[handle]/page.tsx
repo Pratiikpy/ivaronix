@@ -238,7 +238,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
         {consolidations.length === 0 ? (
           <p style={{ fontSize: 13, color: 'var(--color-muted)', margin: 0 }}>
             <span className="italic-display">No consolidations yet for this agent.</span>{' '}
-            From the operator&apos;s terminal:{' '}
+            From your terminal:{' '}
             <code className="mono">ivaronix passport consolidate --day</code>
             {' '}runs a TEE-attested rollup over the agent&apos;s recent receipts and anchors a{' '}
             <code className="mono">memory_consolidation</code> receipt that points back at the source ids.

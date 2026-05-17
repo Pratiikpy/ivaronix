@@ -102,7 +102,7 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
       <Section
         label={`§ DELEGATE · ${id.slice(0, 12)}…`}
         title="Delegate not found."
-        description="No manifest for this delegate id is on the local filesystem of the Studio process. Either it was never created, or the operator who created it has not synced its manifest to this machine. Confirm the delegate id, or rerun the operator's manifest sync. The on-chain identity (passport tokenId + capability grants) remains valid regardless of whether the local manifest is present."
+        description="The Studio could not find a local manifest for this delegate id. Either it was never created, or its manifest was created on a different machine and never synced. Double-check the id, or re-sync the manifest. The on-chain identity (passport tokenId + capability grants) stays valid either way."
       />
     );
   }
@@ -219,8 +219,8 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
             <dt style={{ color: 'var(--color-muted)' }}>phase B target</dt>
             <dd style={{ margin: 0, fontSize: 12, lineHeight: 1.55 }}>
               Key generated <strong>inside</strong> a 0G Compute TEE on first mint, never extracted. On-chain identity
-              model is unchanged — all that changes is where the private key sits. See{' '}
-              <code className="mono">docs/planning-01.md</code> §3.
+              model is unchanged — only where the private key sits changes. Roadmap in{' '}
+              <code className="mono">docs/planning-01.md</code>.
             </dd>
           </dl>
         </div>

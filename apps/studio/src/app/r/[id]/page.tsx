@@ -463,7 +463,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
                 border: '1px dashed var(--color-hairline, #d4d4d4)',
                 borderRadius: 999,
               }}
-              title="Anchored on the V1 ReceiptRegistry. New receipts use V3 (canonical slots 10/11/12 admitted · B-V2-32 fix). V2 (EIP-712 agent recovery · K-2 fix) and V3 both stay live; V1 stays live for the existing legacy receipts."
+              title="Anchored on the V1 ReceiptRegistry. New receipts use V3 (canonical schema, all 13 receipt-type slots). V2 (EIP-712 agent recovery) and V3 both stay live; V1 stays live so existing legacy receipts remain verifiable."
             >
               LEGACY-REGISTRY
             </span>
@@ -537,6 +537,9 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
                 behalf, or the operator owns the receipt outright. */}
             {local?.agent?.signedBy && local.agent.signedBy !== 'operator' && (
               <span
+                title={local.agent.signedBy === 'user-direct'
+                  ? 'Signed directly by the user wallet.'
+                  : 'Anchored by the Ivaronix house wallet on behalf of the user. The receipt body still records the user as the agent.'}
                 style={{
                   marginLeft: 12,
                   padding: '2px 8px',
@@ -550,7 +553,7 @@ IVARONIX_NETWORK=${getNetwork()} pnpm ivaronix receipt verify ${onChain.id.toStr
                   fontWeight: 600,
                 }}
               >
-                {local.agent.signedBy === 'user-direct' ? 'USER-SIGNED' : 'OPERATOR-ON-BEHALF-OF-USER'}
+                {local.agent.signedBy === 'user-direct' ? 'USER-SIGNED' : "ANCHORED ON USER'S BEHALF"}
               </span>
             )}
           </dd>

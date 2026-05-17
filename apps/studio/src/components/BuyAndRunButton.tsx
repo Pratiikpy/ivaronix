@@ -400,7 +400,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
           onChange={(e) => setBurnMode(e.target.checked)}
           disabled={isDisabled}
         />
-        <span><strong>Burn Mode</strong> — encrypt input with a session key the operator destroys after the run.</span>
+        <span><strong>Burn Mode</strong> — encrypt the input with a session key that is wiped from memory as soon as the run finishes.</span>
       </label>
 
       <div style={{ fontSize: 11, opacity: 0.6 }}>
