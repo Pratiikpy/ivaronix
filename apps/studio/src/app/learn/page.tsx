@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { FourLightRow } from '@/components/FourLightRow';
 import { unifiedNextId, livePassportCount } from '@/lib/chain';
 import { getSampleReceiptHref } from '@/lib/sample-receipt';
 import { RECEIPT_TYPES, ROLES_BY_TIER } from '@ivaronix/core';
 import numbersJson from '../../../../../docs/numbers.json';
+
+export const metadata: Metadata = {
+  title: 'Learn · Ivaronix',
+  description: 'How receipts work — TIER 1 vs TIER 2, the four-light row, consensus tiers, RFC-8785 canonical hash, EIP-712 anchor.',
+};
 
 // SovereigntyCircle is a planned interactive component (final-plan §1.6
 // day 10-12). It does not exist in the repo at the time of writing; we

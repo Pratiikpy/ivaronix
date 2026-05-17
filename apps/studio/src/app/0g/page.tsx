@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   getStudioDeployedAddress as getDeployedAddress,
@@ -7,6 +8,11 @@ import { getNetwork } from '@/lib/chain';
 import { getSampleReceiptHref, getSampleReceiptId } from '@/lib/sample-receipt';
 import { NETWORKS } from '@ivaronix/core';
 import { CopyLinkButton } from './CopyLinkButton';
+
+export const metadata: Metadata = {
+  title: '0G integration · Ivaronix',
+  description: 'How Ivaronix uses each 0G primitive — Chain (anchor), Compute (TEE), Storage (body), Router (inference), Agent ID (ERC-7857).',
+};
 
 export const dynamic = 'force-dynamic';
 

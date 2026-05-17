@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { unifiedNextId, livePassportCount } from '@/lib/chain';
 import { getSampleReceiptHref } from '@/lib/sample-receipt';
 import numbersJson from '../../../../../docs/numbers.json';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Thesis · Ivaronix',
+  description: 'Why receipts beat dashboards. The product thesis — verifiable AI process, not just answers.',
+};
 
 // Fallback values pulled from the canonical numbers.json so when chain
 // RPC fails (rare but real), the page still shows fresh-ish numbers

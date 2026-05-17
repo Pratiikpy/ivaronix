@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { loadAllSkills } from '@/lib/skills';
@@ -5,6 +6,11 @@ import { unifiedNextId, getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: 'Legal · Ivaronix',
+  description: 'AI legal review for documents you can\'t paste into ChatGPT — NDA triage, term sheets, contract renewals, citation checks.',
+};
 
 /**
  * `/legal` — the legal-vertical SEO landing.

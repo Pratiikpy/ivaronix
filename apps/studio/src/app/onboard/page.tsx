@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import { OnboardClient } from './OnboardClient';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import { getNetwork } from '@/lib/chain';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Onboard · Ivaronix',
+  description: 'Mint an ERC-7857 passport, run a first paid skill, see the receipt anchor on 0G — guided in 60 seconds.',
+};
 
 export default function OnboardPage() {
   const net = getNetwork();
