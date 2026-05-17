@@ -447,10 +447,11 @@ function TrustGradientSection(): React.JSX.Element {
       </div>
 
       <p style={pStyle}>
-        TIER 2 exists because some skills do not yet have a TEE-hosted equivalent, and we would
-        rather ship a signed amber receipt than no receipt at all. The receipt page surfaces the
-        tier in three places: the header chip, the four-light TEE pill, and the model attribution
-        block. A judge can read any of the three and reach the same conclusion.
+        TIER 2 exists for skills that route through providers outside a TEE-attested enclave.
+        Rather than hide the distinction, we surface it as an amber receipt: signed, chain-anchored,
+        re-verifiable, but plainly labeled as non-enclave. The receipt page surfaces the tier in
+        three places: the header chip, the four-light TEE pill, and the model attribution block.
+        A judge can read any of the three and reach the same conclusion.
       </p>
       <p style={{ ...pStyle, fontStyle: 'italic', color: 'var(--color-fg)' }}>
         Honest amber beats a green light that does not check out.

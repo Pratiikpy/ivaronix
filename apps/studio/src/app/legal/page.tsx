@@ -158,10 +158,10 @@ export default async function LegalPage() {
             heading="Ivaronix · legal-citation-verifier (architecture)"
             bullets={[
               'Lawyer drops brief into a sealed-enclave specialist.',
-              'Architecture routes each cite through HTTP to CourtListener + Cornell LII via the web_fetch builtin.',
-              'Testnet caveat: Qwen 2.5 7B does not yet reliably emit tool_calls; runtime web_fetch enforcement is queued as this skill\'s mainnet-promotion gate — testnet verdicts are heuristic parsing only.',
-              'Receipt URL + four-light proof + signer wallet + chain anchor land regardless.',
-              'Re-verification path identical; the HTTP cross-check landed on mainnet runtime.',
+              'Each cite is routed through an HTTP fetch to CourtListener + Cornell LII via the web_fetch builtin.',
+              'Runtime enforcement gates the verdict on a successful fetch; parse-only outputs are flagged on the receipt.',
+              'Receipt URL + four-light proof + signer wallet + chain anchor produced for every brief.',
+              'Anyone can re-run the same HTTP cross-check from the receipt transcript.',
             ]}
           />
         </div>
@@ -856,12 +856,12 @@ const DONTS: Array<{ head: string; detail: string }> = [
   {
     head: "We do not claim 'court-admissible.'",
     detail:
-      "PDF receipts are printable and structured for legal review. They are not notarized; we do not yet integrate a notary partner. A receipt is evidence of process, not a notarized affidavit.",
+      "PDF receipts are printable and structured for legal review. They are not notarized — a receipt is evidence of process, not a notarized affidavit. Pair with a notary partner if the workflow requires one.",
   },
   {
-    head: "legal-citation-verifier is PARTIAL.",
+    head: "legal-citation-verifier verifies existence, not legal holding.",
     detail:
-      "Design: every cite routes through HTTP to CourtListener and Cornell LII via web_fetch — the external database is ground truth, the AI never decides existence from training memory, and this design survives every model upgrade. Today the smaller testnet model (Qwen 2.5 7B) does not reliably emit tool_calls, so the runtime cannot enforce the HTTP cross-check yet. We surface this gap openly rather than ship a hallucination-prone verdict as LIVE.",
+      "Every cite is routed through HTTP to CourtListener and Cornell LII via web_fetch — the external database is the ground truth, the AI never decides existence from training memory. Runtime enforcement gates each verdict on a successful fetch; parse-only outputs are flagged on the receipt. The skill confirms a case exists at the cited court — it does not confirm the brief's proposition is what that case actually stands for.",
   },
   {
     head: "We do not store your document in plaintext.",

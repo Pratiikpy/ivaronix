@@ -88,7 +88,7 @@ const SECTIONS: DocSection[] = [
     id: 'mcp',
     name: 'MCP server',
     body:
-      'Wire Ivaronix into Claude Desktop or Cursor through the Model Context Protocol. The MCP server exposes 4 tools: run_skill, verify_receipt, list_passports, recall_memory. The host LLM calls them directly inside a chat session. The server is workspace-only today (not yet on npm) — clone the repo, build the package, then point Claude Desktop at the built binary.',
+      'Wire Ivaronix into Claude Desktop or Cursor through the Model Context Protocol. The MCP server exposes 4 tools: run_skill, verify_receipt, list_passports, recall_memory. The host LLM calls them directly inside a chat session. The server runs from a built workspace binary — clone the repo, build the package, then point Claude Desktop at the built binary.',
     snippets: [
       {
         label: 'Claude Desktop config (workspace path)',

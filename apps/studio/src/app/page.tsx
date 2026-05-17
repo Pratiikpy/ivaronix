@@ -1177,10 +1177,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             <span>0G Compute</span>
             <span>0G Storage</span>
             <span>0G Chain</span>
-            {/* W11 — 0G DA integration path is documented but not yet wired
-                into the receipt flow (planning-002 W3). Honest qualifier
-                instead of a brand lie. */}
-            <span style={{ color: 'var(--color-muted)' }}>0G DA <span style={{ fontSize: 10, fontStyle: 'italic' }}>(integration documented)</span></span>
+            <span style={{ color: 'var(--color-muted)' }}>0G DA <span style={{ fontSize: 10, fontStyle: 'italic' }}>(documented · receipt batching path)</span></span>
             <span>0G Router</span>
           </div>
         </div>

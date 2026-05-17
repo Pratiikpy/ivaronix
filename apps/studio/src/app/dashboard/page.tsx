@@ -115,7 +115,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                       <dd style={{ margin: 0 }}>
                         {data.passport.receiptCount}
                         <span style={{ marginLeft: 6, fontSize: 10, color: 'var(--color-muted)' }}>
-                          (passport-recorded · anchored runs not yet recorded here)
+                          (passport-recorded · receipts anchored without the recordReceipt hook are not counted here)
                         </span>
                       </dd>
                       <dt style={{ color: 'var(--color-muted)' }}>violations</dt>

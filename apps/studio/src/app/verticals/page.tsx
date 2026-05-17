@@ -160,7 +160,7 @@ export default async function VerticalsPage() {
             // a matching ROADMAP_META entry — the card still renders, just
             // with a generic line until the metadata catches up.
             const meta = ROADMAP_META[vertical] ?? {
-              useCase: 'Use case description coming soon.',
+              useCase: 'A specialist agent for this vertical is on the roadmap.',
             };
             const label = vertical.replace('roadmap_', '').replace(/_/g, ' ');
             return (

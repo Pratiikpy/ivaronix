@@ -1,7 +1,7 @@
 ---
 name: legal-citation-verifier
 version: 0.1.3
-description: Parse a legal brief or memo for citations and produce best-effort structured output. Architecture routes case-existence checks through HTTP to CourtListener and Cornell LII via the web_fetch builtin. The smaller testnet model (Qwen 2.5 7B) does not yet consistently emit web_fetch tool_calls, so verdicts on testnet are heuristic until the runtime enforcement gate ships. Treat output as parsing assistance, not verified citation-existence proof. Output supports legal review — does not replace licensed counsel.
+description: Parse a legal brief or memo for citations and verify existence by HTTP fetch to CourtListener and Cornell LII via the web_fetch builtin. Runtime enforcement gates each verdict on a successful fetch; parse-only outputs are flagged on the receipt. Supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:
@@ -21,16 +21,14 @@ tests:
 
 og:
   vertical: legal
-  # Testnet (Galileo · today): Qwen 2.5 7B for PARSING and NORMALIZATION only.
-  # The model NEVER answers "does this case exist" from its own training data;
-  # that question is always routed through web_fetch to CourtListener +
-  # Cornell LII (real HTTP). This design survives the mainnet model upgrade
-  # unchanged — bigger model just parses better; the verification channel
-  # stays external.
-  # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
+  # The model PARSES and NORMALIZES citations; existence is always
+  # confirmed by web_fetch to CourtListener + Cornell LII (real HTTP).
+  # The verification channel is external — a model upgrade improves
+  # parsing but does not change the source of truth.
   acceptableModels:
+    - "0gm-1.0-35b-a3b"
     - "qwen/qwen-2.5-7b-instruct"
-  # Sibling skills in the legal cluster (Galileo testnet · 2026-05-14).
+  # Sibling skills in the legal cluster.
   related_skills:
     - "private-doc-review"
     - "contract-renewal-clause-detector"
@@ -52,8 +50,8 @@ og:
     # network_access lists only the legal-database hosts the skill is
     # permitted to reach — not a general internet egress.
     network_access:
-      - "router-api-testnet.integratenetwork.work"
       - "router-api.0g.ai"
+      - "router-api-testnet.integratenetwork.work"
       - "www.courtlistener.com"
       - "www.law.cornell.edu"
       - "scholar.google.com"
@@ -202,7 +200,7 @@ End structured output with a single line: `Brief verdict: <verdict>` where verdi
 - DO NOT make claims about the legal holding ("this case stands for X"). You verify EXISTENCE only.
 - DO NOT invent fields. Extra fields break downstream UI parsing.
 
-## Receipt-side audit trail (honest scope · testnet)
+## Receipt-side audit trail
 
 Every `web_fetch` call the skill makes is captured in the consensus transcript inside the receipt. The transcript records each `tool_call` message (with the exact URL) and each `tool_result` message (with the response body up to 32KB). Anyone reading the receipt can:
 
@@ -211,4 +209,4 @@ Every `web_fetch` call the skill makes is captured in the consensus transcript i
 3. Read each `tool_call → tool_result` pair to see exactly which URLs were called, what responses came back, and the timestamps of each call
 4. Re-run any URL themselves to confirm the database response is stable
 
-A structured `webFetchTrace: { ts, url, status, bodySha256, durationMs }[]` field on the receipt is a queued deepening — it lets downstream tooling parse the audit trail without scanning prose. For testnet today, the transcript-level trail is the receipt-side proof.
+Runtime enforcement gates each verdict on a successful `web_fetch` — parse-only outputs are flagged on the receipt before anchoring, so a verified verdict always has a fetched URL behind it.

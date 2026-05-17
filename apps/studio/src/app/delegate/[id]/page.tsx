@@ -233,11 +233,10 @@ export default async function DelegatePage({ params }: { params: Promise<{ id: s
               still protected against operator-side <em>misuse</em> by capability scoping + on-chain revocation: a
               compromised key can only do what the active grants allow, and the user can kill it instantly.
             </dd>
-            <dt style={{ color: 'var(--color-muted)' }}>phase B target</dt>
+            <dt style={{ color: 'var(--color-muted)' }}>roadmap</dt>
             <dd style={{ margin: 0, fontSize: 12, lineHeight: 1.55 }}>
               Key generated <strong>inside</strong> a 0G Compute TEE on first mint, never extracted. On-chain identity
-              model is unchanged — only where the private key sits changes. Roadmap in{' '}
-              <code className="mono">docs/planning-01.md</code>.
+              model stays the same — only where the private key sits changes.
             </dd>
           </dl>
         </div>

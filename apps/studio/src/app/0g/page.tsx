@@ -90,8 +90,8 @@ function buildCards(network: ReturnType<typeof getNetwork>): ModuleCard[] {
     {
       name: 'Agent ID · ERC-7857',
       status: 'live',
-      what: 'Every receipt is bound to a passport tokenId. A delegated agent (planning-01 §2A) gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an AgentPassport-resolvable wallet — the chain confirms the signer matches.',
-      endpoint: { label: 'AgentPassportINFT — custom ERC-7857 implementation (V1 legacy + V2 K-1/K-4/K-6 fix)' },
+      what: 'Every receipt is bound to a passport tokenId. A delegated agent gets its own passport so the trustScore accrues to the agent itself, not the operator. The receipt is signed by an AgentPassport-resolvable wallet — the chain confirms the signer matches.',
+      endpoint: { label: 'AgentPassportINFT — custom ERC-7857 implementation (V1 legacy + V2 active)' },
       addresses: [
         ...(addr('AgentPassportINFTV2') ? [{ label: 'AgentPassportINFTV2', address: addr('AgentPassportINFTV2'), explorer: linkOf(addr('AgentPassportINFTV2')) }] : []),
         { label: 'AgentPassportINFT', address: addr('AgentPassportINFT'), explorer: linkOf(addr('AgentPassportINFT')) },

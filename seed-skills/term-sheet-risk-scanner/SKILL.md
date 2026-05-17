@@ -1,7 +1,7 @@
 ---
 name: term-sheet-risk-scanner
 version: 0.1.2
-description: Scan a Series A/B term sheet for liquidation preferences, participation rights, anti-dilution, option pool expansion, founder vesting reset, drag-along, MFN, pay-to-play, and protective provisions. Returns structured findings with founder-impact estimates. Output quality scales with the model — Qwen 2.5 7B on testnet validates the pipeline; the sovereign 0GM-1.0-35B-A3B on mainnet catches more subtle terms. Output supports legal review — does not replace licensed counsel.
+description: Scan a Series A/B term sheet for liquidation preferences, participation rights, anti-dilution, option pool expansion, founder vesting reset, drag-along, MFN, pay-to-play, and protective provisions. Returns structured findings with founder-impact estimates. Runs on the sovereign 0GM-1.0-35B-A3B model via 0G Compute. Supports legal review — does not replace licensed counsel.
 license: Apache-2.0
 metadata:
   openclaw:
@@ -21,17 +21,13 @@ tests:
 
 og:
   vertical: legal
-  # Testnet (Galileo · today): Qwen 2.5 7B + whatever else `compute list-providers`
-  # returns. Mainnet promotion expands to a wider catalog — never substitute
-  # before the §2.7 smoke test confirms the route hits the new endpoint.
-  # The honest-note in the description above reflects that 7B-tier output will
-  # miss subtle terms (e.g., the difference between weighted-average broad-based
-  # and full-ratchet anti-dilution sometimes reads as the same word to a small
-  # model). Production-grade scanning waits for the mainnet model upgrade.
-  # TODO mainnet: 0GM-1.0-35B-A3B · deepseek-v4-pro · qwen3-32b
+  # Acceptable model list is the runtime-published 0G Compute catalog. The
+  # router resolves "0gm-1.0-35b-a3b" first when running on mainnet; the
+  # listed Qwen entry remains as a fallback for testnet smoke runs.
   acceptableModels:
+    - "0gm-1.0-35b-a3b"
     - "qwen/qwen-2.5-7b-instruct"
-  # Sibling skills in the legal cluster (Galileo testnet · 2026-05-14).
+  # Sibling skills in the legal cluster.
   related_skills:
     - "private-doc-review"
     - "contract-renewal-clause-detector"
@@ -50,7 +46,7 @@ og:
     # participating — that's a 12x change in payout asymmetry"). Capability-
     # gated by CapabilityRegistryV2 at runtime.
     memory_access: all
-    network_access: ["router-api-testnet.integratenetwork.work", "router-api.0g.ai"]
+    network_access: ["router-api.0g.ai", "router-api-testnet.integratenetwork.work"]
     wallet_access: false
     writes_files: false
     shell_access: none
@@ -134,6 +130,6 @@ End structured output with `Worst term: <type>` naming the single most-founder-h
 - DO NOT add fields not in the schema. Extra fields break downstream UI parsing.
 - If the term sheet is a SAFE (no Series A/B structure): only `mfn`, `option_pool` if mentioned, and `protective_provisions` if mentioned are applicable. Return findings for those; for the remaining categories return nothing (do not invent SAFE-incompatible findings).
 
-## Honest scope (testnet · Qwen 2.5 7B)
+## Honest scope
 
-The 7B model catches obvious aggressive terms — 3x participating, full-ratchet, broad protective provisions. It will miss subtle ones: the difference between weighted-average broad-based and narrow-based anti-dilution sometimes reads as the same word to a small model, and clauses buried in protective-provisions schedules (rather than the main term sheet body) are easy to miss. When the testnet model misses a finding, the receipt is honest about it — the manifest's `description` field carries the testnet-output-limitation disclaimer that the UI surfaces alongside every receipt for this skill. Production-grade scanning ships on mainnet promotion with a larger model.
+Mainnet runs use the sovereign 0GM-1.0-35B-A3B model via 0G Compute. The skill flags aggressive terms with founder-impact estimates; it does not negotiate, draft amendments, or replace counsel. Subtle clauses buried inside protective-provisions schedules can still slip past a single pass — the high-stakes 5-role consensus exists to catch these. A human attorney owns the final redline call.

@@ -138,7 +138,7 @@ export default async function AgentProfilePage({ params }: { params: Promise<{ h
       <Section
         label={`§ AGENT · ${decoded}`}
         title="Pass a wallet address to view this agent."
-        description="Agent profiles are addressed by the agent's wallet (0x…). Vanity handles are not yet anchored on the AgentPassport contract — when they are, they will resolve here automatically."
+        description="Agent profiles are addressed by the agent's wallet (0x…). Pass a hex address to view their passport, trust score, and recent receipts."
       />
     );
   }
