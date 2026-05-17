@@ -4,12 +4,18 @@
  * Server component reads on-chain creatorBalance + creatorLifetimeEarned.
  * Client island shows Withdraw button (wagmi.writeContract withdrawCreator).
  */
+import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
 import { CreatorPayoutsPanel } from '@/components/CreatorPayoutsPanel';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import type { Network } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Creator payouts · Ivaronix',
+  description: 'Creator earnings, pending balance, lifetime withdrawals — claim 90% of every paid run on your skill.',
+};
 
 export default function PayoutsPage() {
   const network: Network = (process.env.IVARONIX_NETWORK ?? 'testnet') as Network;

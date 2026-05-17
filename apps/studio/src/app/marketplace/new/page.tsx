@@ -10,12 +10,18 @@
  * For v1 the manifestRoot is computed from a simple `manifest.json` upload
  * (sha256). v1.1 adds 0G Storage upload for the full manifest body.
  */
+import type { Metadata } from 'next';
 import { Section } from '@/components/Section';
 import { NewSkillForm } from '@/components/NewSkillForm';
 import { getStudioDeployedAddress as getDeployedAddress } from '@/lib/deployments-bundle';
 import type { Network } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'Publish a skill · Ivaronix marketplace',
+  description: 'Publish + price a skill on SkillRegistryV2 + SkillPricing — set creator/treasury bps split.',
+};
 
 export default function NewSkillPage() {
   const network: Network = (process.env.IVARONIX_NETWORK ?? 'testnet') as Network;
