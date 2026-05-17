@@ -2,6 +2,7 @@ import { ImageResponse } from 'next/og';
 import { unifiedGetReceipt, unifiedFindByReceiptRoot, getNetwork } from '@/lib/chain';
 import { findLocalReceiptByRoot } from '@/lib/local-receipt';
 import { loadBrandFont } from '@/lib/og-font';
+import { receiptTypeLabel } from '@/lib/receipt-labels';
 
 export const runtime = 'nodejs';
 // Stays on the Node runtime (not edge): the headline lookup imports ethers
@@ -35,13 +36,31 @@ export default async function Image({ params }: { params: { id: string } }) {
       const local = findLocalReceiptByRoot(onChain.receiptRoot);
       if (local?.body.outputs?.wording?.headline) {
         headline = local.body.outputs.wording.headline;
-      } else if (process.env.IVARONIX_DEBUG) {
-        // Bug-21 trace · the OG image render finds the on-chain receipt
-        // but the bundled-body lookup misses, so the social-share preview
-        // falls back to the generic "Verified action receipt" headline
-        // instead of the actual AI finding. The same lookup works in
-        // /r/[id]/page.tsx — debug here when investigating why.
-        console.warn(`[og-image] no bundled body for receiptRoot ${onChain.receiptRoot} (id ${id}); falling back to generic headline`);
+      } else {
+        // Bug-21 partial mitigation: when the bundled body isn't local,
+        // use the on-chain receipt-type enum to give a more specific
+        // headline than the pure-generic fallback. "doc_ask" -> "AI doc
+        // review", "audit" -> "AI audit", "burn" -> "Burn-mode AI run",
+        // "consensus" -> "Multi-role consensus", etc. Skill-specific
+        // headlines still require storage-body fetch (queued in v1.1
+        // roadmap) but tier/category is on-chain.
+        const typeLabel = receiptTypeLabel(onChain.receiptType);
+        const typeHeadline: Record<string, string> = {
+          doc_ask: 'AI document review on 0G',
+          audit: 'AI audit receipt on 0G',
+          consensus: 'Multi-role consensus on 0G',
+          burn: 'Burn-mode AI run on 0G',
+          memory_access: 'Memory grant receipt on 0G',
+          skill_exec: 'Skill execution receipt on 0G',
+          code_change: 'Code change receipt on 0G',
+          passport_update: 'Agent passport update on 0G',
+          doc_room_create: 'Data-room create receipt on 0G',
+          doc_room_read: 'Data-room read receipt on 0G',
+        };
+        headline = typeHeadline[typeLabel] ?? `Receipt #${id} verified on 0G ${network}`;
+        if (process.env.IVARONIX_DEBUG) {
+          console.warn(`[og-image] no bundled body for receiptRoot ${onChain.receiptRoot} (id ${id}); using on-chain type "${typeLabel}" headline`);
+        }
       }
     }
   } catch (err) {
