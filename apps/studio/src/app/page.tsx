@@ -1099,6 +1099,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 borderRadius: 'var(--radius-md)',
                 textDecoration: 'none',
                 color: 'inherit',
+                // minWidth:0 lets this grid cell honour minmax(280px, 1fr) on
+                // mobile. Without it, the inner <pre whiteSpace:pre> with a
+                // long code line (e.g. the SDK import + iframe src) inflates
+                // the cell width past the viewport, causing horizontal scroll
+                // on /  at 375x812. The pre's own overflowX:auto only kicks
+                // in once the parent allows shrinking. (Bug-73)
+                minWidth: 0,
               }}
               className="module-card"
             >
@@ -1120,6 +1127,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   overflowX: 'auto',
                   color: 'var(--color-fg)',
                   whiteSpace: 'pre',
+                  // Pair with parent minWidth:0 — without this the pre still
+                  // claims its content's intrinsic width on mobile.
+                  maxWidth: '100%',
                 }}
               >
                 {code}
