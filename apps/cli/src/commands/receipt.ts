@@ -497,22 +497,26 @@ receiptCommand
         ui.pass(`receipt body fetched  ${fetchedPath}`);
         r = { kind: 'found', path: fetchedPath };
       } catch (err) {
-        // Bug-51: 0G Storage indexer may say "file not found" for a few reasons:
-        //  (a) the upload succeeded but the indexer hasn't propagated yet (try again in 5-15 min),
-        //  (b) the storage node garbage-collected an unpaid blob,
-        //  (c) the receipt was anchored from a different storage namespace.
-        // The chain anchor itself is durable — only the body retrieval is the issue here.
+        // Bug-69 honest framing: the on-chain `storageRoot` field is the
+        // sha256 of the input-context plaintext (see pipeline.ts line 697,
+        // 962 — `evidenceBytes32 = sha256(activeContext)`). It is NOT the
+        // 0G Storage Merkle upload root. The actual upload root lives in
+        // the receipt body as `storage.evidenceRoot` and is only known
+        // once the body is in hand.
+        //
+        // So this fetch path will always 404 for receipts whose body
+        // isn't already cached: we're querying the storage indexer with
+        // the input-content digest, not the upload root. The chain anchor
+        // is still durable (receiptRoot is what binds it), the body just
+        // has to come from somewhere other than the storage indexer.
         const msg = (err as Error).message;
-        ui.fail(`Receipt ${missingBody.onChainId} is anchored on ${missingBody.registryVersion.toUpperCase()}, but the body could not be retrieved from 0G Storage right now.`);
+        ui.fail(`Receipt ${missingBody.onChainId} is anchored on ${missingBody.registryVersion.toUpperCase()}, but the body is not cached locally and 0G Storage cannot serve it from the on-chain root.`);
         ui.hint(`receiptRoot: ${missingBody.receiptRoot}`);
-        ui.hint(`storageRoot: ${missingBody.storageRoot}`);
+        ui.hint(`storageRoot: ${missingBody.storageRoot}  (sha256(input plaintext) — not the 0G Storage upload root)`);
         ui.hint(`indexer: ${msg}`);
-        if (/file not found|404/i.test(msg)) {
-          ui.hint(`Possible causes:`);
-          ui.hint(`  · propagation lag — fresh anchors can take 5-15 min before the indexer serves them`);
-          ui.hint(`  · the storage blob was GC'd if no replication fee was paid`);
-          ui.hint(`The chain anchor itself is still valid — the receipt root above is durable on-chain.`);
-        }
+        ui.hint(`Why this fails: the on-chain storageRoot is a content-addressed digest of the input, not a fetch URL.`);
+        ui.hint(`The body has to come from local cache, the operator who anchored it, or a stranger who saved it.`);
+        ui.hint(`The chain anchor itself is still valid — the receiptRoot above is durable on-chain.`);
         ui.hint('Run `ivaronix receipt show ' + pathOrId + '` for on-chain metadata only (no body needed).');
         process.exitCode = 1;
         return;
