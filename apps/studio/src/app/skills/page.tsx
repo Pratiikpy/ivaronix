@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { PermissionPills } from '@/components/PermissionPills';
 import { loadAllSkills } from '@/lib/skills';
+import { FIRST_PARTY_SLUGS } from '@/lib/first-party-skills';
 import { getSkillRegistry } from '@/lib/chain';
 import { skillIdFromName, versionIdFromSemver } from '@ivaronix/og-chain';
 import type { ConsensusTier } from '@ivaronix/core';
@@ -44,8 +45,19 @@ async function loadCards(): Promise<SkillCard[]> {
   const CHUNK = 12;       // 12 parallel RPCs is well under Galileo throughput
   const MAX_RETRY = 2;    // first call + 2 retries = 3 attempts per skill
 
+  // Bug-67: pre-fix, this page made 161 getVersion calls — one per skill —
+  // including 151 third-party imports that we KNOW are not on chain. Skip
+  // the RPC entirely for non-first-party slugs (~16x reduction in chain
+  // load + ~5s TTFB cut). Same registry-MATCH semantics for the 10
+  // first-party skills the user actually cares about.
+  const firstPartySet = new Set<string>(FIRST_PARTY_SLUGS as readonly string[]);
+
   async function resolveStatus(s: ReturnType<typeof loadAllSkills>[number]): Promise<SkillCard['registryStatus']> {
     if (!reg) return 'unknown';
+    // Imports are deterministically 'unregistered' (never published on chain).
+    // Skipping the RPC is the legitimate optimization — they would ALL
+    // return null after a wasted round trip.
+    if (!firstPartySet.has(s.id)) return 'unregistered';
     const skillId = skillIdFromName(s.id);
     const versionId = versionIdFromSemver(s.manifest.version);
     for (let attempt = 0; attempt <= MAX_RETRY; attempt++) {
