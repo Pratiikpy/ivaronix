@@ -205,10 +205,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
               <div className="card" style={{ gridColumn: 'span 2' }}>
                 <div className="section-label">recent receipts ({data.recentReceipts.length})</div>
+                {/* Bug-68: surface the 5k-block scan window so a user who anchored */}
+                {/* 10 receipts yesterday doesn't see "recent receipts (0)" and think */}
+                {/* their data was lost. The window is in dashboard.ts (perf trade-off */}
+                {/* to keep TTFB under 5s); passport.receiptCount is the lifetime total. */}
+                <p style={{ fontSize: 11, color: 'var(--color-muted)', marginTop: 6, marginBottom: 0 }}>
+                  scan window: ~5,000 recent blocks (~75 min on mainnet)
+                  {data.passport ? <> · passport lifetime total: <span className="mono">{data.passport.receiptCount}</span></> : null}
+                </p>
                 {data.recentReceipts.length === 0 ? (
                   <p style={{ fontSize: 14, color: 'var(--color-muted)', marginTop: 12 }}>
-                    <span className="italic-display">No receipts yet.</span> Run something —
-                    <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>ivaronix doc ask &lt;file&gt; "..."</code>
+                    <span className="italic-display">No receipts in the recent window.</span> Older receipts stay on chain at <code className="mono" style={{ marginLeft: 6, fontSize: 12 }}>/r/&lt;id&gt;</code> — paginated history is on the v1.1 roadmap.
                   </p>
                 ) : (
                   <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
