@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Section } from '@/components/Section';
 import { PermissionPills } from '@/components/PermissionPills';
@@ -8,6 +9,14 @@ import type { ConsensusTier } from '@ivaronix/core';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
+
+// Bug-66: /skills was missed in the Bug-56 metadata sweep — it inherited
+// the generic homepage title. Caught by a final whole-sitemap title
+// audit after Bug-65 deployed.
+export const metadata: Metadata = {
+  title: 'Skills · Ivaronix',
+  description: 'Browse every published Ivaronix skill — manifest, fee split, REGISTRY MATCH chip, permissions.',
+};
 
 interface SkillCard {
   id: string;
