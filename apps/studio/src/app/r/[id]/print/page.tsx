@@ -71,7 +71,7 @@ export default async function PrintableReceipt({ params }: { params: Promise<{ i
     ? 'TIER 2 · External-signed'
     : 'Anchored';
   const status = isFullyVerified ? 'FULLY VERIFIED' : 'ANCHORED';
-  const skillId = local?.request?.skillId ?? receiptTypeLabel(onChain.receiptType);
+  const skillId = local?.request?.skillId ?? `type: ${receiptTypeLabel(onChain.receiptType)}`;
   const skillVersion = local?.request?.skillVersion;
   const issuedAt = local?.chainAnchor?.anchorTimestamp
     ? new Date(local.chainAnchor.anchorTimestamp * 1000).toISOString().replace('T', ' ').slice(0, 19) + 'Z'
