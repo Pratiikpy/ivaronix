@@ -140,9 +140,16 @@ openclawCommand
   .description('Parse a SKILL.md and validate it against the OpenClaw frontmatter contract')
   .option('--check-env', 'also assert that every metadata.openclaw.requires.env var is set in the current shell')
   .action(async (skillMdPath: string, opts: { checkEnv?: boolean }) => {
-    const abs = resolve(process.cwd(), skillMdPath);
+    // INIT_CWD = the dir where the user invoked pnpm/npm; process.cwd() is
+    // the package's own dir (apps/cli) when running via pnpm --filter.
+    // Mirrors the doc.ts pattern (commit aaeabe2). Bug-49 was "SKILL.md
+    // not found" on a path that obviously exists from the repo root.
+    const userCwd = process.env.INIT_CWD ?? process.cwd();
+    const abs = resolve(userCwd, skillMdPath);
     if (!existsSync(abs)) {
       ui.fail(`SKILL.md not found at ${skillMdPath}`);
+      ui.hint(`resolved to: ${abs}`);
+      ui.hint(`cwd:         ${userCwd}`);
       process.exitCode = 1;
       return;
     }
