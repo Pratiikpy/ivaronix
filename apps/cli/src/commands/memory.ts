@@ -335,7 +335,7 @@ memoryCommand
             // receiptType==7. The receipt body cites the updateMemoryRoot
             // tx as the underlying chain action.
             ui.divider();
-            ui.pending('anchoring passport_update receipt (B-V2-35 slot 7)...');
+            ui.pending('anchoring passport_update receipt (canonical slot 7)...');
             try {
               const receiptRegV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
               const receiptRegV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
@@ -450,7 +450,7 @@ memoryCommand
           }
         } else {
           ui.divider();
-          ui.hint(`Storage blob is content-addressed; anyone with the rootHash can re-fetch the manifest JSON. Pass --anchor-on-chain to also write the rootHash into AgentPassport.memoryRoot (~0.0002 OG · B-V2-24).`);
+          ui.hint(`Storage blob is content-addressed; anyone with the rootHash can re-fetch the manifest JSON. Pass --anchor-on-chain to also write the rootHash into AgentPassport.memoryRoot (~0.0002 OG).`);
         }
       } catch (err) {
         ui.divider();
@@ -565,7 +565,7 @@ memoryCommand
     // slot 4) on V3 ReceiptRegistry. Chain consumers can now filter
     // receiptType==4 to find every memory-grant event. The receipt body
     // cites the CapabilityRegistry grant tx as the underlying chain action.
-    ui.pending('anchoring memory_access receipt (B-V2-35 slot 4)...');
+    ui.pending('anchoring memory_access receipt (canonical slot 4)...');
     try {
       const receiptRegV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
       const receiptRegV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');

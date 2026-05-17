@@ -40,7 +40,7 @@ daCommand
         ui.hint('  docker compose up -d da-client');
         ui.hint('');
         ui.hint('Then re-run `ivaronix da preflight`. See `da.env.example` for the env');
-        ui.hint('shape and `docker-compose.yml` for the container config (planning-003 §A.5.21).');
+        ui.hint('shape and `docker-compose.yml` for the container config.');
         process.exitCode = 1;
       }
     } finally {

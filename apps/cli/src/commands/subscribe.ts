@@ -255,7 +255,7 @@ subscribeCommand
     // (canonical slot 9) on V3 ReceiptRegistry. Chain consumers can
     // filter receiptType==9 to find every subscription tick.
     ui.divider();
-    ui.pending('anchoring subscription_skill_exec receipt (B-V2-35 slot 9)...');
+    ui.pending('anchoring subscription_skill_exec receipt (canonical slot 9)...');
     try {
       const receiptRegV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
       const receiptRegV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
