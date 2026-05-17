@@ -477,6 +477,14 @@ passportCommand
   .command('executor <executor>')
   .description('Show whether an executor is currently authorized for your passport')
   .action(async (executor: string) => {
+    // Bug-44 fix: validate the address shape upfront so 'not-an-address'
+    // doesn't fall through to a confusing chain-revert message.
+    if (!/^0x[0-9a-fA-F]{40}$/.test(executor)) {
+      ui.fail(`Invalid executor address: "${executor}"`);
+      ui.hint('Expected a 0x-prefixed 40-character hex address (e.g. 0xaa954c33810029a3eFb0bf755FEF17863E8677Ce)');
+      process.exitCode = 1;
+      return;
+    }
     const env = loadEnv();
     // V2-first lookup with V1 fallback (Bug-32 fix). Earlier this read
     // only the V1 deployment record, which doesn't exist on mainnet —

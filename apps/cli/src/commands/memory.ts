@@ -162,6 +162,16 @@ memoryCommand
   .option('--from <ts>', 'unix-ms lower bound')
   .option('--to <ts>', 'unix-ms upper bound')
   .action(async (query: string, opts: { tags?: string; topK: string; from?: string; to?: string }) => {
+    // Bug-45 fix: reject empty / whitespace-only queries before constructing
+    // the engine. Empty queries previously returned score-0 bogus matches
+    // AND emitted an on-chain MemoryAccessLog tx — wasting both the user's
+    // attention and gas budget for what should be a clear input error.
+    if (!query.trim()) {
+      ui.fail('recall query is empty — pass a search string');
+      ui.hint('Example: ivaronix memory recall "lease deposit" --top-k 5');
+      process.exitCode = 1;
+      return;
+    }
     const engine = buildEngine();
     if (!engine) {
       process.exitCode = 1;
