@@ -203,7 +203,7 @@ indexerCommand
         ui.info(`contract V${reg.registryVersion}          ${reg.address}`);
         ui.info(`  cursor (last block) ${c?.lastBlock ?? '(none)'}`);
       }
-      ui.info(`total receipts       ${s.totalReceipts}  (V1: ${s.totalV1} + V2: ${s.totalV2})`);
+      ui.info(`total receipts       ${s.totalReceipts}  (V1: ${s.totalV1} + V2: ${s.totalV2} + V3: ${s.totalV3})`);
       ui.info(`distinct agents      ${s.distinctAgents}`);
       ui.info(`latest receipt id    ${s.latestReceiptId >= 0 ? s.latestReceiptId : '(none)'}`);
       ui.info(`latest block         ${s.latestBlock}`);
