@@ -395,7 +395,7 @@ function FooterNote() {
     <section style={wrap({ paddingTop: 64, paddingBottom: 96 })}>
       <hr style={{ border: 0, borderTop: `1px solid ${T.line}`, margin: '0 0 32px' }} />
       <p style={{ fontSize: 13, color: T.muted, maxWidth: 800, lineHeight: 1.6 }}>
-        The original standalone HTML lives at <code style={inlineCode}>/brand.html</code> as a downloadable artifact. This native page is the source of truth for the brand on the live product. Voice contract: <code style={inlineCode}>CLAUDE.md §9</code>. Visual contract: <code style={inlineCode}>CLAUDE.md §10</code>.
+        Standalone HTML at <a href="/brand.html" style={{ color: 'inherit' }}><code style={inlineCode}>/brand.html</code></a>.
       </p>
     </section>
   );
