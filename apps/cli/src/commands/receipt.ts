@@ -1130,7 +1130,7 @@ receiptCommand
 // ─── list ───────────────────────────────────────────────────────────────────
 receiptCommand
   .command('list')
-  .description('List recent receipts from V1 + V2 ReceiptRegistry events (merged + sorted)')
+  .description('List recent receipts from V1 + V2 + V3 ReceiptRegistry events (merged + sorted by timestamp desc)')
   .option('--agent <addr>', 'filter to receipts anchored by this wallet (default: configured wallet)')
   .option('--since <date>', 'only show receipts after this ISO date (YYYY-MM-DD)')
   .option('--limit <n>', 'max rows to print', '20')
