@@ -1,0 +1,150 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRV5EWQZSVAQGH4W9ARYQ395",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": false,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1779028161278",
+    "zgResKey": "0d644881-9be8-4ce0-9a8c-31f3c37eac69",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 504,
+    "outputTokens": 2389,
+    "inputCostNeuron": "25200000000000",
+    "outputCostNeuron": "238900000000000",
+    "totalCostNeuron": "264100000000000",
+    "totalCostOg": "0.0002641000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "237690000000000",
+      "treasuryNeuron": "26410000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    },
+    "payment": {
+      "txHash": "0x1fa1b4ca7440532060060bf7ec1a73cc6f14a2f9c1e2d8425e2408c02d975ce0",
+      "paymentContract": "0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A",
+      "payer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "paidOg": "15000000000000000",
+      "creatorPaidOg": "13500000000000000",
+      "treasuryPaidOg": "1500000000000000",
+      "creator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "paidAt": 1779028138,
+      "subsidised": false,
+      "refunded": false,
+      "draftReceiptRoot": "0x6342dc76a300b70cafd1e9109c7187b9081e24aca6d50fc2614e002166d23df0"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x89b502061f3d6e9b7ec57e85158c5764d73508365b705b03201e8b3280f4e371",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:1877fa2f5a796f1231372f9d4c4b74d84522b5be936eafd7ac8f23fe47b56db9"
+    },
+    "receiptRoot": "0x708ec4e93f61552c0bc3738574fc4c0c165d237b12db5230dd9c9af1077291a8"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779028148393,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "131",
+    "anchorTxHash": "0xcdf64a74704b8af320b3ff76989298fd86a874cc7aae050558398c00b1758b51",
+    "anchorBlockNumber": 33525875,
+    "anchorTimestamp": 1779028172
+  },
+  "outputs": {
+    "outputHash": "sha256:508458a1ada8e3026822b2679619a1b1597e63fa5c1a4fb4a5aaa184dde7c9f8",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Risk: The most concerning clause creates extreme, unpredictable financial exposure by allowing unlimited rent spikes. Evidence: Section 4 permits the landlord to unilaterally raise rent by up to 50",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779028161280,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x1a9766b60ceebc4dfa61eff484edbbc62b70b8da408ec61e329cb0253a0a56c92469c129a246d01f61d4773bad6449cd038c0fbd74f03dbccd257247ec3fd3be1b"
+  }
+}

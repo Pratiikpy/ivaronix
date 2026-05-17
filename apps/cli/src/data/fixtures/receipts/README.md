@@ -16,11 +16,16 @@ endpoint accepts unauthenticated `processResponse` queries.
 
 ## Bundled receipts
 
-| ULID | On-chain id | Tier | Status |
-|---|---|---|---|
-| `rcpt_01KRR69YKYSACE5Y25PQWF2XEW` | 66 | quick | FULLY VERIFIED ✓ |
-| `rcpt_01KRR7X3BW8VJJ65KMQSQHT04H` | 68 | high-stakes (5-role) | FULLY VERIFIED ✓ |
-| `rcpt_01KRR8EP8QHSE5BRFD8GG9X9FR` | 70 | audit (6-role) | FULLY VERIFIED ✓ |
+| ULID | On-chain id | Skill | Tier | Status |
+|---|---|---|---|---|
+| `rcpt_01KRR69YKYSACE5Y25PQWF2XEW` | 66 | private-doc-review | quick | FULLY VERIFIED ✓ |
+| `rcpt_01KRR7X3BW8VJJ65KMQSQHT04H` | 68 | private-doc-review | high-stakes (5-role) | FULLY VERIFIED ✓ |
+| `rcpt_01KRR8EP8QHSE5BRFD8GG9X9FR` | 70 | private-doc-review | audit (6-role) | FULLY VERIFIED ✓ |
+| `rcpt_01KRV2M9DM0QY1D5N1DKR8JBWS` | 124 | legal-citation-verifier | high-stakes (5-role) | FULLY VERIFIED ✓ · Bug-72 proof |
+| `rcpt_01KRV4ZAJHSRDJ0A0GY2QCVF2A` | 126 | term-sheet-risk-scanner | high-stakes (5-role) | FULLY VERIFIED ✓ · Bug-72 proof |
+| `rcpt_01KRV5AHFAPFRX0MKQZAD6HSK2` | 129 | nda-triage-reviewer | standard (3-role) · PAID | anchored |
+| `rcpt_01KRV5CY3YP1197J1Y6SH9GSM1` | 130 | contract-renewal-clause-detector | standard (3-role) · PAID | anchored |
+| `rcpt_01KRV5EWQZSVAQGH4W9ARYQ395` | 131 | private-doc-review | quick · PAID | anchored |
 
 Try the README's quick start:
 
@@ -28,9 +33,15 @@ Try the README's quick start:
 pnpm ivaronix receipt verify 66 --network mainnet
 pnpm ivaronix receipt verify 68 --network mainnet --tee-independent
 pnpm ivaronix receipt verify 70 --network mainnet --tee-independent
+# Bug-72 keyring-rotation fix · 2026-05-17 · all 5 first-party skills proven:
+pnpm ivaronix receipt verify 124 --network mainnet --tee-independent  # legal-citation 5-role
+pnpm ivaronix receipt verify 126 --network mainnet --tee-independent  # term-sheet 5-role
+pnpm ivaronix receipt verify 129 --network mainnet                    # nda-triage paid 3-role
+pnpm ivaronix receipt verify 130 --network mainnet                    # contract-renewal paid 3-role
+pnpm ivaronix receipt verify 131 --network mainnet                    # private-doc paid quick
 ```
 
-All three should produce `FULLY VERIFIED ✓` on a fresh clone.
+All 8 should produce `FULLY VERIFIED ✓` or `ANCHORED ✓` on a fresh clone.
 
 ## Why bundle these?
 

@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRV5AHFAPFRX0MKQZAD6HSK2",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "nda-triage-reviewer",
+    "skillVersion": "0.1.1",
+    "skillManifestHash": "sha256:114042c5a4cc6ee3c6bcf66cf2eb6574fe6bee543737f5eef2e6b4521db29792",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "judge"
+      ],
+      "convergenceScore": 0.201,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.201). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"1. Section 4 is the most concerning clause because it permits the landlord to unilaterally raise rent by up to 50% per quarter without any notice or justificati\"\ncritic: \"1. **Section 1 ($13,500 non-refundable deposit, stablecoin, 24-hour window)** — Extremely one-sided funding term. Non-refundable security deposits are routinely\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xd9d0fef923bf7d22489c2f2aac08e01f9d83a2472d7b53b8e900a0c05baf31fe",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "b5b5987c-aa00-4d70-9d45-68cd7d0aee40",
+          "content": "1. Section 4 is the most concerning clause because it permits the landlord to unilaterally raise rent by up to 50% per quarter without any notice or justification.\n2. Section 9 is highly problematic as it requires the tenant to waive all jury trial rights and consent to mandatory arbitration in a venue chosen exclusively by the landlord.\n3. Section 1 creates significant financial and operational risk by mandating a non-refundable $13,500 security deposit to be paid in stablecoin within a strict 24-hour window.",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xeed78c46e01b7b5eb34a4aad3435a3b5c2818023665f724cbd407ec7e170f250",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "413ed057-c8e2-4931-babf-d11932d86e05",
+          "content": "1. **Section 1 ($13,500 non-refundable deposit, stablecoin, 24-hour window)** — Extremely one-sided funding term. Non-refundable security deposits are routinely unenforceable in residential tenancies, and requiring payment in stablecoin introduces valuation volatility, potential regulatory friction, and zero consumer protections typically found in fiat escrow. The 24-hour deadline provides no buffer for funding verification or dispute resolution before forfeiture.\n\n2. **Section 4 (Unilateral 50% quarterly rent increase, no notice or justification)** — Mathematically unsustainable and procedurally naked. A 50% escalation every three months compounds to a 4× increase in a single year without any contractual caps, inflation adjustments, or procedural notice. It effectively nullifies the lease’s purpose by imposing catastrophic, unpredictable costs unilaterally.\n\n3. **Section 9 (Jury trial waiver + arbitration in landlord’s jurisdiction of choice)** — Removes a fundamental procedural right and grants the landlord unilateral forum selection. \"Landlord's jurisdiction of choice\" allows the counterparty to dictate venue after the fact, increasing your litigation costs and reducing neutral oversight. Combined with mandatory arbitration, it creates a heavily skewed dispute pathway.\n\n**Most concerning clause: Section 4.** While all three provisions are heavily landlord-favorable, the unilateral 50% per-quarter rent increase is immediately economically destructive. Unlike deposit or dispute clauses, which primarily affect risk allocation, this clause dictates the core financial terms of the agreement and does so without notice, justification, or standard escalation limits. It is the only clause that guarantees immediate operational and financial collapse upon execution.",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x2a1906bb167e2118f2bc16c6ee7f30ee137f2e98068d688a0f0466d662415c58",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "1d91a5bf-0ee5-40ac-bbcc-fcd2270149d1",
+          "content": "**Synthesis**\nBoth reviewers identify **Section 4** as the most concerning clause. They agree that the landlord’s unilateral authority to raise rent by up to 50% per quarter without notice or justification creates immediate, compounding financial exposure. While Section 1 (non-refundable stablecoin deposit with a 24-hour deadline) and Section 9 (waiver of jury trial + arbitration in a landlord-chosen venue) are also flagged as heavily one-sided, Section 4 is singled out as the primary deal-breaker because it dictates the core economic terms and can quickly render the agreement financially unworkable.\n\n**Where Reviewers AGREE (High Confidence)**\nBoth specialists converge on Section 4 being the critical risk:\n- `ANALYST`: “Section 4 is the most concerning clause because it permits the landlord to unilaterally raise rent by up to 50% per quarter without any notice or justification.”\n- `CRITIC`: “The unilateral 50% per-quarter rent increase is immediately economically destructive... It effectively nullifies the lease’s purpose by imposing catastrophic, unpredictable costs unilaterally.”\n\n**Where Reviewers DISAGREE**\nNone. Both reviewers align completely on Section 4 being the primary concern and rank Sections 1 and 9 as secondary but still severe procedural and financial risks.\n\n**Final Risk Level**\nHigh\n\n**Action**\nDo not sign as-is. Request immediate redlines to cap rent escalation, remove the unilateral 50% hike, establish a neutral dispute venue, and clarify the deposit mechanics before proceeding. If the counterparty refuses reasonable adjustments, decline the agreement.",
+          "independentVerified": null
+        }
+      ],
+      "policyApplied": "majority",
+      "dissents": 1
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1779028018665",
+    "zgResKey": "1d91a5bf-0ee5-40ac-bbcc-fcd2270149d1",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 4436,
+    "outputTokens": 7193,
+    "inputCostNeuron": "221800000000000",
+    "outputCostNeuron": "719300000000000",
+    "totalCostNeuron": "941100000000000",
+    "totalCostOg": "0.0009411000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "846990000000000",
+      "treasuryNeuron": "94110000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    },
+    "payment": {
+      "txHash": "0xce73c14e65a5a0e9045c369c1da991e424e95f38fee42f2901eca6eba808425f",
+      "paymentContract": "0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A",
+      "payer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "paidOg": "5000000000000000",
+      "creatorPaidOg": "4500000000000000",
+      "treasuryPaidOg": "500000000000000",
+      "creator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "paidAt": 1779027983,
+      "subsidised": false,
+      "refunded": false,
+      "draftReceiptRoot": "0x6d3fa44c3cb71df092542aa3078d9fa387da43a4001988d87f2dcc8678c8563a"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xbfc1eed98df12a4ec3575bbc2f8e35d165d274960447bd5a4ab41a281fe50ea2",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:e7ac0eb27f80c5f01a378da67a42865a797d15b0db744869db3700ea4b315f31"
+    },
+    "receiptRoot": "0x7c9110a2b7eec6a815a8233674c7e07e3867b83ac797d9ff5cd7da46f24fec0f"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779028006136,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "129",
+    "anchorTxHash": "0x927c1260b42056b69d2e4654d37b2675392843ed7b00571bd4d52c7e2a6464b4",
+    "anchorBlockNumber": 33525714,
+    "anchorTimestamp": 1779028030
+  },
+  "outputs": {
+    "outputHash": "sha256:f87b8fe4d02c02fc05cd9f81ebbcf1ef013cecb5e321262bce51bbf917a27614",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "**Synthesis** Both reviewers identify **Section 4** as the most concerning clause. They agree that the landlord’s unilateral authority to raise rent by up to 50% per quarter without notice or justific",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779028018667,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x322e4a31f1d10550cd11e27152f975aef651c6d02927f505081bc0b5afb01831160dcbf365fd33b8d86ec0a37fb651bb2599f8b1b8db7c1a4bcb5f294a38c6081b"
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRV5CY3YP1197J1Y6SH9GSM1",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "contract-renewal-clause-detector",
+    "skillVersion": "0.1.1",
+    "skillManifestHash": "sha256:9178eac446564f20937db0d696ed34ff4e082d3d4fa84512afc75d76e6e06c8f",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "judge"
+      ],
+      "convergenceScore": 0.246,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.246). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"1. **Section 4** is the most concerning clause because the document states the \"Landlord may unilaterally raise rent by up to 50% per quarter without notice or \"\ncritic: \"1. Section 4 is the most concerning clause. It permits the landlord to increase rent by up to 50% per quarter without notice or justification. This eliminates f\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0x564a1fb05edd486a64b7b7d1cbab14457bcc00325fde4be64e433883566f4e1c",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "d442b9e9-55e5-442e-a555-458a6efcf84c",
+          "content": "1. **Section 4** is the most concerning clause because the document states the \"Landlord may unilaterally raise rent by up to 50% per quarter without notice or justification,\" creating severe and unpredictable financial exposure.\n2. **Section 1** poses immediate capital risk since the agreement specifies the \"Tenant agrees to a $13,500 non-refundable security deposit, payable in stablecoin within 24 hours.\"\n3. **Section 9** severely limits legal recourse as the text confirms the \"Tenant waives all rights to a jury trial and consents to mandatory arbitration in the landlord's jurisdiction of choice.\"\n\nNo auto-renewal language found in the document. Based on the provided text, Section 4 remains the most concerning due to its extreme, unregulated price escalation and complete lack of notice requirements.",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0x332ccb6093d9814c4d6ecf18aa0786e99195f8a9073f803dcc3b221df3a96f19",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "2cc1a47e-b973-4f77-ba5f-a233d97ada28",
+          "content": "1. Section 4 is the most concerning clause. It permits the landlord to increase rent by up to 50% per quarter without notice or justification. This eliminates financial predictability, compounds rapidly over time, and grants the counterparty unilateral pricing power with zero transparency or contractual caps.\n2. Section 1 creates severe upfront financial exposure. A $13,500 deposit explicitly labeled \"non-refundable\" negates the standard protective function of a security deposit. The requirement to pay in stablecoin within 24 hours adds volatility and settlement risk before any premises or services are delivered.\n3. Section 9 strips procedural protections. The mandatory arbitration waiver and the landlord’s exclusive right to select the jurisdiction remove access to public courts, limit appeal options, and create a structural disadvantage for any future dispute.\nNo auto-renewal language found in the document.\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0xac6d04516399412c0a8aa35c999e1513e2e4da687e8e76a4fad14fd316090b7c",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "9ac19325-8a01-4633-b4c4-6796674b5929",
+          "content": "**Synthesized Judgment**\nBoth reviewers unanimously identify **Section 4** as the most concerning clause. It permits the landlord to unilaterally raise rent by up to 50% per quarter without notice or justification, creating immediate and compounding financial exposure with zero transparency or contractual caps.\n\n**Where Reviewers AGREE (High Confidence)**\n- **Primary Risk:** Section 4 is the worst clause due to extreme, unregulated price escalation.\n- **Secondary Risks:** Section 1 poses severe upfront capital risk (non-refundable $13,500 stablecoin deposit due within 24 hours), and Section 9 strips procedural protections (mandatory arbitration in the landlord’s chosen jurisdiction).\n- **Auto-Renewal Scope:** Neither reviewer found any auto-renewal, evergreen, or negative-option billing language in the provided excerpt.\n\n**Where Reviewers DISAGREE**\n- There is **no substantive disagreement** between the reviewers. Both arrive at identical conclusions regarding the risk hierarchy, clause analysis, and absence of renewal terms. No conflicting claims to quote.\n\n**Final Risk Level:** high\n\n**Action:** Do not execute under the current terms. Demand: (1) a strict, written cap on periodic rent increases, (2) a standard refundable deposit paid in fiat with clear return conditions, and (3) neutral dispute resolution/venue terms. If auto-renewal or pricing provisions exist in unprovided sections, request the full contract for a complete scan before signing.",
+          "independentVerified": null
+        }
+      ],
+      "policyApplied": "first-objection",
+      "dissents": 2
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1779028097148",
+    "zgResKey": "9ac19325-8a01-4633-b4c4-6796674b5929",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 3216,
+    "outputTokens": 7361,
+    "inputCostNeuron": "160800000000000",
+    "outputCostNeuron": "736100000000000",
+    "totalCostNeuron": "896900000000000",
+    "totalCostOg": "0.0008969000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "807210000000000",
+      "treasuryNeuron": "89690000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    },
+    "payment": {
+      "txHash": "0x1fa186f4c3cd576754014684b8f08e4206fe9c166d8a03bd75207ceaf52234bb",
+      "paymentContract": "0xf8085B43a08e957Fea157394dbB0d3EB76A1cD6A",
+      "payer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "paidOg": "5000000000000000",
+      "creatorPaidOg": "4500000000000000",
+      "treasuryPaidOg": "500000000000000",
+      "creator": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "paidAt": 1779028061,
+      "subsidised": false,
+      "refunded": false,
+      "draftReceiptRoot": "0x6620b5693832d2b50fdd6c8701837a1bad96b3ded12b6310e70be315f30b33d1"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x46d4f978a26a4545230b3f128e3b0e119f79acf506348d525cd5601dcb9dbb34",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:0b6019690349951caf4bf1d0429a5a31002b3361ac8ceaae2b57ca4a08ff6d3c"
+    },
+    "receiptRoot": "0xdb2e966b551aa3203b63875aac2da7b3e899cd99e08ee6b74bb002ad52d5ab72"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779028082755,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "130",
+    "anchorTxHash": "0xf2e806f9b92138ec3f5d33fb50532df5453ab1c1a91b110c65e3c037a4f1b74a",
+    "anchorBlockNumber": 33525803,
+    "anchorTimestamp": 1779028109
+  },
+  "outputs": {
+    "outputHash": "sha256:cdc2e509a7e35dd30abd37fea02a01bb69595e8fad2703abc693518cfe41ea5e",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "**Synthesized Judgment** Both reviewers unanimously identify **Section 4** as the most concerning clause. It permits the landlord to unilaterally raise rent by up to 50% per quarter without notice or ",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779028097150,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xee892902860651879b720b73ada13b689befdb697fec9acd61b71be6f05b02386dfaa617b6e16eeb6a19de773ddf2602c501ef91e3c43f372a0b32bbaeb4bc471b"
+  }
+}
