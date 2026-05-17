@@ -7,6 +7,7 @@ import { Wallet, JsonRpcProvider } from 'ethers';
 import {
   ReceiptRegistryClient,
   ReceiptRegistryV2Client,
+  ReceiptRegistryV3Client,
   getDeployedAddress,
 } from '@ivaronix/og-chain';
 import { buildReceipt, signReceipt, defaultChainAnchor } from '@ivaronix/receipts';
@@ -163,11 +164,15 @@ export function addBulkCommand(parent: Command): void {
       ui.title('Aggregate receipt');
       const provider = new JsonRpcProvider(env.rpcUrl, { chainId: env.chainId, name: env.network });
       const wallet = new Wallet(env.privateKey, provider);
-      // V2-first WRITE per .claude/rules/og-chain.md
+      // V3-first WRITE (Bug-42a fix) — previously skipped V3 entirely
+      // and anchored aggregates on V2, leaving them on the older registry.
+      // V3 is canonical on mainnet today; the per-child anchors already
+      // use V3 via the doc-runner path, so the aggregate matches now.
+      const registryAddrV3 = getDeployedAddress(env.network, 'ReceiptRegistryV3');
       const registryAddrV2 = getDeployedAddress(env.network, 'ReceiptRegistryV2');
       const registryAddrV1 = getDeployedAddress(env.network, 'ReceiptRegistry');
-      const registryAddr = registryAddrV2 ?? registryAddrV1;
-      const registryVersion: 'v1' | 'v2' = registryAddrV2 ? 'v2' : 'v1';
+      const registryAddr = registryAddrV3 ?? registryAddrV2 ?? registryAddrV1;
+      const registryVersion: 'v1' | 'v2' | 'v3' = registryAddrV3 ? 'v3' : registryAddrV2 ? 'v2' : 'v1';
       // V2-first passport handle (K-6 memoryRoot-poisoning fix on V2).
       const passportHandle = getActivePassportClient(env.network, wallet);
       if (!registryAddr) { ui.fail('ReceiptRegistry not deployed'); process.exitCode = 1; return; }
@@ -280,7 +285,20 @@ export function addBulkCommand(parent: Command): void {
       let txHash: string;
       let txBlock: number | null;
       let onChainId: string;
-      if (registryVersion === 'v2') {
+      if (registryVersion === 'v3') {
+        const regV3 = new ReceiptRegistryV3Client(registryAddr, wallet);
+        const { tx: v3Tx } = await regV3.signAndAnchor(wallet, {
+          receiptRoot: signed.storage.receiptRoot as Hash,
+          storageRoot: childIdsBytes32,
+          receiptType: RECEIPT_TYPE_CODE,
+          attestationHash: ZERO_HASH,
+        });
+        txHash = v3Tx.hash;
+        const r = await v3Tx.wait();
+        txBlock = r?.blockNumber ?? null;
+        const nextId = await regV3.nextId();
+        onChainId = (nextId - 1n).toString();
+      } else if (registryVersion === 'v2') {
         const regV2 = new ReceiptRegistryV2Client(registryAddr, wallet);
         const { tx: v2Tx } = await regV2.signAndAnchor(wallet, {
           receiptRoot: signed.storage.receiptRoot as Hash,
