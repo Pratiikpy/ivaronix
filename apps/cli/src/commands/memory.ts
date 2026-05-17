@@ -66,8 +66,11 @@ function memoryDbPath(): string {
   return resolve(process.cwd(), '.ivaronix', 'memory', 'ivaronix.db');
 }
 
-/** Build a configured MemoryEngine. */
-function buildEngine(): MemoryEngine | null {
+/** Build a configured MemoryEngine. Pass emitLog=false to skip on-chain log
+ *  emission (Bug-40 fix — the --no-log flag is honored at engine construction
+ *  by omitting the MemoryAccessLog address, which makes engine.accessLog
+ *  undefined so the try-block at engine.ts:87 never fires). */
+function buildEngine(opts: { emitLog?: boolean } = {}): MemoryEngine | null {
   const env = loadEnv();
   if (!env.privateKey || !env.walletAddress) {
     ui.fail('Memory engine requires IVARONIX_SIGNER_KEY + IVARONIX_WALLET_ADDRESS in .env (legacy aliases EVM_PRIVATE_KEY + EVM_WALLET_ADDRESS still resolve)');
@@ -82,7 +85,8 @@ function buildEngine(): MemoryEngine | null {
   const capAddr = capAddrV2 ?? capAddrV1;
   const logAddrV2 = getDeployedAddress(env.network, 'MemoryAccessLogV2');
   const logAddrV1 = getDeployedAddress(env.network, 'MemoryAccessLog');
-  const logAddr = logAddrV2 ?? logAddrV1;
+  // Honor emitLog=false by treating the access-log address as absent.
+  const logAddr = opts.emitLog === false ? null : (logAddrV2 ?? logAddrV1);
 
   return MemoryEngine.create({
     ownerWallet: env.walletAddress as Address,
@@ -108,7 +112,10 @@ memoryCommand
   .option('--receipt <id>', 'associate this observation with a receipt id')
   .option('--no-log', 'skip on-chain MemoryAccessLog emission')
   .action(async (text: string, opts: { tags: string; source: string; receipt?: string; log: boolean }) => {
-    const engine = buildEngine();
+    // Commander auto-negates --no-log into opts.log=false (default true). Pass
+    // emitLog through so the engine constructor omits the access-log address
+    // when the user opts out (Bug-40 fix).
+    const engine = buildEngine({ emitLog: opts.log });
     if (!engine) {
       process.exitCode = 1;
       return;
