@@ -11,82 +11,57 @@
  * disappears with /tmp, so the page shows "skill name in storage body —
  * fetch pending". This cache closes that gap.
  *
- * Keyed by `receiptRoot` (the canonical content-hash) so the lookup in
- * /r/<id> can ask Redis after the on-chain anchor is fetched. TTL set
- * to 30 days — receipts older than that fall back to the on-chain
- * anchor metadata only (which is forever).
+ * Uses the official @upstash/redis SDK rather than hand-rolling the REST
+ * wire format · earlier hand-rolled attempts hit silent format mismatches.
+ *
+ * Keyed by `receiptRoot` (the canonical content-hash). TTL 30 days.
  */
+import { Redis } from '@upstash/redis';
 
-const URL_VAR = 'UPSTASH_REDIS_REST_URL';
-const TOKEN_VAR = 'UPSTASH_REDIS_REST_TOKEN';
 const TTL_SECONDS = 60 * 60 * 24 * 30; // 30 days
 const KEY_PREFIX = 'receipt:body:';
 
-function getCreds(): { url: string; token: string } | null {
-  const url = process.env[URL_VAR]?.trim();
-  const token = process.env[TOKEN_VAR]?.trim();
-  if (!url || !token) return null;
-  return { url, token };
+let redisClient: Redis | null = null;
+function getRedis(): Redis | null {
+  if (redisClient) return redisClient;
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) {
+    console.warn('[receipt-cache] UPSTASH_REDIS_REST_URL/TOKEN unset · cache disabled');
+    return null;
+  }
+  redisClient = new Redis({ url, token });
+  return redisClient;
 }
 
 export async function cacheReceiptBody(receiptRoot: string, body: unknown): Promise<boolean> {
-  const creds = getCreds();
-  if (!creds) {
-    console.warn('[receipt-cache] UPSTASH_REDIS_REST_URL/TOKEN unset · skipping persistence');
-    return false;
-  }
+  const r = getRedis();
+  if (!r) return false;
   const key = KEY_PREFIX + receiptRoot.toLowerCase();
-  const value = JSON.stringify(body);
-  // Upstash REST API: command-array form via the body. Sending the value
-  // in the URL path fails for receipt bodies (>2KB exceeds URL limits)
-  // and the JSON-wrap form (`{ value }`) wasn't decoded server-side.
-  // The command-array form `["SET", key, value, "EX", ttl]` is the most
-  // robust shape and matches the @upstash/redis SDK's wire format.
   try {
-    const res = await fetch(creds.url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${creds.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(['SET', key, value, 'EX', String(TTL_SECONDS)]),
-    });
-    if (!res.ok) {
-      const txt = await res.text().catch(() => '');
-      console.warn(`[receipt-cache] Upstash SET failed (${res.status}) for ${receiptRoot.slice(0, 10)}… body=${txt.slice(0, 200)}`);
-      return false;
-    }
+    await r.set(key, JSON.stringify(body), { ex: TTL_SECONDS });
     return true;
   } catch (err) {
-    console.warn('[receipt-cache] Upstash SET threw:', err);
+    console.warn(`[receipt-cache] SET ${receiptRoot.slice(0, 10)}… failed:`, (err as Error).message);
     return false;
   }
 }
 
 export async function fetchCachedReceiptBody(receiptRoot: string): Promise<unknown | null> {
-  const creds = getCreds();
-  if (!creds) return null;
+  const r = getRedis();
+  if (!r) return null;
   const key = KEY_PREFIX + receiptRoot.toLowerCase();
   try {
-    const res = await fetch(creds.url, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${creds.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(['GET', key]),
-      // 60s edge cache — receipts are immutable once cached.
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { result?: string | null };
-    if (!data.result) return null;
-    try {
-      return JSON.parse(data.result);
-    } catch {
-      return null;
+    const data = await r.get<string>(key);
+    if (!data) return null;
+    // The SDK auto-parses JSON when the stored value is a JSON string;
+    // handle both shapes for safety.
+    if (typeof data === 'string') {
+      try { return JSON.parse(data); } catch { return data; }
     }
-  } catch {
+    return data;
+  } catch (err) {
+    console.warn(`[receipt-cache] GET ${receiptRoot.slice(0, 10)}… failed:`, (err as Error).message);
     return null;
   }
 }

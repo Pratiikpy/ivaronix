@@ -1,73 +1,48 @@
 /**
- * Diagnostic-only endpoint · `/api/_debug/upstash`
+ * Diagnostic-only endpoint · `/api/debug/upstash`
  *
- * Tests the receipt-cache write/read round-trip against the deployed
- * Upstash credentials. Returns the raw HTTP responses so we can see
- * exactly where the cache flow is breaking on production (the
- * `console.warn` in receipt-cache.ts is invisible from outside Vercel
- * function logs).
- *
- * Returns JSON · safe to leave deployed (no secrets, no destructive
- * ops). Will remove once Upstash is confirmed working.
+ * Tests the receipt-cache write/read round-trip using the official
+ * @upstash/redis SDK. Returns JSON with the actual outcome so we can see
+ * whether the cache flow works on production without combing through
+ * Vercel function logs.
  *
  * error-sanitize-allow:debug-endpoint-must-expose-raw-failure-mode
  */
 import { NextResponse } from 'next/server';
+import { cacheReceiptBody, fetchCachedReceiptBody } from '@/lib/receipt-cache';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(): Promise<NextResponse> {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) {
-    return NextResponse.json({
-      ok: false,
-      reason: 'env-missing',
-      hasUrl: !!url,
-      hasToken: !!token,
-    });
+  const hasUrl = !!process.env.UPSTASH_REDIS_REST_URL;
+  const hasToken = !!process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!hasUrl || !hasToken) {
+    return NextResponse.json({ ok: false, reason: 'env-missing', hasUrl, hasToken });
   }
 
-  const probeKey = `receipt:body:debug-${Date.now()}`;
-  const probeValue = JSON.stringify({ smoke: 'test', ts: Date.now() });
+  // Fake a receiptRoot so we don't collide with real cache entries.
+  const probeRoot = `0xdebug${Date.now()}`;
+  const probeBody = { smoke: 'upstash-roundtrip', ts: Date.now() };
 
-  // SET via command-array body
   const setStart = Date.now();
-  let setRes: { status: number; body: string };
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(['SET', probeKey, probeValue, 'EX', '60']),
-    });
-    setRes = { status: r.status, body: (await r.text()).slice(0, 500) };
-  } catch (err) {
-    setRes = { status: 0, body: `THREW: ${(err as Error).message}` };
-  }
+  const setOk = await cacheReceiptBody(probeRoot, probeBody);
   const setMs = Date.now() - setStart;
 
-  // GET via command-array body
   const getStart = Date.now();
-  let getRes: { status: number; body: string };
-  try {
-    const r = await fetch(url, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(['GET', probeKey]),
-    });
-    getRes = { status: r.status, body: (await r.text()).slice(0, 500) };
-  } catch (err) {
-    getRes = { status: 0, body: `THREW: ${(err as Error).message}` };
-  }
+  const got = await fetchCachedReceiptBody(probeRoot);
   const getMs = Date.now() - getStart;
 
+  const roundtripMatches = JSON.stringify(got) === JSON.stringify(probeBody);
+
   return NextResponse.json({
-    ok: setRes.status === 200 && getRes.status === 200,
-    url: url.replace(/^https:\/\/([^.]+)\..*/, 'https://$1.<redacted>'),
-    tokenLength: token.length,
-    probeKey,
-    probeValue,
-    set: { ...setRes, ms: setMs },
-    get: { ...getRes, ms: getMs },
+    ok: setOk && roundtripMatches,
+    setOk,
+    setMs,
+    getMs,
+    roundtripMatches,
+    probeRoot,
+    probeBody,
+    fetched: got,
   });
 }
