@@ -156,6 +156,25 @@ export async function POST(req: Request) {
       ...(userWallet ? { delegatedOwnerWallet: userWallet } : {}),
     });
 
+    // Bug-79 long-tail · cache the receipt body to Upstash so /r/<id>
+    // can render the full AI output on a fresh page load. /tmp on Vercel
+    // is ephemeral; without this cache the home Run panel's receipts
+    // show "skill name in storage body — fetch pending" indefinitely.
+    if (result.receiptPath) {
+      try {
+        const { readFileSync } = await import('node:fs');
+        const { cacheReceiptBody } = await import('@/lib/receipt-cache');
+        const receiptObj = JSON.parse(readFileSync(result.receiptPath, 'utf8')) as Record<string, unknown>;
+        const storage = receiptObj.storage as Record<string, unknown> | undefined;
+        const receiptRoot = (storage?.receiptRoot ?? '') as string;
+        if (receiptRoot) {
+          await cacheReceiptBody(receiptRoot, receiptObj);
+        }
+      } catch (cacheErr) {
+        console.warn('[api/run] receipt-body cache write failed:', cacheErr);
+      }
+    }
+
     return NextResponse.json(jsonSafe({
       ok: true,
       finalText: result.finalText,
