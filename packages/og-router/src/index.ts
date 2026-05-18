@@ -71,7 +71,7 @@ export class RouterClient {
     // the OpenAI body.
     const result = await this.client.chat.completions
       .create({
-        model: opts.model ?? 'qwen/qwen-2.5-7b-instruct',
+        model: opts.model ?? '0GM-1.0-35B-A3B',
         messages,
         stream: false,
         ...(opts.verifyTee !== undefined ? { verify_tee: opts.verifyTee } : {}),
@@ -129,7 +129,7 @@ export class RouterClient {
    */
   async chatRich(input: ChatRichInput): Promise<ChatRichResult> {
     const params: Record<string, unknown> = {
-      model: input.model ?? 'qwen/qwen-2.5-7b-instruct',
+      model: input.model ?? '0GM-1.0-35B-A3B',
       messages: input.messages,
       stream: false,
     };

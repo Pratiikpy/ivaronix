@@ -12,7 +12,7 @@ computeCommand
   .command('test')
   .description('Send a test prompt to verify the Router is reachable + key works')
   .option('--prompt <text>', 'prompt to send', 'Hello, frontier.')
-  .option('--model <model>', 'model id', 'qwen/qwen-2.5-7b-instruct')
+  .option('--model <model>', 'model id', '0GM-1.0-35B-A3B')
   .action(async (opts: { prompt: string; model: string }) => {
     const keyring = keyringFromEnv();
     if (!keyring) {

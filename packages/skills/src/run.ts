@@ -53,7 +53,7 @@ export async function runSkill(input: RunSkillInput): Promise<RunSkillResult> {
   const consensus = await runConsensus({
     tier,
     keyring,
-    model: model ?? 'qwen/qwen-2.5-7b-instruct',
+    model: model ?? '0GM-1.0-35B-A3B',
     context: enrichedContext,
     userPrompt,
     rawBytes,

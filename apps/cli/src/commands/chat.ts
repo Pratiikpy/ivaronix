@@ -39,6 +39,7 @@ import pc from 'picocolors';
  */
 
 const SUPPORTED_MODELS = [
+  '0GM-1.0-35B-A3B',
   'qwen/qwen-2.5-7b-instruct',
   'qwen/qwen-2.5-14b-instruct',
   'meta/llama-3-8b-instruct',
@@ -355,7 +356,7 @@ async function chatTurn(state: ChatState, userText: string): Promise<void> {
 
 export const chatCommand = new Command('chat-classic')
   .description('Legacy readline REPL — for SSH / piped workflows where the Ink TUI raw-mode isn\'t available. The new `chat` (alias of `chat-v2`) is the default interactive surface.')
-  .option('--model <id>', 'model id', 'qwen/qwen-2.5-7b-instruct')
+  .option('--model <id>', 'model id', '0GM-1.0-35B-A3B')
   .option('--skill <id>', 'active skill (changes system prompt)')
   .option('--resume <id>', 'resume a saved conversation by id (or short prefix)')
   .option('--stream', 'stream tokens as they arrive (testnet router currently 502s on stream+tools — off by default)', false)

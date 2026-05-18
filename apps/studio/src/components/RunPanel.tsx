@@ -220,11 +220,14 @@ export function RunPanel(props: RunPanelProps = {}) {
       }
     }
     // P14 finding: a hung /api/run would leave the panel in "Running…"
-    // forever because fetch has no default timeout. Cap the wait at 90s so
-    // the user sees an honest error if the inference provider stalls —
-    // §P3 line 173 ("no stuck spinner").
+    // forever because fetch has no default timeout. Cap the wait at 300s
+    // (matches Vercel's default function execution timeout) so the user
+    // sees an honest error if the inference provider stalls — §P3 line 173
+    // ("no stuck spinner"). Bumped from 90s after Bug-79: Standard tier
+    // skills with web_fetch (legal-citation-verifier) take ~150s and the
+    // old cap surfaced FETCH_TIMEOUT even though the receipt anchored.
     const abortCtrl = new AbortController();
-    const timeoutHandle = setTimeout(() => abortCtrl.abort(), 90_000);
+    const timeoutHandle = setTimeout(() => abortCtrl.abort(), 300_000);
     try {
       const res = await fetch('/api/run', {
         method: 'POST',
@@ -297,7 +300,7 @@ export function RunPanel(props: RunPanelProps = {}) {
     } catch (err) {
       const e = err as Error & { name?: string };
       const msg = e.name === 'AbortError'
-        ? 'Run timed out after 90 seconds. The 0G Router or Compute provider is slow or rate-limited right now. Try a smaller input, a lower tier, or wait a minute.'
+        ? 'Run timed out after 5 minutes. The 0G Router or Compute provider is overloaded. The receipt may still finalize — check /dashboard. Otherwise try a smaller input or a lower tier.'
         : e.message;
       setResult({ ok: false, error: msg });
       setLayers({ Storage: 'pending', Compute: 'mismatch', TEE: 'pending', Chain: 'pending' });

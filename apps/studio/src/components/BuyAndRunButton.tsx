@@ -96,11 +96,14 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
 
   const inputsReady = contentText.trim().length > 0 && question.trim().length > 0;
 
-  // Cap every fetch at 90s so a hung Vercel function doesn't leave the
-  // UI in "Running…" forever — same bug class as RunPanel's pre-fix
-  // behavior (§P3 line 173 "no stuck spinner"). 90s covers normal Quick
-  // tier (~10s) + Standard (~25s) + Audit (~60s) with headroom.
-  const fetchWithTimeout = async (url: string, init: RequestInit, ms = 90_000): Promise<Response> => {
+  // Cap every fetch at 300s so a hung Vercel function doesn't leave the
+  // UI in "Running…" forever (§P3 line 173 "no stuck spinner"). 300s
+  // matches Vercel's default function execution timeout — anything that
+  // would succeed server-side completes inside this window. Bumped from
+  // 90s after Bug-79: legal-citation-verifier's web_fetch step + 3-role
+  // consensus + chain anchor takes ~150s, and the old 90s cap surfaced
+  // FETCH_TIMEOUT even though the receipt eventually anchored.
+  const fetchWithTimeout = async (url: string, init: RequestInit, ms = 300_000): Promise<Response> => {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), ms);
     try {
@@ -294,7 +297,7 @@ export function BuyAndRunButton({ skillId, priceWei, priceOg, isFree, creator, c
       const e = err as Error & { name?: string };
       const msg = e.message;
       if (e.name === 'AbortError') {
-        setState({ kind: 'error', code: 'FETCH_TIMEOUT', message: 'The server did not respond within 90 seconds. The 0G Router / Compute provider is slow or rate-limited right now. Try again in a minute.' });
+        setState({ kind: 'error', code: 'FETCH_TIMEOUT', message: 'The server did not respond within 5 minutes. The 0G Router / Compute provider is overloaded or rate-limited. Your payment is on chain — check /dashboard in a minute; the receipt may finalize. Otherwise try again.' });
       } else if (msg.toLowerCase().includes('user rejected')) {
         setState({ kind: 'error', code: 'USER_REJECTED', message: 'Wallet popup rejected. No charge.' });
       } else if (msg.toLowerCase().includes('chain') && (msg.toLowerCase().includes('mismatch') || msg.toLowerCase().includes('not configured'))) {

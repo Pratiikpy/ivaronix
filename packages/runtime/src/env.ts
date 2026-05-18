@@ -131,7 +131,11 @@ export function loadEnv(): Env {
     routerApiKey: readWithDeprecation(ROUTER_KEY_ALIASES),
     routerServiceUrl: readWithDeprecation(ROUTER_URL_ALIASES),
     routerProvider: readWithDeprecation(ROUTER_PROVIDER_ALIASES),
-    defaultModel: readWithDeprecation(DEFAULT_MODEL_ALIASES) ?? 'qwen/qwen-2.5-7b-instruct',
+    // Canonical TIER 1 model for the current 0G TEE provider. Stale fallback
+    // (qwen/qwen-2.5-7b-instruct) caused PIPELINE_FAILED_POST_PAYMENT errors
+    // whenever IVARONIX_DEFAULT_MODEL drifted unset on Vercel — the provider
+    // rejects any non-0GM model with "model not supported".
+    defaultModel: readWithDeprecation(DEFAULT_MODEL_ALIASES) ?? '0GM-1.0-35B-A3B',
   };
   flushDeprecationBanner();
   return env;
