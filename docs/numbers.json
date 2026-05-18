@@ -1,6 +1,6 @@
 {
   "$schema": "Single source of truth for numeric claims across README and MAINNET_READINESS. Refresh with: pnpm numbers:refresh. Render markers expand via: pnpm docs:render.",
-  "lastRefreshed": "2026-05-17",
+  "lastRefreshed": "2026-05-18",
   "network": "testnet · Galileo (chainId 16602)",
   "receipts": {
     "v1Anchored": 1645,
@@ -82,8 +82,8 @@
     ],
     "vendored": 150,
     "catalogTotal": 160,
-    "creatorEarningsOG": "0.0141",
-    "creatorEarningsLabel": "0.0141 OG · 78 paid runs of private-doc-review · 90/10 split"
+    "creatorEarningsOG": "0.0166",
+    "creatorEarningsLabel": "0.0166 OG · 83 paid runs of private-doc-review · 90/10 split"
   },
   "packages": {
     "workspaceTotal": 25,
@@ -145,7 +145,7 @@
       "SubscriptionEscrowV2": "0x937cfE76dEdB25CCf6c7C56fF16F53270794311e"
     },
     "deployedAt": "2026-05-15T02:50:00Z",
-    "receiptsAnchored": 132,
+    "receiptsAnchored": 148,
     "blockedOn": null
   }
 }
