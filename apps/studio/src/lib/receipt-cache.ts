@@ -32,25 +32,28 @@ function getCreds(): { url: string; token: string } | null {
 export async function cacheReceiptBody(receiptRoot: string, body: unknown): Promise<boolean> {
   const creds = getCreds();
   if (!creds) {
-    if (process.env.IVARONIX_DEBUG) {
-      console.warn('[receipt-cache] UPSTASH_REDIS_REST_URL/TOKEN unset · skipping persistence');
-    }
+    console.warn('[receipt-cache] UPSTASH_REDIS_REST_URL/TOKEN unset · skipping persistence');
     return false;
   }
   const key = KEY_PREFIX + receiptRoot.toLowerCase();
   const value = JSON.stringify(body);
-  // Upstash REST API: SET <key> <value> EX <ttl>
+  // Upstash REST API: command-array form via the body. Sending the value
+  // in the URL path fails for receipt bodies (>2KB exceeds URL limits)
+  // and the JSON-wrap form (`{ value }`) wasn't decoded server-side.
+  // The command-array form `["SET", key, value, "EX", ttl]` is the most
+  // robust shape and matches the @upstash/redis SDK's wire format.
   try {
-    const res = await fetch(`${creds.url}/set/${encodeURIComponent(key)}?EX=${TTL_SECONDS}`, {
+    const res = await fetch(creds.url, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${creds.token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ value }),
+      body: JSON.stringify(['SET', key, value, 'EX', String(TTL_SECONDS)]),
     });
     if (!res.ok) {
-      console.warn(`[receipt-cache] Upstash SET failed (${res.status}) for ${receiptRoot.slice(0, 10)}…`);
+      const txt = await res.text().catch(() => '');
+      console.warn(`[receipt-cache] Upstash SET failed (${res.status}) for ${receiptRoot.slice(0, 10)}… body=${txt.slice(0, 200)}`);
       return false;
     }
     return true;
@@ -65,20 +68,21 @@ export async function fetchCachedReceiptBody(receiptRoot: string): Promise<unkno
   if (!creds) return null;
   const key = KEY_PREFIX + receiptRoot.toLowerCase();
   try {
-    const res = await fetch(`${creds.url}/get/${encodeURIComponent(key)}`, {
-      headers: { Authorization: `Bearer ${creds.token}` },
-      // No revalidation cache — receipts are immutable once cached, but a
-      // 60s edge cache still saves the round-trip for hot receipts.
+    const res = await fetch(creds.url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${creds.token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(['GET', key]),
+      // 60s edge cache — receipts are immutable once cached.
       next: { revalidate: 60 },
     });
     if (!res.ok) return null;
     const data = (await res.json()) as { result?: string | null };
     if (!data.result) return null;
-    // Upstash stores our JSON-wrapped object as a string; double-decode.
     try {
-      const wrapped = JSON.parse(data.result) as { value?: string };
-      if (typeof wrapped.value !== 'string') return null;
-      return JSON.parse(wrapped.value);
+      return JSON.parse(data.result);
     } catch {
       return null;
     }
