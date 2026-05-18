@@ -302,6 +302,23 @@ export async function POST(req: Request) {
           draftReceiptRoot: body.draftReceiptRoot,
         };
         writeFileSync(result.receiptPath, JSON.stringify(receiptObj, null, 2));
+
+        // Bug-79 long-tail · persist body to Upstash so /r/<id> can render
+        // the AI output for receipts anchored on Vercel production.
+        // Vercel /tmp is ephemeral; the file we just wrote is gone the
+        // moment this function instance recycles. Without this Redis cache
+        // /r/140 shows "skill name in storage body — fetch pending"
+        // forever even though the chain anchor is real.
+        try {
+          const { cacheReceiptBody } = await import('@/lib/receipt-cache');
+          const storage = receiptObj.storage as Record<string, unknown> | undefined;
+          const receiptRoot = (storage?.receiptRoot ?? '') as string;
+          if (receiptRoot) {
+            await cacheReceiptBody(receiptRoot, receiptObj);
+          }
+        } catch (cacheErr) {
+          console.warn('[api/run/confirm] receipt-body cache write failed:', cacheErr);
+        }
       } catch (patchErr) {
         console.warn('[api/run/confirm] failed to patch payment onto receipt JSON:', patchErr);
       }

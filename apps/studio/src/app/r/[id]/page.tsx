@@ -96,8 +96,28 @@ async function loadReceipt(idOrRoot: string): Promise<ResolvedReceipt | null> {
     try {
       const onChain = await load();
       if (onChain) {
+        // Local-disk lookup first — fast, no network. Covers CLI-anchored
+        // receipts that ship bundled with the deploy under
+        // `apps/studio/src/data/receipts/anchored/`.
         const local = findLocalReceiptByRoot(onChain.receiptRoot);
-        return { onChain, local: local?.body ?? null, registryVersion: version };
+        if (local?.body) {
+          return { onChain, local: local.body, registryVersion: version };
+        }
+        // Bug-79 long-tail · Upstash Redis fallback. Production-paid
+        // receipts (`/api/run/confirm`) write the body to /tmp + push it
+        // to Upstash so /r/<id> can render the AI output. Without this,
+        // every fresh paid run shows "skill name in storage body —
+        // fetch pending" even though the chain anchor is real.
+        try {
+          const { fetchCachedReceiptBody } = await import('@/lib/receipt-cache');
+          const cached = await fetchCachedReceiptBody(onChain.receiptRoot);
+          if (cached) {
+            return { onChain, local: cached as ReceiptBody, registryVersion: version };
+          }
+        } catch (cacheErr) {
+          console.warn('[r/[id]] receipt-cache fetch failed:', cacheErr);
+        }
+        return { onChain, local: null, registryVersion: version };
       }
     } catch {
       // Move to the next registry on RPC error / decode error.
