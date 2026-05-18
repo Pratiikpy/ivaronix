@@ -1,0 +1,135 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRW7AFP6MK7MTTA5AFPWN7AS",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": false,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1779063668421",
+    "zgResKey": "39b71202-ccc5-496d-aa9a-fcc8de141063",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 504,
+    "outputTokens": 3510,
+    "inputCostNeuron": "25200000000000",
+    "outputCostNeuron": "351000000000000",
+    "totalCostNeuron": "376200000000000",
+    "totalCostOg": "0.0003762000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "338580000000000",
+      "treasuryNeuron": "37620000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x9532e687d718c665c73a03a408a5a0dceaf67b8a14abbbbadffb56f499ef76a0",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:381421369ce8e8c43664a6829160f6014d15c52d98e80162b209ef5d4b74cf9f"
+    },
+    "receiptRoot": "0x8d4a78445abace1abc807fd9a6a98091209aa28f70e3126353f13d7209fcf616"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779063654288,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "138",
+    "anchorTxHash": "0x2bed198919c50c88c898a3eccb685032b422055cc96018523e7bcd7287b0ab11",
+    "anchorBlockNumber": 33565982,
+    "anchorTimestamp": 1779063679
+  },
+  "outputs": {
+    "outputHash": "sha256:6eea19f8169bed96f2b385b548c66a3871b5b1091468b17c228a7afc1a7b71e1",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "1. Risk: Section 4 is the most concerning clause because it grants the landlord unilateral power to drastically increase rent without notice or justification, while the document omits any termination ",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779063668423,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x67dc7e84ee4904563e3f23029aa5d473437149a8b01502cf8e15702246135e1e2b269b268c05f9aa4afe86a9b777d9d0efdd0d65e21fd99e7a0f0e600c8931841c"
+  }
+}

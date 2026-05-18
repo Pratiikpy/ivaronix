@@ -1,0 +1,174 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRVK3SFVGC9CV5114CVYXNX2",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "legal-citation-verifier",
+    "skillVersion": "0.1.4",
+    "skillManifestHash": "sha256:a701fb64c742c9224a96d4b3c5ee7ea142518c4b7104133d52212ca68198da53",
+    "userPromptHash": "sha256:b7bb03f144f7191f2603ab3e8deb16a0c53b1331c606e0ff3e63e244ef20a11c",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x0000000000000000000000000000000000000000"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "judge"
+      ],
+      "convergenceScore": 0.2,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.2). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"Based on the document provided, **there is no mention of \"Chainscan\"** anywhere in the text. The document only references two verification sources:\"\ncritic: \"**1. \"Chainscan\" is not mentioned in the document.** The document exclusively names two verification sources: the **CourtListener API** (for cases) and **Cornel\"",
+      "individualAttestations": []
+    },
+    "toolCallTrace": [
+      {
+        "tool": "web_fetch",
+        "argumentsHash": "sha256:66e501d4e43a370fc855c5807203b73bab01ef082a5ed045d9c1ae9c6914d8aa",
+        "ok": false,
+        "durationMs": 1687,
+        "responseHash": "sha256:d430997a5e33788948d1dc10118ae4e0f107a81d9bc2eaa6fe93a151b2b2fb0d",
+        "responseSize": 8
+      },
+      {
+        "tool": "web_fetch",
+        "argumentsHash": "sha256:37182b7b4685bbe5cd911a45f99c4aedeca07ffb6b6fa2e85fe8b341339837ee",
+        "ok": false,
+        "durationMs": 309,
+        "responseHash": "sha256:d430997a5e33788948d1dc10118ae4e0f107a81d9bc2eaa6fe93a151b2b2fb0d",
+        "responseSize": 8
+      },
+      {
+        "tool": "web_fetch",
+        "argumentsHash": "sha256:b3b2d74186751c812d451338ae898e3ccf173085741e12cffe36e1811213532e",
+        "ok": false,
+        "durationMs": 1757,
+        "responseHash": "sha256:59b46d3c46fac56fd888824fd29738bcf59d07bc5d23207371e1ee9d69b7630d",
+        "responseSize": 8
+      },
+      {
+        "tool": "web_fetch",
+        "argumentsHash": "sha256:6eec8e0a4277c764ce4d2f8cc6ebe2e8d5ab9effac5bfcb24efa8781d3554e6e",
+        "ok": true,
+        "durationMs": 302,
+        "responseHash": "sha256:09326504b7520d0438b6cca1a48a677f58212b27cf682e000a311251d1b7e46b",
+        "responseSize": 24297
+      }
+    ]
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1779042477562",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 10926,
+    "outputTokens": 2341,
+    "inputCostNeuron": "546300000000000",
+    "outputCostNeuron": "234100000000000",
+    "totalCostNeuron": "780400000000000",
+    "totalCostOg": "0.0007804000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "597006000000000",
+      "treasuryNeuron": "183394000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xe6a17ab471b3f5707a6a0edc0a7a6c1f918498b44d8028e2f94c7788d3751211",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:fde7011c93af5ead694b59d80f19c412493a2423d41d53055828f11f47f28b34"
+    },
+    "receiptRoot": "0x82ece48eaaec1efe2dab19251b6d7f64e7460b6ed5a2fca71132b000c8f8de2b"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779042447477,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "anchorTxHash": "0x6846ec12e2cdbd55ca6f3253c2d379b8a39ee041c6d63183dc21ace6f98cf329",
+    "anchorBlockNumber": 33542037,
+    "anchorTimestamp": 1779042488
+  },
+  "outputs": {
+    "outputHash": "sha256:24abb66a7c5769c7cc1db773faf99420af5b3ff4a01ddc0aadc619a5e086fea6",
+    "citations": [],
+    "riskLevel": "low",
+    "wording": {
+      "headline": "### Synthesized Judgment Based on the provided document, **there is no mention of \"Chainscan\" whatsoever**. Both reviewers confirm that the text exclusively designates two verification sources: the **",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": false,
+      "error": "Unexpected token '#', \"### Synthe\"... is not valid JSON",
+      "attempted": [],
+      "rawBytes": 1523
+    }
+  },
+  "createdAt": 1779042477564,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0xbbd903afb2d72813a82bfcef2e3b2c4bafdba747b691d55d72ca37e448fb9e0b072b00c3aaddbcc02e2074a287e3431ddb55d032471f9c4303527d80266b5e221b"
+  }
+}

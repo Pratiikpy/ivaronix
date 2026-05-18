@@ -1,0 +1,191 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRV95CRE2MZ6NXHB619ETW8W",
+  "type": "doc_ask",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0,
+    "signedBy": "operator"
+  },
+  "request": {
+    "skillId": "private-doc-review",
+    "skillVersion": "0.4.0",
+    "skillManifestHash": "sha256:b788d2ca153488814d4a8c1de104c0e8e39c19065fade43c2ffb3df9993fcfaf",
+    "userPromptHash": "sha256:fb2fe6c7b0563b3a95275867fb7e814d77f4441d5aed331556f22f0ffe1f8010",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "doc_ask",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "model": {
+      "source": "0G",
+      "computePath": "0G Private Compute",
+      "skillRunOn0GModel": true
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.316,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.316). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"1. The most concerning clause due to extreme financial exposure and zero constraints on the landlord.\"\nevidence-checker: \"- Section 1 explicitly requires a $13,500 security deposit that is non-refundable and must be paid in stablecoin within 24 hours.\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0xb1b08cd49305de5a6a4de381966b8b76eac6cee4dcfa65d7baeddd554680d771",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "efb3716a-5d4d-4d99-a12a-71a47eab0b1c",
+          "content": "1. The most concerning clause due to extreme financial exposure and zero constraints on the landlord.\n   Landlord may unilaterally raise rent by up to 50% per quarter without notice or justification.\n2. The tenant assumes high liquidity and valuation risk from a large upfront payment that cannot be recovered.\n   Tenant agrees to a $13,500 non-refundable security deposit, payable in stablecoin within 24 hours.\n3. The tenant forfeits fundamental legal protections and may face prohibitive costs to challenge the landlord.\n   Tenant waives all rights to a jury trial and consents to mandatory arbitration in the landlord's jurisdiction of choice.\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xa974877e9d8815b409522fbd8acac49630699ce8a0175e3e32a4db57c1da59f7",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "d87e1ba8-2833-4bc2-a4e5-62062949fd77",
+          "content": "1. Section 4 is the most concerning clause due to its potential for immediate and extreme financial harm.\n2. The document grants the landlord authority to unilaterally raise rent by up to 50% per quarter without notice or justification.\n3. Section 1 traps a large sum with no recovery option, imposes an unrealistic payment deadline, and uses a volatile payment method.\n4. The document requires a $13,500 non-refundable security deposit, payable in stablecoin within 24 hours.\n5. Section 9 strips all legal defenses and forces dispute resolution in a jurisdiction selected exclusively by the landlord.\n6. The document states the tenant waives all rights to a jury trial and consents to mandatory arbitration in the landlord's jurisdiction of choice.\n7. The document lacks standard safety nets like cure periods, termination rights, or rent increase limits.\n8. No provisions address tenant protections, dispute timelines, or mutual obligations.\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0x1103c19aeccc53e7dbc1ceba158bcecf27f344ebca612124f78c886f9241f360",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "b080778c-adcb-434d-842e-32eb554c4ace",
+          "content": "1. Extreme quarterly rent escalation without notice exposes the tenant to uncontrollable costs and immediate financial distress. (Category: Financial | Impact: High) Evidence: Section 4 grants the landlord the right to \"unilaterally raise rent by up to 50% per quarter without notice or justification.\"\n2. Non-refundable crypto deposit removes tenant recourse and introduces stablecoin volatility and blockchain transaction risks. (Category: Financial/Operational | Impact: Medium) Evidence: Section 1 mandates a \"$13,500 non-refundable security deposit, payable in stablecoin within 24 hours.\"\n3. Mandatory arbitration in the landlord's preferred location strips the tenant of jury trial rights and increases legal defense exposure. (Category: Legal | Impact: Medium) Evidence: Section 9 requires the tenant to \"waive all rights to a jury trial and consent to mandatory arbitration in the landlord's jurisdiction of choice.\"\n\nMost concerning clause: Section 4. Its 50% quarterly increase cap, combined with zero notice and no justification requirement, creates compounding financial liability and grants the landlord unrestricted pricing power with no tenant protection.\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0xad62a40bd9add4454054fc0c9a45a69e31098ce846656de34fe3a82925e5176f",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "388e7d19-803d-41a5-acec-b4594957924e",
+          "content": "**Verified facts**\n- Section 1 explicitly requires a $13,500 security deposit that is non-refundable and must be paid in stablecoin within 24 hours.\n- Section 4 explicitly allows the landlord to increase rent by up to 50% per quarter without providing notice or justification.\n- Section 9 explicitly requires the tenant to waive jury trial rights and submit to mandatory arbitration in a jurisdiction selected solely by the landlord.\n\n**Inferred**\n- A reader might infer the arbitration clause creates procedural disadvantage for the tenant, though the document only states the landlord picks the jurisdiction.\n- A reader might infer the stablecoin payment exposes the tenant to cryptocurrency volatility, though the document does not mention price stability, conversion, or fees.\n- A reader might infer the 50% quarterly rent increase will apply immediately upon signing, though the document does not state a baseline rent or effective start date.\n\n**Unsupported**\n- The document does not specify which stablecoin (e.g., USDT, USDC) or blockchain network is accepted.\n- The document does not mention lease duration, property address, or the legal names of the parties.\n- The document does not indicate whether arbitration filing fees, arbitrator costs, or legal expenses will be paid by the tenant or split.\n- The document does not reference standard lease protections such as maintenance responsibilities, utility allocations, or early termination options.\n\nRisk Level: high",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x23526eab665856c5e28340bee9497cbe59e651cfe95544bb755ea0952ca97580",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "bb5927ee-ac8d-4be3-aa7f-0b82179c7fa7",
+          "content": "All reviewers unanimously identify **Section 4** as the most concerning clause. The contractual permission to raise rent by up to 50% per quarter without notice or justification creates immediate, compounding financial liability with zero tenant safeguards.\n\n1. Unrestricted rent escalation creates immediate financial distress with no tenant recourse. Evidence: \"Landlord may unilaterally raise rent by up to 50% per quarter without notice or justification.\"\n2. Large upfront payment is completely forfeited regardless of contract outcome. Evidence: \"Tenant agrees to a $13,500 non-refundable security deposit, payable in stablecoin within 24 hours.\"\n3. Dispute resolution is forced into a venue controlled by the counterparty, stripping basic legal safeguards. Evidence: \"Tenant waives all rights to a jury trial and consents to mandatory arbitration in the landlord's jurisdiction of choice.\"\n4. Standard lease protections are entirely absent from the document. Evidence: The document contains no cure periods, termination triggers, maintenance duties, or lease duration terms.\n\n**Where reviewers AGREE:** All four reviewers unanimously flag Section 4 as the primary threat, classify the overall risk as high, and note the absence of standard tenant protections like dispute timelines or mutual obligations.\n\n**Where reviewers DISAGREE:** Reviewers differ on the severity and documentation of the stablecoin deposit risk.\n- ANALYST: \"Tenant assumes high liquidity and valuation risk from a large upfront payment that cannot be recovered.\"\n- EVIDENCE-CHECKER: \"A reader might infer the stablecoin payment exposes the tenant to cryptocurrency volatility, though the document does not mention price stability, conversion, or fees.\" (Explicitly labels this inference as unsupported).\n- RISK-REVIEWER: Assigns the deposit clause a \"Medium\" impact category, contrasting with the higher severity assessments from other reviewers.\n\nAction: Request written amendments to Sections 1, 4, and 9 to remove unilateral pricing power, secure refundable deposit terms, and establish neutral dispute resolution before any funds are transferred.\n\nRisk Level: high",
+          "independentVerified": null
+        }
+      ],
+      "policyApplied": "first-objection",
+      "dissents": 4
+    }
+  },
+  "routerTrace": {
+    "requestId": "pipeline-1779032044300",
+    "zgResKey": "bb5927ee-ac8d-4be3-aa7f-0b82179c7fa7",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null,
+    "tier": "tier-1-tee",
+    "providerKind": "0g-router"
+  },
+  "billing": {
+    "inputTokens": 3624,
+    "outputTokens": 14665,
+    "inputCostNeuron": "181200000000000",
+    "outputCostNeuron": "1466500000000000",
+    "totalCostNeuron": "1647700000000000",
+    "totalCostOg": "0.0016477000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_1",
+      "tierMultiplierBps": 10000,
+      "creatorBps": 9000,
+      "treasuryBps": 1000,
+      "creatorNeuron": "1482930000000000",
+      "treasuryNeuron": "164770000000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0xaf1f74e561b2f8b8234e3204f151bd9ba6a0cf1cb3f5a22bb82e83370bc05123",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:80f4f195c4a8248d9c91a2af86d02a0a865fecc2c6dec8c59ab4db83b2e6393e"
+    },
+    "receiptRoot": "0x98098c817af712f0cc60c4c6cf2446534b3f2d7acfcc02f0f231a54b0763a0e7"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779032031944,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created during this run (in-memory pipeline)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "status": "anchored",
+    "onChainId": "135",
+    "anchorTxHash": "0x3acdb9bff82a2a3af29960107bc118336c3eb2a018be0b38ccf17212c340966f",
+    "anchorBlockNumber": 33530254,
+    "anchorTimestamp": 1779032056
+  },
+  "outputs": {
+    "outputHash": "sha256:e318df91a62f50fd27b6ca52eca2a855ecdd60a9831841203b752cb3281da949",
+    "citations": [],
+    "riskLevel": "high",
+    "wording": {
+      "headline": "All reviewers unanimously identify **Section 4** as the most concerning clause. The contractual permission to raise rent by up to 50% per quarter without notice or justification creates immediate, com",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    }
+  },
+  "createdAt": 1779032044302,
+  "createdBy": "ivaronix-runtime/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x38abbe086c30ace64a5f08d3fac90ffcf39cbff3b6afb159d30bc59c33100ff56489eb5eb7750c7b43de24276346d3e59e887193f6159c1bc3def4dfcd859aff1b"
+  }
+}

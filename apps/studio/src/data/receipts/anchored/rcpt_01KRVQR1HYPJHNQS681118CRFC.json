@@ -1,0 +1,185 @@
+{
+  "version": "1.0",
+  "id": "rcpt_01KRVQR1HYPJHNQS681118CRFC",
+  "type": "burn",
+  "parentReceiptId": null,
+  "agent": {
+    "passportId": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+    "ownerWallet": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "trustScoreAtTime": 0
+  },
+  "request": {
+    "skillId": "nda-triage-reviewer",
+    "skillVersion": "0.1.1",
+    "skillManifestHash": "sha256:114042c5a4cc6ee3c6bcf66cf2eb6574fe6bee543737f5eef2e6b4521db29792",
+    "userPromptHash": "sha256:63992c438748497e2c92cc3dd674d0d226eb6333f166c22bead35188bd186673",
+    "inputArtifacts": [
+      {
+        "kind": "doc",
+        "encrypted": true
+      }
+    ],
+    "policyDecision": "approved",
+    "approvalChain": [
+      {
+        "gate": "wallet-access",
+        "decision": "auto-allow",
+        "actor": "policy:default-strict"
+      }
+    ]
+  },
+  "execution": {
+    "mode": "consensus",
+    "burnMode": true,
+    "consensusMode": true,
+    "modelSelection": {
+      "requested": "0GM-1.0-35B-A3B",
+      "final": "0GM-1.0-35B-A3B"
+    },
+    "providerRouting": {
+      "allowFallbacks": true,
+      "finalProvider": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9"
+    },
+    "consensus": {
+      "roles": [
+        "analyst",
+        "critic",
+        "risk-reviewer",
+        "evidence-checker",
+        "judge"
+      ],
+      "convergenceScore": 0.232,
+      "agreementSummary": "Reviewers diverge significantly (Jaccard 0.232). Treat the final judgment with caution.",
+      "disagreementSummary": "analyst: \"1. The provided document does not mention Citizens United v. FEC, as it only cites Mata v. Avianca, Inc., 678 F. Supp. 3d 412 (S.D.N.Y. 2023) in the Southern Di\"\nrisk-reviewer: \"Yes, *Citizens United v. Federal Election Commission* is a real and landmark U.S. Supreme Court case. Decided in 2010 (558 U.S. 310), it held that the governmen\"",
+      "individualAttestations": [
+        {
+          "role": "analyst",
+          "attestationHash": "0x0342eeae7ed31559bd10e9e8231b7fd669cfd9a8a9a01a39430bd2c3810afc57",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "9ace00cc-f4f4-40d0-b848-9c4085b1e254",
+          "content": "1. The provided document does not mention Citizens United v. FEC, as it only cites Mata v. Avianca, Inc., 678 F. Supp. 3d 412 (S.D.N.Y. 2023) in the Southern District of New York.\n2. Because the document contains no reference to Citizens United v. FEC, I cannot confirm or deny its existence based solely on the provided text.",
+          "independentVerified": null
+        },
+        {
+          "role": "critic",
+          "attestationHash": "0xa308f3ed7acfdc258382f5457502b92b098bbf7c326b8b9ad5984132cd155445",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "f88321ce-f066-459b-b005-d7404c439973",
+          "content": "1. The document does not contain enough information to answer the question.\n2. The provided text does not mention \"Citizens United v. FEC\"; it is entirely silent on the matter and only provides a citation for a different case, *Mata v. Avianca, Inc.*, 678 F. Supp. 3d 412 (S.D.N.Y. 2023).\n3. A reviewer relying on this document to verify the existence or details of *Citizens United v. FEC* would find no supporting evidence, as the document only pertains to the U.S. District Court, Southern District of New York, and the plaintiff's citation of *Mata*.",
+          "independentVerified": null
+        },
+        {
+          "role": "risk-reviewer",
+          "attestationHash": "0x86e6902c00b0b2a2fb6dd105b25ac2736ef57da081db347057f3b3809b3ab05a",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "1e195250-0702-40cd-87b6-a643bfd307d5",
+          "content": "Yes, *Citizens United v. Federal Election Commission* is a real and landmark U.S. Supreme Court case. Decided in 2010 (558 U.S. 310), it held that the government cannot restrict independent political expenditures by corporations, labor unions, and other associations, ruling that such spending is protected speech under the First Amendment. The decision fundamentally reshaped American campaign finance and directly contributed to the rise of Super PACs.",
+          "independentVerified": null
+        },
+        {
+          "role": "evidence-checker",
+          "attestationHash": "0x428a480760448728db2218eda39af1beeb4db5343b39f19088d5c5d16e6ea22b",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "f8aac727-3ce5-4070-842b-906f97a477e5",
+          "content": "Verified facts: The document does not mention *Citizens United v. FEC*. It only states that a case is being heard in the U.S. District Court for the Southern District of New York and cites a different case: *Mata v. Avianca, Inc.*, 678 F. Supp. 3d 412 (S.D.N.Y. 2023).\n\nInferred: None. The text provides no basis to draw conclusions about *Citizens United v. FEC*.\n\nUnsupported: Any claim that the document verifies, discusses, or contains information about *Citizens United v. FEC*. The document does not contain enough information to answer the question.",
+          "independentVerified": null
+        },
+        {
+          "role": "judge",
+          "attestationHash": "0x8ee7902369e9b86fd05350b06d1d1fc7662cb76d048469d19988582f2477ecf9",
+          "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+          "chatId": "08567f65-dc74-4077-94fe-62b8ede3e1e2",
+          "content": "**Synthesis**\nAll reviewers confirm that the provided document contains absolutely no reference to *Citizens United v. FEC*; it exclusively cites *Mata v. Avianca, Inc.* in the Southern District of New York. Regarding the actual existence of the case, the RISK-REVIEWER answers affirmatively using external legal knowledge, while the ANALYST, CRITIC, and EVIDENCE-CHECKER restrict their analysis strictly to the provided text, concluding the document lacks sufficient information to answer.\n\n**Where Reviewers AGREE (High Confidence)**\nAll four reviewers agree that the provided document is silent on *Citizens United v. FEC* and cannot be used to verify it.\n> ANALYST: `\"The provided document does not mention Citizens United v. FEC, as it only cites Mata v. Avianca, Inc... I cannot confirm or deny its existence based solely on the provided text.\"`\n> EVIDENCE-CHECKER: `\"The document does not mention Citizens United v. FEC. It only states that a case is being heard... and cites a different case... The document does not contain enough information to answer the question.\"`\n\n**Where Reviewers DISAGREE**\nThe disagreement centers on whether to answer from external knowledge or strictly from the document:\n> RISK-REVIEWER: `\"Yes, Citizens United v. Federal Election Commission is a real and landmark U.S. Supreme Court case. Decided in 2010 (558 U.S. 310), it held that the government cannot restrict independent political expenditures...\"`\n> vs.\n> ANALYST: `\"Because the document contains no reference to Citizens United v. FEC, I cannot confirm or deny its existence based solely on the provided text.\"`\n\n**Final Risk Level:** Low\n**Action:** Treat the document as irrelevant to your question. Verify historical case law and case citations through primary legal databases (e.g., PACER, Justia, or official U.S. Reports) rather than relying on unrelated court headers or vendor filings.",
+          "independentVerified": null
+        }
+      ]
+    }
+  },
+  "routerTrace": {
+    "requestId": "doc-ask-1779047335485",
+    "zgResKey": "08567f65-dc74-4077-94fe-62b8ede3e1e2",
+    "x0gTrace": {},
+    "rateLimit": {},
+    "rotations": []
+  },
+  "teeVerification": {
+    "requested": true,
+    "routerVerified": false,
+    "independentVerified": null,
+    "providerAddress": "0x4870CbC4D07d6Ac2EE5aA865588e5985FE77a4E9",
+    "verificationMethod": "router_flag",
+    "verifiedAt": null
+  },
+  "billing": {
+    "inputTokens": 6992,
+    "outputTokens": 6957,
+    "inputCostNeuron": "349600000000000",
+    "outputCostNeuron": "695700000000000",
+    "totalCostNeuron": "1045300000000000",
+    "totalCostOg": "0.0010453000",
+    "feeSplit": {
+      "declaredCreatorBps": 9000,
+      "declaredTreasuryBps": 1000,
+      "tier": "TIER_2",
+      "tierMultiplierBps": 8500,
+      "creatorBps": 7650,
+      "treasuryBps": 2350,
+      "creatorNeuron": "799654500000000",
+      "treasuryNeuron": "245645500000000",
+      "creatorPassport": "did:0g:passport:0xaa954c33810029a3eFb0bf755FEF17863E8677Ce:1",
+      "policyApplied": "flat"
+    }
+  },
+  "storage": {
+    "proofDownloadVerified": false,
+    "evidenceRoot": "0x22cc6b961e22841e65c40d798520dba73edbd23cdaeb3ee4f55ef95aa9e718b6",
+    "encryption": {
+      "enabled": true,
+      "type": "aes-256-gcm",
+      "headerDetected": true,
+      "keyFingerprint": "sha256:61c04b6e173da15beac65b199c1b8acc2a0ab8eb2321772606aed4a61f3c7e12"
+    },
+    "receiptRoot": "0x1807d3cae0e8cb0d3fb73961780d75169db3d5ab3f1a871c745b20ba874ffc58"
+  },
+  "burn": {
+    "sessionKeyDestroyedAt": 1779047295676,
+    "localCleanupStatus": "not-applicable",
+    "tempPathsZeroed": [],
+    "wording": "Session key destroyed; ciphertext now unreadable to operator. Burn Mode protects against operator-side disclosure; local-machine compromise is out of scope. No temp files were created (in-memory encrypt-and-upload)."
+  },
+  "chainAnchor": {
+    "network": "mainnet",
+    "chainId": 16661,
+    "rpcUrlHash": "sha256:e017d9e03fd9315a20342fc699359ce366ad2e225c17328d9af334735c9e5f90",
+    "registryAddress": "0xCE35aF8D75ffB24BC1671Ca9F0CF293D82737297",
+    "anchorTxHash": "0xf09381bbf4c0e32ea5c771bba4154302a88b110c32f0ddf812794b52aae2c718",
+    "anchorBlockNumber": 33547553,
+    "anchorTimestamp": 1779047346
+  },
+  "outputs": {
+    "outputHash": "sha256:f3d97049974e9ecb7060a801bdf8cc0abefebe801f4e010948da99eebbd5fb0c",
+    "citations": [],
+    "riskLevel": "low",
+    "wording": {
+      "headline": "**Synthesis** All reviewers confirm that the provided document contains absolutely no reference to *Citizens United v. FEC*; it exclusively cites *Mata v. Avianca, Inc.* in the Southern District of Ne",
+      "doNotSay": [
+        "truth score",
+        "verified by AI",
+        "guaranteed safe"
+      ]
+    },
+    "parsed": {
+      "ok": false,
+      "error": "Unexpected token '*', \"**Synthesi\"... is not valid JSON",
+      "attempted": [],
+      "rawBytes": 1890
+    }
+  },
+  "createdAt": 1779047335486,
+  "createdBy": "ivaronix-forge/0.0.1",
+  "signature": {
+    "method": "eth_personal_sign",
+    "signer": "0xaa954c33810029a3eFb0bf755FEF17863E8677Ce",
+    "signature": "0x5a46deeaf29ce4d03826ca3cf862fe63b4d36dcd4185da51e066b5a66aeb453f2eb4b8580c92130372e1737ace04cdda3186f5d8ff25da05114e87df61e7173a1c"
+  }
+}
